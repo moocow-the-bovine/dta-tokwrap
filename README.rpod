@@ -1,0 +1,41 @@
+=pod
+
+README for DTA::TokWrap
+
+=head1 ABSTRACT
+
+DTA::TokWrap - Wrapper modules & scripts for DTA corpus tokenization
+
+=head1 REQUIREMENTS
+
+=over 4
+
+=item perl
+
+=back
+
+
+=head1 DESCRIPTION
+
+The DTA::TokWrap distribution provides wrapper modules and
+scripts for tokenization of DTA "base-format" XML documents.
+
+=head1 INSTALLATION
+
+Issue the following commands to the shell:
+
+ bash$ cd DTA-TokWrap-0.01   # (or wherever you unpacked this distribution)
+ bash$ perl Makefile.PL      # check requirements, etc.
+ bash$ make                  # build the module
+ bash$ make test             # (optional): test module before installing
+ bash$ make install          # install the module on your system
+
+=head1 SEE ALSO
+
+perl(1).
+
+=head1 AUTHOR
+
+Bryan Jurish E<lt>jurish@bbaw.deE<gt>
+
+=cut
