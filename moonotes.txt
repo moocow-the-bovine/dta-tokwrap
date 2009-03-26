@@ -1,0 +1,52 @@
+ex1 ~ kraepelin_arzneimittel_1892.xml
+ + tag 'text'
+   - document text begins here
+
+ + tag 'lb'
+   - line-break (implicit "\n")
+
+ + tag 'pb'
+   - page-break (implicit "\n")
+
+ + tag 'hi'
+   - ex: <hi rendition="#b">Dr. Emil Kraepelin,</hi>
+   - highlighting
+   - no special handling
+
+ + tag 'table'
+   - lots of "empty" tables:
+     ... <table><row><cell/></row></table> ...
+   - how to handle non-empty tables -- is there an example?
+   - implicit line- rsp. token-breaks at table-|row-|cell-boundaries?
+   - serialize tables in own sections?
+
+ + tags 'list', 'item'
+   - implicit token-|line-break?
+
+ + tag 'note'
+   - <note place="foot" n="*)"> : footnote
+   - <note place="???"> : what else?
+   - how to serialize these?
+
+ + tag 'head'
+   - looks like chapter|section headings
+   - implicit breaks? -->yep
+
+ + tag 'ref'
+   - ex: <item><hi rendition="#b">I. Methodik</hi><ref>1</ref></item>
+   - in table of contents
+   - call it an implicit token-break
+
+ + tag 'fw'
+   - ex: <fw type="sig" place="bottom"><hi rendition="#g">Kraepelin,</hi> Beeinflussung. 1</fw>
+
+ + tag 'g'
+   - ex: <g ref="#frac12" type="frac">1/2</g>
+
+ + tag 'milestone'
+   - ex: <milestone unit="section" rendition="#hr"/>
+
+ + tag 'figure'
+   - ex: <figure><p>Kraepelin del. Verl.v.Gustav Fischer, Jena. Lith. Anst.v.A.Giltsch.Jena.</p></figure>
+   - serialization?
+   - implicit breaks?

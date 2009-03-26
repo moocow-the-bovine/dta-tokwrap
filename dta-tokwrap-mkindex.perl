@@ -30,7 +30,8 @@ our ($tv_started,$elapsed) = (undef,undef);
 our ($xp); ##-- underlying XML::Parser object
 
 our $docname = undef;    ##-- name for document (=basename($infilename))
-our $c_id = undef;        ##-- $c_id: xml:id of currently open <c> element, if any
+our $in_text = 0;        ##-- whether we've seen a <text> START event
+our $c_id = undef;       ##-- $c_id: xml:id of currently open <c> element, if any
 our $txtfh = undef;      ##-- $txtfh: output filehandle for text stream
 our $idxfh = undef;      ##-- $idxfh: output filehandle for index stream
 our $txtpos = 0;         ##-- $txtpos: byte position in $txtfh
@@ -38,6 +39,19 @@ our $cbuf = '';          ##-- buffer for contents of current <c> element
 our $clen = 0;           ##-- length of $cbuf (in bytes)
 our $cxbyte = 0;         ##-- byte offset (in XML stream) of start of current <c> element
 our $cnum = 0;           ##-- $cnum: global index of <c> element (number of elts read so far)
+
+our $idx_hdrpos_nchars = undef; ##-- position of 'nchars' number in header
+our $idx_hdrpos_nbytes = undef; ##-- position of 'nbytes' number in header
+our $idx_hdr_numwd     = 16;    ##-- sprintf() width for numeric fields in $idxfh header
+
+##-- globals: implicit line- & token-breaks
+our @implicit_newline_elts = qw(lb p pb note head); ##-- implicit newline on element END
+our %implicit_newline_elts = map { ($_=>undef) } @implicit_newline_elts;
+
+our @implicit_tokbreak_elts = qw(div p fw figure item list ref);  ##-- implicit token break on START and END
+our %implicit_tokbreak_elts = map { ($_=>undef) } @implicit_tokbreak_elts;
+our $tokbreak_text = "\n\$TB\$\n";
+our $tokbreak_len  = length($tokbreak_text);
 
 ##------------------------------------------------------------------------------
 ## Command-line
@@ -71,17 +85,24 @@ sub cb_init {
   $cxbyte = 0;         ##-- byte offset (in XML stream) of start of current <c> element
   $cnum = 0;           ##-- $cnum: global index of <c> element (number of elts read so far)
   $txtpos = 0 if (!$txtpos);   ##-- $txtpos: byte position in $txtfh
+  $in_text = 0;
 
   ##-- write header information
-  $idxfh->print('%% BEGIN FILE ', basename($infile), "\n",
-		'%% ', join("\t", qw(XML_ID XML_BYTE_OFFSET XML_BYTE_LEN TXT_BYTE_OFFSET TXT_BYTE_LEN)), "\n",
-	       )
-    if (defined($idxfh));
-}
+  if (defined($idxfh)) {
+    $idxfh->print('%% BEGIN FILE ', basename($infile), "\n");
 
-## undef = cb_final($expat)
-sub cb_final_NOPE {
-  $nxbytes += $_[0]->current_byte; ##-- always returns 0 here?
+    $idxfh->print('%% NCHARS ');
+    $idx_hdrpos_nchars = $idxfh->tell() if ($idxfh->can('tell'));
+    $idxfh->print(sprintf("%-*s\n", $idx_hdr_numwd, '?'));
+
+    $idxfh->print('%% NBYTES ');
+    $idx_hdrpos_nbytes = $idxfh->tell() if ($idxfh->can('tell'));
+    $idxfh->print(sprintf("%-*s\n", $idx_hdr_numwd, '?'));
+
+    $idxfh->print('%% ',
+		  join("\t", qw(XML_ID XML_BYTE_OFFSET XML_BYTE_LEN TXT_BYTE_OFFSET TXT_BYTE_LEN [DEBUG...])),
+		  "\n");
+  }
 }
 
 ## undef = cb_char($expat,$string)
@@ -92,12 +113,19 @@ sub cb_char {
 ## undef = cb_start($expat, $elt,%attrs)
 our (%c_attrs);
 sub cb_start {
+  if ($_[1] eq 'text') { $in_text=1; return; }
+  return if (!$in_text);
+
   if ($_[1] eq 'c')  {
     ##-- reset buffers
     %c_attrs = @_[2..$#_];
-    $c_id = $c_attrs{'xml:id'} || "(none)";
+    $c_id = $c_attrs{'xml:id'} || "-";
     $cbuf = '';
     $cxbyte = $_[0]->current_byte(); ##-- use current_byte()+1 for emacs (which counts from 1)
+  }
+  elsif (exists($implicit_tokbreak_elts{$_[1]})) {
+    $txtfh->print($tokbreak_text) if (defined($txtfh));
+    $txtpos += $tokbreak_len;
   }
 }
 
@@ -113,8 +141,10 @@ sub escape_cbuf {
 ## undef = cb_end($expat, $elt)
 our ($cxlen);
 sub cb_end {
+  return if (!$in_text);
   if ($_[1] eq 'c') {
     ##-- update text fh
+    if (($clen=length($cbuf)) != 1)
     $txtfh->print($cbuf) if (defined($txtfh));
 
     ##-- update index fh
@@ -124,8 +154,8 @@ sub cb_end {
     $idxfh->print(join("\t",
 		       $c_id,
 		       $cxbyte,$cxlen,
-		       $txtpos,$clen,
-		       escape_cbuf()
+		       $txtpos, $clen, ##($clen==1 ? qw() : $clen),
+		       escape_cbuf()  ##-- DEBUG
 		      ),
 		  "\n")
       if (defined($idxfh));
@@ -134,13 +164,17 @@ sub cb_end {
     ++$cnum;
     $c_id = undef;
   }
-  elsif ($_[1] eq 'lb') {
-    ##-- line break: convert to newline
+  elsif (exists($implicit_tokbreak_elts{$_[1]})) {
+    ##-- implicit token break: mark it
+    $txtfh->print($tokbreak_text) if (defined($txtfh));
+    $txtpos += $tokbreak_len;
+  }
+  elsif (exists($implicit_newline_elts{$_[1]})) {
+    ##-- implicit line break: convert to newline
     $txtfh->print("\n") if (defined($txtfh));
     $txtpos++;
   }
 }
-
 
 ##======================================================================
 ## MAIN
@@ -166,12 +200,12 @@ push(@ARGV,'-') if (!@ARGV);
 ##-- initialize output file(s)
 $idxfile = '-' if (!defined($txtfile) && !defined($idxfile));
 if (defined($idxfile)) {
-  $idxfh = IO::File->new(">$idxfile")
-    or die("$prog: open failed for output index file '$idxfile': $!");
+  $idxfh = $idxfile eq '-' ? \*STDOUT : IO::File->new(">$idxfile");
+  die("$prog: open failed for output index file '$idxfile': $!") if (!$idxfh);
 }
 if (defined($txtfile)) {
-  $txtfh = IO::File->new(">$txtfile")
-    or die("$prog: open failed for output text file '$txtfile': $!");
+  $txtfh = $txtfile eq '-' ? \*STDOUT : IO::File->new(">$txtfile");
+  die("$prog: open failed for output text file '$txtfile': $!") if (!$txtfh);
 }
 
 ##-- initialize: profiling info
@@ -184,12 +218,22 @@ foreach $infile (@ARGV) {
   $nchrs += $cnum;
   $nxbytes += (-s $infile) if ($infile ne '-');
   $txtfh->print("\n") if (defined($txtfh)); ##-- always terminate text file with a newline
-  $idxfh->print(
-		"%% NCHARS ", $cnum, "\n",
-		"%% NBYTES ", $txtpos-$txtpos0, "\n",
-		"%% END FILE ", basename($infile), "\n",
-	       )
-    if (defined($idxfh));
+  if (defined($idxfh)) {
+    ##-- tail information
+    $idxfh->print(
+		  "%% NCHARS ", $cnum, "\n",
+		  "%% NBYTES ", $txtpos-$txtpos0, "\n",
+		  "%% END FILE ", basename($infile), "\n",
+		 );
+    if (defined($idx_hdrpos_nchars) && $idxfh->can('seek')) {
+      $idxfh->seek($idx_hdrpos_nchars,0);
+      $idxfh->print(sprintf("%-*d", $idx_hdr_numwd, $cnum));
+    }
+    if (defined($idx_hdrpos_nbytes) && $idxfh->can('seek')) {
+      $idxfh->seek($idx_hdrpos_nbytes,0);
+      $idxfh->print(sprintf("%-*d", $idx_hdr_numwd, $txtpos-$txtpos0));
+    }
+  }
 }
 
 ##-- profiling / output
