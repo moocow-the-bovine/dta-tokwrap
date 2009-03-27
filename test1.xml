@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <text>
-  <c xml:id="pre-specified">&amp;</c>
+  <c xml:id="test-ent-amp">&amp;</c>
+  <c xml:id="test-ent-quot">&quot;</c>
+  <c xml:id="test-ent-lt">&lt;</c>
+  <c xml:id="test-ent-gt">&gt;</c>
+  <c xml:id="test-ent-ouml-dec">&#246;</c>
+  <c xml:id="test-ent-ouml-hex">&#xf6;</c>
+  <c xml:id="test-ent-wide-ldq">&#x201E;</c>
 
   <c> </c>
 

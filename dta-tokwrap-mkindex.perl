@@ -16,6 +16,9 @@ use Pod::Usage;
 ##------------------------------------------------------------------------------
 our $prog = basename($0);
 
+##-- debugging
+our $DEBUG = 1;
+
 ##-- vars: I/O
 our $txtfile = undef; ##-- default: none
 our $idxfile = undef; ##-- default: none (or stdout if no --output arg is specified)
@@ -60,7 +63,8 @@ GetOptions(##-- General
 	   'help|h' => \$help,
 
 	   ##-- I/O
-	   'index-output|output|io|o=s' => \$idxfile,
+	   'output-base|output|o=s' => sub { $idxfile="$_[1].ix"; $txtfile="$_[1].tx"; },
+	   'index-output|io=s' => \$idxfile,
 	   'text-output|to=s' => \$txtfile,
 	   'profile|p!' => \$profile,
 	  );
@@ -81,6 +85,7 @@ pod2usage({
 sub cb_init {
   $c_id = undef;       ##-- $c_id : xml:id of currently open <c> element, if any
   $cbuf = '';          ##-- buffer for contents of current <c> element
+  $cxbuf = '';         ##-- debug: source xml buffer
   $clen = 0;           ##-- length of $cbuf (in bytes)
   $cxbyte = 0;         ##-- byte offset (in XML stream) of start of current <c> element
   $cnum = 0;           ##-- $cnum: global index of <c> element (number of elts read so far)
@@ -107,7 +112,10 @@ sub cb_init {
 
 ## undef = cb_char($expat,$string)
 sub cb_char {
-  $cbuf .= $_[0]->original_string() if (defined($c_id));
+  if (defined($c_id)) {
+    $cbuf  .= $_[0]->original_string();
+    $cxbuf .= $_[0]->original_string() if ($DEBUG);
+  }
 }
 
 ## undef = cb_start($expat, $elt,%attrs)
@@ -122,6 +130,7 @@ sub cb_start {
     $c_id = $c_attrs{'xml:id'} || "-";
     $cbuf = '';
     $cxbyte = $_[0]->current_byte(); ##-- use current_byte()+1 for emacs (which counts from 1)
+    $cxbuf  = $_[0]->original_string() if ($DEBUG);
   }
   elsif (exists($implicit_tokbreak_elts{$_[1]})) {
     $txtfh->print($tokbreak_text) if (defined($txtfh));
@@ -144,18 +153,30 @@ sub cb_end {
   return if (!$in_text);
   if ($_[1] eq 'c') {
     ##-- update text fh
-    if (($clen=length($cbuf)) != 1)
+    if (($clen=length($cbuf)) != 1) {
+      ##-- decode escapes in $cbuf
+      $cbuf =~ s/\&\#([0-9]+)\;/pack('U',$1)/eg;
+      $cbuf =~ s/\&\#x([0-9a-fA-F]+)\;/pack('U',hex($1))/eg;
+      $cbuf =~ s/\&amp\;/&/g;
+      $cbuf =~ s/\&quot;/\"/g;
+      $cbuf =~ s/\&lt;/\</g;
+      $cbuf =~ s/\&gt;/\>/g;
+      $cbuf = encode('UTF-8', $cbuf);
+      $clen = length($cbuf); ##-- re-compute after substituting
+    }
     $txtfh->print($cbuf) if (defined($txtfh));
 
     ##-- update index fh
     $clen = length($cbuf); ##-- bytes::length($cbuf); but $cbuf should already be expressed in bytes
     $cxlen = $_[0]->current_byte()-$cxbyte + length($_[0]->original_string);
+    $cxbuf .= $_[0]->original_string() if ($DEBUG);
 
     $idxfh->print(join("\t",
 		       $c_id,
 		       $cxbyte,$cxlen,
 		       $txtpos, $clen, ##($clen==1 ? qw() : $clen),
-		       escape_cbuf()  ##-- DEBUG
+		       ($DEBUG ? escape_cbuf() : qw()),  ##-- DEBUG
+		       ($DEBUG ? $cxbuf : qw()),         ##-- DEBUG
 		      ),
 		  "\n")
       if (defined($idxfh));
