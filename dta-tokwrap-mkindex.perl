@@ -2,8 +2,8 @@
 
 use IO::File;
 use XML::Parser;
-use XML::LibXML;
-use Unicode::Normalize qw();
+#use XML::LibXML;
+#use Unicode::Normalize qw();
 use Getopt::Long qw(:config no_ignore_case);
 use Encode qw(encode decode);
 use File::Basename qw(basename);
@@ -17,7 +17,7 @@ use Pod::Usage;
 our $prog = basename($0);
 
 ##-- debugging
-our $DEBUG = 1;
+our $DEBUG = 0;
 
 ##-- vars: I/O
 our $txtfile = undef; ##-- default: none
@@ -155,6 +155,7 @@ sub cb_end {
     ##-- update text fh
     if (($clen=length($cbuf)) != 1) {
       ##-- decode escapes in $cbuf
+      $cbuf = decode('UTF-8', $cbuf);
       $cbuf =~ s/\&\#([0-9]+)\;/pack('U',$1)/eg;
       $cbuf =~ s/\&\#x([0-9a-fA-F]+)\;/pack('U',hex($1))/eg;
       $cbuf =~ s/\&amp\;/&/g;
