@@ -39,6 +39,13 @@ ex1 ~ kraepelin_arzneimittel_1892.xml
 
  + tag 'fw'
    - ex: <fw type="sig" place="bottom"><hi rendition="#g">Kraepelin,</hi> Beeinflussung. 1</fw>
+   - buggrit: these happen (in Kraepelin) just before page breaks (<pb>), and can separate
+     two halves of 1 token;
+     * ex:
+        ... Offenbar aber kann es sich hier nicht um eine Ermüdungs-<lb/>
+        <fw type="sig" place="bottom"><hi rendition="#g">Kraepelin</hi>, Beeinflussung. 10</fw><lb/>
+        <pb n="146" />
+        wirkung handeln, wie beim Alkohol, da die Erscheinung ...
 
  + tag 'g'
    - ex: <g ref="#frac12" type="frac">1/2</g>

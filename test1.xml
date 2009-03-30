@@ -7,6 +7,9 @@
   <c xml:id="test-ent-ouml-dec">&#246;</c>
   <c xml:id="test-ent-ouml-hex">&#xf6;</c>
   <c xml:id="test-ent-wide-ldq">&#x201E;</c>
+  <c xml:id="test-g-in-c"><g ref="#frac12" type="frac">1/2</g></c>
+  <c xml:id="test-tab">&#x09;</c>
+  <c xml:id="test-backslash-t">\t</c>
 
   <c> </c>
 
