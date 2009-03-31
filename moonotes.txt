@@ -23,6 +23,14 @@ ex1 ~ kraepelin_arzneimittel_1892.xml
  + tags 'list', 'item'
    - implicit token-|line-break?
 
+ + tag 'seg'
+   - e.g. (from kant_pvernunft
+     <seg part="I"><note place="foot" n="*)"> INITIAL_FOOTNOTE_SEGMENT </note></seg>
+     ... <seg part="M"><note place="foot" n="*)"> MIDDLE_FOOTNOTE_SEGMENT </note></seg>
+     ... MORE_SEG_PART_M_SEGMENTS ...
+     ... <seg part="F"><note place="foot" n="*)"> FINAL_FOOTNOTE_SEGMENT </note></seg>
+     
+
  + tag 'note'
    - <note place="foot" n="*)"> : footnote
    - <note place="???"> : what else?
