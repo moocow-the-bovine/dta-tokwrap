@@ -6,11 +6,11 @@ CFLAGS ?= -Wall -O2 -pipe
 LDFLAGS ?=
 LIBS ?= -lexpat
 
-TARGETS = dta-tokwrap-mkindex
+TARGETS = dta-tokwrap-lschars
 
 all: $(TARGETS)
 
-dta-tokwrap-mkindex: dta-tokwrap-mkindex.o
+dta-tokwrap-lschars: dta-tokwrap-lschars.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 %.o: %.c
