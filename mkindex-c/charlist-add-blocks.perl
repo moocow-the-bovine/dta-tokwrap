@@ -3,29 +3,20 @@
 ##======================================================================
 ## Globals
 
-##-- %key2blk : $blkKey => \%blkData
-## + $blkKey    ##-- unique identifier for logical text block
-## + %blkData   ##-- HASH ref
-##   {
-##    key => $blkKey,       ##-- block key
-##    typ => $blkTyp,       ##-- block type (???)
-##    xranges => \@xranges, ##-- byte ranges [$min,$max] in source XML document for this logical block
-##   }
-## + the range [$min,$max] indicates all positions $i with ($min <= $i < $max)
-our $rootBlk = { key=>'ROOT', typ=>'root', xranges=>[ [0,0] ] };
-our %key2blk = ( $rootBlk->{key} => $rootBlk );
+##-- unique identifier for ROOT block
+our $rootKey = '__ROOT__';
 
 ##-- @eltstack = (\%rootEltAttrs, ..., \%currentEltAttrs)
 ##  + each \%attrs element has an additional '__name__' attribute
-our $rootElt = { __name__ => 'ROOT' };
+our $rootElt = { __name__ => '__ROOT__' };
 our @eltstack = ( $rootElt );
 
-##-- @blkstack = ($rootBlk, ..., $currentBlk)
+##-- @blkstack = ($rootKey, ..., $currentKey)
 ## + mirrors @eltstack
-our @blkstack = ( $rootBlk );
+our @blkstack = ( $rootKey );
 
-##-- $blk : current block
-our $blk = $rootBlk;
+##-- $blk : key of current block
+our $blk = $rootKey;
 
 ##-- @implicit_block_elts
 ## + create new blocks for these elements, unless they occur as a daughter of a 'seg' element
@@ -68,8 +59,14 @@ our ($eltname,$elt,@attrs);
 
 $_ = <>;
 while (defined($_)) {
+  $_buf = $_;
   chomp;
-  if (/^%%/) { $_=<>; next; }; ##-- ignore comments
+  if (/^%%/) {
+    ##-- (mostly) ignore comments
+    print $_buf;
+    $_=<>;
+    next;
+  };
 
   ##-- parse input
   ($id,$off,$len,$txt) = split(/\t/,$_);
@@ -77,14 +74,17 @@ while (defined($_)) {
   ##--------------------------------------------
   if ($id eq '$START$') {
     ##-- start-tag: slurp attributes
-    $eltname        = $txt;
+    $eltname = $txt;
     @attrs = qw();
     while (<>) {
+      print $_buf;
+      $_buf = $_;
       chomp;
       ($aid,$aoff,$alen,$atxt) = split(/\t/,$_);
       last if ($aid ne '$ATTR$');
       push(@attrs,$atxt);
     }
+    $_ .= "\n";
     $elt = { @attrs, __name__=>$eltname };
 
     ##-- start-tag: push to stack
@@ -94,34 +94,29 @@ while (defined($_)) {
     if ($eltname eq 'seg') {
       ##-- start-tag: <seg> element
 
-      ##-- start-tag: <seg>: close current range of previously open block
-      $blk->{xranges}[$#{$blk->{xranges}}][1] = $off;
-
       if ( ($elt->{part} && $elt->{part} eq 'I') || !($elt->{part}) )
 	{
 	  ##-- start-tag: <seg>: initial
-	  $key = "seg.$off";
-	  $blk = { key=>$key, typ=>'seg', xranges=>[ [$off, $off+$len] ], };
+	  $blk = $key = "seg.$off";
 	  $lastblk{'seg'} = $blk if ($elt->{part});
-	  $key2blk{$key} = $blk;
 	  push(@blkstack,$blk);
+	  print "\$BLOCK\$\t", ($off+$len), "\t0\t$key\n";
 	}
       elsif ( $elt->{part} ) ## ($elt->{part} eq 'M' || $elt->{part} eq 'F')
 	{
 	  ##-- start-tag: <seg>: non-initial
-	  $blk = $lastblk{'seg'}; ##-- get last opened seg[@part="I"]
-	  push(@{$blk->{xranges}}, [$off, $off+$len]);
+	  $blk = $key = $lastblk{'seg'}; ##-- get last opened seg[@part="I"]
 	  push(@blkstack,$blk);
+	  print "\$BLOCK\$\t", ($off+$len), "\t0\t$key\n";
 	}
     }
     ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     elsif (exists($implicit_block_elts{$eltname})) {
       ##-- start-tag: <note> etc.: implicit block
-      if ($blk->{typ} ne 'seg') {
+      if ($blk !~ /^seg\b/) {
 	##-- start-tag: <note> etc.: no parent <seg>: allocate a new block
-	$key = "${eltname}.${off}";
-	$blk = { key=>$key, typ=>$eltname, xranges=>[ [$off, $off+$len] ], };
-	$key2blk{$key} = $blk;
+	$blk = $key = "${eltname}.${off}";
+	print "\$BLOCK\$\t", ($off+$len), "\t0\t$key\n";
       }
       push(@blkstack,$blk);
     }
@@ -129,6 +124,7 @@ while (defined($_)) {
     else { # ($eltname =~ m/./)
       ##-- start-tag: default: just inherit current block, keep range running
       push(@blkstack, $blk);
+      #print STDERR "inheriting block '$blk' for <$eltname>\n";
     }
     #$_=<>; ##-- DON'T slurp more (we got the next line when reading $ATTRS)
   }
@@ -136,14 +132,12 @@ while (defined($_)) {
   elsif ($id eq '$END$') {
     ##-- end-tag event: update ranges & pop stacks
     $pblk = pop(@blkstack);
-    $pblk->{xranges}[$#{$pblk->{xranges}}][1] = $off+$len;
-
-    $blk = $blkstack[$#blkstack];
+    $blk  = $blkstack[$#blkstack];
     if ($blk ne $pblk) {
-      ##-- block switch: open a new range in the re-opened block popped from the stack
-      push(@{$blk->{xranges}}, [$off+$len, $off+$len]);
+      ##-- block switch: re-open the block we popped from the stack
+      print $_buf, "\$BLOCK\$\t", ($off+$len), "\t0\t$blk\n";
+      $_buf='';
     }
-
     $_=<>; ##-- slurp more
   }
   ##--------------------------------------------
@@ -151,16 +145,5 @@ while (defined($_)) {
     ##-- other event (e.g. char): keep current block open
     $_=<>; ##-- slurp more
   }
-}
-
-##-- output block-ranges
-our @blocks = sort { $a->{xranges}[0][0] <=> $b->{xranges}[0][0] } values(%key2blk);
-foreach $blk (@blocks) {
-  print "BLOCK\t$blk->{key}\n";
-}
-
-our @xranges = sort {$a->[0] <=> $b->[0]} map { $blk=$_; map {[@$_,$blk]} @{$_->{xranges}} } @blocks;
-foreach $xr (@xranges) {
-  my $blk = $xr->[2];
-  print "XRANGE\t$blk->{key}\t$xr->[0]\t$xr->[1]\n";
+  print $_buf; ##-- dump last event
 }
