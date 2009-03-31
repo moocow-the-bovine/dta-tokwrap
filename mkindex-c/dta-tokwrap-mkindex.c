@@ -13,43 +13,21 @@
  * Globals
  */
 
+//-- ENABLE_ASSERT : if defined, debugging assertions will be enabled
+#define ENABLE_ASSERT 1
+//#undef ENABLE_ASSERT
+
 //-- NIL_ID: string used for missing xml:id attributes on <c> elements
 const char *NIL_ID = "-";
 
-//-- START_ID : pseudo-ID for START records (see WATCH_ELTS[])
+//-- START_ID : pseudo-ID for START records
 const char *START_ID = "$START$";
 
-//-- ATTR_ID : pseudo-ID for ATTR records (see WATCH_ELTS[])
+//-- ATTR_ID : pseudo-ID for ATTR records
 const char *ATTR_ID = "$ATTR$";
 
-//-- END_ID : pseudo-ID for END records (see WATCH_ELTS[])
+//-- END_ID : pseudo-ID for END records
 const char *END_ID = "$END$";
-
-//-- WATCH_ELTS : START, ATTR and END records will be written for these
-const char *WATCH_ELTS[] =
-  {
-    "lb",
-    "hi",
-    "p",
-    "pb",
-    "table",
-    "row",
-    "cell",
-    "item",
-    "note",
-    "list",
-    "div",
-    "head",
-    "ref",
-    "fw",
-    "g",
-    "figure",
-    "front",
-    "body",
-    "back",
-    /*... more here ...*/
-    NULL //-- EOL sentinel
-  };
 
 #define BUFSIZE     8192 //-- file input buffer size
 #define CTBUFSIZE    256 //-- <c>-local text buffer size
@@ -60,7 +38,7 @@ typedef int ByteLen;
 
 typedef struct {
   XML_Parser xp;        //-- expat parser
-  FILE *fidx;           //-- output index file
+  FILE *fout;           //-- output index file
   int text_depth;       //-- boolean: number of open 'text' elements
   ByteOffset n_chrs;    //-- number of <c> elements read
   int is_c;             //-- boolean: true if currently parsing a 'c' elt
@@ -71,6 +49,21 @@ typedef struct {
 } TokWrapData;
 
 char *prog = "dta-tokwrap-mkindex";
+
+//-- want_profile: if true, some profiling information will be printed to stdout
+int want_profile = 1;
+
+/*======================================================================
+ * Debug
+ */
+
+#if !defined(assert)
+# if defined(ENABLE_ASSERT)
+#  define assert(test) if (!(test)) { fprintf(stderr, "%s: %s:%d: assertion failed: (%s)\n", prog, __FILE__, __LINE__, #test); exit(255); }
+# else  /* defined(ENABLE_ASSERT) -> false */
+#  define assert(test) 
+# endif /* defined(ENABLE_ASSERT) */
+#endif /* !defined(assert) */
 
 /*======================================================================
  * Utils
@@ -125,52 +118,32 @@ void put_record_raw(FILE *f, const char *id, ByteOffset xoffset, int xlen, int t
 }
 
 //--------------------------------------------------------------
-#define STARTBUF_LEN 1024
-char startbuf[STARTBUF_LEN];
-void put_record_watch(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
+void put_record_start(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
 {
-  if (attrs) {
-    int ai;
-    long xoffset = XML_GetCurrentByteIndex(data->xp);
-    int  xlen    = XML_GetCurrentByteCount(data->xp);
-    put_record_raw(data->fidx, START_ID, xoffset,xlen, -1,name);
-    for (ai=0; attrs[ai]; ai++) {
-      put_record_raw(data->fidx, ATTR_ID, xoffset,xlen, -1,attrs[ai]);
-    }
+  int ai;
+  long xoffset = XML_GetCurrentByteIndex(data->xp);
+  int  xlen    = XML_GetCurrentByteCount(data->xp);
+  put_record_raw(data->fout, START_ID, xoffset,xlen, -1,name);
+  for (ai=0; attrs[ai]; ai++) {
+    put_record_raw(data->fout, ATTR_ID, xoffset,xlen, -1,attrs[ai]);
   }
-  else {
-    //-- END
-    put_record_raw(data->fidx, END_ID, XML_GetCurrentByteIndex(data->xp),XML_GetCurrentByteCount(data->xp), -1,name);
-  }
+}
+
+//--------------------------------------------------------------
+void put_record_end(TokWrapData *data, const XML_Char *name)
+{
+  put_record_raw(data->fout, END_ID, XML_GetCurrentByteIndex(data->xp),XML_GetCurrentByteCount(data->xp), -1,name);
 }
 
 //--------------------------------------------------------------
 void put_record_char(TokWrapData *data)
 {
   ByteOffset c_xlen = XML_GetCurrentByteIndex(data->xp) + XML_GetCurrentByteCount(data->xp) - data->c_xoffset;
-  put_record_raw(data->fidx,
+  put_record_raw(data->fout,
 		 data->c_id,
 		 data->c_xoffset, c_xlen,
 		 data->c_tlen, data->c_tbuf
 		 );
-}
-
-/*--------------------------------------------------------------
- * check_watch(data,name,attrs)
- *  + check whether 'name' is being watch; if so, write a pseudo-record
- *  + if *attrs is NULL, a pseudo-END record will be written
- *  + otherwise, a pseudo-START record and pseudo-ATTR records will be written
- */
-int check_watch(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
-{
-  int i;
-  for (i=0; WATCH_ELTS[i]; i++) {
-    if (strcmp(name,WATCH_ELTS[i])==0) {
-      put_record_watch(data,name,attrs);
-      return 1;
-    }
-  }
-  return 0;
 }
 
 /*--------------------------------------------------------------
@@ -229,8 +202,10 @@ void cb_start(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
       exit(3);
     }
     if ( (id=get_attr("xml:id", attrs)) ) {
+      assert(strlen(id) < CIDBUFSIZE);
       strcpy(data->c_id,id);
     } else {
+      assert(strlen(NIL_ID) < CIDBUFSIZE);
       strcpy(data->c_id,NIL_ID);
     }
     data->c_xoffset = XML_GetCurrentByteIndex(data->xp);
@@ -239,17 +214,15 @@ void cb_start(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
     data->n_chrs++;
     return;
   }
-  else if (strcmp(name,"text")==0) {
+  if (strcmp(name,"text")==0) {
     data->text_depth++;
   }
-  //-- check: token-break on element START
-  check_watch(data,name,attrs);
+  put_record_start(data,name,attrs);
 }
 
 //--------------------------------------------------------------
 void cb_end(TokWrapData *data, const XML_Char *name)
 {
-  //fprintf(data->fidx, "END %s\n", name);
   if (strcmp(name,"c")==0) {
     put_record_char(data);  //-- output: index record
     data->is_c = 0;         //-- ... and leave <c>-parsing mode
@@ -258,14 +231,14 @@ void cb_end(TokWrapData *data, const XML_Char *name)
   if (strcmp(name,"text")==0) {
     data->text_depth--;
   }
-  check_watch(data,name,NULL);
+  put_record_end(data,name);
 }
 
 //--------------------------------------------------------------
 void cb_char(TokWrapData *data, const XML_Char *s, int len)
 {
   if (data->is_c) {
-    //assert(data->c_tlen + len < CTBUFSIZE);
+    assert(data->c_tlen + len < CTBUFSIZE);
     memcpy(data->c_tbuf+data->c_tlen, s, len); //-- copy required, else clobbered by nested elts (e.g. <c><g>...</g></c>)
     data->c_tlen += len;
   }
@@ -280,9 +253,10 @@ int main(int argc, char **argv)
   XML_Parser xp;
   void *buf;
   int  isFinal = 0;
-  const char *infilename = "-";
-  FILE *in = stdin;
-  FILE *fidx = stdout;
+  char *infilename = "-";
+  char *outfilename = "-";
+  FILE *fin = stdin;
+  FILE *fout = stdout;
   //FILE *ftxt = fopen("out.txt","wb");
   //
   //-- profiling
@@ -292,8 +266,28 @@ int main(int argc, char **argv)
   //-- initialize globals
   prog = argv[0];
 
+  //-- command-line: files
+  if (argc > 1) {
+    infilename = argv[1];
+    if ( strcmp(infilename,"-")!=0 && !(fin=fopen(infilename,"rb")) ) {
+      fprintf(stderr, "%s: open failed for input file `%s': %s\n", prog, infilename, strerror(errno));
+      exit(1);
+    }
+  }
+  if (argc > 2) {
+    outfilename = argv[2];
+    if ( strcmp(outfilename,"-")!=0 && !(fout=fopen(outfilename,"wb")) ) {
+      fprintf(stderr, "%s: open failed for output file `%s': %s\n", prog, outfilename, strerror(errno));
+      exit(1);
+    }
+  }
+
   //-- setup expat parser
   xp = XML_ParserCreate("UTF-8");
+  if (!xp) {
+    fprintf(stderr, "%s: XML_ParserCreate failed", prog);
+    exit(1);
+  }
   XML_SetUserData(xp, &data);
   XML_SetElementHandler(xp, (XML_StartElementHandler)cb_start, (XML_EndElementHandler)cb_end);
   XML_SetCharacterDataHandler(xp, (XML_CharacterDataHandler)cb_char);
@@ -301,8 +295,7 @@ int main(int argc, char **argv)
   //-- setup callback data
   memset(&data,0,sizeof(data));
   data.xp   = xp;
-  data.fidx = fidx;
-  //data.ftxt = ftxt;
+  data.fout = fout;
 
   //-- parse input file
   do {
@@ -315,15 +308,15 @@ int main(int argc, char **argv)
       fprintf(stderr, "%s: XML_GetBuffer() failed!\n", prog);
       exit(1);
     }
-    nread = fread(buf, 1,BUFSIZE, in);
+    nread = fread(buf, 1,BUFSIZE, fin);
     n_xbytes += nread;
 
     //-- check for file errors
-    isFinal = feof(in);
-    if (ferror(in) && !isFinal) {
-      fprintf(stderr, "%s: '%s' (line %d, col %d): I/O error: %s\n",
+    isFinal = feof(fin);
+    if (ferror(fin) && !isFinal) {
+      fprintf(stderr, "%s: `%s' (line %d, col %d, byte %ld): I/O error: %s\n",
 	      prog, infilename,
-	      XML_GetCurrentLineNumber(xp), XML_GetCurrentColumnNumber(xp),
+	      XML_GetCurrentLineNumber(xp), XML_GetCurrentColumnNumber(xp), XML_GetCurrentByteIndex(xp),
 	      strerror(errno));
       exit(1);
     }
@@ -334,35 +327,37 @@ int main(int argc, char **argv)
     if (status != XML_STATUS_OK) {
       int ctx_offset = 0, ctx_len = 0;
       const char *ctx_buf;
-      fprintf(stderr, "%s: '%s' (line %d, col %d, byte %ld): XML error: %s\n",
+      fprintf(stderr, "%s: `%s' (line %d, col %d, byte %ld): XML error: %s\n",
 	      prog, infilename,
 	      XML_GetCurrentLineNumber(xp), XML_GetCurrentColumnNumber(xp), XML_GetCurrentByteIndex(xp),
 	      XML_ErrorString(XML_GetErrorCode(xp)));
 
       ctx_buf = get_error_context(xp, 64, &ctx_offset, &ctx_len);
-      fprintf(stderr, "%s: Error Context:\n%.*s\n--HERE--\n%.*s\n", prog, ctx_offset, ctx_buf, (ctx_len-ctx_offset), ctx_buf+ctx_offset);
+      fprintf(stderr, "%s: Error Context:\n%.*s%s%.*s\n",
+	      prog,
+	      ctx_offset, ctx_buf,
+	      "\n---HERE---\n",
+	      (ctx_len-ctx_offset), ctx_buf+ctx_offset);
       exit(2);
     }
   } while (!isFinal);
 
-  //-- always terminate text file with a newline
-  //fputc('\n', data.ftxt);
-  //data.c_toffset++;
-
   //-- profiling
-  elapsed = ((double)clock()) / ((double)CLOCKS_PER_SEC);
-  if (elapsed <= 0) elapsed = 1e-5;
-  fprintf(stderr, "%s: %.2f%s XML chars ~ %.2f%s XML bytes in %.2f sec: %.2f %schar/sec ~ %.2f %sbyte/sec\n",
-	  prog,
-	  si_val(data.n_chrs),si_suffix(data.n_chrs),
-	  si_val(n_xbytes),si_suffix(n_xbytes),
-	  elapsed, 
-	  si_val(data.n_chrs/elapsed),si_suffix(data.n_chrs/elapsed),
-	  si_val(n_xbytes/elapsed),si_suffix(n_xbytes/elapsed));
+  if (want_profile) {
+    elapsed = ((double)clock()) / ((double)CLOCKS_PER_SEC);
+    if (elapsed <= 0) elapsed = 1e-5;
+    fprintf(stderr, "%s: %.2f%s XML chars ~ %.2f%s XML bytes in %.2f sec: %.2f %schar/sec ~ %.2f %sbyte/sec\n",
+	    prog,
+	    si_val(data.n_chrs),si_suffix(data.n_chrs),
+	    si_val(n_xbytes),si_suffix(n_xbytes),
+	    elapsed, 
+	    si_val(data.n_chrs/elapsed),si_suffix(data.n_chrs/elapsed),
+	    si_val(n_xbytes/elapsed),si_suffix(n_xbytes/elapsed));
+  }
 
   //-- cleanup
-  if (in) fclose(in);
-  if (fidx) fclose(fidx);
+  if (fin) fclose(fin);
+  if (fout) fclose(fout);
   //if (ftxt) fclose(ftxt);
   if (xp) XML_ParserFree(xp);
 
