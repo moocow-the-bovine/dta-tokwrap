@@ -61,7 +61,7 @@ int want_outfile_comments = 1;
 int want_outfile_format_help = 1;
 
 //-- want_outfile_format_colnames: if true, column names will be printed as the first record
-int want_outfile_colnames = 1;
+int want_outfile_colnames = 0;
 
 /*======================================================================
  * Debug
