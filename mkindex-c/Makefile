@@ -36,9 +36,15 @@ dta-tokwrap-lschars: dta-tokwrap-lschars.o
 XML_SOURCES ?= test-raw.chr.xml test1.xml ex1.xml ex2.xml
 
 xcl: $(XML_SOURCES:.xml=.xcl)
-
 no-xcl:
 	rm -f *.xcl
+
+%.xbl: %.xcl ./dta-tokwrap-lsblocks.perl
+	./dta-tokwrap-lsblocks.perl $< > $@ || (rm -f $@; false)
+
+xbl: $(XML_SOURCES:.xml=.xbl)
+no-xbl:
+	rm -f *.xbl
 
 ##======================================================================
 ## Rules: Clean
