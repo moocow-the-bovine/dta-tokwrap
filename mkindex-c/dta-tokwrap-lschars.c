@@ -263,7 +263,7 @@ int main(int argc, char **argv)
   double elapsed = 0;
   ByteOffset n_xbytes = 0;
 
-  //-- initialize globals
+  //-- initialize: globals
   prog = argv[0];
 
   //-- command-line: files
