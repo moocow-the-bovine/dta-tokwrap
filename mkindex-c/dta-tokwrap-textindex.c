@@ -51,7 +51,7 @@ typedef struct {
 } TokWrapData;
 
 //-- prog: default name of this program (used for error reporting, set from argv[0] later)
-char *prog = "dta-tokwrap-mkindex";
+char *prog = "dta-tokwrap-textindex";
 
 //-- want_profile: if true, some profiling information will be printed to stderr
 int want_profile = 1;
