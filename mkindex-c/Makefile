@@ -63,13 +63,13 @@ no-sx: ; rm -f *.sx
 no-tx: ; rm -f *.tx
 no-xx: no-cx no-sx no-tx
 
-##-- TODO
-%.xbl: %.xcl ./dta-tokwrap-lsblocks.perl
+##-- Block indices
+%.bx: %.sx ./dta-tokwrap-lsblocks.perl
 	./dta-tokwrap-lsblocks.perl $< > $@ || (rm -f $@; false)
 
-xbl: $(XML_SOURCES:.xml=.xbl)
-no-xbl:
-	rm -f *.xbl
+bx: $(XML_SOURCES:.xml=.bx)
+no-bx: ; rm -f *.bx
+CLEAN_FILES += *.bx
 
 ##======================================================================
 ## Rules: Clean

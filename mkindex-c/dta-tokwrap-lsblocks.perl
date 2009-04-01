@@ -38,6 +38,7 @@ our $all_implicit_block_elts = 1;
 
 ##-- @implicit_block_elts
 ## + create new blocks for these elements, unless they occur as a daughter of a 'seg' element
+## + overrides @no_implicit_block_elts
 our @implicit_block_elts = (
 			    ##-- title page stuff
 			    qw(titlePage titlePart docTitle byline docAuthor docImprint pubPlace docDate),
@@ -69,6 +70,9 @@ our @implicit_block_elts = (
 our %implicit_block_elts = map {$_=>undef} @implicit_block_elts;
 
 
+##-- @no_implicit_block_elts
+## + do NOT implicitly create new blocks for these elements
+#our @no_implicit_block_elts = qw();
 our @no_implicit_block_elts = ( qw(lb hi pb g milestone) );
 our %no_implicit_block_elts = map {$_=>undef} @no_implicit_block_elts;
 
