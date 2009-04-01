@@ -151,7 +151,7 @@ void put_record_start(TokWrapData *data, const XML_Char *name, const XML_Char **
 void put_record_end(TokWrapData *data, const XML_Char *name)
 {
   put_record_raw(data->f_ix, END_ID, XML_GetCurrentByteIndex(data->xp),XML_GetCurrentByteCount(data->xp), data->c_toffset,-1, name);
-  //if (strcmp(name,"lb")==0) put_raw_text(data, 1, "\n");
+  if (strcmp(name,"lb")==0) put_raw_text(data, 1, "\n");
 }
 
 //--------------------------------------------------------------
@@ -406,6 +406,9 @@ int main(int argc, char **argv)
       exit(2);
     }
   } while (!isFinal);
+
+  //-- always terminate text file with a newline
+  if (f_tx) fputc('\n',f_tx);
 
   //-- profiling
   if (want_profile) {
