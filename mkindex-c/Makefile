@@ -6,15 +6,15 @@ CFLAGS ?= -Wall -O2 -pipe
 LDFLAGS ?=
 LIBS ?= -lexpat
 
-TARGETS = dta-tokwrap-textindex
+TARGETS = dta-tokwrap-mkindex
+#dta-tokwrap-textindex
 #dta-tokwrap-lschars
-#dta-tokwrap-mkindex
 
 ##======================================================================
 ## Variables: cleanup
 
-CLEAN_FILES = *.o
-REALCLEAN_FILES = $(TARGETS)
+CLEAN_FILES = $(TARGETS) *.o
+REALCLEAN_FILES =
 
 ##======================================================================
 ## Rules: Top-Level
@@ -45,21 +45,25 @@ dta-tokwrap-mkindex: dta-tokwrap-mkindex.o
 %.chr.xml: %.xml ../dta-tokwrap-addchr.perl
 	../dta-tokwrap-addchr.perl $< > $@ || (rm -f $@; false)
 
-%.ix: %.ix %.tx
-%.tx: %.ix %.tx
-%.ix %.tx: %.xml dta-tokwrap-textindex
-	./dta-tokwrap-textindex $< $*.ix $*.tx
-CLEAN_FILES += *.ix *.tx
+%.cx: %.cx %.sx %.tx
+%.sx: %.cx %.sx %.tx
+%.tx: %.cx %.sx %.tx
+%.cx %.sx %.tx: %.xml dta-tokwrap-mkindex
+	./dta-tokwrap-mkindex $< $*.cx $*.sx $*.tx
+CLEAN_FILES += *.cx *.sx *.tx
 
 XML_SOURCES ?= test-raw.chr.xml test1.xml ex1.xml ex2.xml
 
-ix: $(XML_SOURCES:.xml=.ix)
+cx: $(XML_SOURCES:.xml=.cx)
+sx: $(XML_SOURCES:.xml=.sx)
 tx: $(XML_SOURCES:.xml=.tx)
-ixtx: ix tx
-no-ix: ; rm -f *.ix
+xx: cx sx tx
+no-cx: ; rm -f *.cx
+no-sx: ; rm -f *.sx
 no-tx: ; rm -f *.tx
-no-ixtx: no-ix no-tx
+no-xx: no-cx no-sx no-tx
 
+##-- TODO
 %.xbl: %.xcl ./dta-tokwrap-lsblocks.perl
 	./dta-tokwrap-lsblocks.perl $< > $@ || (rm -f $@; false)
 
