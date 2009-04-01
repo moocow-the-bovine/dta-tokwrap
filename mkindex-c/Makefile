@@ -6,7 +6,7 @@ CFLAGS ?= -Wall -O2 -pipe
 LDFLAGS ?=
 LIBS ?= -lexpat
 
-TARGETS = dta-tokwrap-lschars
+TARGETS = dta-tokwrap-mkindex
 
 ##======================================================================
 ## Rules: Top-Level
@@ -15,6 +15,9 @@ all: $(TARGETS)
 ##======================================================================
 ## Rules: Linking
 dta-tokwrap-lschars: dta-tokwrap-lschars.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+dta-tokwrap-mkindex: dta-tokwrap-mkindex.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 ##======================================================================
