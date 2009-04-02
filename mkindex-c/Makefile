@@ -39,6 +39,12 @@ xmlparse-noop: xmlparse-noop.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
 
 ##======================================================================
+## Rules: formatting
+
+%.fmt: %
+	xmllint --format -o $@ $<
+
+##======================================================================
 ## Rules: test
 
 .SECONDARY:

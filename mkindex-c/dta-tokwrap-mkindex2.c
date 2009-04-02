@@ -47,6 +47,8 @@ typedef struct {
   ByteOffset n_chrs;    //-- number of <c> elements read
   int is_c;             //-- boolean: true if currently parsing a 'c' elt
   int is_chardata;      //-- true if current event is character data
+  ByteOffset loc_xoff;  //-- last xml-offset written as <loc/>
+  ByteOffset loc_toff;  //-- last text-offset written as <loc/>
   XML_Char c_tbuf[CTBUFSIZE]; //-- text buffer for current <c>
   int c_tlen;                 //-- byte length of text in character buffer c_tbuf[]
   XML_Char c_id[CIDBUFSIZE];  //-- xml:id of current <c>
@@ -293,15 +295,25 @@ void cb_char(TokWrapData *data, const XML_Char *s, int len)
 }
 
 //--------------------------------------------------------------
+//static const char *LOC_FMT = "<dta.loc n=\"%lu %lu\"/>";
+//static const char *LOC_FMT = "<dta.loc xb=\"%lu\" tb=\"%lu\"/>";
+static const char *LOC_FMT = "<milestone unit=\"dta.loc\" n=\"%lu %lu\"/>";
 void cb_default(TokWrapData *data, const XML_Char *s, int len)
 {
   int ctx_len;
   const XML_Char *ctx = get_event_context(data->xp, &ctx_len);
   if (ctx_len > 0) {
     ByteOffset xoff = XML_GetCurrentByteIndex(data->xp);
+    if (data->total_depth > 1 && !data->is_chardata && xoff != data->loc_xoff) {
+      fprintf(data->f_sx, LOC_FMT, xoff, data->c_toffset);
+      data->loc_xoff = xoff;
+      data->loc_toff = data->c_toffset;
+    }
     fwrite(ctx, 1,ctx_len, data->f_sx);
-    if (data->total_depth > 0 && !data->is_chardata) {
-      fprintf(data->f_sx, "<loc xb=\"%lu\" xl=\"%d\" tb=\"%lu\"/>", xoff,ctx_len, data->c_toffset);
+    if (data->total_depth > 0 && !data->is_chardata && xoff+ctx_len != data->loc_xoff) {
+      fprintf(data->f_sx, LOC_FMT, xoff+ctx_len, data->c_toffset);
+      data->loc_xoff = xoff+ctx_len;
+      data->loc_toff = data->c_toffset;
     }
   }
 }
