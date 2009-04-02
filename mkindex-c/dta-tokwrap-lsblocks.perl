@@ -101,12 +101,12 @@ sub close_block {
   $_xoff = $::xoff if (!defined($_xoff));
   $_toff = $::toff if (!defined($_xoff));
 
-  ##-- only print if block has non-zero text length
+
   my $_xlen = $_xoff-$_blk->{xbegin};
   my $_tlen = $_toff-$_blk->{tbegin};
-  if ($_tlen) { ## || $_xlen
+  #if ($_tlen) {  ##-- only print if block has non-zero text length
     print join("\t", $BLOCK_ID, $_blk->{xbegin},$_xlen, $_blk->{tbegin},$_tlen, $_blk->{key}), "\n";
-  }
+  #}
   @$_blk{qw(xend tend)} = ($_xoff,$_toff);
   return $_blk;
 }
