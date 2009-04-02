@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xmlns:dta="http://www.deutsches-textarchiv.de/ns/1.0">
+  <text>
+    Some test text.
+  </text>
+  <dta:elt>
+    Some test text in dta:elt.
+  </dta:elt>
+  <text dta:attr="dta:attr:val"/>
+</TEI>
