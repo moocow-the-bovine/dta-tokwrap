@@ -6,7 +6,8 @@ CFLAGS ?= -Wall -O2 -pipe
 LDFLAGS ?=
 LIBS ?= -lexpat
 
-TARGETS = dta-tokwrap-mkindex
+TARGETS = dta-tokwrap-mkindex dta-tokwrap-mkindex2
+#xmlparse-noop
 #dta-tokwrap-textindex
 #dta-tokwrap-lschars
 
@@ -23,13 +24,13 @@ all: $(TARGETS)
 ##======================================================================
 ## Rules: Linking
 
-dta-tokwrap-textindex: dta-tokwrap-textindex.o
-	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
-
-dta-tokwrap-lschars: dta-tokwrap-lschars.o
-	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
-
 dta-tokwrap-mkindex: dta-tokwrap-mkindex.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+dta-tokwrap-mkindex2: dta-tokwrap-mkindex2.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+xmlparse-noop: xmlparse-noop.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 ##======================================================================
@@ -52,15 +53,28 @@ dta-tokwrap-mkindex: dta-tokwrap-mkindex.o
 	./dta-tokwrap-mkindex $< $*.cx $*.sx $*.tx
 CLEAN_FILES += *.cx *.sx *.tx
 
+%.cx2: %.cx2 %.sx2 %.tx2
+%.sx2: %.cx2 %.sx2 %.tx2
+%.tx2: %.cx2 %.sx2 %.tx2
+%.cx2 %.sx2 %.tx2: %.xml dta-tokwrap-mkindex2
+	./dta-tokwrap-mkindex2 $< $*.cx2 $*.sx2 $*.tx2
+
+
 XML_SOURCES ?= test-raw.chr.xml test1.xml ex1.xml ex2.xml
 
 cx: $(XML_SOURCES:.xml=.cx)
 sx: $(XML_SOURCES:.xml=.sx)
 tx: $(XML_SOURCES:.xml=.tx)
 xx: cx sx tx
-no-cx: ; rm -f *.cx
-no-sx: ; rm -f *.sx
-no-tx: ; rm -f *.tx
+
+cx2: $(XML_SOURCES:.xml=.cx2)
+sx2: $(XML_SOURCES:.xml=.sx2)
+tx2: $(XML_SOURCES:.xml=.tx2)
+xx2: cx2 sx2 tx2
+
+no-cx: ; rm -f *.cx *.cx2
+no-sx: ; rm -f *.sx *.sx2
+no-tx: ; rm -f *.tx *.tx2
 no-xx: no-cx no-sx no-tx
 
 ##-- Block indices
