@@ -234,7 +234,7 @@ sub insert_implicit_breaks {
     ##-- insert final breaks
     foreach $brkname ($blk->{final} && $breaks && $breaks->[1] ? @{$breaks->[1]} : qw()) {
       $brktext = $breakText{$brkname};
-      $brkblk = { typ=>'BREAK',
+      $brkblk = { typ=>"BREAK.${brkname}",
 		  key=>"BREAK.$blk->{key}.post.${brkname}",
 		  sortkey=>$blk->{sortkey},
 		  text=>$brktext,
@@ -254,7 +254,7 @@ sub insert_implicit_breaks {
 ## MAIN
 
 ##-- command-line
-if (@ARGV < 2) {
+if (@ARGV < 1) {
   print STDERR "Usage: $0 BXFILE > SBXFILE\n";
   exit(1);
 }

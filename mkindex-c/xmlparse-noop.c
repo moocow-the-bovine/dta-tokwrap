@@ -98,7 +98,6 @@ void cb_end(ParseData *data, const XML_Char *name)
   const XML_Char *ctx = get_event_context(data->xp, &data->ctx_size);
   fwrite(ctx, 1,data->ctx_size, data->f_out);
 }
-
 //--------------------------------------------------------------
 void cb_char(ParseData *data, const XML_Char *s, int len)
 {

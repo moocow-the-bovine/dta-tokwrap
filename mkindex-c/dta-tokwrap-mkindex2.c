@@ -295,9 +295,9 @@ void cb_char(TokWrapData *data, const XML_Char *s, int len)
 }
 
 //--------------------------------------------------------------
-//static const char *LOC_FMT = "<dta.loc n=\"%lu %lu\"/>";
-//static const char *LOC_FMT = "<dta.loc xb=\"%lu\" tb=\"%lu\"/>";
-static const char *LOC_FMT = "<milestone unit=\"dta.loc\" n=\"%lu %lu\"/>";
+static const char *LOC_FMT = "<dta.tw.b n=\"%lu %lu\"/>";
+//static const char *LOC_FMT = "<dta.tw.block xb=\"%lu\" tb=\"%lu\"/>";
+//static const char *LOC_FMT = "<milestone unit=\"dta.loc\" n=\"%lu %lu\"/>";
 void cb_default(TokWrapData *data, const XML_Char *s, int len)
 {
   int ctx_len;
