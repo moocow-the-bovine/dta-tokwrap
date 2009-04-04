@@ -86,6 +86,16 @@ no-sx: ; rm -f *.sx *.sx2
 no-tx: ; rm -f *.tx *.tx2
 no-xx: no-cx no-sx no-tx
 
+sx2-fmt: $(XML_SOURCES:.xml=.sx2.fmt)
+
+##-- namespace removal
+
+sx2-nons: $(XML_SOURCES:.xml=.sx2.nons)
+%.nons: % xml-no-namespaces
+	./xml-no-namespaces $< $@
+no-sx2-nons:  ; rm -f *.nons
+sx2-nons-fmt: $(XML_SOURCES:.xml=.sx2.nons.fmt)
+
 ##-- Block indices
 %.bx: %.sx ./dta-tokwrap-lsblocks.perl
 	./dta-tokwrap-lsblocks.perl $< > $@ || (rm -f $@; false)
