@@ -6,7 +6,7 @@ CFLAGS ?= -Wall -O2 -pipe
 LDFLAGS ?=
 LIBS ?= -lexpat
 
-TARGETS = dta-tokwrap-mkindex dta-tokwrap-mkindex2
+TARGETS = dta-tokwrap-mkindex dta-tokwrap-mkindex2 xml-no-namespaces
 #xmlparse-noop
 #dta-tokwrap-textindex
 #dta-tokwrap-lschars
@@ -31,6 +31,9 @@ dta-tokwrap-mkindex2: dta-tokwrap-mkindex2.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 xmlparse-noop: xmlparse-noop.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+xml-no-namespaces: xml-no-namespaces.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 ##======================================================================
