@@ -34,8 +34,9 @@ our $rootObj =
   {
    key    => '__ROOT__',
    elt    => '__ROOT__',
+   parent => undef, ##-- parent object
    attrs  => {},
-   blocks => [ { xbegin=>0,xend=>0, tbegin=>0,tend=>0, } ],
+   blocks => [ { xbegin=>0,tbegin=>0, xend=>0,tend=>0, } ],
   };
 
 ##-- $top : current top of the stack
@@ -103,40 +104,8 @@ our $prog = File::Basename::basename($0);
 ##======================================================================
 ## Subs
 
-## $blk = open_block($oldObj, $newKey, $xoff, $toff)
-##  + opens a new block logically BEFORE current event ($xoff~$toff)
-##  + implicitly closes $oldBlk if defined
-##  + returns new block
-sub open_block {
-  my ($_old,$_key,$_xoff,$_toff) = @_;
-  $_xoff = $::xoff if (!defined($_xoff));
-  $_toff = $::toff if (!defined($_toff));
-  $_key = ".$_xoff" if (!defined($_key));
-  close_block($_old,$_xoff,$_toff) if (defined($_old));
-  return { key=>$_key, xbegin=>$_xoff,xend=>undef, tbegin=>$_toff,tend=>undef };
-}
-
-## $blk = close_block($blk, $xoff, $toff)
-##  + closes current $blk logically BEFORE current event ($xoff~$toff)
-##  + writes a record for the current block run to STDOUT
-sub close_block {
-  my ($_blk,$_xoff,$_toff) = @_;
-  $_blk = $::blk if (!defined($_blk));
-  $_xoff = $::xoff if (!defined($_xoff));
-  $_toff = $::toff if (!defined($_xoff));
-
-
-  my $_xlen = $_xoff-$_blk->{xbegin};
-  my $_tlen = $_toff-$_blk->{tbegin};
-  #if ($_tlen) {  ##-- only print if block has non-zero text length
-    print join("\t", $BLOCK_ID, $_blk->{xbegin},$_xlen, $_blk->{tbegin},$_tlen, $_blk->{key}), "\n";
-  #}
-  @$_blk{qw(xend tend)} = ($_xoff,$_toff);
-  return $_blk;
-}
-
 ##--------------------------------------------------------------
-## XML::Parser handlers
+## XML::Parser handlers: just build %key2obj
 
 ## undef = cb_start($expat, $elt,%attrs)
 our ($_xp,$elt,%attrs,$e);
@@ -145,8 +114,8 @@ sub cb_start {
 
   ##-- update stack(s)
   ($xbegin,$tbegin, $xend,$tend) = split(/ /,$attrs{'dta.tw.at'});
-  $obj = { elt=>$eltname, attrs=>{%attrs} };
-
+  $obj = { key=>"${eltname}.${xbegin}", elt=>$eltname, attrs=>{%attrs} };
+  push(@stack,$obj);
 
   ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   if ($eltname eq 'seg') {

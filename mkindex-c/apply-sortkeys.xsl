@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:output
@@ -10,7 +10,6 @@
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- parameters -->
-  <!--<xsl:param name="path" select="//text/w"/>-->
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- options -->
@@ -22,116 +21,72 @@
     <dta.tw.serialized>
       <s/>
       <xsl:comment>MAIN</xsl:comment>
-      <xsl:apply-templates mode="main" select="*"/>
+      <xsl:apply-templates mode="MAIN" />
       <s/>
-      <xsl:comment>END</xsl:comment>
-      <xsl:apply-templates mode="end" select="*"/>
+      <xsl:comment>OTHER</xsl:comment>
+      <xsl:apply-templates mode="OTHER" />
       <s/>
     </dta.tw.serialized>
   </xsl:template>
 
   <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
-  <!-- MAIN -->
+  <!-- Mode MAIN -->
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: main: ignore non-MAIN stuff -->
-  <xsl:template mode="main" match="*[@where!='MAIN']" priority="100">
-    <xsl:apply-templates mode="main" select="*"/>
+  <!-- templates: MAIN: ignore non-MAIN stuff -->
+  <xsl:template mode="MAIN" match="*[@dta.tw.key != '-']" priority="100">
+    <xsl:apply-templates mode="MAIN" />
   </xsl:template>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: main: loc: copy -->
-  <xsl:template mode="main" match="dta.tw.b|lb">
+  <!-- templates: MAIN: text-pointers: copy -->
+  <xsl:template mode="MAIN" match="c|w|s">
     <xsl:copy-of select="."/>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: main: implicit sentence breaks -->
-  <xsl:template mode="main" match="div|p|text|front|back|body">
-    <s/><xsl:apply-templates mode="main" select="*"/><s/>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: main: implicit token breaks -->
-  <xsl:template mode="main" match="cit|q|quote|head">
-    <w/><xsl:apply-templates mode="main" select="*"/><w/>
   </xsl:template>
 
   <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
   <!-- MAIN: defaults -->
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- default: main: elements: just recurse -->
-  <xsl:template mode="main" match="*" priority="-1">
-    <xsl:apply-templates mode="main" />
+  <!-- default: MAIN: elements: copy -->
+  <xsl:template mode="MAIN" match="*|@*" priority="-1">
+    <xsl:copy>
+      <xsl:apply-templates mode="MAIN" select="*|@*" />
+    </xsl:copy>
   </xsl:template>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- default: main: other: ignore -->
-  <xsl:template mode="main" match="@*|text()|comment()|processing-instruction()" priority="-1"/>
+  <!-- default: MAIN: other: ignore -->
+  <xsl:template mode="MAIN" match="text()|comment()|processing-instruction()" priority="-1"/>
 
   <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
-  <!-- END -->
+  <!-- Mode OTHER -->
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: end: ignore non-END stuff -->
-  <xsl:template mode="end" match="*[@where!='END']" priority="100">
-    <xsl:apply-templates mode="end" select="*"/>
+  <!-- templates: OTHER: ignore non-OTHER stuff -->
+  <xsl:template mode="OTHER" match="*[@dta.tw.key = '-']" priority="100">
+    <xsl:apply-templates mode="OTHER" select="*"/>
   </xsl:template>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: end: loc: copy -->
-  <xsl:template mode="end" match="lb|dta.tw.b">
+  <!-- templates: OTHER: text-pointers: copy -->
+  <xsl:template mode="OTHER" match="c|w|s">
     <xsl:copy-of select="."/>
   </xsl:template>
 
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: end: note, no seg -->
-  <xsl:template mode="end" match="note[not(ancestor::seg)]">
-    <s/><xsl:apply-templates mode="end" select="*"/><s/>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: end: seg -->
-  <xsl:template mode="end" match="seg[@part='I']">
-    <s/><xsl:apply-templates mode="end" select="*"/>
-  </xsl:template>
-
-  <xsl:template mode="end" match="seg[@part='F']">
-    <xsl:apply-templates mode="end" select="*"/><s/>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: end: table -->
-  <xsl:template mode="end" match="table">
-    <s/><xsl:apply-templates mode="end" select="*"/><s/>
-  </xsl:template>
-
-  <xsl:template mode="end" match="row|cell">
-    <w/><xsl:apply-templates mode="end" select="*"/><w/>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: end: list, item -->
-  <xsl:template mode="end" match="list">
-    <w/><xsl:apply-templates mode="end" select="*"/><w/>
-  </xsl:template>
-  <xsl:template mode="end" match="item">
-    <w/><xsl:apply-templates mode="end" select="*"/><w/>
-  </xsl:template>
-
-
   <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
-  <!-- END: defaults -->
+  <!-- OTHER: defaults -->
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- default: end: elements: just recurse -->
-  <xsl:template mode="end" match="*" priority="-1">
-    <xsl:apply-templates mode="end" select="*"/>
+  <!-- defaults: OTHER: elements: copy -->
+  <xsl:template mode="OTHER" match="*|@*" priority="-1">
+    <xsl:copy>
+      <xsl:apply-templates mode="OTHER" select="*|@*"/>
+    </xsl:copy>
   </xsl:template>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- default: end: other: ignore -->
-  <xsl:template mode="end" match="@*|text()|comment()|processing-instruction()" priority="-1"/>
+  <xsl:template mode="OTHER" match="text()|comment()|processing-instruction()" priority="-1"/>
 
 </xsl:stylesheet>

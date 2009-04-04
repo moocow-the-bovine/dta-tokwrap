@@ -21,14 +21,8 @@
 //-- NIL_ID: string used for missing xml:id attributes on <c> elements
 const char *NIL_ID = "-";
 
-//-- START_ID : pseudo-ID for START records
-const char *START_ID = "$START$";
-
-//-- ATTR_ID : pseudo-ID for ATTR records
-const char *ATTR_ID = "$ATTR$";
-
-//-- END_ID : pseudo-ID for END records
-const char *END_ID = "$END$";
+//-- LB_ID : pseudo-ID for <lb/> records
+const char *LB_ID = "$LB$";
 
 #define BUFSIZE     8192 //-- file input buffer size
 #define CTBUFSIZE    256 //-- <c>-local text buffer size
@@ -171,6 +165,19 @@ void put_record_char(TokWrapData *data)
   put_raw_text(data, data->c_tlen, data->c_tbuf);
 }
 
+//--------------------------------------------------------------
+void put_record_lb(TokWrapData *data)
+{
+  ByteOffset c_xlen = XML_GetCurrentByteIndex(data->xp) + XML_GetCurrentByteCount(data->xp) - data->c_xoffset;
+  put_record_raw(data->f_cx,
+		 LB_ID,
+		 data->c_xoffset, c_xlen,
+		 data->c_toffset, 1,
+		 "\n"
+		 );
+  put_raw_text(data, 1, "\n");
+}
+
 /*--------------------------------------------------------------
  * get_error_context()
  *  + gets error context
@@ -255,7 +262,11 @@ void cb_start(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
     data->n_chrs++;
     return;
   }
-  if (strcmp(name,"text")==0) {
+  else if (strcmp(name,"lb")==0) {
+    put_record_lb(data);
+    return;
+  }
+  else if (strcmp(name,"text")==0) {
     data->text_depth++;
   }
   data->is_chardata = 0;
@@ -271,11 +282,11 @@ void cb_end(TokWrapData *data, const XML_Char *name)
     data->is_c = 0;         //-- ... and leave <c>-parsing mode
     return;
   }
-  if (strcmp(name,"text")==0) {
-    data->text_depth--;
-  }
   else if (strcmp(name,"lb")==0) {
-    put_raw_text(data, 1, "\n");
+    return;
+  }
+  else if (strcmp(name,"text")==0) {
+    data->text_depth--;
   }
   data->is_chardata = 0;
   XML_DefaultCurrent(data->xp);
@@ -295,7 +306,8 @@ void cb_char(TokWrapData *data, const XML_Char *s, int len)
 }
 
 //--------------------------------------------------------------
-static const char *LOC_FMT = "<dta.tw.b n=\"%lu %lu\"/>";
+static const char *LOC_FMT = "<c n=\"%lu %lu\"/>";
+//static const char *LOC_FMT = "<dta.tw.b n=\"%lu %lu\"/>";
 //static const char *LOC_FMT = "<dta.tw.block xb=\"%lu\" tb=\"%lu\"/>";
 //static const char *LOC_FMT = "<milestone unit=\"dta.loc\" n=\"%lu %lu\"/>";
 void cb_default(TokWrapData *data, const XML_Char *s, int len)

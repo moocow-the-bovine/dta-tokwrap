@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:output
@@ -9,8 +9,10 @@
     />
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- parameters -->
-  <!--<xsl:param name="path" select="//text/w"/>-->
+  <!-- parameters & variables -->
+  <xsl:param    name="keyName"    select="'dta.tw.key'"/>
+  <xsl:variable name="defaultVal" select="'-'"/>
+  <xsl:param    name="keyVal"     select="defaultVal"/>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- options -->
@@ -18,59 +20,87 @@
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- template: root: traverse -->
-  <xsl:template match="/">
-    <xsl:apply-templates select="*|@*"/>
+  <xsl:template match="/*">
+    <xsl:copy>
+      <xsl:attribute name="{$keyName}"><xsl:value-of select="$defaultVal"/></xsl:attribute>
+      <xsl:apply-templates select="*|@*">
+	<xsl:with-param name="keyVal" select="$defaultVal"/>
+      </xsl:apply-templates>
+    </xsl:copy>
   </xsl:template>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- templates: ignored material -->
-  <xsl:template match="ref|fw" priority="10"/>
+  <xsl:template match="ref|fw" priority="100"/>
 
   <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
-  <!-- templates: postponed material -->
+  <!-- templates: quasi-independent segments -->
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: table -->
-  <xsl:template match="table|table//*">
+  <!-- templates: seg (priority=10) -->
+  <xsl:template match="seg[@part='I']" priority="10">
+    <xsl:variable name="keyVal" select="generate-id(.)"/> <!-- clobber -->
     <xsl:copy>
-      <xsl:attribute name="where">END</xsl:attribute>
-      <xsl:apply-templates select="*|@*"/>
+      <xsl:attribute name="{$keyName}"><xsl:value-of select="$keyVal"/></xsl:attribute>
+      <xsl:apply-templates select="*|@*">
+	<xsl:with-param name="keyVal" select="$keyVal"/>
+      </xsl:apply-templates>
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="seg[@part='M' or @part='F']" priority="10">
+    <xsl:variable name="keyVal" select="generate-id(preceding::seg[@part='I'][1])"/> <!-- clobber -->
+    <xsl:copy>
+      <xsl:attribute name="{$keyName}"><xsl:value-of select="$keyVal"/></xsl:attribute>
+      <xsl:apply-templates select="*|@*">
+	<xsl:with-param name="keyVal" select="$keyVal"/>
+      </xsl:apply-templates>
     </xsl:copy>
   </xsl:template>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: note -->
-  <xsl:template match="note|note//*">
+  <!-- templates: table, no seg: clobber sort key -->
+  <xsl:template match="table[not(parent::seg)]">
+    <xsl:variable name="keyVal" select="generate-id(.)"/> <!-- clobber -->
     <xsl:copy>
-      <xsl:attribute name="where">END</xsl:attribute>
-      <xsl:apply-templates select="*|@*"/>
+      <xsl:attribute name="{$keyName}"><xsl:value-of select="$keyVal"/></xsl:attribute>
+      <xsl:apply-templates select="*|@*">
+	<xsl:with-param name="keyVal" select="$keyVal"/>
+      </xsl:apply-templates>
     </xsl:copy>
   </xsl:template>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: seg//* -->
-  <xsl:template match="seg|seg//*" priority="10">
+  <!-- templates: note, no seg: clobber sort key -->
+  <xsl:template match="note[not(parent::seg)]">
+    <xsl:variable name="keyVal" select="generate-id(.)"/>
     <xsl:copy>
-      <xsl:attribute name="where">END</xsl:attribute>
-      <xsl:apply-templates select="*|@*"/>
+      <xsl:attribute name="{$keyName}"><xsl:value-of select="$keyVal"/></xsl:attribute>
+      <xsl:apply-templates select="*|@*">
+	<xsl:with-param name="keyVal" select="$keyVal"/>
+      </xsl:apply-templates>
     </xsl:copy>
   </xsl:template>
 
   <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
-  <!-- default: elements -->
+  <!-- defaults -->
+
+  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+  <!-- defaults: elements: copy, propagating sort-key value -->
   <xsl:template match="*" priority="-1">
+    <xsl:param name="keyVal" select="$defaultVal"/>
     <xsl:copy>
-      <xsl:attribute name="where">MAIN</xsl:attribute>
-      <xsl:apply-templates select="*|@*"/>
+      <xsl:attribute name="{$keyName}"><xsl:value-of select="$keyVal"/></xsl:attribute>
+      <xsl:apply-templates select="*|@*">
+	<xsl:with-param name="keyVal" select="$keyVal"/>
+      </xsl:apply-templates>
     </xsl:copy>
   </xsl:template>
 
-  <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
-  <!-- default: attributes -->
+  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+  <!-- defaults: attributes: copy -->
   <xsl:template match="@*" priority="-1">
-    <xsl:copy>
-      <xsl:apply-templates select="*|@*"/>
-    </xsl:copy>
+    <xsl:copy-of select="."/>
   </xsl:template>
 
 </xsl:stylesheet>
