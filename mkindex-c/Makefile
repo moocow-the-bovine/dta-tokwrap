@@ -96,6 +96,13 @@ sx2-nons: $(XML_SOURCES:.xml=.sx2.nons)
 no-sx2-nons:  ; rm -f *.nons
 sx2-nons-fmt: $(XML_SOURCES:.xml=.sx2.nons.fmt)
 
+##-- serialization, v2
+
+%.bx2: %.sx2 ./xml-no-namespaces ./xsltpipe.perl insert-implicit-breaks.xsl mark-sortkeys.xsl
+	./xml-no-namespaces $< | ./xsltpipe.perl insert-implicit-breaks.xsl mark-sortkeys.xsl - -format -o $@
+
+bx2: $(XML_SOURCES:.xml=.bx2)
+
 ##-- Block indices
 %.bx: %.sx ./dta-tokwrap-lsblocks.perl
 	./dta-tokwrap-lsblocks.perl $< > $@ || (rm -f $@; false)

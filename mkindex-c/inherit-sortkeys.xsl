@@ -11,6 +11,7 @@
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- parameters -->
   <!--<xsl:param name="path" select="//text/w"/>-->
+  <xsl:param    name="keyName"       select="'dta.tw.key'"/>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- options -->
@@ -23,17 +24,12 @@
   </xsl:template>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: c: just copy -->
-  <xsl:template match="c" priority="10">
-    <xsl:copy-of select="."/>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: element: inherit offsets -->
+  <!-- templates: element: inherit sort keys -->
   <xsl:template match="*">
     <xsl:copy>
-      <xsl:attribute name="cn"><xsl:value-of select="concat(preceding::c[1]/@n,' ',following::c[1]/@n)"/></xsl:attribute>
-      <xsl:apply-templates select="*|@*"/>
+      <!--<xsl:attribute name="{$keyName}"><xsl:value-of select="ancestor-or-self::*[@dta.tw.key]][1]/@dta.tw.key"/></xsl:attribute>-->
+      <xsl:attribute name="{$keyName}"><xsl:value-of select="ancestor-or-self::*[attribute::*[name()=$keyName]][1]/attribute::*[name()=$keyName]"/></xsl:attribute>
+      <xsl:apply-templates select="*|@*[not(name()=$keyName)]"/>
     </xsl:copy>
   </xsl:template>
 

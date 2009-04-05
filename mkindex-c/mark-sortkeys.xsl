@@ -10,9 +10,7 @@
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- parameters & variables -->
-  <xsl:param    name="keyName"    select="'dta.tw.key'"/>
-  <xsl:variable name="defaultVal" select="'-'"/>
-  <xsl:param    name="keyVal"     select="defaultVal"/>
+  <xsl:param    name="keyName"       select="'dta.tw.key'"/>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- options -->
@@ -22,10 +20,8 @@
   <!-- template: root: traverse -->
   <xsl:template match="/*">
     <xsl:copy>
-      <xsl:attribute name="{$keyName}"><xsl:value-of select="$defaultVal"/></xsl:attribute>
-      <xsl:apply-templates select="*|@*">
-	<xsl:with-param name="keyVal" select="$defaultVal"/>
-      </xsl:apply-templates>
+      <xsl:attribute name="{$keyName}"><xsl:call-template name="generate-key"/></xsl:attribute>
+      <xsl:apply-templates select="*|@*"/>
     </xsl:copy>
   </xsl:template>
 
@@ -39,46 +35,35 @@
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- templates: seg (priority=10) -->
   <xsl:template match="seg[@part='I']" priority="10">
-    <xsl:variable name="keyVal" select="generate-id(.)"/> <!-- clobber -->
     <xsl:copy>
-      <xsl:attribute name="{$keyName}"><xsl:value-of select="$keyVal"/></xsl:attribute>
-      <xsl:apply-templates select="*|@*">
-	<xsl:with-param name="keyVal" select="$keyVal"/>
-      </xsl:apply-templates>
+      <xsl:attribute name="{$keyName}"><xsl:call-template name="generate-key"/></xsl:attribute>
+      <xsl:apply-templates select="*|@*"/>
     </xsl:copy>
   </xsl:template>
 
   <xsl:template match="seg[@part='M' or @part='F']" priority="10">
-    <xsl:variable name="keyVal" select="generate-id(preceding::seg[@part='I'][1])"/> <!-- clobber -->
+    <xsl:variable name="keyNode" select="preceding::seg[@part='I'][1]"/> <!-- clobber -->
     <xsl:copy>
-      <xsl:attribute name="{$keyName}"><xsl:value-of select="$keyVal"/></xsl:attribute>
-      <xsl:apply-templates select="*|@*">
-	<xsl:with-param name="keyVal" select="$keyVal"/>
-      </xsl:apply-templates>
+      <xsl:attribute name="{$keyName}"><xsl:call-template name="generate-key"><xsl:with-param name="node" select="$keyNode"/></xsl:call-template></xsl:attribute>
+      <xsl:apply-templates select="*|@*"/>
     </xsl:copy>
   </xsl:template>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- templates: table, no seg: clobber sort key -->
   <xsl:template match="table[not(parent::seg)]">
-    <xsl:variable name="keyVal" select="generate-id(.)"/> <!-- clobber -->
     <xsl:copy>
-      <xsl:attribute name="{$keyName}"><xsl:value-of select="$keyVal"/></xsl:attribute>
-      <xsl:apply-templates select="*|@*">
-	<xsl:with-param name="keyVal" select="$keyVal"/>
-      </xsl:apply-templates>
+      <xsl:attribute name="{$keyName}"><xsl:call-template name="generate-key"/></xsl:attribute>
+      <xsl:apply-templates select="*|@*"/>
     </xsl:copy>
   </xsl:template>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- templates: note, no seg: clobber sort key -->
   <xsl:template match="note[not(parent::seg)]">
-    <xsl:variable name="keyVal" select="generate-id(.)"/>
     <xsl:copy>
-      <xsl:attribute name="{$keyName}"><xsl:value-of select="$keyVal"/></xsl:attribute>
-      <xsl:apply-templates select="*|@*">
-	<xsl:with-param name="keyVal" select="$keyVal"/>
-      </xsl:apply-templates>
+      <xsl:attribute name="{$keyName}"><xsl:call-template name="generate-key"/></xsl:attribute>
+      <xsl:apply-templates select="*|@*"/>
     </xsl:copy>
   </xsl:template>
 
@@ -86,21 +71,18 @@
   <!-- defaults -->
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- defaults: elements: copy, propagating sort-key value -->
-  <xsl:template match="*" priority="-1">
-    <xsl:param name="keyVal" select="$defaultVal"/>
+  <!-- defaults: copy -->
+  <xsl:template match="*|@*" priority="-1">
     <xsl:copy>
-      <xsl:attribute name="{$keyName}"><xsl:value-of select="$keyVal"/></xsl:attribute>
-      <xsl:apply-templates select="*|@*">
-	<xsl:with-param name="keyVal" select="$keyVal"/>
-      </xsl:apply-templates>
+      <xsl:apply-templates select="*|@*"/>
     </xsl:copy>
   </xsl:template>
 
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- defaults: attributes: copy -->
-  <xsl:template match="@*" priority="-1">
-    <xsl:copy-of select="."/>
+  <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+  <!-- templates: named: key-generation -->
+  <xsl:template name="generate-key">
+    <xsl:param name="node" select="."/>
+    <xsl:value-of select="concat(name($node),'.',generate-id($node))"/>
   </xsl:template>
 
 </xsl:stylesheet>

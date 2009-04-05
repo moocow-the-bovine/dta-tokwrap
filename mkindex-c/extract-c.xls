@@ -22,14 +22,14 @@
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- main: template: root: traverse -->
   <xsl:template match="/">
-    <dta.tw.locations>
+    <dta.tw.c>
       <xsl:apply-templates/>
-    </dta.tw.locations>
+    </dta.tw.c>
   </xsl:template>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- main: template(s): copy -->
-  <xsl:template match="loc|s|w|lb|milestone">
+  <!-- main: template(s): copy targets -->
+  <xsl:template match="c|s|w">
     <xsl:copy-of select="."/>
     <xsl:apply-templates/>
   </xsl:template>
