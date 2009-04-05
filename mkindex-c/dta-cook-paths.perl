@@ -13,11 +13,15 @@ use Pod::Usage;
 our $progname = basename($0);
 
 our $encoding = 'UTF-8';
-our $format   = 0; ##-- setting this to anything other than "0" might break line numbers
+our $format   = undef; ##-- setting this to anything other than "0" might break output line numbers
 our $outfile  = '-';
 
-our $pseudoXpath = '//dta.tw.b';
-our $pathAttr  = 'p';     ##-- mnemonic: "path" (to psuedo-text node)
+our $xpath     = '//*';
+our $pathAttr  = 'p';     ##-- mnemonic: "path" (to selected node)
+our $lineAttr  = 'l';     ##-- mnemonic: "line" (of selected node)
+
+our $expand_ents = 0; ##-- expand entities when parsing input file?
+our $keep_blanks = 0; ##-- keep blanks in input file?
 
 ##------------------------------------------------------------------------------
 ## Command-line
@@ -25,14 +29,19 @@ our $pathAttr  = 'p';     ##-- mnemonic: "path" (to psuedo-text node)
 GetOptions(##-- General
 	   'help|h' => \$help,
 
-	   ##-- pseudo-text nodes
-	   'xpath|xp|x=s'  => \$pseudoXpath,
-	   'path-attribute|path|pa|p=s' => \$pathAttr,  ##-- path to original text node
+	   ##-- path expansion
+	   'xpath|xp|x|select=s'  => \$xpath,
+	   'path-attribute|path|pa|p=s' => \$pathAttr,
+	   'line-attribute|line|la|l=s' => \$lineAttr,
+	   'nopath|nop' => sub { undef($pathAttr); },
+	   'noline|nol' => sub { undef($lineAttr); },
 
-	   ##-- output
-	   'output|o=s'=>\$outfile,
-	   'format|f:i' =>\$format,
-	   'noformat' => sub { $format=0; },
+	   ##-- I/O
+	   'entities|ent|e!' => sub { $expand_ents=!$_[1]; },
+	   'blanks|b!'       => sub { $keep_blanks=$_[1]; },
+	   'output|o=s' =>\$outfile,
+	   'format|f:i' => sub { $format=($_[1] ? $_[1] : 1); },
+	   'noformat'   => sub { $format=0; },
 	  );
 
 
@@ -52,13 +61,12 @@ sub dtaCookDoc {
   my ($doc,$file) = @_;
   $file = '?' if (!defined($file)); ##-- for error reporting
 
-  ##-- ugly but it's gotta happen: re-parse to get line numbers
-  my ($node,$path,$name);
-  foreach $node (@{$doc->documentElement->findnodes($pseudoXpath)}) {
+  my ($node,$path,$line);
+  foreach $node (@{$doc->documentElement->findnodes($xpath)}) {
     $path = $node->nodePath();
-    $name = $node->nodeName();
-    $path =~ s|/\Q$name\E([^/]*)$|/block$1|;
-    $node->setAttribute($pathAttr,$path);
+    $line = $node->line_number();
+    $node->setAttribute($pathAttr,$path) if (defined($pathAttr));
+    $node->setAttribute($lineAttr,$line) if (defined($lineAttr));
   }
 
   return $doc;
@@ -71,13 +79,12 @@ sub dtaCookDoc {
 ##-- ye olde guttes
 push(@ARGV,'-') if (!@ARGV);
 our $parser = XML::LibXML->new();
-#$parser->keep_blanks(0);  ##-- ... or do we want blanks kept?!
-$parser->keep_blanks(1); ##-- maybe for this app, we *want* blanks kept?
+$parser->keep_blanks($keep_blanks);
+$parser->expand_entities($expand_ents);
 $parser->line_numbers(1);
 $parser->load_ext_dtd(0);
 $parser->validation(0);
 $parser->recover(1);
-$parser->expand_entities(1);
 
 foreach $f (@ARGV) {
   #print STDERR "$progname: parsing file '$f'...";
@@ -96,22 +103,28 @@ foreach $f (@ARGV) {
 
 =head1 NAME
 
-dta-cook-paths.perl - add 'path' attributes to pseudo-text nodes for DTA XML files
+mark-canonical-xpath.perl - add 'path' attributes to selected elements in XML files
 
 =head1 SYNOPSIS
 
- dta-cook-paths.perl [OPTIONS] [FILE...]
+ mark-canonical-xpath.perl [OPTIONS] [XMLFILE...]
 
  General Options:
   -help                  # this help message
 
  Extraction Options:
-  -pseudo-element ELT    # specify pseudo-element for wrapping text nodes (default='text')
-  -path-attribute ATTR   # specify path attribute for output pseudo-text elements (default='tp')
+  -xpath XPATH           # xpath of elements to be marked  (default='//*')
+  -path-attribute ATTR   # specify path attribute for selected elements (default='p')
+  -line-attribute ATTR   # specify line attribute for selected elements (default='l')
+  -nopath                # do not mark canonical xpaths
+  -noline                # do not mark input line numbers
 
  I/O Options:
   -output FILE           # specify output file (default='-' (STDOUT))
-  -format , -noformat    # pretty-print output? (default=yes)
+  -blanks , -noblanks    # do/don't keep ignorable whitespace (default=don't (-noblanks))
+  -ent    , -noent       # don't/do expand entities (default=don't (-ent))
+  -format , -noformat    # pretty-print output? (default=no)
+
 
 =cut
 
