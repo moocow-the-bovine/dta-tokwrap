@@ -11,165 +11,117 @@ use Pod::Usage;
 ##======================================================================
 ## Globals
 
-##-- event type identifier for BLOCK events
-our $BLOCK_ID = '$BLOCK$';
+##-- prog
+our $prog = File::Basename::basename($0);
 
-##-- $rootObj: stack object for ROOT pseudo-element
-## + each XML element corresponds to one element on the stack
-## + stack object structure:
+##-- $rootBlk : root block
+## + block structure:
 ##   {
-##    key    => $blockKey,
-##    elt    => $eltName,
-##    attrs  => \%eltAttrs,
-##    blocks => [ \%eltBlock1, ... \%eltBlockN ],
-##   }
-## + where each \%eltBlock =
-##   {
+##    key    =>$sortkey, ##-- inherited sort key
+##    elt    =>$eltname, ##-- element name which created this block
 ##    xbegin =>$xoff,    ##-- XML byte offset where this block run begins
 ##    xend   =>$xoff1,   ##-- XML byte offset where this block run ends
 ##    tbegin =>$toff0,   ##-- text byte offset where this block run begins
 ##    tend   =>$toff1,   ##-- text byte offset where this block run ends
 ##   }
-our $rootObj =
-  {
-   key    => '__ROOT__',
-   elt    => '__ROOT__',
-   parent => undef, ##-- parent object
-   attrs  => {},
-   blocks => [ { xbegin=>0,tbegin=>0, xend=>0,tend=>0, } ],
-  };
+our $rootBlk = {key=>'__ROOT__',elt=>'__ROOT__',xbegin=>0,tbegin=>0, xend=>undef, tend=>undef};
 
-##-- $top : current top of the stack
-our $top = $rootObj;
+##-- @blocks: all parsed blocks
+our @blocks = ( $rootBlk );
 
-##-- @stack: stack of objects mirroring XML element structure
-our @stack = ($top);
+##-- @keystack: stack of (inherited) sort keys
+our @keystack = ( $rootBlk->{key} );
 
-##-- %key2obj : known objects
-our %key2obj = ( $rootObj->{key} => $rootObj );
+##-- %key2i : maps keys to the block-index of their first occurrence, for block-sorting
+our %key2i = ($rootBlk->{key} => 0);
 
-##-- %lastobj : $objType => $lastOpenEltForType
-##  + used for tracking discontinuous segments with '<seg>'
-our %lastobj = qw();
+##-- $blk: global: currently running block
+our $blk = $rootBlk;
 
-##-- $all_implicit_block_elts
-##  + if true, new blocks will be created for all elements, unless:
-##    - they occur as a daughter of a 'seg' element
-##    - or if they occur in %no_implicit_block_elts
-our $all_implicit_block_elts = 1;
+##-- $key: global: currently active sort key
+our $key = $keystack[$#keystack];
 
-##-- @implicit_block_elts
-## + create new blocks for these elements, unless they occur as a daughter of a 'seg' element
-## + overrides @no_implicit_block_elts
-our @implicit_block_elts = (
-			    ##-- title page stuff
-			    qw(titlePage titlePart docTitle byline docAuthor docImprint pubPlace docDate),
-			    ##
-			    ##-- main text body
-			    qw(p div head text front back body),
-			    ##
-			    ##-- genre-specific: drama
-			    qw(speaker sp stage castList castItem role roleDesc set),
-			    ##
-			    ##-- citations
-			    qw(cit q quote),
-			    ##
-			    ##-- genre-specific: letters
-			    qw(salute dateline opener closer signed),
-			    ##
-			    ##-- tables
-			    qw(table row cell),
-			    ##
-			    ##-- lists
-			    qw(list item),
-			    ##
-			    ##-- notes etc
-			    qw(note argument),
-			    ##
-			    ##-- misc
-			    qw(figure ref fw),
-			   );
-our %implicit_block_elts = map {$_=>undef} @implicit_block_elts;
+##-- $keyAttr : attribute name for sort keys
+our $keyAttr = 'dta.tw.key';
 
-
-##-- @no_implicit_block_elts
-## + do NOT implicitly create new blocks for these elements
-#our @no_implicit_block_elts = qw();
-our @no_implicit_block_elts = ( qw(lb hi pb g milestone) );
-our %no_implicit_block_elts = map {$_=>undef} @no_implicit_block_elts;
-
-##-- prog
-our $prog = File::Basename::basename($0);
+##-- @target_elts : block-like elements
+our @target_elts = qw(c s w);
+our %target_elts = map {$_=>undef} @target_elts;
 
 ##======================================================================
 ## Subs
 
 ##--------------------------------------------------------------
-## XML::Parser handlers: just build %key2obj
+## XML::Parser temporary globals
+
+our ($_xp,$eltname,%attrs,$item,$iblk);
+
+##-- $xoff,$toff: global: current XML-, text-byte offset
+our ($xoff,$toff) = (0,0);
+
+##--------------------------------------------------------------
+## XML::Parser handlers: build %key2obj
 
 ## undef = cb_start($expat, $elt,%attrs)
-our ($_xp,$elt,%attrs,$e);
 sub cb_start {
   ($_xp,$eltname,%attrs) = @_;
 
-  ##-- update stack(s)
-  ($xbegin,$tbegin, $xend,$tend) = split(/ /,$attrs{'dta.tw.at'});
-  $obj = { key=>"${eltname}.${xbegin}", elt=>$eltname, attrs=>{%attrs} };
-  push(@stack,$obj);
+  ##-- check for sort key
+  if (exists($attrs{$keyAttr})) {
+    $key = $attrs{$keyAttr};
+    $key2i{$key} = scalar(@blocks);
+  }
 
-  ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if ($eltname eq 'seg') {
-    if ( ($attrs{part} && $attrs{part} eq 'I') || !($attrs{part}) )
-      {
-	##-- start-tag: <seg>: initial
-	$blk = open_block($blk, "seg.${xoff}", $xoff, $toff);
-	$lastkey{'seg'} = $blk->{key} if ($attrs{part});
-	push(@keystack,$blk->{key});
-      }
-    elsif ( $attrs{part} ) ## ($attrs{part} eq 'M' || $attrs{part} eq 'F')
-      {
-	##-- start-tag: <seg>: non-initial
-	$blk = open_block($blk, $lastkey{'seg'}, $xoff, $toff); ##-- re-open most recent seg[@part="I"]
-	push(@keystack,$blk->{key});
-      }
-  }
-  ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  elsif (
-	 ($all_implicit_block_elts && !exists($no_implicit_block_elts{$eltname}))
-	 ||
-	 exists($implicit_block_elts{$eltname})
-	) {
-    ##-- start-tag: <note> etc.: implicit block
-    if ($blk->{key} !~ /^seg\b/) {
-      ##-- start-tag: <note> etc.: no parent <seg>: allocate a new block
-      $blk = open_block($blk, "${eltname}.${xoff}", $xoff, $toff);
-    }
-    push(@keystack,$blk->{key});
-  }
-  ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  else { # ($eltname =~ m/./)
-    ##-- start-tag, but no implicit block: just keep current block running
-    push(@keystack, $blk->{key});
-    #print STDERR "inheriting block '$blk' for <$eltname>\n";
+  ##-- update key stack
+  push(@keystack,$key);
+
+  ##-- check for target elements
+  if (exists($target_elts{$eltname})) {
+    ($xoff,$toff) = split(/ /,$attrs{n}) if (exists($attrs{n}));
+    push(@blocks, $blk={ key=>$key, elt=>$eltname, xbegin=>$xoff, tbegin=>$toff });
   }
 }
 
 ## undef = cb_end($expat, $elt)
 sub cb_end {
-  #($_xp,$elt) = @_;
-  $popkey = pop(@keystack);
-  $newkey = $keystack[$#keystack];
-  if ($popkey ne $newkey) {
-    ##-- block switch: re-open the block we popped from the stack
-    $blk = open_block($blk, $newkey, $xoff, $toff);
+  pop(@keystack);
+  $key = $keystack[$#keystack];
+}
+
+##--------------------------------------------------------------
+## Subs: assign block '*end', '*len' keys
+
+##-- undef = compute_block_lengths(\@blocks)
+sub compute_block_lengths {
+  my $blocks = shift;
+  my $prv = $blocks->[0];
+  my ($nxt);
+  foreach $nxt (@$blocks[1..$#$blocks]) {
+    @$prv{qw(xend tend)} = @$nxt{qw(xbegin tbegin)};
+    $prv->{xlen} = $prv->{xend} - $prv->{xbegin};
+    $prv->{tlen} = $prv->{tend} - $prv->{tbegin};
+    $prv = $nxt;
   }
+  @$prv{qw(xend tend)} = @$prv{qw(xbegin tbegin)};
+  @$prv{qw(xlen tlen)} = (0,0);
+}
+
+##-- \@sorted = sort_blocks(\@blocks)
+sub sort_blocks {
+  my $blocks = shift;
+  return [
+	  sort {
+	    ($key2i{$a->{key}} <=> $key2i{$b->{key}}
+	     || $a->{key} cmp $b->{key}
+	     || $a->{xbegin} <=> $b->{xbegin})
+	   } @$blocks
+	  ];
 }
 
 ##======================================================================
 ## MAIN
 
 ##-- initialize XML::Parser
-our ($xoff,$toff) = (0,0);
 $xp = XML::Parser->new(
 		       ErrorContext => 1,
 		       ProtocolEncoding => 'UTF-8',
@@ -187,14 +139,20 @@ $xp = XML::Parser->new(
 ##-- initialize: @ARGV
 push(@ARGV,'-') if (!@ARGV);
 
+##-- parse file(s)
+$xp->parsefile($ARGV[0]);
+
+##-- compute block lengths & sort
+compute_block_lengths(\@blocks);
+$sblocks = sort_blocks(\@blocks);
+
+##-- list blocks
 ##-- print header
 print
   (
    "%% XML block list file generated by $0\n",
    "%% Command-line: $0 ", join(' ', map {"'$_'"} @ARGV), "\n",
    "%%======================================================================\n",
-   "%% \$ID\$\t\$XML_OFFSET\$\t\$XML_LENGTH\$\t\$TXT_OFFSET\$\t\$TXT_LEN\$\t\$KEY\$\n",
+   "%% \$KEY\$\t\$ELT\$\t\$XML_OFFSET\$\t\$XML_LENGTH\$\t\$TXT_OFFSET\$\t\$TXT_LEN\$\n",
+   (map {join("\t", @$_{qw(key elt xbegin xlen tbegin tlen)})."\n"} @$sblocks),
   );
-
-##-- parse file(s)
-$xp->parsefile($ARGV[0]);

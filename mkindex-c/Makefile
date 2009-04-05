@@ -46,9 +46,12 @@ xml-no-namespaces: xml-no-namespaces.o
 
 %.fmt: %
 	xmllint --format -o $@ $<
+CLEAN_FILES += *.fmt
 
 ##======================================================================
 ## Rules: test
+
+XML_SOURCES ?= test-raw.chr.xml test1.xml ex1.xml ex2.xml
 
 .SECONDARY:
 
@@ -67,26 +70,31 @@ CLEAN_FILES += *.cx *.sx *.tx
 %.tx2: %.cx2 %.sx2 %.tx2
 %.cx2 %.sx2 %.tx2: %.xml dta-tokwrap-mkindex2
 	./dta-tokwrap-mkindex2 $< $*.cx2 $*.sx2 $*.tx2
-
-
-XML_SOURCES ?= test-raw.chr.xml test1.xml ex1.xml ex2.xml
+CLEAN_FILES += *.cx2 *.sx2 *.tx2
 
 cx: $(XML_SOURCES:.xml=.cx)
 sx: $(XML_SOURCES:.xml=.sx)
 tx: $(XML_SOURCES:.xml=.tx)
 xx: cx sx tx
 
-cx2: $(XML_SOURCES:.xml=.cx2)
-sx2: $(XML_SOURCES:.xml=.sx2)
-tx2: $(XML_SOURCES:.xml=.tx2)
-xx2: cx2 sx2 tx2
-
 no-cx: ; rm -f *.cx *.cx2
 no-sx: ; rm -f *.sx *.sx2
 no-tx: ; rm -f *.tx *.tx2
 no-xx: no-cx no-sx no-tx
 
+##--
+cx2: $(XML_SOURCES:.xml=.cx2)
+sx2: $(XML_SOURCES:.xml=.sx2)
+tx2: $(XML_SOURCES:.xml=.tx2)
+xx2: cx2 sx2 tx2
+
 sx2-fmt: $(XML_SOURCES:.xml=.sx2.fmt)
+
+no-cx2: no-cx
+no-sx2: no-sx
+no-tx2: no-tx
+no-xx2: no-xx
+
 
 ##-- namespace removal
 
@@ -95,21 +103,30 @@ sx2-nons: $(XML_SOURCES:.xml=.sx2.nons)
 	./xml-no-namespaces $< $@
 no-sx2-nons:  ; rm -f *.nons
 sx2-nons-fmt: $(XML_SOURCES:.xml=.sx2.nons.fmt)
+CLEAN_FILES += *.nons
+
+##-- Block indices, v1
+%.bx: %.sx ./dta-tokwrap-lsblocks.perl
+	./dta-tokwrap-lsblocks.perl $< > $@ || (rm -f $@; false)
+
+bx: $(XML_SOURCES:.xml=.bx)
+no-bx: ; rm -f *.bx *.bx2 *.bx2s
+CLEAN_FILES += *.bx
 
 ##-- serialization, v2
 
 %.bx2: %.sx2 ./xml-no-namespaces ./xsltpipe.perl insert-implicit-breaks.xsl mark-sortkeys.xsl
 	./xml-no-namespaces $< | ./xsltpipe.perl insert-implicit-breaks.xsl mark-sortkeys.xsl - -format -o $@
-
 bx2: $(XML_SOURCES:.xml=.bx2)
+no-bx2: no-bx
+CLEAN_FILES += *.bx2
 
-##-- Block indices
-%.bx: %.sx ./dta-tokwrap-lsblocks.perl
-	./dta-tokwrap-lsblocks.perl $< > $@ || (rm -f $@; false)
+%.bx2s: %.bx2 ./dta-tokwrap-lsblocks2.perl
+	./dta-tokwrap-lsblocks2.perl $< > $@ || (rm -f $@; false)
+bx2s: $(XML_SOURCES:.xml=.bx2s)
+CLEAN_FILES += *.bx2s
 
-bx: $(XML_SOURCES:.xml=.bx)
-no-bx: ; rm -f *.bx
-CLEAN_FILES += *.bx
+
 
 ##======================================================================
 ## Rules: Clean
