@@ -87,16 +87,26 @@ sx-nons-fmt: $(XML_SOURCES:.xml=.sx.nons.fmt)
 CLEAN_FILES += *.nons
 
 ##-- serialization (block index), v2
-%.bx: %.sx ./xml-no-namespaces insert-implicit-breaks.xsl mark-sortkeys.xsl ./dta-tokwrap-lsblocks.perl
+%.bx0: %.sx ./xml-no-namespaces insert-implicit-breaks.xsl mark-sortkeys.xsl
 	./xml-no-namespaces $< \
 	 | xsltproc insert-implicit-breaks.xsl - \
 	 | xsltproc mark-sortkeys.xsl - \
-	 | dta-tokwrap-lsblocks.perl -
+	 | xmllint --format - \
 	 > $@ || (rm -f $@; false)
-bx: $(XML_SOURCES:.xml=.bx)
-no-bx: ; rm -f *.bx
-CLEAN_FILES += *.bx
+bx0: $(XML_SOURCES:.xml=.bx0)
+no-bx0: ; rm -f *.bx0
+CLEAN_FILES += *.bx0
 
+##-- serialization + block list
+%.bx:  %.bx %.txt
+%.txt: %.bx %.txt
+%.bx %.txt: %.bx0 %.tx dta-tokwrap-lsblocks.perl
+	./dta-tokwrap-lsblocks.perl "$*.bx0" "$*.tx" "$*.bx" "$*.txt"
+bx: $(XML_SOURCES:.xml=.bx)
+txt: $(XML_SOURCES:.xml=.txt)
+no-bx: ; rm -f *.bx0 *.bx
+no-txt: ; rm -f *.txt
+CLEAN_FILES += *.bx
 
 ##======================================================================
 ## Rules: Clean
