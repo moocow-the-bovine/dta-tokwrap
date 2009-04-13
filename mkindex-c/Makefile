@@ -6,7 +6,8 @@ CFLAGS ?= -Wall -O2 -pipe
 LDFLAGS ?=
 LIBS ?= -lexpat
 
-TARGETS = dta-tokwrap-mkindex dta-tokwrap-mkindex2 xml-no-namespaces
+TARGETS = dta-tokwrap-mkindex xml-no-namespaces
+#dta-tokwrap-mkindex2
 #xmlparse-noop
 #dta-tokwrap-textindex
 #dta-tokwrap-lschars
@@ -65,67 +66,36 @@ XML_SOURCES ?= test-raw.chr.xml test1.xml ex1.xml ex2.xml
 	./dta-tokwrap-mkindex $< $*.cx $*.sx $*.tx
 CLEAN_FILES += *.cx *.sx *.tx
 
-%.cx2: %.cx2 %.sx2 %.tx2
-%.sx2: %.cx2 %.sx2 %.tx2
-%.tx2: %.cx2 %.sx2 %.tx2
-%.cx2 %.sx2 %.tx2: %.xml dta-tokwrap-mkindex2
-	./dta-tokwrap-mkindex2 $< $*.cx2 $*.sx2 $*.tx2
-CLEAN_FILES += *.cx2 *.sx2 *.tx2
-
 cx: $(XML_SOURCES:.xml=.cx)
 sx: $(XML_SOURCES:.xml=.sx)
 tx: $(XML_SOURCES:.xml=.tx)
 xx: cx sx tx
 
-no-cx: ; rm -f *.cx *.cx2
-no-sx: ; rm -f *.sx *.sx2
-no-tx: ; rm -f *.tx *.tx2
+no-cx: ; rm -f *.cx
+no-sx: ; rm -f *.sx
+no-tx: ; rm -f *.tx
 no-xx: no-cx no-sx no-tx
 
-##--
-cx2: $(XML_SOURCES:.xml=.cx2)
-sx2: $(XML_SOURCES:.xml=.sx2)
-tx2: $(XML_SOURCES:.xml=.tx2)
-xx2: cx2 sx2 tx2
-
-sx2-fmt: $(XML_SOURCES:.xml=.sx2.fmt)
-
-no-cx2: no-cx
-no-sx2: no-sx
-no-tx2: no-tx
-no-xx2: no-xx
-
+sx-fmt: $(XML_SOURCES:.xml=.sx.fmt)
 
 ##-- namespace removal
-
-sx2-nons: $(XML_SOURCES:.xml=.sx2.nons)
+sx-nons: $(XML_SOURCES:.xml=.sx.nons)
 %.nons: % xml-no-namespaces
 	./xml-no-namespaces $< $@
-no-sx2-nons:  ; rm -f *.nons
-sx2-nons-fmt: $(XML_SOURCES:.xml=.sx2.nons.fmt)
+no-sx-nons:  ; rm -f *.nons
+sx-nons-fmt: $(XML_SOURCES:.xml=.sx.nons.fmt)
 CLEAN_FILES += *.nons
 
-##-- Block indices, v1
-%.bx: %.sx ./dta-tokwrap-lsblocks.perl
-	./dta-tokwrap-lsblocks.perl $< > $@ || (rm -f $@; false)
-
+##-- serialization (block index), v2
+%.bx: %.sx ./xml-no-namespaces insert-implicit-breaks.xsl mark-sortkeys.xsl ./dta-tokwrap-lsblocks.perl
+	./xml-no-namespaces $< \
+	 | xsltproc insert-implicit-breaks.xsl - \
+	 | xsltproc mark-sortkeys.xsl - \
+	 | dta-tokwrap-lsblocks.perl -
+	 > $@ || (rm -f $@; false)
 bx: $(XML_SOURCES:.xml=.bx)
-no-bx: ; rm -f *.bx *.bx2 *.bx2s
+no-bx: ; rm -f *.bx
 CLEAN_FILES += *.bx
-
-##-- serialization, v2
-
-%.bx2: %.sx2 ./xml-no-namespaces ./xsltpipe.perl insert-implicit-breaks.xsl mark-sortkeys.xsl
-	./xml-no-namespaces $< | ./xsltpipe.perl insert-implicit-breaks.xsl mark-sortkeys.xsl - -format -o $@
-bx2: $(XML_SOURCES:.xml=.bx2)
-no-bx2: no-bx
-CLEAN_FILES += *.bx2
-
-%.bx2s: %.bx2 ./dta-tokwrap-lsblocks2.perl
-	./dta-tokwrap-lsblocks2.perl $< > $@ || (rm -f $@; false)
-bx2s: $(XML_SOURCES:.xml=.bx2s)
-CLEAN_FILES += *.bx2s
-
 
 
 ##======================================================================
