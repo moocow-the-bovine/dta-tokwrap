@@ -107,6 +107,7 @@ push(@ARGV,'-') if (!@ARGV);
 $outfile = '-' if (!defined($outfile));
 $outfh = IO::File->new(">$outfile")
   or die("$prog: open failed for output file '$outfile': $!");
+$outfh->binmode();
 
 ##-- parse file(s)
 foreach $infile (@ARGV) {
