@@ -105,7 +105,7 @@ bx0: $(XML_SOURCES:.xml=.bx0)
 no-bx0: ; rm -f *.bx0
 CLEAN_FILES += *.bx0
 
-##-- serialization + block list
+##-- serialization + txt
 %.bx:  %.bx %.txt
 %.txt: %.bx %.txt
 %.bx %.txt: %.bx0 %.tx dta-tokwrap-lsblocks.perl
@@ -115,6 +115,13 @@ txt: $(XML_SOURCES:.xml=.txt)
 no-bx: ; rm -f *.bx0 *.bx
 no-txt: ; rm -f *.txt
 CLEAN_FILES += *.bx
+
+##-- tokenization (dummy)
+%.tokd: %.txt dta-tokenize-dummy.perl
+	./dta-tokenize-dummy.perl "$<" -o "$@"
+tokd: $(XML_SOURCES:.xml=.tokd)
+no-tokd: ; rm -f *.tokd
+CLEAN_FILES += *.tokd
 
 ##======================================================================
 ## Rules: Clean
