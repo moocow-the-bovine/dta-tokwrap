@@ -3,6 +3,7 @@ LD = $(CC)
 
 CPPFLAGS ?=
 CFLAGS ?= -Wall -O2 -pipe
+#CFLAGS ?= -Wall -g
 LDFLAGS ?=
 LIBS ?= -lexpat
 
@@ -76,7 +77,14 @@ no-sx: ; rm -f *.sx
 no-tx: ; rm -f *.tx
 no-xx: no-cx no-sx no-tx
 
+##-- debugging
 sx-fmt: $(XML_SOURCES:.xml=.sx.fmt)
+stx: $(XML_SOURCES:.xml=.stx)
+no-stx: ; rm -f *.stx
+CLEAN_FILES += *.stx
+
+%.stx: %.sx.nons %.tx sx-insert-tx.perl
+	./sx-insert-tx.perl "$*.sx.nons" "$*.tx" -f 1 > $@ || (rm -f $@; false)
 
 ##-- namespace removal
 sx-nons: $(XML_SOURCES:.xml=.sx.nons)

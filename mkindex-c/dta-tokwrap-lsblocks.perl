@@ -18,7 +18,8 @@ our $WB = "\n\$WB\$\n";
 our $SB = "\n\$SB\$\n";
 
 ##-- $DEBUG_TXT: include debugging output in .txt file?
-our $DEBUG_TXT = 0;
+our ($DEBUG_TXT);
+#$DEBUG_TXT = 1;
 
 ##-- prog
 our $prog = File::Basename::basename($0);
@@ -28,12 +29,12 @@ our $prog = File::Basename::basename($0);
 ##   {
 ##    key    =>$sortkey, ##-- inherited sort key
 ##    elt    =>$eltname, ##-- element name which created this block
-##    xbegin =>$xoff,    ##-- XML byte offset where this block run begins
-##    xend   =>$xoff1,   ##-- XML byte offset where this block run ends
-##    tbegin =>$toff0,   ##-- text byte offset where this block run begins
-##    tend   =>$toff1,   ##-- text byte offset where this block run ends
+##    xoff   =>$xoff,    ##-- XML byte offset where this block run begins
+##    xlen   =>$xlen,    ##-- XML byte offset where this block run ends
+##    toff   =>$toff,    ##-- raw-text byte offset where this block run begins
+##    tlen   =>$tlen,    ##-- raw-text byte offset where this block run ends
 ##   }
-our $rootBlk = {key=>'__ROOT__',elt=>'__ROOT__',xbegin=>0,tbegin=>0, xend=>undef, tend=>undef};
+our $rootBlk = {key=>'__ROOT__',elt=>'__ROOT__',xoff=>0,xlen=>0, toff=>0,tlen=>0};
 
 ##-- @blocks: all parsed blocks
 our @blocks = ( $rootBlk );
@@ -67,7 +68,8 @@ our %target_elts = map {$_=>undef} @target_elts;
 our ($_xp,$eltname,%attrs,$item,$iblk);
 
 ##-- $xoff,$toff: global: current XML-, text-byte offset
-our ($xoff,$toff) = (0,0);
+##-- $xlen,$tlen: global: current XML-, text-byte length
+our ($xoff,$xlen, $toff,$tlen) = (0,0,0,0);
 
 ##--------------------------------------------------------------
 ## XML::Parser handlers: build %key2obj
@@ -87,8 +89,8 @@ sub cb_start {
 
   ##-- check for target elements
   if (exists($target_elts{$eltname})) {
-    ($xoff,$toff) = split(/ /,$attrs{n}) if (exists($attrs{n}));
-    push(@blocks, $blk={ key=>$key, elt=>$eltname, xbegin=>$xoff, tbegin=>$toff });
+    ($xoff,$xlen, $toff,$tlen) = split(/ /,$attrs{n}) if (exists($attrs{n}));
+    push(@blocks, $blk={ key=>$key, elt=>$eltname, xoff=>$xoff,xlen=>$xlen, toff=>$toff,tlen=>$tlen });
   }
 }
 
@@ -101,60 +103,47 @@ sub cb_end {
 ##--------------------------------------------------------------
 ## Subs: assign block '*end', '*len' keys
 
-##-- undef = compute_block_lengths(\@blocks)
-sub compute_block_lengths {
-  my $blocks = shift;
-  my ($prv,$nxt);
-  foreach $nxt (@$blocks) {
-    ##-- defaults
-    @$nxt{qw(xend tend)} = @$nxt{qw(xbegin tbegin)};
-    @$nxt{qw(xlen tlen ttlen)} = (0,0,0);
-
-    ##-- specials
-    if    ($nxt->{elt} eq 'w') { $nxt->{ttext}=$WB; $nxt->{ttlen}=length($WB); }
-    elsif ($nxt->{elt} eq 's') { $nxt->{ttext}=$SB; $nxt->{ttlen}=length($SB); }
-
-    if (!defined($prv)) { $prv=$nxt; next; }
-    elsif ($prv->{elt} ne 'c') { $prv=$nxt; next; }
-    elsif ($nxt->{elt} ne 'c') { next; }
-
-    @$prv{qw(xend tend)} = @$nxt{qw(xbegin tbegin)};
-    $prv->{xlen} = $prv->{xend} - $prv->{xbegin};
-    $prv->{tlen} = $prv->{tend} - $prv->{tbegin};
-    $prv = $nxt;
-  }
-}
-
-##-- undef = prune_empty_blocks(\@blocks)
+##-- \@blocks = prune_empty_blocks(\@blocks)
 ## + removes empty 'c'-type blocks
 sub prune_empty_blocks {
   my $blocks = shift;
   @$blocks = grep { $_->{elt} ne 'c' || $_->{tlen} > 0 } @$blocks;
+  return $blocks;
 }
 
-##-- \@sorted = sort_blocks(\@blocks)
+##-- \@blocks = sort_blocks(\@blocks)
+##  + sorts \@blocks
 sub sort_blocks {
   my $blocks = shift;
-  return [
-	  sort {
-	    ($key2i{$a->{key}} <=> $key2i{$b->{key}}
-	     || $a->{key} cmp $b->{key}
-	     || $a->{xbegin} <=> $b->{xbegin})
-	   } @$blocks
-	  ];
+  @$blocks = (
+	      sort {
+		($key2i{$a->{key}} <=> $key2i{$b->{key}}
+		 || $a->{key}  cmp $b->{key}
+		 || $a->{xoff} <=> $b->{xoff})
+	      } @$blocks
+	     );
+  return $blocks;
 }
 
-##-- undef = compute_output_lengths(\@sorted_blocks)
-##  + sets $blk->{ttbegin}, $blk->{ttlen} for each block
-sub compute_output_lengths {
-  my $blocks = shift;
-  my $off = 0;
+##-- \@blocks = compute_block_text(\@blocks, \$txtbuf)
+##  + \@blocks should already have been sorted
+##  + sets $blk->{otoff}, $blk->{otlen}, $blk->{otext} for each block
+sub compute_block_text {
+  my ($blocks,$txtbufr) = @_;
+  my $otoff = 0;
   my ($blk);
   foreach $blk (@$blocks) {
-    $blk->{ttlen}   = $blk->{tlen} if (!defined($blk->{ttlen}));
-    $blk->{ttbegin} = $off;
-    $off += $blk->{ttlen};
+    ##-- specials
+    if    ($blk->{elt} eq 'w') { $blk->{otext}=$WB; }
+    elsif ($blk->{elt} eq 's') { $blk->{otext}=$SB; }
+    else {
+      $blk->{otext} = substr($$txtbufr, $blk->{toff}, $blk->{tlen});
+    }
+    $blk->{otoff} = $otoff;
+    $blk->{otlen} = length($blk->{otext});
+    $otoff += $blk->{otlen};
   }
+  return $blocks;
 }
 
 ##--------------------------------------------------------------
@@ -202,25 +191,25 @@ our ($sxfile, $txfile, $bxfile, $txtfile) = @ARGV;
 $bxfile = '-' if (!defined($bxfile));
 $txtfile = '-' if (!defined($txtfile));
 
-##-- parse file(s): annotated structure index
-$xp->parsefile($sxfile);
-
-##-- compute (raw) block lengths & sort
-compute_block_lengths(\@blocks);
-prune_empty_blocks(\@blocks);
-
-$sblocks = sort_blocks(\@blocks);
-compute_output_lengths($sblocks);
-
-##-- extract text
+##-- slurp raw-text into buffer $txbuf
 $txbuf = '';
 slurp_file($txfile,\$txbuf);
+
+##-- parse structure file(s): annotated structure index
+$xp->parsefile($sxfile);
+
+##-- prune empty blocks & serialize (sort)
+prune_empty_blocks(\@blocks);
+sort_blocks(\@blocks);
+compute_block_text(\@blocks,\$txbuf);
+
+##-- output: txt
 open(TXT,">$txtfile") or die("$0: open failed for output .txt file '$txtfile': $!");
-foreach $blk (@$sblocks) {
+foreach $blk (@blocks) {
   print TXT
     (
      ($DEBUG_TXT ? "[$blk->{key}:$blk->{elt}]\n" : qw()),
-     (defined($blk->{ttext}) ? $blk->{ttext} : substr($txbuf,$blk->{tbegin},$blk->{tlen})),
+     $blk->{otext},
      ($DEBUG_TXT ? "\n[/$blk->{key}:$blk->{elt}]\n" : qw()),
     );
 }
@@ -233,7 +222,7 @@ print BX
    "%% XML block list file generated by $0\n",
    "%% Command-line: $0 ", join(' ', map {"'$_'"} @ARGV), "\n",
    "%%======================================================================\n",
-   "%% \$KEY\$\t\$ELT\$\t\$XML_OFFSET\$\t\$XML_LENGTH\$\t\$TXT_OFFSET\$\t\$TXT_LEN\$\n",
-   (map {join("\t", @$_{qw(key elt xbegin xlen tbegin tlen)})."\n"} @$sblocks),
+   "%% \$KEY\$\t\$ELT\$\t\$XML_OFFSET\$\t\$XML_LENGTH\$\t\$TX_OFFSET\$\t\$TX_LEN\$\t\$TXT_OFFSET\$\t\$TXT_LEN\$\n",
+   (map {join("\t", @$_{qw(key elt xoff xlen toff tlen otoff otlen)})."\n"} @blocks),
   );
 close(BX);

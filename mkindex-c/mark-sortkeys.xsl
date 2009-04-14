@@ -27,7 +27,7 @@
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- templates: ignored material -->
-  <xsl:template match="ref|fw" priority="100"/>
+  <xsl:template match="ref|fw|head" priority="100"/>
 
   <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
   <!-- templates: quasi-independent segments -->

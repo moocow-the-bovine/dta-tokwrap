@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <ctype.h>
 #include <time.h>
 
 #undef XML_DTD
@@ -41,8 +42,8 @@ typedef struct {
   ByteOffset n_chrs;    //-- number of <c> elements read
   int is_c;             //-- boolean: true if currently parsing a 'c' elt
   int is_chardata;      //-- true if current event is character data
-  ByteOffset loc_xoff;  //-- last xml-offset written as <loc/>
-  ByteOffset loc_toff;  //-- last text-offset written as <loc/>
+  ByteOffset loc_xoff;  //-- last xml-offset written to .sx as location-block (see LOC_FMT, cb_default())
+  ByteOffset loc_toff;  //-- last text-offset written to .sx as location-block (see LOC_FMT, cb_default())
   XML_Char c_tbuf[CTBUFSIZE]; //-- text buffer for current <c>
   int c_tlen;                 //-- byte length of text in character buffer c_tbuf[]
   XML_Char c_id[CIDBUFSIZE];  //-- xml:id of current <c>
@@ -74,6 +75,9 @@ int want_outfile_colnames = 1;
 #  define assert(test) 
 # endif /* defined(ENABLE_ASSERT) */
 #endif /* !defined(assert) */
+
+//-- SX_IGNORE_WS : ignore whitespace-only text events for .sx output
+#define SX_IGNORE_WS 1
 
 /*======================================================================
  * Utils
@@ -163,6 +167,7 @@ void put_record_char(TokWrapData *data)
 		 data->c_tbuf
 		 );
   put_raw_text(data, data->c_tlen, data->c_tbuf);
+  data->c_tlen = 0; //-- reset
 }
 
 //--------------------------------------------------------------
@@ -241,7 +246,6 @@ const char *si_suffix(double g)
 //--------------------------------------------------------------
 void cb_start(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
 {
-  ++data->total_depth;
   if (data->text_depth && strcmp(name,"c")==0) {
     const char *id;
     if (data->is_c) {
@@ -260,10 +264,12 @@ void cb_start(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
     data->c_tlen    = 0;
     data->is_c      = 1;
     data->n_chrs++;
+    data->total_depth++;
     return;
   }
   else if (strcmp(name,"lb")==0) {
     put_record_lb(data);
+    data->total_depth++;
     return;
   }
   else if (strcmp(name,"text")==0) {
@@ -271,18 +277,20 @@ void cb_start(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
   }
   data->is_chardata = 0;
   XML_DefaultCurrent(data->xp);
+  data->total_depth++;
 }
 
 //--------------------------------------------------------------
 void cb_end(TokWrapData *data, const XML_Char *name)
 {
-  --data->total_depth;
   if (strcmp(name,"c")==0) {
     put_record_char(data);  //-- output: index record + raw text
     data->is_c = 0;         //-- ... and leave <c>-parsing mode
+    data->total_depth--;
     return;
   }
   else if (strcmp(name,"lb")==0) {
+    data->total_depth--;
     return;
   }
   else if (strcmp(name,"text")==0) {
@@ -290,6 +298,8 @@ void cb_end(TokWrapData *data, const XML_Char *name)
   }
   data->is_chardata = 0;
   XML_DefaultCurrent(data->xp);
+  data->total_depth--;
+
 }
 
 //--------------------------------------------------------------
@@ -301,12 +311,23 @@ void cb_char(TokWrapData *data, const XML_Char *s, int len)
     data->c_tlen += len;
     return;
   }
+#ifdef SX_IGNORE_WS
+  else {
+    int i;
+    int isws=1;
+    for (i=0; i<len; i++) {
+      if (!isspace(s[i])) { isws=0; break; }
+    }
+    if (isws) return;
+  }
+#endif /* SX_IGNORE_WS */
   data->is_chardata = 1;
   XML_DefaultCurrent(data->xp);
 }
 
 //--------------------------------------------------------------
-static const char *LOC_FMT = "<c n=\"%lu %lu\"/>";
+static const char *LOC_FMT = "<c n=\"%lu %lu %lu %lu\"/>"; //-- xoff xlen toff tlen
+//static const char *LOC_FMT = "<c n=\"%lu %lu\"/>";
 //static const char *LOC_FMT = "<dta.tw.b n=\"%lu %lu\"/>";
 //static const char *LOC_FMT = "<dta.tw.block xb=\"%lu\" tb=\"%lu\"/>";
 //static const char *LOC_FMT = "<milestone unit=\"dta.loc\" n=\"%lu %lu\"/>";
@@ -314,19 +335,23 @@ void cb_default(TokWrapData *data, const XML_Char *s, int len)
 {
   int ctx_len;
   const XML_Char *ctx = get_event_context(data->xp, &ctx_len);
-  if (ctx_len > 0) {
-    ByteOffset xoff = XML_GetCurrentByteIndex(data->xp);
-    if (data->total_depth > 1 && !data->is_chardata && xoff != data->loc_xoff) {
-      fprintf(data->f_sx, LOC_FMT, xoff, data->c_toffset);
-      data->loc_xoff = xoff;
-      data->loc_toff = data->c_toffset;
-    }
-    fwrite(ctx, 1,ctx_len, data->f_sx);
-    if (data->total_depth > 0 && !data->is_chardata && xoff+ctx_len != data->loc_xoff) {
-      fprintf(data->f_sx, LOC_FMT, xoff+ctx_len, data->c_toffset);
-      data->loc_xoff = xoff+ctx_len;
-      data->loc_toff = data->c_toffset;
-    }
+  ByteOffset xoff = XML_GetCurrentByteIndex(data->xp);
+  if (data->total_depth > 0 && !data->is_chardata && xoff != data->loc_xoff) {
+    //-- pre-event location element
+    ByteOffset xlen = xoff - data->loc_xoff;
+    ByteOffset tlen = data->c_toffset + data->c_tlen - data->loc_toff;
+    fprintf(data->f_sx, LOC_FMT, data->loc_xoff, xlen, data->loc_toff, tlen);
+    data->loc_xoff = xoff;
+    data->loc_toff = data->c_toffset + data->c_tlen;
+  }
+  fwrite(ctx, 1,ctx_len, data->f_sx);
+  if (data->total_depth > 1 && !data->is_chardata && xoff+ctx_len != data->loc_xoff) {
+    //-- post-event location element
+    ByteOffset xlen = xoff + ctx_len - data->loc_xoff;
+    ByteOffset tlen = data->c_toffset + data->c_tlen - data->loc_toff;
+    fprintf(data->f_sx, LOC_FMT, data->loc_xoff, xlen, data->loc_toff, tlen);
+    data->loc_xoff = xoff + ctx_len;
+    data->loc_toff = data->c_toffset + data->c_tlen;
   }
 }
 

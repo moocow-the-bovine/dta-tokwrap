@@ -26,8 +26,8 @@
   <!-- Main Text (MAIN) -->
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: MAIN: ignored stuff -->
-  <xsl:template match="ref|fw" priority="100"/>
+  <!-- templates: MAIN: ignored stuff: see mark-sortkeys.xsl -->
+  <!--<xsl:template match="ref|fw" priority="100"/>-->
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- templates: MAIN: implicit sentence breaks -->
