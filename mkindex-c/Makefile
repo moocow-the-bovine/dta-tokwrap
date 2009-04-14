@@ -123,6 +123,19 @@ tokd: $(XML_SOURCES:.xml=.tokd)
 no-tokd: ; rm -f *.tokd
 CLEAN_FILES += *.tokd
 
+##-- standoff
+%.s.xml: %.s.xml %.w.xml
+%.w.xml: %.s.xml %.w.xml
+sw: $(XML_SOURCES:.xml=.s.xml) $(XML_SOURCES:.xml=.w.xml)
+ws: sw
+no-sw: ; rm -f *.s.xml *.w.xml
+no-ws: no-sw
+CLEAN_FILES += *.s.xml *.w.xml
+
+%.s.xml %.w.xml: %.cx %.bx %.tokd dta-tokwrap-standoff.perl
+	./dta-tokwrap-standoff.perl "$*.cx" "$*.bx" "$*.tokd" -xb="$*.xml" -f
+
+
 ##======================================================================
 ## Rules: Clean
 clean:
