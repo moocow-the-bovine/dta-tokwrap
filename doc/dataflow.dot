@@ -1,0 +1,58 @@
+##-*- Mode: C -*-
+digraph dataflow {
+  node [shape=rectangle,height=0.25,fontname="Courier"];
+
+  xml [label="x.xml"];
+
+  mkindex [label="mkindex.c",shape=rectangle,style=filled,fillcolor=grey,fontname="Courier-Bold"];
+  xml -> mkindex;
+
+  cx [label="x.cx"];
+  sx [label="x.sx"];
+  tx [label="x.tx"];
+  mkindex -> cx;
+  mkindex -> sx;
+  mkindex -> tx;
+  {rank=same; cx sx tx}
+
+  bx0 [label="x.bx0"];
+  mkbx0 [label="xml-no-namespaces.c\ninsert-implicit-breaks.xsl\nmark-sortkeys.xsl",shape=rectangle,style=filled,fillcolor=grey,fontname="Courier-Bold"];
+  sx -> mkbx0;
+  mkbx0 -> bx0;
+
+  bx [label="x.bx"];
+  txt [label="x.txt"];
+  lsblocks [label="lsblocks.perl",shape=rectangle,style=filled,fillcolor=grey,fontname="Courier-Bold"];
+  bx0 -> lsblocks;
+  tx  -> lsblocks;
+  lsblocks -> bx;
+  lsblocks -> txt;
+  {rank=same; bx txt}
+
+  t [label="x.t"];
+  tokenize [label="tokenizer",shape=rectangle,style=filled,fillcolor=grey,fontname="Courier-Bold"];
+  txt -> tokenize;
+  tokenize -> t;
+
+  t_xml [label="x.t.xml"];
+  t2xml [label="tt2xml.perl",shape=rectangle,style=filled,fillcolor=grey,fontname="Courier-Bold"];
+  t -> t2xml;
+  bx -> t2xml;
+  cx -> t2xml;
+  t2xml -> t_xml;
+
+  s_xml [label="x.s.xml"];
+  txml2sxml [label="ttxml2sxml.xsl",shape=rectangle,style=filled,fillcolor=grey,fontname="Courier-Bold"];
+  t_xml -> txml2sxml;
+  txml2sxml -> s_xml;
+
+  w_xml [label="x.w.xml"];
+  txml2wxml [label="ttxml2wxml.xsl",shape=rectangle,style=filled,fillcolor=grey,fontname="Courier-Bold"];
+  t_xml -> txml2wxml;
+  txml2wxml -> w_xml;
+
+  a_xml [label="x.a.xml"];
+  txml2axml [label="ttxml2axml.xsl",shape=rectangle,style=filled,fillcolor=grey,fontname="Courier-Bold"];
+  t_xml -> txml2axml;
+  txml2axml -> a_xml;
+}
