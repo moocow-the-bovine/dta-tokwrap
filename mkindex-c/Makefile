@@ -132,16 +132,16 @@ tokd: $(XML_SOURCES:.xml=.tokd)
 no-tokd: ; rm -f *.tokd
 CLEAN_FILES += *.tokd
 
-##-- tokenizer master xml output (slowest step so far)
-%.tokd.xml: %.tokd %.bx %.cx dta-tokwrap-tt2xml.perl
+##-- tokenizer master xml output (slowest step so far: 7.25 Ktok/sec ~ 47.0 Kchr/sec ~ 13sec for ex1 (kraepelin))
+%.t.xml: %.tokd %.bx %.cx dta-tokwrap-tt2xml.perl
 	./dta-tokwrap-tt2xml.perl "$*.tokd" "$*.bx" "$*.cx" -f -o "$@"
-tokd-xml: $(XML_SOURCES:.xml=.tokd.xml)
-no-tokd-xml: ; rm -f *.tokd.xml
+tokd-xml: $(XML_SOURCES:.xml=.t.xml)
+no-tokd-xml: ; rm -f *.t.xml
 t-xml: tokd-xml
 no-t-xml: no-tokd-xml
 tt-xml: t-xml
 no-tt-xml: no-t-xml
-CLEAN_FILES += *.tokd.xml
+CLEAN_FILES += *.t.xml
 
 ##-- standoff (via xsl)
 standoff: s-xml w-xml a-xml
@@ -149,23 +149,34 @@ no-standoff: no-s-xml no-w-xml no-a-xml
 %-standoff:
 	$(MAKE) $*.s.xml $*.w.xml $*.a.xml
 
-%.s.xml: dta-tokwrap-ttxml2sxml.xsl %.tokd.xml
+%.s.xml: dta-tokwrap-ttxml2sxml.xsl %.t.xml
 	xsltproc --stringparam xmlbase "$*.w.xml" -o "$@" $^
 s-xml: $(XML_SOURCES:.xml=.s.xml)
 no-s-xml: ; rm -f *.s.xml
 CLEAN_FILES += *.s.xml
 
-%.w.xml: dta-tokwrap-ttxml2wxml.xsl %.tokd.xml
+%.w.xml: dta-tokwrap-ttxml2wxml.xsl %.t.xml
 	xsltproc --stringparam xmlbase "$*.xml" -o "$@" $^
 w-xml: $(XML_SOURCES:.xml=.w.xml)
 no-w-xml: ; rm -f *.w.xml
 CLEAN_FILES += *.w.xml
 
-%.a.xml: dta-tokwrap-ttxml2axml.xsl %.tokd.xml
+%.a.xml: dta-tokwrap-ttxml2axml.xsl %.t.xml
 	xsltproc --stringparam xmlbase "$*.w.xml" -o "$@" $^
 a-xml: $(XML_SOURCES:.xml=.a.xml)
 no-a-xml: ; rm -f *.a.xml
 CLEAN_FILES += *.a.xml
+
+##-- running time summary / ex1 (kraepelin) / uhura
+## xml -> cx,sx,tx   1.2s  ~  75.9 Ktok/sec ~ 502.3 Kchr/sec
+## sx -> bx0         0.11s ~ 842.8 Ktok/sec ~   5.6 Mchr/sec
+## bx0 -> txt        0.30s ~ 303.4 Ktok/sec ~   2.0 Mchr/sec
+## txt -> tokd       0.08s ~   1.1 Mtok/sec ~   7.5 Mchr/sec
+## tokd -> t.xml    13.13s ~   6.9 Ktok/sec ~  45.9 Kchr/sec  *** SLOW (perl) ***
+## t.xml -> s.xml    1.79s ~  59.8 Ktok/sec ~ 336.8 Kchr/sec
+## t.xml -> w.xml    8.62s ~  10.6 Ktok/sec ~  70.0 Kchr/sec  *** SLOW (xsl) ***
+## t.xml -> a.xml    2.08s ~  43.8 Ktok/sec ~ 289.8 Kchr/sec
+## TOTAL            27.31s ~   3.3 Ktok/sec ~  22.1 Kchr/sec
 
 ##======================================================================
 ## Rules: Clean
