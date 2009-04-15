@@ -7,7 +7,7 @@ CFLAGS ?= -Wall -O2 -pipe
 LDFLAGS ?=
 LIBS ?= -lexpat
 
-TARGETS = dta-tokwrap-mkindex xml-no-namespaces
+TARGETS = dta-tokwrap-mkindex xml-no-namespaces dta-tokenize-dummy
 #dta-tokwrap-mkindex2
 #xmlparse-noop
 #dta-tokwrap-textindex
@@ -38,10 +38,19 @@ xmlparse-noop: xmlparse-noop.o
 xml-no-namespaces: xml-no-namespaces.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
 
+dta-tokenize-dummy: dta-tokenize-dummy.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS) -lfl
+
 ##======================================================================
 ## Rules: Compling
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+
+##======================================================================
+## Rules: Dummy tokenizer
+
+dta-tokenize-dummy.c: dta-tokenize-dummy.l
+	flex -8 $<
 
 ##======================================================================
 ## Rules: formatting
@@ -117,8 +126,10 @@ no-txt: ; rm -f *.txt
 CLEAN_FILES += *.bx
 
 ##-- tokenization (dummy)
-%.tokd: %.txt dta-tokenize-dummy.perl
+%.tokd-perl: %.txt dta-tokenize-dummy.perl
 	./dta-tokenize-dummy.perl "$<" -o "$@"
+%.tokd: %.txt dta-tokenize-dummy
+	./dta-tokenize-dummy < "$<" > "$@" || (rm -f "$@"; false)
 tokd: $(XML_SOURCES:.xml=.tokd)
 no-tokd: ; rm -f *.tokd
 CLEAN_FILES += *.tokd
@@ -135,21 +146,28 @@ no-tt-xml: no-t-xml
 CLEAN_FILES += *.tokd.xml
 
 ##-- standoff (via xsl)
-standoff: s-xml w-xml
-no-standoff: no-s-xml no-w-xml
+standoff: s-xml w-xml a-xml
+no-standoff: no-s-xml no-w-xml no-a-xml
+%-standoff:
+	$(MAKE) $*.s.xml $*.w.xml $*.a.xml
 
-%.s.xml: ttxml-to-sxml.xsl %.tokd.xml
-	xsltproc -o "$@" $^
+%.s.xml: dta-tokwrap-ttxml2sxml.xsl %.tokd.xml
+	xsltproc --stringparam xmlbase "$*.w.xml" -o "$@" $^
 s-xml: $(XML_SOURCES:.xml=.s.xml)
 no-s-xml: ; rm -f *.s.xml
 CLEAN_FILES += *.s.xml
 
-%.w.xml: ttxml-to-wxml.xsl %.tokd.xml
-	xsltproc -o "$@" $^
+%.w.xml: dta-tokwrap-ttxml2wxml.xsl %.tokd.xml
+	xsltproc --stringparam xmlbase "$*.xml" -o "$@" $^
 w-xml: $(XML_SOURCES:.xml=.w.xml)
 no-w-xml: ; rm -f *.w.xml
 CLEAN_FILES += *.w.xml
 
+%.a.xml: dta-tokwrap-ttxml2axml.xsl %.tokd.xml
+	xsltproc --stringparam xmlbase "$*.w.xml" -o "$@" $^
+a-xml: $(XML_SOURCES:.xml=.a.xml)
+no-a-xml: ; rm -f *.a.xml
+CLEAN_FILES += *.a.xml
 
 ##======================================================================
 ## Rules: Clean

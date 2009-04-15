@@ -22,17 +22,8 @@
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- main: template: root: traverse -->
   <xsl:template match="/*">
-    <xsl:element name="sentences">
+    <xsl:element name="tokens">
       <xsl:attribute name="xml:base"><xsl:value-of select="$xmlbase"/></xsl:attribute>
-      <xsl:apply-templates select="*"/>
-    </xsl:element>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- main: template: s -->
-  <xsl:template match="s">
-    <xsl:element name="s">
-      <xsl:copy-of select="./@xml:id"/>
       <xsl:apply-templates select="*"/>
     </xsl:element>
   </xsl:template>
@@ -41,15 +32,31 @@
   <!-- main: template: w -->
   <xsl:template match="w">
     <xsl:element name="w">
-      <xsl:attribute name="ref">#<xsl:value-of select="./@xml:id"/></xsl:attribute>
+      <xsl:attribute name="ref">#<xsl:value-of select="@xml:id"/></xsl:attribute>
+      <xsl:copy-of select="@t"/>
       <xsl:apply-templates select="*"/>
     </xsl:element>
   </xsl:template>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+  <!-- main: template: w/a -->
+  <xsl:template match="w/a">
+    <xsl:element name="a">
+      <xsl:copy-of select="@*"/>
+      <xsl:apply-templates select="*|text()"/>
+    </xsl:element>
+  </xsl:template>
+
+  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+  <!-- main: template: w/a/text() -->
+  <xsl:template match="w/a/text()">
+    <xsl:copy-of select="."/>
+  </xsl:template>
+
+  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- main: default: just recurse -->
   <xsl:template match="*|@*|text()|processing-instruction()|comment()" priority="-1">
-    <xsl:apply-templates select="*|@*"/>
+    <xsl:apply-templates select="*"/>
   </xsl:template>
 
 </xsl:stylesheet>

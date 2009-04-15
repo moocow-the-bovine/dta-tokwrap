@@ -10,7 +10,7 @@
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- parameters -->
-  <!--<xsl:param name="path" select="//text/w"/>-->
+  <xsl:param name="xmlbase" select="/*/@xml:base"/>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- options -->
@@ -23,7 +23,7 @@
   <!-- main: template: root: traverse -->
   <xsl:template match="/*">
     <xsl:element name="tokens">
-      <xsl:copy-of select="@*"/>
+      <xsl:attribute name="xml:base"><xsl:value-of select="$xmlbase"/></xsl:attribute>
       <xsl:apply-templates select="*"/>
     </xsl:element>
   </xsl:template>
@@ -33,6 +33,7 @@
   <xsl:template match="w">
     <xsl:element name="w">
       <xsl:copy-of select="@xml:id"/>
+      <xsl:copy-of select="@t"/>
       <xsl:call-template name="w-ref"/>
       <xsl:apply-templates select="*"/>
     </xsl:element>

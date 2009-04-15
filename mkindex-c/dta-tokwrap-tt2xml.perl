@@ -17,7 +17,7 @@ our $prog = basename($0);
 our $outfile  = '-';     ##-- default: stdout
 our $xmlbase  = undef;  ##-- default: basename($cxfile,'.cx').".xml"
 our $format   = 0;      ##-- output formatting?
-our $verbose  = 1;      ##-- verbosity
+our $verbose  = 0;      ##-- verbosity
 
 ##-- profiling
 our $profile = 1;

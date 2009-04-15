@@ -107,7 +107,15 @@ sub dtaTokenizeFile {
       $textstr = encode('UTF-8', $textstr);
 
       ##-- output
-      $outfh->print($textstr, "\t", $byte, ' ', $textlen, "\n");
+      $outfh->print($textstr, "\t", $byte, ' ', $textlen,
+		    ##-- pre-analyses (hacks)
+		    ($textstr =~ /^[[:punct:]]+$/
+		     ? "\t\$PUNCT"
+		     : ($textstr =~ /[[:digit:]]/
+			? "\t\$NUM"
+			: qw())
+		    ),
+		    "\n");
 
       ##-- hack: output sentence breaks at any of: . ? !
       if ($textstr eq '.' || $textstr eq '?' || $textstr eq '!') { $outfh->print("\n"); }
