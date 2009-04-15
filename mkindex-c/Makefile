@@ -125,16 +125,14 @@ no-bx: ; rm -f *.bx0 *.bx
 no-txt: ; rm -f *.txt
 CLEAN_FILES += *.bx
 
-##-- tokenization (dummy)
-%.tokd-perl: %.txt dta-tokenize-dummy.perl
-	./dta-tokenize-dummy.perl "$<" -o "$@"
+##-- tokenization (dummy, via flex for speed)
 %.tokd: %.txt dta-tokenize-dummy
 	./dta-tokenize-dummy < "$<" > "$@" || (rm -f "$@"; false)
 tokd: $(XML_SOURCES:.xml=.tokd)
 no-tokd: ; rm -f *.tokd
 CLEAN_FILES += *.tokd
 
-##-- tokenizer master xml output
+##-- tokenizer master xml output (slowest step so far)
 %.tokd.xml: %.tokd %.bx %.cx dta-tokwrap-tt2xml.perl
 	./dta-tokwrap-tt2xml.perl "$*.tokd" "$*.bx" "$*.cx" -f -o "$@"
 tokd-xml: $(XML_SOURCES:.xml=.tokd.xml)
