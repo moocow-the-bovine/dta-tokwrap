@@ -123,17 +123,32 @@ tokd: $(XML_SOURCES:.xml=.tokd)
 no-tokd: ; rm -f *.tokd
 CLEAN_FILES += *.tokd
 
-##-- standoff
-%.s.xml: %.s.xml %.w.xml
-%.w.xml: %.s.xml %.w.xml
-sw: $(XML_SOURCES:.xml=.s.xml) $(XML_SOURCES:.xml=.w.xml)
-ws: sw
-no-sw: ; rm -f *.s.xml *.w.xml
-no-ws: no-sw
-CLEAN_FILES += *.s.xml *.w.xml
+##-- tokenizer master xml output
+%.tokd.xml: %.tokd %.bx %.cx dta-tokwrap-tt2xml.perl
+	./dta-tokwrap-tt2xml.perl "$*.tokd" "$*.bx" "$*.cx" -f -o "$@"
+tokd-xml: $(XML_SOURCES:.xml=.tokd.xml)
+no-tokd-xml: ; rm -f *.tokd.xml
+t-xml: tokd-xml
+no-t-xml: no-tokd-xml
+tt-xml: t-xml
+no-tt-xml: no-t-xml
+CLEAN_FILES += *.tokd.xml
 
-%.s.xml %.w.xml: %.cx %.bx %.tokd dta-tokwrap-standoff.perl
-	./dta-tokwrap-standoff.perl "$*.cx" "$*.bx" "$*.tokd" -xb="$*.xml" -f
+##-- standoff (via xsl)
+standoff: s-xml w-xml
+no-standoff: no-s-xml no-w-xml
+
+%.s.xml: ttxml-to-sxml.xsl %.tokd.xml
+	xsltproc -o "$@" $^
+s-xml: $(XML_SOURCES:.xml=.s.xml)
+no-s-xml: ; rm -f *.s.xml
+CLEAN_FILES += *.s.xml
+
+%.w.xml: ttxml-to-wxml.xsl %.tokd.xml
+	xsltproc -o "$@" $^
+w-xml: $(XML_SOURCES:.xml=.w.xml)
+no-w-xml: ; rm -f *.w.xml
+CLEAN_FILES += *.w.xml
 
 
 ##======================================================================
