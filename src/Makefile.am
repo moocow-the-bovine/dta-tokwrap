@@ -11,10 +11,12 @@ include $(top_srcdir)/Common.am
 
 bin_PROGRAMS = \
 	dtatw-mkindex \
+	dtatw-mkindex-bin \
 	dtatw-tokenize-dummy \
 	xml-rm-namespaces
 
 dtatw_mkindex_SOURCES = dtatw-mkindex.c
+dtatw_mkindex_bin_SOURCES = dtatw-mkindex-bin.c
 
 if HAVE_FLEX
 dtatw_tokenize_dummy_SOURCES = dtatw-tokenize-dummy.l
