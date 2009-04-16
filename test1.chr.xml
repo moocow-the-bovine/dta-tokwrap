@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<text>
+  <c xml:id="test-ent-amp">&amp;</c>
+  <c xml:id="test-ent-quot">&quot;</c>
+  <c xml:id="test-ent-lt">&lt;</c>
+  <c xml:id="test-ent-gt">&gt;</c>
+  <c xml:id="test-ent-ouml-dec">&#246;</c>
+  <c xml:id="test-ent-ouml-hex">&#xf6;</c>
+  <c xml:id="test-ent-wide-ldq">&#x201E;</c>
+  <c xml:id="test-g-in-c"><g ref="#frac12" type="frac">1/2</g></c>
+  <c xml:id="test-tab">&#x09;</c>
+  <c xml:id="test-backslash-t">\t</c>
+
+  <c> </c>
+
+  <c>f</c>
+  <c>o</c>
+  <c>o</c>
+
+  <c> </c>
+
+  <c>b</c>
+  <c>a</c>
+  <c>r</c>
+
+  <lb/>
+
+  <c>b</c>
+  <c>a</c>
+  <c>z</c>
+  <c>.</c>
+
+  <p>
+   <c>b</c>
+   <c>o</c>
+   <c>f</c>
+   <c>f</c>
+   <c>o</c>
+   <c>!</c>
+  </p>
+</text>
