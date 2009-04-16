@@ -1,0 +1,12 @@
+dnl -*- Mode: autoconf -*-
+
+AC_DEFUN([AX_SAVE_USERFLAGS],
+[
+AC_MSG_NOTICE([saving user *FLAGS variables])
+##-- save user's *FLAGS
+USER_LIBS="$LIBS"
+USER_LDFLAGS="$LDFLAGS"
+USER_CPPFLAGS="$CPPFLAGS"
+USER_CFLAGS="$CFLAGS"
+USER_CXXFLAGS="$CXXFLAGS"
+])
