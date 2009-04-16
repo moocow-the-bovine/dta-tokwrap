@@ -173,7 +173,7 @@ no-w-xml: ; rm -f *.w.xml
 CLEAN_FILES += *.w.xml
 
 ##-- standoff: .a.xml
-%.a.xml: ../scripts/dtatw-txml2axml.xsl.t.xml
+%.a.xml: ../scripts/dtatw-txml2axml.xsl %.t.xml
 	xsltproc --stringparam xmlbase "$*.w.xml" -o "$@" $^
 a-xml: $(XML_SOURCES:.xml=.a.xml)
 no-a-xml: ; rm -f *.a.xml
