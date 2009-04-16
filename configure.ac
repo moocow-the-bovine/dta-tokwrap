@@ -45,9 +45,6 @@ dnl AC_PROG_LIBTOOL
 dnl v--- for static-only libraries (non-libtool)
 dnl AC_PROG_RANLIB
 
-###-- restore user FLAGS
-AX_RESTORE_USERFLAGS
-
 #---------------------------------------------------------------
 # short package includes
 spkgincludedir="\${includedir}/AC_PACKAGE_NAME"
@@ -55,45 +52,46 @@ AC_SUBST(spkgincludedir)
 # short package includes
 #---------------------------------------------------------------
 
-#---------------------------------------------------------------
-# get real prefix
-AC_CACHE_CHECK([for installation prefix], [ac_cv_install_prefix],
-	[if test "$prefix" = "NONE" ; then
-	   ac_cv_install_prefix="/usr/local"
-	 else
-           ac_cv_install_prefix="$prefix"
-	 fi
-	])
-
-dnl check for strdup
-AC_CHECK_FUNC(strdup,[AC_DEFINE(HAVE_STRDUP,1,[Define this if you have the strdup() function])])
-
-
 ##-- pkg-config
-AX_CHECK_PKGCONFIG
-dnl AX_PKGCONFIG_DIR
+dnl AX_CHECK_PKGCONFIG
+dnl AX_PKGCONFIG_DIR  dnl-- only for packages which install their own .pc file(s)
 
-##-- perl, gog
+##-- perl
 AX_CHECK_PERL
-AX_CHECK_GOG
+
+##-- Getopt::Gen, optgen.perl
+dnl AX_CHECK_GOG
+
+##-- expat
+AX_CHECK_EXPAT
+if test "$ENABLE_EXPAT" != "yes"; then
+  AC_MSG_ERROR([could not find expat XML parser library: refusing to continue!])
+fi
+
+##-- debug
+AX_CHECK_DEBUG
+
+###-- restore user FLAGS
+AX_RESTORE_USERFLAGS
+
 
 ##vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 ## Documentation
 ##
-AX_DOC_COMMON
+dnl AX_DOC_COMMON
 AX_DOC_POD
-AX_DOC_GOG
-AX_DOC_GOG_LINKS
+dnl AX_DOC_GOG
+dnl AX_DOC_GOG_LINKS
 ##
 ## /Documentation
 ##^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ##-- no-autoheader stuff
-AC_CONFIG_LINKS(src/dtaTwNoAuto.h:src/dtaTwConfigAuto.h.in)
+AC_CONFIG_LINKS(src/dtaTwConfigNoAuto.h:src/dtaTwConfigAuto.h.in)
 
 ##----------------------------------------------------------------------
 ## output
 ##
-dnl AC_CONFIG_FILES(src/Makefile)
+AC_CONFIG_FILES(src/Makefile)
 AC_CONFIG_FILES(Makefile)
 AC_OUTPUT

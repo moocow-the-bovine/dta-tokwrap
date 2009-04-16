@@ -4,7 +4,7 @@ dnl AX_CHECK_DEBUG
 dnl + sets/modifies vars:
 dnl   ENABLE_DEBUG
 dnl   OFLAGS
-dnl   USER_CFLAGS
+dnl   CFLAGS, USER_CFLAGS
 dnl + autoheader defines
 dnl   ENABLE_DEBUG
 dnl + AC_SUBST vars
@@ -49,7 +49,7 @@ else
       ;;
     *)
      AC_MSG_NOTICE([GNU C compiler detected: setting appropriate optimization flags])
-     OFLAGS="-O2"
+     OFLAGS="-pipe -O2"
      ;;
    esac
   else
@@ -60,7 +60,7 @@ else
   CONFIG_OPTIONS="DEBUG=0"
 fi
 
-test -n "$OFLAGS" && USER_CFLAGS="$USER_CFLAGS $OFLAGS"
+test -n "$OFLAGS" && USER_CFLAGS="$USER_CFLAGS $OFLAGS" && CFLAGS="$CLFAGS $OFLAGS"
 AC_SUBST(OFLAGS)
 ##
 ## /debug ?

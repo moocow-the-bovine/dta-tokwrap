@@ -145,7 +145,7 @@ AC_DEFUN([AX_DOC_DOXYGEN],
 ##-- doxygen: var
 AC_ARG_VAR(DOXYGEN,[Path to doxygen documentation generator; "no" to disable])
 
-if test "doc_formats" != "none" ; then
+if test "$doc_formats" != "none" ; then
 
   ##-- doxygen: prog
   ##
@@ -233,7 +233,7 @@ if test "doc_formats" != "none" ; then
   ##
   ##--/doxyxgen: tag-files
   
-fi; # if "$doc_formats" != "none" ...
+fi; # if test "$doc_formats" != "none" ...
 
 ##-- automake conditionals: doyxgen
 AM_CONDITIONAL(HAVE_DOXYGEN,     [test -n "$DOXYGEN"     -a "$DOXYGEN"     != "no"])
@@ -247,7 +247,7 @@ AC_DEFUN([AX_DOC_POD],
 [
   ##vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
   ## Documentation: .pod
-if "$doc_formats" != "none" ; then
+if test "$doc_formats" != "none" ; then
   ##-- docs: section 5 (static pods)
   AC_SUBST(DOC_MAN1_PODS)
   AC_SUBST(DOC_MAN5_PODS)
@@ -276,7 +276,7 @@ if "$doc_formats" != "none" ; then
   fi
   ##
   ##--/docs:pod2x
-fi; # if "$doc_formats" != "none" ...
+fi; # if test "$doc_formats" != "none" ...
 
 ##-- programs: pod2x
 AC_SUBST(POD2TEXT)

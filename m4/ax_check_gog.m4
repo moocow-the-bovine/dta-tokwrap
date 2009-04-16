@@ -31,6 +31,9 @@ if test "$OPTGEN_PERL" = "no" ; then
   AC_MSG_WARN([- regeneration of POD documentation from .gog specifications disabled.])
 fi
 AM_CONDITIONAL(HAVE_OPTGEN, [test "$OPTGEN_PERL" != "no"])
+
+##-- check for strdup (needed for gog-generated files)
+AC_CHECK_FUNC(strdup,[AC_DEFINE(HAVE_STRDUP,1,[Define this if you have the strdup() function])])
 ##
 ## /optgen.perl
 ##^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
