@@ -11,9 +11,10 @@ include $(top_srcdir)/Common.am
 
 bin_PROGRAMS = \
 	dtatw-mkindex \
-	dtatw-mkindex-bin \
 	dtatw-tokenize-dummy \
 	xml-rm-namespaces
+
+EXTRA_PROGRAMS = dtatw-mkindex-bin
 
 dtatw_mkindex_SOURCES = dtatw-mkindex.c
 dtatw_mkindex_bin_SOURCES = dtatw-mkindex-bin.c

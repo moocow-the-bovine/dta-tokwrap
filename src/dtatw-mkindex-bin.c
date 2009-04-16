@@ -150,18 +150,32 @@ void put_raw_text(TokWrapData *data, int tlen, const char *txt)
 }
 
 //--------------------------------------------------------------
+#define CXBIN_NULSTRINGS 1 //-- use NUL-terminated strings instead of fixed-width fields
+#ifndef CXBIN_NULSTRINGS
+# define BINLEN_ID   12 //-- == 2 + length(2**32-1 (=4294967295))
+# define BINLEN_TEXT  4 //-- == UTF-8 max?
+#endif
+
 void put_record_raw(FILE *f, const char *id, ByteOffset xoffset, int xlen, ByteOffset toffset, int tlen, const char *txt)
 {
   unsigned char xlen_c = xlen;
   unsigned char tlen_c = tlen;
+  int strlen_id  = strlen(id);
+  int strlen_txt = (tlen < 0 ? strlen(txt) : tlen);
+  int i;
 
   if (!f) return;
   //fprintf(f, "%s\t%lu\t%d\t%lu\t%d\t%s\n", id, xoffset, xlen, toffset, (tlen < 0 ? 0 : tlen), index_text(txt,tlen));
 
   //-- id, NUL-terminated
-  fwrite(id, 1,strlen(id), f);
+  fwrite(id, 1,strlen_id, f);
+#ifdef CXBIN_NULSTRINGS
   fputc('\0', f);
-
+#else
+  assert(strlen_id<=BINLEN_ID);
+  for (i=strlen_id; i < BINLEN_ID; i++) { fputc('\0', f); }
+#endif
+  
   //-- xoffset, xlen
   fwrite(&xoffset, sizeof(ByteOffset),1, f);
   fwrite(&xlen_c,  sizeof(unsigned char),1, f);
@@ -171,8 +185,12 @@ void put_record_raw(FILE *f, const char *id, ByteOffset xoffset, int xlen, ByteO
   fwrite(&tlen_c,  sizeof(unsigned char),1, f);
 
   //-- txt
-  fwrite(txt, 1,(tlen < 0 ? strlen(txt) : tlen), f);
+  fwrite(txt, 1,strlen_txt, f);
+#ifdef CXBIN_NULSTRINGS
   fputc('\0', f);
+#else
+  for (i=strlen_txt; i < BINLEN_TEXT; i++) { fputc('\0', f); }
+#endif
 
   return;
 }
@@ -534,11 +552,13 @@ int main(int argc, char **argv)
     }
   } while (!isFinal);
 
-  //-- terminate cx file with number of characters
+  //-- terminate cx file with number of characters (NUL-terminated strings only)
+#ifdef CXBIN_NULSTRINGS
   if (f_cx) {
     ByteOffset n_cx = data.n_chrs+1;
     fwrite(&n_cx, sizeof(ByteOffset),1, f_cx);
   }
+#endif
 
   //-- always terminate text file with a newline
   if (f_tx) fputc('\n',f_tx);
