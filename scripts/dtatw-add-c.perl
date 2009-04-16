@@ -78,7 +78,7 @@ sub cb_char {
 	next;
       }
     }
-    $outfh->print("<c xml:id=\"c_", ++$cnum, "\">", encode('UTF-8',$c_char), "</c>");
+    $outfh->print("<c xml:id=\"c", ++$cnum, "\">", encode('UTF-8',$c_char), "</c>");
   }
 }
 
@@ -144,11 +144,11 @@ $outfh->close();
 ##-- profiling / output
 sub sistr {
   my $x = shift;
-  return sprintf("%.2fK", $x/10**3)  if ($x >= 10**3);
-  return sprintf("%.2fM", $x/10**6)  if ($x >= 10**6);
-  return sprintf("%.2fG", $x/10**9)  if ($x >= 10**9);
-  return sprintf("%.2fT", $x/10**12) if ($x >= 10**12);
-  return sprintf("%.2f", $x);
+  return sprintf("%.2f K", $x/10**3)  if ($x >= 10**3);
+  return sprintf("%.2f M", $x/10**6)  if ($x >= 10**6);
+  return sprintf("%.2f G", $x/10**9)  if ($x >= 10**9);
+  return sprintf("%.2f T", $x/10**12) if ($x >= 10**12);
+  return sprintf("%.2f ", $x);
 }
 
 if ($profile) {
@@ -157,7 +157,7 @@ if ($profile) {
   $bytesPerSec = sistr($elapsed > 0 ? ($nxbytes/$elapsed) : -1);
 
   print STDERR
-    (sprintf("%s: %d chars ~ %d XML-bytes in %.2f sec: %s chr/sec ~ %s bytes/sec\n",
+    (sprintf("%s: %d chars ~ %d XML-bytes in %.2f sec: %schr/sec ~ %sbyte/sec\n",
 	     $prog, $nchrs,$nxbytes, $elapsed, $chrsPerSec, $bytesPerSec));
 }
 
