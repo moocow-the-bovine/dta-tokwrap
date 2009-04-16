@@ -60,11 +60,7 @@ endif
 ## Cleanup
 
 ##--- clean: built by 'make'
-if HAVE_POD2TEXT
-CLEANFILES = $(PODS:.pod=.txt)
-else
 CLEANFILES =
-endif
 
 ##--- distclean: built by 'configure'
 DISTCLEANFILES = \

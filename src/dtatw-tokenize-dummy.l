@@ -47,7 +47,7 @@ NEWLINE  [\n\r]
 SENTBREAK \$SB\$
 WORDBREAK \$[WT]B\$
 
-ABBR     (Prof|Dr|[[:alpha:L]]|([[:alpha:][:alpha:]]))\.
+ABBR     (Prof|Dr|[[:alpha:]]|([[:alpha:]][[:alpha:]]))\.
 
 /*======================================================================
  * Rules

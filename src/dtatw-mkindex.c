@@ -52,7 +52,7 @@ typedef struct {
 } TokWrapData;
 
 //-- prog: default name of this program (used for error reporting, set from argv[0] later)
-char *prog = "dta-tokwrap-textindex";
+char *prog = "dtatw-mkindex";
 
 //-- want_profile: if true, some profiling information will be printed to stderr
 int want_profile = 1;
@@ -370,7 +370,7 @@ int main(int argc, char **argv)
   char *filename_tx = NULL;
   FILE *f_in = stdin;   //-- input file
   FILE *f_cx = stdout;  //-- output character-index file (NULL for none)
-  FILE *f_sx = stdout;  //-- output structure-index file (NULL for none)
+  FILE *f_sx = NULL;    //-- output structure-index file (NULL for none)
   FILE *f_tx = NULL;    //-- output text file (NULL for none)
   //
   //-- profiling
@@ -383,10 +383,12 @@ int main(int argc, char **argv)
   //-- command-line: usage
   if (argc <= 1) {
     fprintf(stderr, "Usage: %s INFILE [CXFILE [SXFILE [TXFILE]]]\n", prog);
-    fprintf(stderr, " + INFILE : XML source file with <c> elements\n");
-    fprintf(stderr, " + CXFILE : output character-index file; default=stdout\n");
-    fprintf(stderr, " + SXFILE : output structure-index file; default=stdout\n");
-    fprintf(stderr, " + TXFILE : output raw text file; default=none\n");
+    fprintf(stderr, " + INFILE : XML source file with <c> and <lb> elements\n");
+    fprintf(stderr, " + CXFILE : output character-index CSV file; default=stdout\n");
+    fprintf(stderr, " + SXFILE : output structure-index XML file; default=none\n");
+    fprintf(stderr, " + TXFILE : output raw text-index file (unserialized); default=none\n");
+    fprintf(stderr, " + \"-\" may be used in place of any filename to indicate standard (in|out)put\n");
+    fprintf(stderr, " + \"\"  may be used in place of any output filename to discard output\n");
     exit(1);
   }
   //-- command-line: input file

@@ -28,7 +28,7 @@ typedef struct {
 } ParseData;
 
 //-- prog: default name of this program (used for error reporting, set from argv[0] later)
-char *prog = "xml-no-namespaces";
+char *prog = "xml-rm-namespaces";
 
 /*======================================================================
  * Debug
@@ -173,7 +173,7 @@ int main(int argc, char **argv)
   if (argc <= 1) {
     fprintf(stderr, "Usage: %s INFILE [OUTFILE]\n", prog);
     fprintf(stderr, " + INFILE  : XML source file with namespaces\n");
-    fprintf(stderr, " + OUTFILE : XML file with pseudo-namespaces\n");
+    fprintf(stderr, " + OUTFILE : XML output file, will have pseudo-namespaces\n");
     exit(1);
   }
   //-- command-line: input file

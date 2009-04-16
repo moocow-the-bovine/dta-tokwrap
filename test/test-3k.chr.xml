@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <doc>
  <head>
-   <c xml:id="headc">ignoreme</c>
+   <no_c xml:id="headc">ignoreme</no_c>
  </head>
  <text>
  <p>

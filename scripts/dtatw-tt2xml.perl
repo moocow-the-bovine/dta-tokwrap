@@ -17,7 +17,7 @@ our $prog = basename($0);
 our $outfile  = '-';     ##-- default: stdout
 our $xmlbase  = undef;  ##-- default: basename($cxfile,'.cx').".xml"
 our $format   = 0;      ##-- output formatting?
-our $verbose  = 0;      ##-- verbosity
+our $verbose  = 1;      ##-- verbosity
 
 ##-- profiling
 our $profile = 1;
@@ -204,7 +204,7 @@ sub flush_sentence {
   our($si,@s_wnods);
   return if (!@s_wnods);
   $snod = $oroot->addNewChild(undef, 's');
-  $snod->setAttribute("xml:id", "s_".($si++));
+  $snod->setAttribute("xml:id", "s".($si++));
   #$snod->setAttribute("ref", join(' ', map {"#".$_->getAttribute('xml:id')} @s_wnods));
   $snod->appendChild($_) foreach (@s_wnods);
   @s_wnods = qw();
@@ -266,10 +266,10 @@ while (<TT>) {
   ($otoff,$otlen) = split(/\s+/,$otofflen);
   @w_cis  = grep {$_ != $noc} map {vec($ob2ci, $_, $VLEN_CI)} ($otoff..($otoff+$otlen-1));
   @w_cis  = ($w_cis[0], @w_cis[grep {$w_cis[$_-1] != $w_cis[$_]} (1..$#w_cis)]);
-  @w_cids = map {$_->[0]} @$cxi[@w_cis];
+  @w_cids = grep {$_ !~ /^\$.*\$$/} map {$_->[0]} @$cxi[@w_cis];
 
   ##-- ... and create XML output
-  $wid = "w_".($wi++);
+  $wid = "w".($wi++);
   $wnod = $odoc->createElement($wElt);
   $wnod->setAttribute("xml:id", $wid);
   $wnod->setAttribute($posAttr, "$otoff $otlen");
@@ -282,7 +282,8 @@ while (<TT>) {
   ##--
   $wnod->setAttribute($textAttr, $text);
   ##----
-  $wnod->setAttribute("ref", join(' ', map {"#$_"} @w_cids));
+  #$wnod->setAttribute("ref", join(' ', map {"#$_"} @w_cids));
+  $wnod->setAttribute("c", join(' ', @w_cids));
   foreach (0..$#rest) {
     $anod = $wnod->addNewChild(undef,$aElt);
     $anod->setAttribute('n',$_+1);
