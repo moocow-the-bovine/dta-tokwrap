@@ -6,7 +6,7 @@ use File::Basename qw(basename);
 use Time::HiRes qw(gettimeofday tv_interval);
 use IO::File;
 use Pod::Usage;
-use XML::LibXML;
+#use XML::LibXML;
 use bytes;
 no bytes;
 
@@ -16,7 +16,7 @@ no bytes;
 our $prog = basename($0);
 our $outfile  = '-';     ##-- default: stdout
 our $xmlbase  = undef;  ##-- default: basename($cxfile,'.cx').".xml"
-our $format   = 0;      ##-- output formatting?
+our $format   = 0;      ##-- formatted output?
 our $verbose  = 1;      ##-- verbosity
 
 ##-- profiling
@@ -175,18 +175,23 @@ sub byte_to_charnum {
   my ($cx,$bx) = @_;
   my $ob2ci = '';
   my $tb2ci = $cx->{tb2ci};
+  my $cxcx  = $cx->{cx};
   my ($blk);
-  my ($toff,$tlen,$otoff,$otlen);
-  my ($obi);
+  my ($id,$toff,$tlen,$otoff,$otlen);
+  my ($obi,$ci);
   foreach $blk (@$bx) {
     ($toff,$tlen,$otoff,$otlen) = @$blk{qw(toff tlen otoff otlen)};
     if ($tlen > 0) {
       ##-- normal text
       foreach $obi (0..($otlen-1)) {
-	vec($ob2ci, $otoff+$obi, $VLEN_CI) = vec($tb2ci, $toff+$obi, $VLEN_CI);
+	$ci = vec($ob2ci, $otoff+$obi, $VLEN_CI) = vec($tb2ci, $toff+$obi, $VLEN_CI);
+	if ($cxcx->[$ci][0] =~ /^\$.*\$$/) {
+	  ##-- special character (e.g. <lb/>): map to $noc
+	  vec($ob2ci, $otoff+$obi, $VLEN_CI) = $noc;
+	}
       }
     } else {
-      ##-- implicit break
+      ##-- implicit break or special
       foreach $obi (0..($otlen-1)) {
 	vec($ob2ci, $otoff+$obi, $VLEN_CI) = $noc;
       }
@@ -195,24 +200,10 @@ sub byte_to_charnum {
   return $ob2ci;
 }
 
-##--------------------------------------------------------------
-## Subs: output utils
-
-## undef = flush_sentence()
-##  + flushes output sentence
-sub flush_sentence {
-  our($si,@s_wnods);
-  return if (!@s_wnods);
-  $snod = $oroot->addNewChild(undef, 's');
-  $snod->setAttribute("xml:id", "s".($si++));
-  #$snod->setAttribute("ref", join(' ', map {"#".$_->getAttribute('xml:id')} @s_wnods));
-  $snod->appendChild($_) foreach (@s_wnods);
-  @s_wnods = qw();
-}
-
 ##------------------------------------------------------------------------------
 ## MAIN
 ##------------------------------------------------------------------------------
+
 ##-- command-line stuff
 ($ttfile,$bxfile,$cxfile) = @ARGV;
 if (!defined($xmlbase)) {
@@ -228,6 +219,18 @@ if (!defined($sfile)) {
   $sfile .= ".s.xml";
 }
 
+##-- open output file
+our $outfh = IO::File->new(">$outfile") or die("$0: open failed for output file '$outfile': $!");
+$outfh->print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<$oDocElt xml:base=\"$xmlbase\">");
+our ($fmtroot,$fmts,$fmtw,$fmta) = ('','','','');
+if ($format) {
+  my $indent = "  ";
+  $fmtroot = "\n";
+  $fmts = "\n".$indent;
+  $fmtw = $fmts.$indent;
+  $fmta = $fmtw.$indent;
+}
+
 $tv_started = [gettimeofday] if ($profile);
 
 ##-- read input files
@@ -237,81 +240,94 @@ $bx    = vdo(1, sub {read_bx_file($bxfile);}, "loading .bx file '$bxfile'...", "
 $ob2ci = vdo(1, sub {byte_to_charnum($cx,$bx);}, "building byte->charnum index...", "done.");
 $cxi   = $cx->{cx};
 
-##-- create output document
-our ($odoc,$oroot);
-$odoc = XML::LibXML::Document->new("1.0","UTF-8");
-$odoc->setDocumentElement($oroot=$odoc->createElement($oDocElt));
-$oroot->setAttribute('xml:base', $xmlbase);
-
 ##-- process tokenizer data
-vmsg(1, "$prog: processing tokenizer data file '$ttfile'...");
-my ($text,$otofflen,$otoff,$otlen,@rest);
-our (@w_cis, @w_cids, $wnod, @s_wnods);
-our ($wi,$si) = (0,0);
-my ($wid);
+sub process_tt_data {
+  vmsg(1, "$prog: processing tokenizer data file '$ttfile'...");
+  my ($text,$otofflen,$otoff,$otlen,@rest);
+  our $s_open = 0;
+  our ($wi,$si) = (0,0);
+  my ($wid);
 
-open(TT,"<$ttfile") or die("$0: open failed for tokenizer data file '$ttfile': $!");
-while (<TT>) {
-  chomp;
-  next if (/^\s*%%/);
+  open(TT,"<$ttfile") or die("$0: open failed for tokenizer data file '$ttfile': $!");
+  while (<TT>) {
+    chomp;
+    next if (/^\s*%%/);
 
-  ##-- check for EOS
-  if ($_ eq '') {
-    flush_sentence();
-    next;
+    ##-- check for EOS
+    if ($_ eq '') {
+      $outfh->print($fmts."</$sElt>") if ($s_open);
+      $s_open = 0;
+      next;
+    }
+
+    ##-- normal token: parse it
+    ($text,$otofflen,@rest) = split(/\t/,$_);
+    ($otoff,$otlen) = split(/\s+/,$otofflen);
+    $last_cid = undef;
+    @w_cids = (
+	       map {$_->[0]}
+	       @$cxi[
+		     grep { $_ != $noc && (!defined($last_cid) || $_ != $last_cid) && (($last_cid=$_)||1) }
+		     map {vec($ob2ci, $_, $VLEN_CI)}
+		     ($otoff..($otoff+$otlen-1))
+		    ],
+	      );
+
+    ##-- make text output XML-save
+    foreach ($text,@rest) {
+      s/\&/&amp;/g;
+      s/\"/&quot;/g;
+      s/\'/&apos;/g;
+      s/\</&lt;/g;
+      s/\>/&gt;/g;
+      s/\t/&#09;/g;
+      s/\n/&#10;/g;
+      s/\r/&#13;/g;
+    }
+
+    ##-- ... and create XML output
+    $wid = "w".($wi++);
+    $outfh->print(
+		  ##-- maybe open new sentence: <s>
+		  (!$s_open ? ($fmts."<$sElt xml:id=\"s".(++$si)."\">") : qw()),
+		  ##
+		  ##-- common token properties: s/w
+		  ($fmtw."<$wElt xml:id=\"$wid\" $posAttr=\"$otoff $otlen\" $textAttr=\"$text\" c=\"".join(' ', @w_cids)."\""),
+		  ##
+		  ##-- additional analyses: s/w/a
+		  (@rest
+		   ? (">", (map { ($fmta."<$aElt>$_</$aElt>") } @rest), $fmtw."</$wElt>")
+		   : "/>"),
+		 );
+    $s_open = 1;
+
+    ##-- profiling
+    ++$ntoks;
   }
+  close(TT);
 
-  ##-- normal token: parse it
-  ($text,$otofflen,@rest) = split(/\t/,$_);
-  ($otoff,$otlen) = split(/\s+/,$otofflen);
-  @w_cis  = grep {$_ != $noc} map {vec($ob2ci, $_, $VLEN_CI)} ($otoff..($otoff+$otlen-1));
-  @w_cis  = ($w_cis[0], @w_cis[grep {$w_cis[$_-1] != $w_cis[$_]} (1..$#w_cis)]);
-  @w_cids = grep {$_ !~ /^\$.*\$$/} map {$_->[0]} @$cxi[@w_cis];
+  ##-- flush any open sentence
+  $outfh->print($fmts."</$sElt>") if ($s_open);
+  $outfh->print($fmtroot."</$oDocElt>", $fmtroot);
 
-  ##-- ... and create XML output
-  $wid = "w".($wi++);
-  $wnod = $odoc->createElement($wElt);
-  $wnod->setAttribute("xml:id", $wid);
-  $wnod->setAttribute($posAttr, "$otoff $otlen");
-  ##----
-  #$wnod->appendText(join("\t",$text,@rest));
-  ##--
-  #$wnod->appendText($text);
-  ##--
-  #$wnod->appendTextChild($textElt,$text);
-  ##--
-  $wnod->setAttribute($textAttr, $text);
-  ##----
-  #$wnod->setAttribute("ref", join(' ', map {"#$_"} @w_cids));
-  $wnod->setAttribute("c", join(' ', @w_cids));
-  foreach (0..$#rest) {
-    $anod = $wnod->addNewChild(undef,$aElt);
-    $anod->setAttribute('n',$_+1);
-    $anod->appendText($rest[$_]);
-  }
-  push(@s_wnods,$wnod);
-  ++$ntoks; ##-- profiling
+  $nchrs = $cx->{nchr}; ##-- profiling
+
+  ##-- all done
+  vmsg(1, " done.\n");
 }
-close(TT);
-
-$nchrs = $cx->{nchr}; ##-- profiling
-
-##-- flush any open sentence
-flush_sentence();
-
-vmsg(1, " done.\n");
-
-##-- output
-$odoc->toFile($outfile,$format);
+process_tt_data();
 
 ##-- profiling
 sub sistr {
-  my $x = shift;
-  return sprintf("%.2f K", $x/10**3)  if ($x >= 10**3);
-  return sprintf("%.2f M", $x/10**6)  if ($x >= 10**6);
-  return sprintf("%.2f G", $x/10**9)  if ($x >= 10**9);
-  return sprintf("%.2f T", $x/10**12) if ($x >= 10**12);
-  return sprintf("%.2f ", $x);
+  my ($x, $how, $prec) = @_;
+  $how  = 'f' if (!defined($how));
+  $prec = '.2' if (!defined($prec));
+  my $fmt = "%${prec}${how}";
+  return sprintf("$fmt T", $x/10**12) if ($x >= 10**12);
+  return sprintf("$fmt G", $x/10**9)  if ($x >= 10**9);
+  return sprintf("$fmt M", $x/10**6)  if ($x >= 10**6);
+  return sprintf("$fmt K", $x/10**3)  if ($x >= 10**3);
+  return sprintf("$fmt ", $x);
 }
 if ($profile) {
   $elapsed = tv_interval($tv_started,[gettimeofday]);
@@ -342,6 +358,7 @@ dtatw-tt2xml.perl - generate standoff annotation from tokenizer output and indic
   -word-file WFILE       # output token standoff file
   -sentence-file SFILE   # output sentence standoff file
   -output BASE           # like -word-file=BASE.w -sentence-file=BASE.s
+  -format , -noformat    # do/don't pretty-print output (default=no)
   -profile, -noprofile   # output profiling information? (default=no)
 
 =cut
