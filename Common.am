@@ -40,16 +40,19 @@ EXTRA_DIST = \
 	$(wildcard mising) \
 	$(wildcard mkinstalldirs)
 
-
 ##-----------------------------------------------------------------------
 ## Rules: .pod
+
+ALL_LOCAL_DEPS =
 
 if HAVE_POD2TEXT
 .pod.txt:
 	pod2text $< $@
 
-all-local: $(PODS:.pod=.txt)
+ALL_LOCAL_DEPS += $(PODS:.pod=.txt)
 endif
+
+#all-local: $(ALL_LOCAL_DEPS)
 
 if HAVE_POD2HTML
 .pod.html:

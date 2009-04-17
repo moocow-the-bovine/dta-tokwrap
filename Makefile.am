@@ -22,3 +22,20 @@ SUBDIRS = src
 ## PODs
 
 PODS = README.pod
+
+##-----------------------------------------------------------------------
+## Subdirs: perl
+
+ALL_LOCAL_DEPS += DTA-TokWrap/Makefile
+
+DTA-TokWrap/Makefile:
+	(cd DTA-TokWrap; $(PERL) Makefile.PL)
+
+all-local: $(ALL_LOCAL_DEPS)
+	$(MAKE) -C DTA-TokWrap
+
+install-data-local: DTA-TokWrap/Makefile
+	$(MAKE) -C DTA-TokWrap install
+
+clean-local: DTA-TokWrap/Makefile
+	$(MAKE) -C DTA-TokWrap clean

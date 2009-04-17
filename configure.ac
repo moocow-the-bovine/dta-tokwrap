@@ -89,6 +89,17 @@ dnl AX_DOC_GOG_LINKS
 ##-- no-autoheader stuff
 AC_CONFIG_LINKS(src/dtaTwConfigNoAuto.h:src/dtaTwConfigAuto.h.in)
 
+##vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+## Subdirs:perl
+##
+AC_MSG_NOTICE([perparing perl module DTA::TokWrap])
+(cd DTA-TokWrap; $PERL Makefile.PL)
+##
+## /subdirs:perl
+##^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
 ##----------------------------------------------------------------------
 ## output
 ##
