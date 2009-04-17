@@ -1,3 +1,4 @@
+##-*- Mode: CPerl -*-
 my ($last_test,$loaded);
 
 ######################### We start with some black magic to print on failure.
