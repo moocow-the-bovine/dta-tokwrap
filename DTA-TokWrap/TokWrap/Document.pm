@@ -5,42 +5,75 @@
 ## Descript: DTA tokenizer wrappers: document wrapper
 
 package DTA::TokWrap::Document;
+use DTA::TokWrap::Base;
+use DTA::TokWrap::Version;
+use File::Basename qw(basename dirname);
 use Carp;
 use strict;
 
 ##==============================================================================
 ## Globals
 ##==============================================================================
-
-our @ISA = qw();
+our @ISA = qw(DTA::TokWrap::Base);
 
 ##==============================================================================
 ## Constructors etc.
 ##==============================================================================
 
-## $doc = CLASS_OR_OBJECT->new(%opts)
-## + %opts, %$doc:
+## $doc = CLASS_OR_OBJECT->new(%args)
+## + %args, %$doc
 ##   (
-##    name   => $docname,   ##-- used for xml:base generation
-##    xmlbuf => $xmlbuf,    ##-- buffers raw XML for document
-##    txtbuf => $txtbuf,    ##-- buffers text stream for document
-##    xc2xb  => $xc2xb,     ##-- 'xml <c> to xml byte':  vec($xc2xb, $cnum, 32) == byte_offset($celt[$cnum]) in $xmlbuf
-##    xc2tb  => $xc2tb,     ##-- 'xml <c> to text byte': vec($xc2tb, $cnum, 32) == byte_offset($celt[$cnum]) in $txtbuf
-##    xc2tl  => $xc2tl,     ##-- 'xml <c> to text len':  vec($xc2tl, $cnum,  8) == byte_length($celt[$cnum]) in $txtbuf
+##    ##-- Source data
+##    xmlfile => $xmlfile,  ##-- source filename
+##    xmlbase => $xmlbase,  ##-- xml:base for generated files (default=basename($xmlfile))
+##
+##    ##-- generated data (common)
+##    outdir => $outdir,    ##-- output directory for generated data (default=.)
+##    outbase => $filebase, ##-- output basename (default=`basename $xmlbase .xml`)
+##
+##    ##-- mkindex data (see DTA::TokWrap::mkindex)
+##    cxfile => $cxfile,    ##-- character index file
+##    sxfile => $sxfile,    ##-- structure index file
+##    txfile => $txfile,    ##-- raw text index file
 ##   )
-sub new {
-  my $that = shift;
-  my $doc = bless({
-		   name => '?',
-		   xmlbuf => '',
-		   txtbuf => '',
-		   xc2xb => '',
-		   xc2tb => '',
-		   xc2tl => '',
+#(inherited from DTA::TokWrap::Base)
 
-		   ##-- user args
-		   @_
-		  }, ref($that)||$that);
+## %defaults = CLASS->defaults()
+sub defaults {
+  return (
+	  ##-- source data
+	  xmlfile => undef,
+	  xmlbase => undef,
+
+	  ##-- generated data (common)
+	  outdir => '.',
+	  outbase => undef,
+
+	  ##-- mkindex data
+	  cxfile => undef,
+	  sxfile => undef,
+	  txfile => undef,
+	 );
+}
+
+## $doc = $doc->init()
+##  + set computed defaults
+sub init {
+  my $doc = shift;
+
+  ##-- defaults: source data
+  $doc->{xmlfile} = '-' if (!defined($doc->{xmlfile})); ##-- this should really be required
+  $doc->{xmlbase} = basename($doc->{xmlfile}) if (!defined($doc->{xmlbase}));
+
+  ##-- defaults: generated data (common)
+  ($doc->{outbase} = basename($doc->{xmlbase})) =~ s/\.xml$//i if (!$doc->{outbase});
+
+  ##-- defaults: mkindex data
+  $doc->{cxfile} = $doc->{outdir}.'/'.$doc->{outbase}.".cx" if (!$doc->{cxfile});
+  $doc->{sxfile} = $doc->{outdir}.'/'.$doc->{outbase}.".sx" if (!$doc->{sxfile});
+  $doc->{txfile} = $doc->{outdir}.'/'.$doc->{outbase}.".tx" if (!$doc->{txfile});
+
+  ##-- return
   return $doc;
 }
 

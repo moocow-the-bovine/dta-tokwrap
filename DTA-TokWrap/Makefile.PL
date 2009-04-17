@@ -7,19 +7,24 @@ WriteMakefile
   (
    NAME		=> 'DTA::TokWrap',
    AUTHOR       => 'Bryan Jurish <moocow@bbaw.de>',
-   ABSTRACT	=> 'Wrapper modules & scripts for DTA corpus tokenization',
-   VERSION_FROM	=> 'TokWrap.pm',
+   ABSTRACT	=> 'Wrapper modules & scripts for DTA XML corpus tokenization',
+   VERSION_FROM	=> 'TokWrap/Version.pm',
 
    PREREQ_PM    => {
-		    XML::Parser => undef,
+		    'XML::Parser' => undef,
+		    'XML::LibXML' => undef,
+		    'XML::LibXSLT' => undef,
+		    'Encode'=>undef,
+		    'Time::HiRes'=>undef,
+		    'Getopt::Long'=>undef,
+		    'Pod::Usage'=>undef,
+		    'Env::Path' =>undef,
 		    ##--
-		    #'Encode'=>undef,
 		    #'Tie::Cache'=>undef,
 		    #'File::Basename'=>undef,
 		    #'Getopt::Long'=>undef,
 		    #'Pod::Usage'=>undef,
 		    #'Storable'=>undef,
-		    #'Time::HiRes'=>undef,
 		    ##--
 		    #'Log::Log4perl' => 1.07,
 		    #'Text::Unidecode' => 0.04,

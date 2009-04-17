@@ -2,17 +2,28 @@
 
 use lib qw(.);
 use DTA::TokWrap;
+use DTA::TokWrap::mkindex;
 
 ##----------------------------------------------------------------------
-sub test1 {
-  my $file = ($_[0] || 'test1.xml');
-  our $dp = DTA::TokWrap::DocParser->new();
-  our $doc = $dp->parsefile($file);
-
-  print STDERR "test1: done\n";
+## Test: document
+sub test_doc {
+  our $doc = DTA::TokWrap::Document->new('xmlfile'=>'test1.chr.xml');
+  return $doc;
 }
-#test1();
-test1('examples/kraepelin_arzneimittel_1892.char.txt.xml');
+
+##----------------------------------------------------------------------
+## Test: mkindex
+sub test_mkindex {
+  my $doc = shift;
+  $doc = test_doc() if (!$doc);
+  my $mi = DTA::TokWrap::mkindex->new();
+  $mi->mkindex($doc)
+    || die("$0: mkindex() failed for doc '$doc->{xmlfile}': $!");
+
+  print STDERR "test_mkindex(): done\n";
+}
+test_mkindex;
+
 
 ##----------------------------------------------------------------------
 ## MAIN
