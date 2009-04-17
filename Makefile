@@ -140,7 +140,7 @@ CLEAN_FILES += *.t
 ## Rules: tokenized: master xml output
 
 %.t.xml: %.t %.bx %.cx $(TT2XML)
-	$(TT2XML) "$*.t" "$*.bx" "$*.cx" -f -o "$@"
+	$(TT2XML) "$*.t" "$*.bx" "$*.cx" -o "$@" -f
 t-xml: $(XML_SOURCES:.xml=.t.xml)
 no-t-xml: ; rm -f *.t.xml
 tokd-xml: t-xml
