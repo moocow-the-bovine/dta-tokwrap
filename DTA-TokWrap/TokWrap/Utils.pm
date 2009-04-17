@@ -7,6 +7,8 @@
 package DTA::TokWrap::Utils;
 use DTA::TokWrap::Version;
 use Env::Path;
+use XML::LibXML;
+use XML::LibXSLT;
 use Exporter;
 use Carp;
 use strict;
@@ -19,6 +21,8 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw();
 our %EXPORT_TAGS = (
 		    progs => [qw(path_prog runcmd)],
+		    libxml => [qw(libxml_parser)],
+		    libxslt => [qw(xsl_stylesheet)],
 		   );
 $EXPORT_TAGS{all} = [map {@$_} values(%EXPORT_TAGS)];
 our @EXPORT_OK = @{$EXPORT_TAGS{all}};
@@ -61,6 +65,95 @@ sub runcmd {
   print STDERR __PACKAGE__, "::runcmd(): ", join(' ', map {$_=~/\s/ ? "\"$_\"" : $_} @argv), "\n"
     if ($TRACE_RUNCMD);
   return system(@argv);
+}
+
+##==============================================================================
+## Utils: XML::LibXML
+##==============================================================================
+
+## %LIBXML_PARSERS
+##  + XML::LibXML parsers, keyed by parser attribute strings (see libxml_parser())
+our %LIBXML_PARSERS = qw();
+
+## $parser = libxml_parser(%opts)
+##  + %opts:
+##     line_numbers => $bool,  ##-- default: 1
+##     load_ext_dtd => $bool,  ##-- default: 0
+##     validation   => $bool,  ##-- default: 0
+##     keep_blanks  => $bool,  ##-- default: 1
+##     expand_entities => $bool, ##-- default: 1
+##     recover => $bool,         ##-- default: 1
+sub libxml_parser {
+  my %opts = @_;
+  my %defaults = (
+		  line_numbers => 1,
+		  load_ext_dtd => 0,
+		  validation => 0,
+		  keep_blanks => 1,
+		  expand_entities => 1,
+		  recover => 1,
+		 );
+  %opts = (%defaults,%opts);
+  my $key  = join(', ', map {"$_=>".($opts{$_} ? 1 : 0)} sort(keys(%defaults)));
+  return $LIBXML_PARSERS{$key} if ($LIBXML_PARSERS{$key});
+
+  my $parser = $LIBXML_PARSERS{$key} = XML::LibXML->new();
+  $parser->keep_blanks($opts{keep_blanks}||0);     ##-- do we want blanks kept?
+  $parser->expand_entities($opts{expand_ents}||0); ##-- do we want entities expanded?
+  $parser->line_numbers($opts{line_numbers}||0);
+  $parser->load_ext_dtd($opts{load_ext_dtd}||0);
+  $parser->validation($opts{validation}||0);
+  $parser->recover($opts{recover}||0);
+  return $parser;
+}
+
+##==============================================================================
+## Utils: XML::LibXSLT
+##==============================================================================
+
+## $XSLT
+##  + package-global shared XML::LibXSLT object (or undef)
+our $XSLT = undef;
+
+## $xslt = PACKAGE::xsl_xslt()
+##  + returns XML::LibXSLT object
+sub xsl_xslt {
+  $XSLT = XML::LibXSLT->new() if (!$XSLT);
+  return $XSLT;
+}
+
+## $stylesheet = PACKAGE::xsl_stylesheet(file=>$xsl_file)
+## $stylesheet = PACKAGE::xsl_stylesheet(fh=>$xsl_fh)
+## $stylesheet = PACKAGE::xsl_stylesheet(doc=>$xsl_doc)
+## $stylesheet = PACKAGE::xsl_stylesheet(string=>$xsl_string)
+sub xsl_stylesheet {
+  my ($what,$src) = @_;
+  my $xmlparser = libxml_parser(line_numbers=>1);
+
+  my ($doc);
+  if ($what eq 'file') {
+    $doc = $xmlparser->parse_file($src)
+      or croak(__PACKAGE__, "::xsl_stylesheet(): failed to parse XSL source file '$src' as XML: $!");
+  } elsif ($what eq 'fh') {
+    $doc = $xmlparser->parse_fh($src)
+      or croak(__PACKAGE__, "::xsl_stylesheet(): failed to parse XSL source filehandle as XML: $!");
+  } elsif ($what eq 'doc') {
+    $doc = $src;
+  } elsif ($what eq 'string') {
+    $doc = $xmlparser->parse_string($src)
+      or croak(__PACKAGE__, "::xsl_stylesheet(): failed to parse XSL source string as XML: $!");
+  } else {
+    warn(__PACKAGE__, "::xsl_stylesheet(): treating unknown type key '$what' as 'string'");
+    $doc = $xmlparser->parse_string(defined($src) ? $src : $what)
+      or croak(__PACKAGE__, "::xsl_stylesheet(): failed to parse XSL source string as XML: $!");
+  }
+  croak(__PACKAGE__, "::xsl_stylesheet(): no XSL source document!") if (!$doc);
+
+  my $xslt = xsl_xslt();
+  my $stylesheet = $xslt->parse_stylesheet($doc)
+    or croak(__PACKAGE__, "::xsl_stylesheet(): could not parse XSL stylesheet: $!");
+
+  return $stylesheet;
 }
 
 ##==============================================================================
