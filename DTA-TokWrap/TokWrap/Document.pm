@@ -32,9 +32,13 @@ our @ISA = qw(DTA::TokWrap::Base);
 ##    outbase => $filebase, ##-- output basename (default=`basename $xmlbase .xml`)
 ##
 ##    ##-- mkindex data (see DTA::TokWrap::mkindex)
-##    cxfile => $cxfile,    ##-- character index file
-##    sxfile => $sxfile,    ##-- structure index file
-##    txfile => $txfile,    ##-- raw text index file
+##    cxfile => $cxfile,    ##-- character index file (default="$outbase.cx")
+##    sxfile => $sxfile,    ##-- structure index file (default="$outbase.sx")
+##    txfile => $txfile,    ##-- raw text index file (default="$outbase.tx")
+##
+##    ##-- mkbx0 data (see DTA::TokWrap::mkbx0)
+##    bx0doc  => $bx0doc,   ##-- pre-serialized block-index XML::LibXML::Document
+##    bx0file => $bx0file,  ##-- pre-serialized block-index file (default="$outbase.bx0"; optional)
 ##   )
 #(inherited from DTA::TokWrap::Base)
 
@@ -53,6 +57,10 @@ sub defaults {
 	  cxfile => undef,
 	  sxfile => undef,
 	  txfile => undef,
+
+	  ##-- mkbx0 data
+	  bx0doc  => undef,
+	  bx0file => undef,
 	 );
 }
 
@@ -72,6 +80,10 @@ sub init {
   $doc->{cxfile} = $doc->{outdir}.'/'.$doc->{outbase}.".cx" if (!$doc->{cxfile});
   $doc->{sxfile} = $doc->{outdir}.'/'.$doc->{outbase}.".sx" if (!$doc->{sxfile});
   $doc->{txfile} = $doc->{outdir}.'/'.$doc->{outbase}.".tx" if (!$doc->{txfile});
+
+  ##-- defaults: mkbx0 data
+  #$doc->{bx0doc} = undef;
+  $doc->{bx0file} = $doc->{outdir}.'/'.$doc->{outbase}.".bx0" if (!$doc->{bx0file});
 
   ##-- return
   return $doc;

@@ -302,32 +302,46 @@ sub dump_sort_stylesheet {
   $_[0]->dump_string($_[0]{sort_stylestr}, $_[1]);
 }
 
-
 ##==============================================================================
-## Methods
+## Methods: Run
 ##==============================================================================
 
-## $doc_or_undef = $mi->mkindex($doc)
+## $doc_or_undef = $mi->mkbx0($doc)
 ## + $doc is a DTA::TokWrap::Document object
 ## + %$doc keys:
-##    xmlfile => $xmlfile, ##-- source XML file
-##    cxfile  => $cxfile,  ##-- output character index filename
-##    sxfile  => $sxfile,  ##-- output structure index filename
-##    txfile  => $txfile,  ##-- output structure index filename
-sub mkindex {
-  my ($mi,$doc) = @_;
-
+##    sxfile  => $sxfile,  ##-- (input) structure index filename
+##    bx0doc  => $bx0doc,  ##-- (output) preliminary block-index data (XML::LibXML::Document)
+sub mkbx0 {
+  my ($mb,$doc) = @_;
 
   ##-- sanity check(s)
-  confess(ref($mi), "::mkindex(): no dtatw-mkindex program") if (!$mi->{mkindex});
+  confess(ref($mb), "::mkbx0(): no xml-rm-namespaces program") if (!$mb->{rmns});
+  $mb->ensure_stylesheets()
+    or confess(ref($mb), "::mkbx0(): could not compile XSL stylesheets");
+  confess(ref($mb), "::mkbx0(): no .sx file defined for document '$doc->{xmlfile}'")
+    if (!$doc->{sxfile});
+  confess(ref($mb), "::mkbx0(): .sx file '$doc->{sxfile}' not readable")
+    if (!-r $doc->{sxfile});
 
-  ##-- run program
-  my $rc = runcmd($mi->{mkindex}, @$doc{qw(xmlfile cxfile sxfile txfile)});
-  croak(ref($mi)."::mkindex() failed for XML document '$doc->{xmlfile}': $!") if ($rc!=0);
-  croak(ref($mi)."::mkindex() failed to create output file(s) for '$doc->{xmlfile}'")
-    if ( ($doc->{cxfile} && !-e $doc->{cxfile})
-	 || ($doc->{sxfile} && !-e $doc->{sxfile})
-	 || ($doc->{txfile} && !-e $doc->{txfile}) );
+  ##-- run command, buffer output to string
+  my $cmdfh = IO::File->new("'$mb->{rmns}' '$doc->{sxfile}'|")
+    or confess(ref($mb),"::mkbx0(): open failed for pipe from '$mb->{rmns}' '$doc->{sxfile}': $!");
+  my $sxbuf = join('', $cmdfh->getlines);
+  $cmdfh->close();
+
+  ##-- parse buffer
+  my $xmlparser = libxml_parser(keep_blanks=>0);
+  my $sxdoc = $xmlparser->parse_string($sxbuf)
+    or confess(ref($mb), "::mkbx0(): could not parse namespace-hacked .sx document '$doc->{sxfile}': $!");
+
+  ##-- apply XSL stylesheets
+  $sxdoc = $mb->{hint_stylesheet}->transform($sxdoc)
+    or confess(ref($mb), "::mkbx0(): could not apply hint stylesheet to .sx document '$doc->{sxfile}': $!");
+  $sxdoc = $mb->{sort_stylesheet}->transform($sxdoc)
+    or confess(ref($mb), "::mkbx0(): could not apply sortkey stylesheet to .sx document '$doc->{sxfile}': $!");
+
+  ##-- adjust $doc
+  $doc->{bx0doc} = $sxdoc;
 
   return $doc;
 }

@@ -6,7 +6,6 @@ use File::Basename qw(basename);
 use Time::HiRes qw(gettimeofday tv_interval);
 use IO::File;
 use Pod::Usage;
-#use XML::LibXML;
 use bytes;
 no bytes;
 

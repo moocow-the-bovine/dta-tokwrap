@@ -2,8 +2,6 @@
 
 use IO::File;
 use XML::Parser;
-#use XML::LibXML;
-#use Unicode::Normalize qw();
 use Getopt::Long qw(:config no_ignore_case);
 use Encode qw(encode decode);
 use File::Basename qw(basename);
