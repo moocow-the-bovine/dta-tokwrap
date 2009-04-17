@@ -14,10 +14,7 @@ bin_PROGRAMS = \
 	dtatw-tokenize-dummy \
 	xml-rm-namespaces
 
-EXTRA_PROGRAMS = dtatw-mkindex-bin
-
 dtatw_mkindex_SOURCES = dtatw-mkindex.c
-dtatw_mkindex_bin_SOURCES = dtatw-mkindex-bin.c
 
 if HAVE_FLEX
 dtatw_tokenize_dummy_SOURCES = dtatw-tokenize-dummy.l
