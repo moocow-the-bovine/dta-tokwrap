@@ -4,7 +4,7 @@ digraph dataflow {
 
   xml [label="x.xml"];
 
-  mkindex [label="dtatw-mkindex.c",shape=rectangle,style=filled,fillcolor=grey,fontname="Courier-Bold"];
+  mkindex [label="dtatw-mkindex.c",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
   xml -> mkindex;
 
   cx [label="x.cx"];
@@ -16,13 +16,13 @@ digraph dataflow {
   {rank=same; cx sx tx}
 
   bx0 [label="x.bx0"];
-  mkbx0 [label="xml-rm-namespaces.c\ndtatw-insert-hints.xsl\ndtatw-mark-sortkeys.xsl",shape=rectangle,style=filled,fillcolor=grey,fontname="Courier-Bold"];
+  mkbx0 [label="xml-rm-namespaces.c\ndtatw-insert-hints.xsl\ndtatw-mark-sortkeys.xsl",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
   sx -> mkbx0;
   mkbx0 -> bx0;
 
   bx [label="x.bx"];
   txt [label="x.txt"];
-  lsblocks [label="dtatw-lsblocks.perl",shape=rectangle,style=filled,fillcolor=grey,fontname="Courier-Bold"];
+  lsblocks [label="dtatw-lsblocks.perl",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
   bx0 -> lsblocks;
   tx  -> lsblocks;
   lsblocks -> bx;
@@ -30,29 +30,29 @@ digraph dataflow {
   {rank=same; bx txt}
 
   t [label="x.t"];
-  tokenize [label="dtatw-tokenize-dummy.l",shape=rectangle,style=filled,fillcolor=grey,fontname="Courier-Bold"];
+  tokenize [label="dtatw-tokenize-dummy.l",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
   txt -> tokenize;
   tokenize -> t;
 
   t_xml [label="x.t.xml"];
-  t2xml [label="dtatw-tt2xml.perl",shape=rectangle,style=filled,fillcolor=grey,fontname="Courier-Bold"];
+  t2xml [label="dtatw-tt2xml.perl",shape=rectangle,style=filled,fillcolor=orange,fontname="Courier-Bold"];
   t -> t2xml;
   bx -> t2xml;
   cx -> t2xml;
   t2xml -> t_xml;
 
   s_xml [label="x.s.xml"];
-  txml2sxml [label="dtatw-txml2sxml.xsl",shape=rectangle,style=filled,fillcolor=grey,fontname="Courier-Bold"];
+  txml2sxml [label="dtatw-txml2sxml.xsl",shape=rectangle,style=filled,fillcolor=orange,fontname="Courier-Bold"];
   t_xml -> txml2sxml;
   txml2sxml -> s_xml;
 
   w_xml [label="x.w.xml"];
-  txml2wxml [label="dtatw-txml2wxml.xsl",shape=rectangle,style=filled,fillcolor=grey,fontname="Courier-Bold"];
+  txml2wxml [label="dtatw-txml2wxml.xsl",shape=rectangle,style=filled,fillcolor=orange,fontname="Courier-Bold"];
   t_xml -> txml2wxml;
   txml2wxml -> w_xml;
 
   a_xml [label="x.a.xml"];
-  txml2axml [label="dtatw-txml2axml.xsl",shape=rectangle,style=filled,fillcolor=grey,fontname="Courier-Bold"];
+  txml2axml [label="dtatw-txml2axml.xsl",shape=rectangle,style=filled,fillcolor=orange,fontname="Courier-Bold"];
   t_xml -> txml2axml;
   txml2axml -> a_xml;
 }
