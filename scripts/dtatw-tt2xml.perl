@@ -1,9 +1,9 @@
 #!/usr/bin/perl -w
 
-use Getopt::Long qw(:config no_ignore_case);
+use Getopt::Long (:config => 'no_ignore_case');
 use Encode qw(encode decode);
 use File::Basename qw(basename);
-use Time::HiRes qw(gettimeofday tv_interval);
+use Time::HiRes ('gettimeofday', 'tv_interval');
 use IO::File;
 use Pod::Usage;
 use bytes;

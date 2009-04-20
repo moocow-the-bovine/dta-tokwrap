@@ -97,8 +97,54 @@ sub test_tokenize_dummy {
   print STDERR "$0: test_tokenize_dummy() done\n";
 }
 #test_tokenize_dummy();
-test_tokenize_dummy($ex1);
+#test_tokenize_dummy($ex1);
 
+
+##----------------------------------------------------------------------
+## Test: tok2xml
+sub test_tok2xml {
+  my $doc = shift;
+  $doc = $testdoc if (!$doc);
+
+  ##-- test tok2xml (object)
+  my $t2x = DTA::TokWrap::tok2xml->new();
+  $t2x->tok2xml($doc) or die("$0: tok2xml() failed for '$doc->{xmlfile}': $!");
+  $doc->saveXtokFile() or die("$0: saveXtokFile() failed for '$doc->{xmlfile}': $!");
+
+  ##-- test tok2xml (doc method)
+  delete($doc->{bxdata});  ##-- test implicit mkbx()
+  unlink($doc->{cxfile});  ##-- test implicit mkindex()
+  delete($doc->{tokdata}); ##-- test implicit tokenize()
+  $doc->tok2xml();
+  $doc->saveXtokFile() or die("$0: saveXtokFile() failed for '$doc->{xmlfile}': $!");
+
+  print STDERR "$0: test_tok2xml() done\n";
+}
+#test_tok2xml();
+#test_tok2xml($ex1);
+
+##----------------------------------------------------------------------
+## Test: standoff
+sub test_standoff {
+  my $doc = shift;
+  $doc = $testdoc if (!$doc);
+
+  ##-- test standoff (object)
+  if (0) {
+    my $so = DTA::TokWrap::standoff->new();
+    $so->standoff($doc) or die("$0: standoff() failed for '$doc->{xmlfile}': $!");
+    $doc->saveStandoffFiles(format=>1) or die("$0: saveStandoffFiles() failed for '$doc->{xmlfile}': $!");
+  }
+
+  ##-- test tok2xml (doc method)
+  delete(@$doc{qw(sosdoc sowdoc soadoc)});
+  #$doc->standoff();
+  $doc->saveStandoffFiles(format=>1);
+
+  print STDERR "$0: test_standoff() done\n";
+}
+#test_standoff();
+test_standoff($ex1);
 
 ##----------------------------------------------------------------------
 ## MAIN
