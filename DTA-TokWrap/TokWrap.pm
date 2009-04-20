@@ -11,6 +11,7 @@ use strict;
 ##-- sub-modules
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
+use DTA::TokWrap::Document;
 
 ##==============================================================================
 ## Constants

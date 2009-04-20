@@ -9,6 +9,7 @@ use DTA::TokWrap::Version;
 use Env::Path;
 use XML::LibXML;
 use XML::LibXSLT;
+use IO::File;
 use Exporter;
 use Carp;
 use strict;
@@ -20,6 +21,7 @@ our @ISA = qw(Exporter);
 
 our @EXPORT = qw();
 our %EXPORT_TAGS = (
+		    slurp => [qw(slurp_file slurp_fh)],
 		    progs => [qw(path_prog runcmd)],
 		    libxml => [qw(libxml_parser)],
 		    libxslt => [qw(xsl_stylesheet)],
@@ -154,6 +156,31 @@ sub xsl_stylesheet {
     or croak(__PACKAGE__, "::xsl_stylesheet(): could not parse XSL stylesheet: $!");
 
   return $stylesheet;
+}
+
+##==============================================================================
+## Utils: I/O: slurp
+##==============================================================================
+
+## \$txtbuf = PACKAGE::slurp_file($filename_or_fh)
+## \$txtbuf = PACKAGE::slurp_file($filename_or_fh,\$txtbuf)
+BEGIN { *slurp_fh = \&slurp_file; }
+sub slurp_file {
+  my ($file,$bufr) = @_;
+  if (!defined($bufr)) {
+    my $buf = '';
+    $bufr = \$buf;
+  }
+  my $fh = $file;
+  if (!ref($file)) {
+    $fh = IO::File->new("<$file")
+      or die(__PACKAGE__, "::slurp_file(): open failed for file '$file': $!");
+    $fh->binmode();
+  }
+  local $/=undef;
+  $$bufr = <$fh>;
+  $fh->close if (!ref($file));
+  return $bufr;
 }
 
 ##==============================================================================

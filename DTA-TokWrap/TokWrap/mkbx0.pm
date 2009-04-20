@@ -1,19 +1,17 @@
 ## -*- Mode: CPerl -*-
 
-## File: DTA::TokWrap::mkbx0
+## File: DTA::TokWrap::mkbx0.pm
 ## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
-## Descript: DTA tokenizer wrappers: bx0 (preliminary block index)
+## Descript: DTA tokenizer wrappers: sxfile -> bx0doc
 
 package DTA::TokWrap::mkbx0;
 
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
-use DTA::TokWrap::Utils qw(:progs :libxml :libxslt);
-use DTA::TokWrap::Document;
+use DTA::TokWrap::Utils qw(:progs :libxml :libxslt :slurp);
 
 use XML::LibXML;
 use XML::LibXSLT;
-
 use IO::File;
 
 use Carp;
@@ -28,28 +26,29 @@ our @ISA = qw(DTA::TokWrap::Base);
 ## Constructors etc.
 ##==============================================================================
 
-## $mb = CLASS_OR_OBJ->new(%args)
-##  + %args:
-##    ##-- Programs
-##    rmns    => $path_to_xml_rm_namespaces, ##-- default: search
-##    inplace => $bool,                      ##-- prefer in-place programs for search?
-##    ##
-##    ##-- Styleheet: insert-hints (<seg> elements and their children are handled implicitly)
-##    hint_sb_xpaths => \@xpaths,            ##-- sentence-break hint for @xpath element open & close
-##    hint_wb_xpaths => \@xpaths,            ##-- word-break hint for @xpath element open & close
-##    ##
-##    hint_stylestr  => $stylestr,           ##-- xsl stylesheet string
-##    hint_styleheet => $stylesheet,         ##-- compiled xsl stylesheet
-##    ##
-##    ##-- Stylesheet: mark-sortkeys (<seg> elements and their children are handled implicitly)
-##    sortkey_attr => $attr,                 ##-- sort-key attribute (default: 'dta.tw.key')
-##    sort_ignore_xpaths => \@xpaths,        ##-- ignore these xpaths
-##    sort_addkey_xpaths => \@xpaths,        ##-- add new sort key for @xpaths
-##    ##
-##    sort_stylestr  => $stylestr,           ##-- xsl stylesheet string
-##    sort_styleheet => $stylesheet,         ##-- compiled xsl stylesheet
-
+## $mbx0 = CLASS_OR_OBJ->new(%args)
 ## %defaults = CLASS->defaults()
+##  + %args, %defaults, %$mbx0:
+##    (
+##     ##-- Programs
+##     rmns    => $path_to_xml_rm_namespaces, ##-- default: search
+##     inplace => $bool,                      ##-- prefer in-place programs for search?
+##     ##
+##     ##-- Styleheet: insert-hints (<seg> elements and their children are handled implicitly)
+##     hint_sb_xpaths => \@xpaths,            ##-- add sentence-break hint (<s/>) for @xpath element open & close
+##     hint_wb_xpaths => \@xpaths,            ##-- ad word-break hint (<w/>) for @xpath element open & close
+##     ##
+##     hint_stylestr  => $stylestr,           ##-- xsl stylesheet string
+##     hint_styleheet => $stylesheet,         ##-- compiled xsl stylesheet
+##     ##
+##     ##-- Stylesheet: mark-sortkeys (<seg> elements and their children are handled implicitly)
+##     sortkey_attr => $attr,                 ##-- sort-key attribute (default: 'dta.tw.key')
+##     sort_ignore_xpaths => \@xpaths,        ##-- ignore these xpaths
+##     sort_addkey_xpaths => \@xpaths,        ##-- add new sort key for @xpaths
+##     ##
+##     sort_stylestr  => $stylestr,           ##-- xsl stylesheet string
+##     sort_styleheet => $stylesheet,         ##-- compiled xsl stylesheet
+##   )
 sub defaults {
   my $that = shift;
   return (
@@ -87,27 +86,27 @@ sub defaults {
 	 );
 }
 
-## $mb = $mb->init()
+## $mbx0 = $mbx0->init()
 sub init {
-  my $mb = shift;
+  my $mbx0 = shift;
 
   ##-- search for xml-rm-namespaces program
-  if (!defined($mb->{rmns})) {
-    $mb->{rmns} = path_prog('xml-rm-namespaces',
-			    prepend=>($mb->{inplace} ? ['.','../src'] : undef),
+  if (!defined($mbx0->{rmns})) {
+    $mbx0->{rmns} = path_prog('xml-rm-namespaces',
+			    prepend=>($mbx0->{inplace} ? ['.','../src'] : undef),
 			    warnsub=>\&croak,
 			   );
   }
 
   ##-- create stylesheet strings
-  $mb->{hint_stylestr}   = $mb->hint_stylestr() if (!$mb->{hint_stylestr});
-  $mb->{sort_stylestr}   = $mb->sort_stylestr() if (!$mb->{sort_stylestr});
+  $mbx0->{hint_stylestr}   = $mbx0->hint_stylestr() if (!$mbx0->{hint_stylestr});
+  $mbx0->{sort_stylestr}   = $mbx0->sort_stylestr() if (!$mbx0->{sort_stylestr});
 
   ##-- compile stylesheets
-  #$mb->{hint_stylesheet} = xsl_stylesheet(string=>$mb->{hint_stylestr}) if (!$mb->{hint_stylesheet});
-  #$mb->{sort_stylesheet} = xsl_stylesheet(string=>$mb->{sort_stylestr}) if (!$mb->{sort_stylesheet});
+  #$mbx0->{hint_stylesheet} = xsl_stylesheet(string=>$mbx0->{hint_stylestr}) if (!$mbx0->{hint_stylesheet});
+  #$mbx0->{sort_stylesheet} = xsl_stylesheet(string=>$mbx0->{sort_stylestr}) if (!$mbx0->{sort_stylesheet});
 
-  return $mb;
+  return $mbx0;
 }
 
 ##==============================================================================
@@ -117,18 +116,18 @@ sub init {
 ##--------------------------------------------------------------
 ## Methods: XSL stylesheets: common
 
-## $mb_or_undef = $mb->ensure_stylesheets()
+## $mbx0_or_undef = $mbx0->ensure_stylesheets()
 sub ensure_stylesheets {
-  my $mb = shift;
-  $mb->{hint_stylesheet} = xsl_stylesheet(string=>$mb->{hint_stylestr}) if (!$mb->{hint_stylesheet});
-  $mb->{sort_stylesheet} = xsl_stylesheet(string=>$mb->{sort_stylestr}) if (!$mb->{sort_stylesheet});
-  return $mb;
+  my $mbx0 = shift;
+  $mbx0->{hint_stylesheet} = xsl_stylesheet(string=>$mbx0->{hint_stylestr}) if (!$mbx0->{hint_stylesheet});
+  $mbx0->{sort_stylesheet} = xsl_stylesheet(string=>$mbx0->{sort_stylestr}) if (!$mbx0->{sort_stylesheet});
+  return $mbx0;
 }
 
 ##--------------------------------------------------------------
 ## Methods: XSL stylesheets: insert-hints
 sub hint_stylestr {
-  my $mb = shift;
+  my $mbx0 = shift;
   return '<?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
@@ -151,7 +150,7 @@ sub hint_stylestr {
       <s/>
     </xsl:copy>
   </xsl:template>\n"
-							 } @{$mb->{hint_sb_xpaths}}).'
+							 } @{$mbx0->{hint_sb_xpaths}}).'
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- templates: implicit token breaks -->'.join('',
@@ -164,7 +163,7 @@ sub hint_stylestr {
       <w/>
     </xsl:copy>
   </xsl:template>\n"
-							 } @{$mb->{hint_wb_xpaths}}).'
+							 } @{$mbx0->{hint_wb_xpaths}}).'
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- templates: OTHER: seg (priority=10) -->
@@ -207,8 +206,8 @@ sub hint_stylestr {
 ##--------------------------------------------------------------
 ## Methods: XSL stylesheets: mark-sortkeys
 sub sort_stylestr {
-  my $mb = shift;
-  my $keyName = $mb->{sortkey_attr};
+  my $mbx0 = shift;
+  my $keyName = $mbx0->{sortkey_attr};
   return '<?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
@@ -228,7 +227,7 @@ sub sort_stylestr {
   <!-- templates: ignored material (priority=100) -->
 
   '.join("\n  ",
-	 (map {"<xsl:template match=\"$_\" priority=\"100\"/>"} @{$mb->{sort_ignore_xpaths}})).'
+	 (map {"<xsl:template match=\"$_\" priority=\"100\"/>"} @{$mbx0->{sort_ignore_xpaths}})).'
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- templates: seg (priority=10) -->
@@ -258,7 +257,7 @@ sub sort_stylestr {
       <xsl:apply-templates select=\"*|@*\"/>
     </xsl:copy>
   </xsl:template>\n"
-						  } @{$mb->{sort_addkey_xpaths}}).'
+						  } @{$mbx0->{sort_addkey_xpaths}}).'
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- template: DEFAULT: copy -->
@@ -284,68 +283,72 @@ sub sort_stylestr {
 ##--------------------------------------------------------------
 ## Methods: XSL stylesheets: debug
 
-## undef = $mb->dump_string($str,$filename_or_fh)
+## undef = $mbx0->dump_string($str,$filename_or_fh)
 sub dump_string {
-  my ($mb,$str,$file) = @_;
+  my ($mbx0,$str,$file) = @_;
   my $fh = ref($file) ? $file : IO::File->new(">$file");
   $fh->print($str);
   $fh->close() if (!ref($file));
 }
 
-## undef = $mb->dump_hint_stylesheet($filename_or_fh)
+## undef = $mbx0->dump_hint_stylesheet($filename_or_fh)
 sub dump_hint_stylesheet {
   $_[0]->dump_string($_[0]{hint_stylestr}, $_[1]);
 }
 
-## undef = $mb->dump_sort_stylesheet($filename_or_fh)
+## undef = $mbx0->dump_sort_stylesheet($filename_or_fh)
 sub dump_sort_stylesheet {
   $_[0]->dump_string($_[0]{sort_stylestr}, $_[1]);
 }
 
 ##==============================================================================
-## Methods: Run
+## Methods: mkbx0 (apply stylesheets)
 ##==============================================================================
 
-## $doc_or_undef = $mi->mkbx0($doc)
+## $doc_or_undef = $CLASS_OR_OBJECT->mkbx0($doc)
 ## + $doc is a DTA::TokWrap::Document object
 ## + %$doc keys:
 ##    sxfile  => $sxfile,  ##-- (input) structure index filename
 ##    bx0doc  => $bx0doc,  ##-- (output) preliminary block-index data (XML::LibXML::Document)
 sub mkbx0 {
-  my ($mb,$doc) = @_;
+  my ($mbx0,$doc) = @_;
 
   ##-- sanity check(s)
-  confess(ref($mb), "::mkbx0(): no xml-rm-namespaces program") if (!$mb->{rmns});
-  $mb->ensure_stylesheets()
-    or confess(ref($mb), "::mkbx0(): could not compile XSL stylesheets");
-  confess(ref($mb), "::mkbx0(): no .sx file defined for document '$doc->{xmlfile}'")
+  $mbx0 = $mbx0->new() if (!ref($mbx0));
+  confess(ref($mbx0), "::mkbx0($doc->{xmlfile}): no xml-rm-namespaces program")
+    if (!$mbx0->{rmns});
+  $mbx0->ensure_stylesheets()
+    or confess(ref($mbx0), "::mkbx0($doc->{xmlfile}): could not compile XSL stylesheets");
+  $doc->mkindex()
+    if (!$doc->{sxfile} || !-r $doc->{sxfile});
+  confess(ref($mbx0), "::mkbx0($doc->{xmlfile}): no .sx file defined")
     if (!$doc->{sxfile});
-  confess(ref($mb), "::mkbx0(): .sx file '$doc->{sxfile}' not readable")
+  confess(ref($mbx0), "::mkbx0($doc->{xmlfile}): .sx file '$doc->{sxfile}' not readable")
     if (!-r $doc->{sxfile});
 
   ##-- run command, buffer output to string
-  my $cmdfh = IO::File->new("'$mb->{rmns}' '$doc->{sxfile}'|")
-    or confess(ref($mb),"::mkbx0(): open failed for pipe from '$mb->{rmns}' '$doc->{sxfile}': $!");
-  my $sxbuf = join('', $cmdfh->getlines);
+  my $cmdfh = IO::File->new("'$mbx0->{rmns}' '$doc->{sxfile}'|")
+    or confess(ref($mbx0),"::mkbx0($doc->{xmlfile}): open failed for pipe from '$mbx0->{rmns}': $!");
+  my $sxbuf = '';
+  slurp_fh($cmdfh, \$sxbuf);
   $cmdfh->close();
 
   ##-- parse buffer
   my $xmlparser = libxml_parser(keep_blanks=>0);
   my $sxdoc = $xmlparser->parse_string($sxbuf)
-    or confess(ref($mb), "::mkbx0(): could not parse namespace-hacked .sx document '$doc->{sxfile}': $!");
+    or confess(ref($mbx0), "::mkbx0($doc->{xmlfile}): could not parse namespace-hacked .sx document '$doc->{sxfile}': $!");
 
   ##-- apply XSL stylesheets
-  $sxdoc = $mb->{hint_stylesheet}->transform($sxdoc)
-    or confess(ref($mb), "::mkbx0(): could not apply hint stylesheet to .sx document '$doc->{sxfile}': $!");
-  $sxdoc = $mb->{sort_stylesheet}->transform($sxdoc)
-    or confess(ref($mb), "::mkbx0(): could not apply sortkey stylesheet to .sx document '$doc->{sxfile}': $!");
+  $sxdoc = $mbx0->{hint_stylesheet}->transform($sxdoc)
+    or confess(ref($mbx0), "::mkbx0($doc->{xmlfile}): could not apply hint stylesheet to .sx document '$doc->{sxfile}': $!");
+  $sxdoc = $mbx0->{sort_stylesheet}->transform($sxdoc)
+    or confess(ref($mbx0), "::mkbx0($doc->{xmlfile}): could not apply sortkey stylesheet to .sx document '$doc->{sxfile}': $!");
 
   ##-- adjust $doc
   $doc->{bx0doc} = $sxdoc;
 
   return $doc;
 }
-
 
 1; ##-- be happy
 

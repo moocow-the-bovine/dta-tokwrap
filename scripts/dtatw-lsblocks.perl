@@ -65,7 +65,7 @@ our %target_elts = map {$_=>undef} @target_elts;
 ##--------------------------------------------------------------
 ## XML::Parser temporary globals
 
-our ($_xp,$eltname,%attrs,$item,$iblk);
+our ($_xp,$eltname,%attrs);
 
 ##-- $xoff,$toff: global: current XML-, text-byte offset
 ##-- $xlen,$tlen: global: current XML-, text-byte length

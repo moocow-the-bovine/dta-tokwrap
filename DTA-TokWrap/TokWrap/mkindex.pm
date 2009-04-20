@@ -9,7 +9,6 @@ package DTA::TokWrap::mkindex;
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Utils qw(:progs);
-use DTA::TokWrap::Document;
 
 use File::Basename qw(basename dirname);
 
@@ -59,7 +58,7 @@ sub init {
 ## Methods
 ##==============================================================================
 
-## $doc_or_undef = $mi->mkindex($doc)
+## $doc_or_undef = $CLASS_OR_OBJECT->mkindex($doc)
 ## + $doc is a DTA::TokWrap::Document object
 ## + %$doc keys:
 ##    xmlfile => $xmlfile, ##-- source XML file
@@ -70,6 +69,7 @@ sub mkindex {
   my ($mi,$doc) = @_;
 
   ##-- sanity check(s)
+  $mi = $mi->new if (!ref($mi));
   confess(ref($mi), "::mkindex(): no dtatw-mkindex program") if (!$mi->{mkindex});
 
   ##-- run program
