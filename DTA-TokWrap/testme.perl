@@ -76,7 +76,28 @@ sub test_mkbx {
   print STDERR "$0: test_mkbx() done\n";
 }
 #test_mkbx();
-test_mkbx($ex1);
+#test_mkbx($ex1);
+
+##----------------------------------------------------------------------
+## Test: tokenize: dummy
+sub test_tokenize_dummy {
+  my $doc = shift;
+  $doc = $testdoc if (!$doc);
+
+  ##-- test tokenize::dummy (object)
+  my $td = DTA::TokWrap::tokenize::dummy->new();
+  $td->tokenize($doc) or die("$0: tokenize() failed for '$doc->{xmlfile}': $!");
+  $doc->saveTokFile() or die("$0: saveTokFile() failed for '$doc->{xmlfile}': $!");
+
+  ##-- test tokenize (doc method)
+  delete($doc->{txtfile}); ##-- test implicit saveTxtFile()
+  $doc->tokenize();
+  $doc->saveTokFile() or die("$0: saveTokFile() failed for '$doc->{xmlfile}': $!");
+
+  print STDERR "$0: test_tokenize_dummy() done\n";
+}
+#test_tokenize_dummy();
+test_tokenize_dummy($ex1);
 
 
 ##----------------------------------------------------------------------

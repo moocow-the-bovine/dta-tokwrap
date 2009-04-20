@@ -10,6 +10,8 @@ use DTA::TokWrap::Version;
 use DTA::TokWrap::mkindex;
 use DTA::TokWrap::mkbx0;
 use DTA::TokWrap::mkbx;
+use DTA::TokWrap::tokenize;
+use DTA::TokWrap::tokenize::dummy;
 
 use File::Basename qw(basename dirname);
 use IO::File;
@@ -20,6 +22,11 @@ use strict;
 ## Globals
 ##==============================================================================
 our @ISA = qw(DTA::TokWrap::Base);
+
+## $TOKENIZE_CLASS
+##  + default tokenizer class
+#our $TOKENIZE_CLASS = 'DTA::TokWrap::tokenize';
+our $TOKENIZE_CLASS = 'DTA::TokWrap::tokenize::dummy';
 
 ##==============================================================================
 ## Constructors etc.
@@ -49,6 +56,10 @@ our @ISA = qw(DTA::TokWrap::Base);
 ##    bxdata  => \@bxdata,  ##-- block-list, see DTA::TokWrap::mkbx::mkbx() for details
 ##    bxfile  => $bxfile,   ##-- serialized block-index CSV file (default="$outbase.bx"; optional)
 ##    txtfile => $txtfile,  ##-- serialized & hinted text file (default="$outbase.txt"; optional)
+##
+##    ##-- tokenize data (see DTA::TokWrap::tokenize, DTA::TokWrap::tokenize::dummy)
+##    tokdata => $tokdata,  ##-- tokenizer output data (slurped string)
+##    tokfile => $tokfile,  ##-- tokenizer output file (default="$outbase.t"; optional)
 ##   )
 #(inherited from DTA::TokWrap::Base)
 
@@ -76,6 +87,10 @@ sub defaults {
 	  bxdata => undef,
 	  bxfile => undef,
 	  txtfile => undef,
+
+	  ##-- tokenize data
+	  tokdata => undef,
+	  tokfile => undef,
 	 );
 }
 
@@ -105,6 +120,10 @@ sub init {
   #$doc->{bxfile}  = $doc->{outdir}.'/'.$doc->{outbase}.".bx" if (!$doc->{bxfile});
   #$doc->{txtfile} = $doc->{outdir}.'/'.$doc->{outbase}.".txt" if (!$doc->{txtfile});
 
+  ##-- defaults: tokenize data
+  #$doc->{tokdata}  = undef;
+  #$doc->{tokfile}  = $doc->{outdir}.'/'.$doc->{outbase}.".t" if (!$doc->{tokfile});
+
   ##-- return
   return $doc;
 }
@@ -115,6 +134,7 @@ sub init {
 
 ## $doc_or_undef = $doc->mkindex($mkindex)
 ## $doc_or_undef = $doc->mkindex()
+##  + see DTA::TokWrap::mkindex::mkindex()
 sub mkindex {
   return $_[1]->mkindex($_[0]) if (UNIVERSAL::isa($_[1],'DTA::TokWrap::mkindex'));
   return DTA::TokWrap::mkindex->mkindex($_[0]);
@@ -122,6 +142,7 @@ sub mkindex {
 
 ## $doc_or_undef = $doc->mkbx0($mkbx0)
 ## $doc_or_undef = $doc->mkbx0()
+##  + see DTA::TokWrap::mkbx0::mkbx0()
 sub mkbx0 {
   return $_[1]->mkbx0($_[0]) if (UNIVERSAL::isa($_[1],'DTA::TokWrap::mkbx0'));
   return DTA::TokWrap::mkbx0->mkbx0($_[0]);
@@ -129,9 +150,19 @@ sub mkbx0 {
 
 ## $doc_or_undef = $doc->mkbx($mkbx)
 ## $doc_or_undef = $doc->mkbx()
+##  + see DTA::TokWrap::mkbx::mkbx()
 sub mkbx {
   return $_[1]->mkbx($_[0]) if (UNIVERSAL::isa($_[1],'DTA::TokWrap::mkbx'));
   return DTA::TokWrap::mkbx->mkbx($_[0]);
+}
+
+## $doc_or_undef = $doc->tokenize($tokenize)
+## $doc_or_undef = $doc->tokenize()
+##  + see DTA::TokWrap::tokenize::tokenize()
+##  + default tokenizer class is given by package-global $TOKENIZE_CLASS
+sub tokenize {
+  return $_[1]->tokenize($_[0]) if (UNIVERSAL::isa($_[1],'DTA::TokWrap::tokenize'));
+  return $TOKENIZE_CLASS->tokenize($_[0]);
 }
 
 ##==============================================================================
@@ -172,7 +203,6 @@ sub saveBx0File {
 
   return 1;
 }
-
 
 ## $bool = $doc->saveBxFile($filename_or_fh,\@blocks)
 ## $bool = $doc->saveBxFile($filename_or_fh)
@@ -249,6 +279,36 @@ sub saveTxtFile {
 	     } @$bxdata
 	    );
   $fh->print("\n"); ##-- always terminate text file with a newline
+  $fh->close() if (!ref($file));
+  return 1;
+}
+
+## $bool = $doc->saveTokFile($filename_or_fh,\$tokdata)
+## $bool = $doc->saveTokFile($filename_or_fh)
+## $bool = $doc->saveTokFile()
+##  + $filename_or_fh defaults to $doc->{tokfile}="$doc->{outdir}/$doc->{outbase}.txt"
+##  + \$tokdata defaults to \$doc->{tokdata}
+##  + may implicitly call $doc->tokenize() (if \$tokdata and $doc->{tokdata} are both undefined)
+sub saveTokFile {
+  my ($doc,$file,$tokdatar) = @_;
+
+  ##-- get data
+  $tokdatar = \$doc->{tokdata} if (!$tokdatar);
+  if (!$tokdatar) {
+    $doc->tokenize()
+      or confess(ref($doc), "::saveTokFile(): tokenize() failed for document '$doc->{xmlfile}': $!");
+    $tokdatar = \$doc->{tokdata};
+  }
+
+  ##-- get file
+  $file = $doc->{tokfile} if (!defined($file));
+  $file = "$doc->{outdir}/$doc->{outbase}.t" if (!defined($file));
+  $doc->{tokfile} = $file if (!ref($file));
+
+  ##-- get filehandle & print
+  my $fh = ref($file) ? $file : IO::File->new(">$file");
+  $fh->binmode() if (!ref($file));
+  $fh->print( $$tokdatar );
   $fh->close() if (!ref($file));
   return 1;
 }

@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 typedef unsigned long int ByteOffset;
 
@@ -90,6 +91,12 @@ ABBR     (Prof|Dr|[[:alpha:]]|([[:alpha:]][[:alpha:]]))\.
  * User C Code
  */
 
+static void print_eos(void)
+{
+  if (lastWasEOS) return;
+  fputc('\n',yyout);
+  lastWasEOS = 1;
+}
 
 static void print_token(const char *typ)
 {
@@ -99,22 +106,22 @@ static void print_token(const char *typ)
       if (i+1 < yyleng && (yytext[i+1]=='\n' || yytext[i+1]=='\r')) {
 	i++;
       } else {
-	fputc('-',stdout);
+	fputc('-',yyout);
       }
     }
     else if (yytext[i]=='\n' || yytext[i]=='\r') {
       ;
     }
     else if (isspace(yytext[i])) {
-      fputc('_', stdout);
+      fputc('_', yyout);
     }
     else {
-      fputc(yytext[i],stdout);
+      fputc(yytext[i],yyout);
     }
   }
-  printf("\t%lu %d", thebyte, yyleng);
-  if (typ != NULL) { fputc('\t',stdout); fputs(typ,stdout); }
-  fputc('\n',stdout);
+  fprintf(yyout, "\t%lu %d", thebyte, yyleng);
+  if (typ != NULL) { fputc('\t',yyout); fputs(typ,yyout); }
+  fputc('\n',yyout);
   lastWasEOS = 0;
 
   //-- check for EOS
@@ -123,20 +130,27 @@ static void print_token(const char *typ)
   }
 }
 
-static void print_eos(void)
-{
-  if (lastWasEOS) return;
-  fputc('\n',stdout);
-  lastWasEOS = 1;
-}
-
 static int yywrap(void)
 {
   return 1;
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
+  if (argc > 1) {
+    yyin = fopen(argv[1], "rb");
+    if (!yyin) {
+      fprintf(stderr, "%s: open failed for input file '%s': %s\n", argv[0], argv[1], strerror(errno));
+      exit(1);
+    }
+  }
+  if (argc > 2) {
+    yyout = fopen(argv[2], "wb");
+    if (!yyout) {
+      fprintf(stderr, "%s: open failed for output file '%s': %s\n", argv[0], argv[2], strerror(errno));
+      exit(1);
+    }
+  }
   yylex();
   return 0;
 }
