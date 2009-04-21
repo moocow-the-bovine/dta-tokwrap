@@ -1,0 +1,58 @@
+/* -*- Mode: C -*- */
+digraph dataflow {
+  node [shape=rectangle,height=0.25,fontname="Courier"];
+  edge [decorate=0,fontname="Courier"];
+
+  xml [label="xmlfile: *.xml"];
+
+  mkindex [label="DTA::TokWrap::mkindex",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  xml -> mkindex;
+
+  cx [label="cxfile, cxdata: *.cx"];
+  sx [label="sxfile: *.sx"];
+  tx [label="txfile: *.tx"];
+  mkindex -> cx;
+  mkindex -> sx;
+  mkindex -> tx;
+  {rank=same; cx sx tx}
+
+  bx0 [label="bx0doc, bx0file: *.bx0"];
+  mkbx0 [label="DTA::TokWrap::mkbx0",shape=rectangle,style=filled,fillcolor=yellow,fontname="Courier-Bold"];
+  sx -> mkbx0;
+  mkbx0 -> bx0;
+
+
+  bx [label="bxfile: *.bx"];
+  mkbx [label="DTA::TokWrap::mkbx (bxdata)",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  bx0 -> mkbx;
+  tx -> mkbx;
+  mkbx -> bx;
+
+  txt [label="txtfile: *.txt"];
+  {rank=same; bx txt}
+  mkbx -> txt;
+
+  tok [label="tokdata, tokfile: *.t"];
+  tokenize [label="DTA::TokWrap::tokenize\lDTA::TokWrap::tokenize::dummy",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold",justify="left"];
+  txt -> tokenize;
+  tokenize -> tok;
+
+  tokxml [label="xtokdata, xtokdoc, xtokfile: *.t.xml"];
+  tok2xml [label="DTA::TokWrap::tok2xml",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  tok -> tok2xml;
+  bx  -> tok2xml;
+  cx  -> tok2xml;
+  tok2xml -> tokxml;
+
+  standoff [label="DTA::TokWrap::standoff",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  tokxml -> standoff;
+
+  sos [label="sosdoc, sosfile: *.s.xml"];
+  standoff -> sos;
+
+  sow [label="sowdoc, sowfile: *.w.xml"];
+  standoff -> sow;
+
+  soa [label="soadoc, soafile: *.a.xml"];
+  standoff -> soa;
+}

@@ -1,6 +1,7 @@
-##-*- Mode: C -*-
+/* -*- Mode: C -*- */
 digraph dataflow {
   node [shape=rectangle,height=0.25,fontname="Courier"];
+  edge [decorate=0,fontname="Courier"];
 
   xml [label="x.xml"];
 
@@ -41,18 +42,21 @@ digraph dataflow {
   cx -> t2xml;
   t2xml -> t_xml;
 
-  s_xml [label="x.s.xml"];
-  txml2sxml [label="dtatw-txml2sxml.xsl",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
-  t_xml -> txml2sxml;
-  txml2sxml -> s_xml;
-
   w_xml [label="x.w.xml"];
   txml2wxml [label="dtatw-txml2wxml.xsl",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
   t_xml -> txml2wxml;
   txml2wxml -> w_xml;
+  //w_xml -> xml [label="xml:base",style=dotted];
+
+  s_xml [label="x.s.xml"];
+  txml2sxml [label="dtatw-txml2sxml.xsl",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  t_xml -> txml2sxml;
+  txml2sxml -> s_xml;
+  //s_xml -> w_xml [label="xml:base",style=dotted];
 
   a_xml [label="x.a.xml"];
   txml2axml [label="dtatw-txml2axml.xsl",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
   t_xml -> txml2axml;
   txml2axml -> a_xml;
+  //a_xml -> w_xml [label="xml:base",style=dotted];
 }

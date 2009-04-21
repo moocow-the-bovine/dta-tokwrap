@@ -1,0 +1,76 @@
+/* -*- Mode: C -*- */
+digraph dataflow {
+  node [shape=rectangle,height=0.25,fontname="Courier"];
+  edge [decorate=0,fontname="Courier"];
+
+  xml [label="xmlfile: *.xml",shape=ellipse,style=filled,fillcolor=grey90];
+
+  mkindex [label="DTA::TokWrap::mkindex",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  xml -> mkindex;
+
+  cxfile [label="cxfile: *.cx",shape=ellipse,style=filled,fillcolor=grey90];
+  sxfile [label="sxfile: *.sx",shape=ellipse,style=filled,fillcolor=grey90];
+  txfile [label="txfile: *.tx",shape=ellipse,style=filled,fillcolor=grey90];
+  mkindex -> cxfile;
+  mkindex -> sxfile;
+  mkindex -> txfile;
+  {rank=same; cxfile sxfile txfile}
+
+  cxdata [label="cxdata"];
+  cxfile -> cxdata;
+
+  bx0doc [label="bx0doc"];
+  mkbx0 [label="DTA::TokWrap::mkbx0",shape=rectangle,style=filled,fillcolor=yellow,fontname="Courier-Bold"];
+  sxfile -> mkbx0;
+  mkbx0 -> bx0doc;
+
+  bxdata [label="bxdata"];
+  mkbx [label="DTA::TokWrap::mkbx",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  bx0doc -> mkbx;
+  txfile -> mkbx;
+  mkbx -> bxdata;
+
+  bxfile [label="bxfile: *.bx",shape=ellipse,style=filled,fillcolor=grey90];
+  txtfile [label="txtfile: *.txt",shape=ellipse,style=filled,fillcolor=grey90];
+  bxdata -> bxfile;
+  bxdata -> txtfile;
+  {rank=same; bxfile txtfile}
+
+  tokdata [label="tokdata"];
+  tokenize [label="DTA::TokWrap::tokenize\lDTA::TokWrap::tokenize::dummy",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold",justify="left"];
+  txtfile -> tokenize;
+  tokenize -> tokdata;
+
+  tokfile [label="tokfile: *.t",shape=ellipse,style=filled,fillcolor=grey90];
+  tokdata -> tokfile;
+
+  xtokdata [label="xtokdata"];
+  xtokfile [label="xtokfile: *.t.xml",shape=ellipse,style=filled,fillcolor=grey90];
+  xtokdoc  [label="xtokdoc"];
+  xtokdata -> xtokfile;
+  xtokdata -> xtokdoc;
+
+  tok2xml [label="DTA::TokWrap::tok2xml",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  tokdata -> tok2xml;
+  bxdata  -> tok2xml;
+  cxdata  -> tok2xml;
+  tok2xml -> xtokdata;
+
+  standoff [label="DTA::TokWrap::standoff",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  xtokdoc -> standoff;
+
+  sowdoc [label="sowdoc"];
+  standoff -> sowdoc;
+  sowfile [label="sowfile: *.w.xml",shape=ellipse,style=filled,fillcolor=grey90];
+  sowdoc -> sowfile;
+  
+  sosdoc [label="sosdoc"];
+  standoff -> sosdoc;
+  sosfile [label="sosfile: *.s.xml",shape=ellipse,style=filled,fillcolor=grey90];
+  sosdoc -> sosfile;
+
+  soadoc [label="soadoc"];
+  standoff -> soadoc;
+  soafile [label="soafile: *.a.xml",shape=ellipse,style=filled,fillcolor=grey90];
+  soadoc -> soafile;
+}
