@@ -8,7 +8,7 @@ package DTA::TokWrap::tok2xml;
 
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
-use DTA::TokWrap::Utils qw(:progs :libxml :libxslt :slurp);
+use DTA::TokWrap::Utils qw(:progs :libxml :libxslt :slurp :time);
 
 use IO::File;
 use Carp;
@@ -76,6 +76,9 @@ sub defaults {
 ##    xtokdata => $xtokdata, ##-- (output) tokenizer output as XML
 ##    nchrs   => $nchrs,     ##-- (output) number of character index records
 ##    ntoks   => $ntoks,     ##-- (output) number of tokens parsed
+##    tok2xml_stamp0 => $f,  ##-- (output) timestamp of operation begin
+##    tok2xml_stamp  => $f,  ##-- (output) timestamp of operation end
+##    xtokdata_stamp => $f,  ##-- (output) timestamp of operation end
 ## + $%t2x keys (temporary, for debugging):
 ##    tb2ci   => $tb2ci,    ##-- (temp) s.t. vec($tb2ci, $txbyte, 32) = $char_index_of_txbyte
 ##    ntb     => $ntb,      ##-- (temp) number of text bytes
@@ -91,6 +94,8 @@ sub tok2xml {
   $doc->tokenize() if (!defined($doc->{tokdata}));
   confess(ref($t2x), "::tok2xml($doc->{xmlfile}): no tokenizer output data") if (!defined($doc->{tokdata}));
 
+  $doc->{tok2xml_stamp0} = timestamp(); ##-- stamp
+
   ##-- create $tb2ci, $ob2ci index vectors
   $t2x->txbyte_to_ci($doc->{cxdata});
   $t2x->txtbyte_to_ci($doc->{cxdata}, $doc->{bxdata});
@@ -99,12 +104,13 @@ sub tok2xml {
   $t2x->process_tt_data($doc);
 
   ##-- update properties
-  $t2x->{nchrs} = scalar(@{$doc->{cxdata}});
+  $doc->{nchrs} = $t2x->{nchrs} = scalar(@{$doc->{cxdata}});
+  $doc->{tok2xml_stamp} = $doc->{xtokdata_stamp} = timestamp(); ##-- stamp
 
   ##-- cleanup temporary data
   #delete(@$t2x{qw(tb2ci ob2ci ntb nchr)});
 
-  ##-- return document
+  ##-- return
   return $doc;
 }
 

@@ -8,7 +8,7 @@ package DTA::TokWrap::standoff;
 
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
-use DTA::TokWrap::Utils qw(:progs :libxml :libxslt :slurp);
+use DTA::TokWrap::Utils qw(:progs :libxml :libxslt :slurp :time);
 
 use XML::LibXML;
 use XML::LibXSLT;
@@ -314,6 +314,9 @@ sub standoff {
 ##    xtokdoc  => $xtokdoc,  ##-- (input) XML-ified tokenizer output data, as XML::LibXML::Document
 ##    xtokdata => $xtokdata, ##-- (input) fallback: string source for $xtokdoc
 ##    sosdoc   => $sosdoc,   ##-- (output) standoff sentence data, refers to 'sowdoc'
+##    sosxml_stamp0 => $f,   ##-- (output) timestamp of operation begin
+##    sosxml_stamp  => $f,   ##-- (output) timestamp of operation end
+##    sosdoc_stamp => $f,    ##-- (output) timestamp of operation end
 sub sosxml {
   my ($so,$doc) = @_;
 
@@ -324,11 +327,15 @@ sub sosxml {
   my $xtdoc = $doc->xtokDoc()
     or confess(ref($so), "::sosxml($doc->{xmlfile}: could not create/parse .t.xml document: $!");
 
+  $doc->{sosxml_stamp0} = timestamp(); ##-- stamp
+
   ##-- apply XSL stylesheet
   $doc->{sosdoc} = $so->{t2s_stylesheet}->transform($xtdoc,
 						    xmlbase=>("'".basename($doc->{sowfile})."'"),
 						   )
     or confess(ref($so), "::sosxml($doc->{xmlfile}): could not apply t2s_stylesheet: $!");
+
+  $doc->{sosxml_stamp} = $doc->{sosdoc_stamp} = timestamp(); ##-- stamp
 
   return $doc;
 }
@@ -340,6 +347,9 @@ sub sosxml {
 ##    xtokdoc  => $xtokdoc,  ##-- (input) XML-ified tokenizer output data, as XML::LibXML::Document
 ##    xtokdata => $xtokdata, ##-- (input) fallback: string source for $xtokdoc
 ##    sowdoc   => $sowdoc,   ##-- (output) standoff token data, refers to 'sowdoc'
+##    sosxml_stamp0 => $f,   ##-- (output) timestamp of operation begin
+##    sosxml_stamp  => $f,   ##-- (output) timestamp of operation end
+##    sosdoc_stamp => $f,    ##-- (output) timestamp of operation end
 sub sowxml {
   my ($so,$doc) = @_;
 
@@ -350,11 +360,15 @@ sub sowxml {
   my $xtdoc = $doc->xtokDoc()
     or confess(ref($so), "::sowxml($doc->{xmlfile}: could not create/parse .t.xml document: $!");
 
+  $doc->{sowxml_stamp0} = timestamp(); ##-- stamp
+
   ##-- apply XSL stylesheet
   $doc->{sowdoc} = $so->{t2w_stylesheet}->transform($xtdoc,
 						   xmlbase=>("'".$doc->{xmlbase}."'"),
 						  )
     or confess(ref($so), "::sosxml($doc->{xmlfile}): could not apply t2w_stylesheet: $!");
+
+  $doc->{sowxml_stamp0} = $doc->{sowdoc_stamp} = timestamp(); ##-- stamp
 
   return $doc;
 }
@@ -366,6 +380,9 @@ sub sowxml {
 ##    xtokdoc  => $xtokdoc,  ##-- (input) XML-ified tokenizer output data, as XML::LibXML::Document
 ##    xtokdata => $xtokdata, ##-- (input) fallback: string source for $xtokdoc
 ##    soadoc   => $soadoc,   ##-- (output) standoff token-analysis data, refers to 'sowdoc'
+##    soaxml_stamp0 => $f,   ##-- (output) timestamp of operation begin
+##    soaxml_stamp  => $f,   ##-- (output) timestamp of operation end
+##    soadoc_stamp => $f,    ##-- (output) timestamp of operation end
 sub soaxml {
   my ($so,$doc) = @_;
 
@@ -376,11 +393,15 @@ sub soaxml {
   my $xtdoc = $doc->xtokDoc()
     or confess(ref($so), "::soaxml($doc->{xmlfile}: could not create/parse .t.xml document: $!");
 
+  $doc->{soaxml_stamp0} = timestamp(); ##-- stamp
+
   ##-- apply XSL stylesheet
   $doc->{soadoc} = $so->{t2a_stylesheet}->transform($xtdoc,
 						   xmlbase=>("'".basename($doc->{sowfile})."'"),
 						  )
     or confess(ref($so), "::soaxml($doc->{xmlfile}): could not apply t2a_stylesheet: $!");
+
+  $doc->{soaxml_stamp} = $doc->{soadoc_stamp} = timestamp(); ##-- stamp
 
   return $doc;
 }

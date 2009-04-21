@@ -2,16 +2,14 @@
 
 use lib qw(.);
 use DTA::TokWrap;
-use DTA::TokWrap::Document;
-use DTA::TokWrap::mkindex;
-use DTA::TokWrap::mkbx0;
-use DTA::TokWrap::mkbx;
+use DTA::TokWrap::Utils qw(:all);
 
 ##----------------------------------------------------------------------
 ## Test: document
 sub test_doc {
   our $test1 = DTA::TokWrap::Document->new('xmlfile'=>'test1.chr.xml');
   our $ex1   = DTA::TokWrap::Document->new('xmlfile'=>'ex1.chr.xml');
+  our $ex2   = DTA::TokWrap::Document->new('xmlfile'=>'../test/ex2.chr.xml');
   our $testdoc = $test1;
   return $testdoc;
 }
@@ -144,7 +142,29 @@ sub test_standoff {
   print STDERR "$0: test_standoff() done\n";
 }
 #test_standoff();
-test_standoff($ex1);
+#test_standoff($ex1);
+#test_standoff($ex2);
+
+##----------------------------------------------------------------------
+## Test: dependency tracking
+
+sub test_deps {
+  my $doc = shift;
+  $doc = $testdoc if (!$doc);
+
+  ##-- mark all data as stale
+  system('touch',$doc->{xmlfile});
+
+  ##-- re-generate index
+  #$doc->makeKey('cxfile');
+  #$doc->makeKey('bxdata');
+  $doc->makeKey('bxfile');
+  $doc->forceKey('bxfile');
+
+  print STDERR "$0: test_deps(): done\n";
+}
+#test_deps();
+test_deps($ex1);
 
 ##----------------------------------------------------------------------
 ## MAIN

@@ -8,7 +8,7 @@ package DTA::TokWrap::mkbx;
 
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
-use DTA::TokWrap::Utils qw(:progs :libxml :libxslt :slurp);
+use DTA::TokWrap::Utils qw(:progs :libxml :libxslt :slurp :time);
 
 use XML::Parser;
 use IO::File;
@@ -174,6 +174,9 @@ sub initXmlParser {
 ##    bx0doc  => $bx0doc,  ##-- (input) preliminary block-index data (XML::LibXML::Document)
 ##    txfile  => $txfile,  ##-- (input) raw text index filename
 ##    bxdata  => \@blocks, ##-- (output) serialized block index
+##    mkbx_stamp0 => $f,   ##-- (output) timestamp of operation begin
+##    mkbx_stamp  => $f,   ##-- (output) timestamp of operation end
+##    bxdata_stamp => $f,  ##-- (output) timestamp of operation end
 ## + block data: @blocks = ($blk0, ..., $blkN); %$blk =
 ##   (
 ##    key    =>$sortkey, ##-- (inherited) sort key
@@ -198,6 +201,8 @@ sub mkbx {
   confess(ref($mbx), "::mkbx0($doc->{xmlfile}): .tx file '$doc->{txfile}' not readable")
     if (!-r $doc->{txfile});
 
+  $doc->{mkbx_stamp0} = timestamp(); ##-- stamp
+
   ##-- parse bx0doc
   my $bx0str = $doc->{bx0doc}->toString(0);
   $mbx->{xp}->parse($bx0str);
@@ -217,6 +222,7 @@ sub mkbx {
 
   ##-- update document
   $doc->{bxdata} = $blocks;
+  $doc->{mkbx_stamp} = $doc->{bxdata_stamp} = timestamp(); ##-- stamp
   return $doc;
 }
 

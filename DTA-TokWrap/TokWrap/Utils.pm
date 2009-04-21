@@ -9,6 +9,7 @@ use DTA::TokWrap::Version;
 use Env::Path;
 use XML::LibXML;
 use XML::LibXSLT;
+use Time::HiRes;
 use IO::File;
 use Exporter;
 use Carp;
@@ -21,10 +22,12 @@ our @ISA = qw(Exporter);
 
 our @EXPORT = qw();
 our %EXPORT_TAGS = (
+		    files => [qw(file_mtime file_is_newer file_try_open)],
 		    slurp => [qw(slurp_file slurp_fh)],
 		    progs => [qw(path_prog runcmd)],
 		    libxml => [qw(libxml_parser)],
 		    libxslt => [qw(xsl_stylesheet)],
+		    time => [qw(timestamp)],
 		   );
 $EXPORT_TAGS{all} = [map {@$_} values(%EXPORT_TAGS)];
 our @EXPORT_OK = @{$EXPORT_TAGS{all}};
@@ -182,6 +185,52 @@ sub slurp_file {
   $fh->close if (!ref($file));
   return $bufr;
 }
+
+##==============================================================================
+## Utils: Files
+##==============================================================================
+
+## $mtime_in_floating_seconds = file_mtime($filename_or_fh)
+##  + de-references symlinks
+sub file_mtime {
+  my $file = shift;
+  #my @stat = (-l $file) ? lstat($file) : stat($file);
+  #my @stat = stat($file);
+  my @stat = Time::HiRes::stat($file);
+  return $stat[9];
+}
+
+## $bool = PACKAGE::file_is_newer($dstFile, \@depFiles, $requireMissingDeps)
+##  + returns true if $dstFile is newer than all existing @depFiles
+##  + if $requireMissingDeps is true, non-existent @depFiles will cause this function to return false
+sub file_is_newer {
+  my ($dst,$deps,$requireMissingDeps) = @_;
+  my $dst_mtime = file_mtime($dst);
+  return 0 if (!defined($dst_mtime));
+  my ($dep_mtime);
+  foreach (UNIVERSAL::isa($deps,'ARRAY') ? @$deps : $deps) {
+    $dep_mtime = file_mtime($_);
+    return 0 if ( defined($dep_mtime) ? $dep_mtime >= $dst_mtime : $requireMissingDeps );
+  }
+  return 1;
+}
+
+## $bool = file_try_open($filename)
+##  + tries to open() $filename; returns true if successful
+sub file_try_open {
+  my $file = shift;
+  my ($fh);
+  eval { $fh = IO::File->new("<$file"); };
+  $fh->close() if (defined($fh));
+  return defined($fh);
+}
+
+##==============================================================================
+## Utils: Timing
+##==============================================================================
+
+## $floating_seconds_since_epoch = PACAKGE::timestamp()
+BEGIN { *timestamp = \&Time::HiRes::time; }
 
 ##==============================================================================
 ## Utils: Misc

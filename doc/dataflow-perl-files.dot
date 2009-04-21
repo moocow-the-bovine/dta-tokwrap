@@ -17,7 +17,7 @@ digraph dataflow {
   {rank=same; cx sx tx}
 
   bx0 [label="bx0doc, bx0file: *.bx0"];
-  mkbx0 [label="DTA::TokWrap::mkbx0",shape=rectangle,style=filled,fillcolor=yellow,fontname="Courier-Bold"];
+  mkbx0 [label="DTA::TokWrap::mkbx0",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
   sx -> mkbx0;
   mkbx0 -> bx0;
 

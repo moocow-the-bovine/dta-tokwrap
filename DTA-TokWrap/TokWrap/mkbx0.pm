@@ -8,7 +8,7 @@ package DTA::TokWrap::mkbx0;
 
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
-use DTA::TokWrap::Utils qw(:progs :libxml :libxslt :slurp);
+use DTA::TokWrap::Utils qw(:progs :libxml :libxslt :slurp :time);
 
 use XML::LibXML;
 use XML::LibXSLT;
@@ -61,14 +61,32 @@ sub defaults {
 
 	  ##-- stylesheet: insert-hings
 	  hint_sb_xpaths => [
+			     ##-- title page
+			     qw(titlePage byline titlePart docAuthor docImprint pubPlace publisher docDate),
+
+			     ##-- main text: common
 			     qw(div|p|text|front|back|body),
-			     qw(note|table)
+
+			     ##-- notes, tables, lists, etc.
+			     qw(note|table|argument),
+			     qw(figure),
+
+			     ##-- drama-specific (TOTO: check real examples)
+			     qw(speaker sp stage castList castItem role roleDesc set),
 			    ],
 	  hint_wb_xpaths => [
-			     qw(cit|q|quote|head),
+			     ##-- main text: common
+			     qw(head|fw),
+
+			     ##-- citations & quotes (TODO: check real examples)
+			     qw(cit|q|quote),
+
+			     ##-- letters (TODO: check real examples)
+			     qw(salute dateline opener closer signed),
+
+			     ##-- notes, tables, lists, etc.
 			     qw(row|cell),
-			     qw(list),
-			     qw(item),
+			     qw(list|item), ##-- maybe move one or both of these to 'sb_xpaths' ?
 			    ],
 	  hint_stylestr => undef,
 	  hint_stylesheet => undef,
@@ -79,7 +97,7 @@ sub defaults {
 				 qw(ref|fw|head)
 				],
 	  sort_addkey_xpaths => [
-				 (map {"$_\[not(parent::seg)\]"} qw(table note)),
+				 (map {"$_\[not(parent::seg)\]"} qw(table note argument figure)),
 				],
 	  sort_stylestr  => undef,
 	  sort_styleheet => undef,
@@ -310,6 +328,9 @@ sub dump_sort_stylesheet {
 ## + %$doc keys:
 ##    sxfile  => $sxfile,  ##-- (input) structure index filename
 ##    bx0doc  => $bx0doc,  ##-- (output) preliminary block-index data (XML::LibXML::Document)
+##    mkbx0_stamp0 => $f,  ##-- (output) timestamp of operation begin
+##    mkbx0_stamp  => $f,  ##-- (output) timestamp of operation end
+##    bx0doc_stamp => $f,  ##-- (output) timestamp of operation end
 sub mkbx0 {
   my ($mbx0,$doc) = @_;
 
@@ -325,6 +346,8 @@ sub mkbx0 {
     if (!$doc->{sxfile});
   confess(ref($mbx0), "::mkbx0($doc->{xmlfile}): .sx file '$doc->{sxfile}' not readable")
     if (!-r $doc->{sxfile});
+
+  $doc->{mkbx0_stamp0} = timestamp(); ##-- stamp
 
   ##-- run command, buffer output to string
   my $cmdfh = IO::File->new("'$mbx0->{rmns}' '$doc->{sxfile}'|")
@@ -346,7 +369,7 @@ sub mkbx0 {
 
   ##-- adjust $doc
   $doc->{bx0doc} = $sxdoc;
-
+  $doc->{mkbx0_stamp} = $doc->{bx0doc_stamp} = timestamp(); ##-- stamp
   return $doc;
 }
 

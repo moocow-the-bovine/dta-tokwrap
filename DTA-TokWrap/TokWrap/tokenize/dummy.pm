@@ -8,7 +8,7 @@ package DTA::TokWrap::tokenize::dummy;
 
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
-use DTA::TokWrap::Utils qw(:progs :slurp);
+use DTA::TokWrap::Utils qw(:progs :slurp :time);
 use DTA::TokWrap::tokenize;
 
 use Carp;
@@ -63,6 +63,9 @@ sub init {
 ##    txtfile => $txtfile,  ##-- (input) serialized text file (uses $doc->{bxdata} if $doc->{txtfile} is not defined)
 ##    bxdata  => \@bxdata,  ##-- (input) block data, used to generate $doc->{txtfile} if not present
 ##    tokdata => $tokdata,  ##-- (output) tokenizer output data (string)
+##    tokenize_stamp0 => $f, ##-- (output) timestamp of operation begin
+##    tokenize_stamp  => $f, ##-- (output) timestamp of operation end
+##    tokdata_stamp => $f,   ##-- (output) timestamp of operation end
 ## + may implicitly call $doc->mkbx() and/or $doc->saveTxtFile()
 sub tokenize {
   my ($td,$doc) = @_;
@@ -74,6 +77,8 @@ sub tokenize {
   confess(ref($td), "::tokenize($doc->{xmlfile}): no .txt file defined") if (!defined($doc->{txtfile}));
   confess(ref($td), "::tokenize($doc->{xmlfile}): .txt file '$doc->{txtfile}' not readable") if (!-r $doc->{txtfile});
 
+  $doc->{tokenize_stamp0} = timestamp(); ##-- stamp
+
   ##-- run program
   $doc->{tokdata} = '';
   my $cmdfh = IO::File->new("'$td->{tokenize}' '$doc->{txtfile}'|")
@@ -81,6 +86,7 @@ sub tokenize {
   slurp_fh($cmdfh, \$doc->{tokdata});
   $cmdfh->close();
 
+  $doc->{tokenize_stamp} = $doc->{tokdata_stamp} = timestamp(); ##-- stamp
   return $doc;
 }
 

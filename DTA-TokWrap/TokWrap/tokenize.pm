@@ -8,7 +8,7 @@ package DTA::TokWrap::tokenize;
 
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
-use DTA::TokWrap::Utils qw(:progs);
+use DTA::TokWrap::Utils qw(:time);
 
 use Carp;
 use strict;
@@ -51,6 +51,9 @@ sub defaults {
 ##    txtfile => $txtfile,  ##-- (input) serialized text file (uses $doc->{bxdata} if $doc->{txtfile} is not defined)
 ##    bxdata  => \@bxdata,  ##-- (input) block data, used to generate $doc->{txtfile} if not present
 ##    tokdata => $tokdata,  ##-- (output) tokenizer output data (string)
+##    tokenize_stamp0 => $f, ##-- (output) timestamp of operation begin
+##    tokenize_stamp  => $f, ##-- (output) timestamp of operation end
+##    tokdata_stamp => $f,   ##-- (output) timestamp of operation end
 ## + may implicitly call $doc->mkbx() and/or $doc->saveTxtFile()
 sub tokenize {
   my ($td,$doc) = @_;

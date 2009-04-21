@@ -8,7 +8,7 @@ package DTA::TokWrap::mkindex;
 
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
-use DTA::TokWrap::Utils qw(:progs);
+use DTA::TokWrap::Utils qw(:progs :time);
 
 use File::Basename qw(basename dirname);
 
@@ -65,12 +65,19 @@ sub init {
 ##    cxfile  => $cxfile,  ##-- output character index filename
 ##    sxfile  => $sxfile,  ##-- output structure index filename
 ##    txfile  => $txfile,  ##-- output structure index filename
+##    mkindex_stamp0 => $f, ##-- (output) timestamp of operation begin
+##    mkindex_stamp  => $f, ##-- (output) timestamp of operation end
+##    cxfile_stamp   => $f, ##-- (output) timetamp of operation end
+##    sxfile_stamp   => $f, ##-- (output) timetamp of operation end
+##    txfile_stamp   => $f, ##-- (output) timetamp of operation end
 sub mkindex {
   my ($mi,$doc) = @_;
 
   ##-- sanity check(s)
   $mi = $mi->new if (!ref($mi));
   confess(ref($mi), "::mkindex(): no dtatw-mkindex program") if (!$mi->{mkindex});
+
+  $doc->{mkindex_stamp0} = timestamp(); ##-- stamp
 
   ##-- run program
   my $rc = runcmd($mi->{mkindex}, @$doc{qw(xmlfile cxfile sxfile txfile)});
@@ -80,6 +87,8 @@ sub mkindex {
 	 || ($doc->{sxfile} && !-e $doc->{sxfile})
 	 || ($doc->{txfile} && !-e $doc->{txfile}) );
 
+  my $stamp = timestamp();
+  $doc->{"${_}_stamp"} = $stamp foreach (qw(mkindex cxfile sxfile txfile));
   return $doc;
 }
 
