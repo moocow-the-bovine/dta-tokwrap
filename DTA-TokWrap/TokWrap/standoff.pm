@@ -320,6 +320,8 @@ sub standoff {
 sub sosxml {
   my ($so,$doc) = @_;
 
+  $so->info("sosxml($doc->{xmlfile})"); ##-- log
+
   ##-- sanity check(s)
   $so = $so->new() if (!ref($so));
   $so->ensure_stylesheets()
@@ -353,6 +355,8 @@ sub sosxml {
 sub sowxml {
   my ($so,$doc) = @_;
 
+  $so->info("sowxml($doc->{xmlfile})"); ##-- log
+
   ##-- sanity check(s)
   $so = $so->new() if (!ref($so));
   $so->ensure_stylesheets()
@@ -385,6 +389,8 @@ sub sowxml {
 ##    soadoc_stamp => $f,    ##-- (output) timestamp of operation end
 sub soaxml {
   my ($so,$doc) = @_;
+
+  $so->info("soaxml($doc->{xmlfile})"); ##-- log
 
   ##-- sanity check(s)
   $so = $so->new() if (!ref($so));

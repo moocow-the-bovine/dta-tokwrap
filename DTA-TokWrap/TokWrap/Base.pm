@@ -6,6 +6,7 @@
 
 package DTA::TokWrap::Base;
 use DTA::TokWrap::Version;
+use DTA::TokWrap::Logger;
 
 use Carp;
 use strict;
@@ -13,7 +14,7 @@ use strict;
 ##==============================================================================
 ## Constants
 ##==============================================================================
-our @ISA = qw();
+our @ISA = qw(DTA::TokWrap::Logger);
 
 ##==============================================================================
 ## Constructors etc.

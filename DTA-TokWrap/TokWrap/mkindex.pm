@@ -73,6 +73,8 @@ sub init {
 sub mkindex {
   my ($mi,$doc) = @_;
 
+  $mi->info("mkindex($doc->{xmlfile})"); ##-- log
+
   ##-- sanity check(s)
   $mi = $mi->new if (!ref($mi));
   confess(ref($mi), "::mkindex(): no dtatw-mkindex program") if (!$mi->{mkindex});

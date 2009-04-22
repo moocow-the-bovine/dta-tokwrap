@@ -192,6 +192,8 @@ sub initXmlParser {
 sub mkbx {
   my ($mbx,$doc) = @_;
 
+  $mbx->info("mkbx($doc->{xmlfile})"); ##-- log
+
   ##-- sanity check(s)
   $mbx = $mbx->new() if (!ref($mbx));
   $doc->mkbx0() if (!$doc->{bx0doc});

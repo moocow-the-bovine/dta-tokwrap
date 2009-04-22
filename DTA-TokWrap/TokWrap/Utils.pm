@@ -6,10 +6,13 @@
 
 package DTA::TokWrap::Utils;
 use DTA::TokWrap::Version;
+use DTA::TokWrap::Logger;
 use Env::Path;
 use XML::LibXML;
 use XML::LibXSLT;
 use Time::HiRes;
+use File::Basename qw(basename dirname);
+use Cwd 'abs_path';
 use IO::File;
 use Exporter;
 use Carp;
@@ -18,11 +21,11 @@ use strict;
 ##==============================================================================
 ## Constants
 ##==============================================================================
-our @ISA = qw(Exporter);
+our @ISA = qw(Exporter DTA::TokWrap::Logger);
 
 our @EXPORT = qw();
 our %EXPORT_TAGS = (
-		    files => [qw(file_mtime file_is_newer file_try_open)],
+		    files => [qw(file_mtime file_is_newer file_try_open abs_path)],
 		    slurp => [qw(slurp_file slurp_fh)],
 		    progs => [qw(path_prog runcmd)],
 		    libxml => [qw(libxml_parser)],
@@ -67,7 +70,7 @@ sub path_prog {
 ## $system_rc = PACKAGE::runcmd(@cmd)
 sub runcmd {
   my @argv = @_;
-  print STDERR __PACKAGE__, "::runcmd(): ", join(' ', map {$_=~/\s/ ? "\"$_\"" : $_} @argv), "\n"
+  __PACKAGE__->trace("runcmd(): ", join(' ', map {$_=~/\s/ ? "\"$_\"" : $_} @argv))
     if ($TRACE_RUNCMD);
   return system(@argv);
 }
@@ -224,6 +227,10 @@ sub file_try_open {
   $fh->close() if (defined($fh));
   return defined($fh);
 }
+
+## $abs_path_to_file = abs_path($file)
+##  + de-references symlinks
+##  + imported from Cwd
 
 ##==============================================================================
 ## Utils: Timing

@@ -334,6 +334,8 @@ sub dump_sort_stylesheet {
 sub mkbx0 {
   my ($mbx0,$doc) = @_;
 
+  $mbx0->info("mkbx0($doc->{xmlfile})"); ##-- log
+
   ##-- sanity check(s)
   $mbx0 = $mbx0->new() if (!ref($mbx0));
   confess(ref($mbx0), "::mkbx0($doc->{xmlfile}): no xml-rm-namespaces program")

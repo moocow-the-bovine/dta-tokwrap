@@ -86,6 +86,8 @@ sub defaults {
 sub tok2xml {
   my ($t2x,$doc) = @_;
 
+  $t2x->info("tok2xml($doc->{xmlfile})"); ##-- log
+
   ##-- sanity check(s)
   $t2x = $t2x->new() if (!ref($t2x));
   $doc->mkbx() if (!$doc->{bxdata});

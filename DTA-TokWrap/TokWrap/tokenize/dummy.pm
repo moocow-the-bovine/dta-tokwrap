@@ -70,6 +70,8 @@ sub init {
 sub tokenize {
   my ($td,$doc) = @_;
 
+  $td->info("tokenize($doc->{xmlfile})"); ##-- log
+
   ##-- sanity check(s)
   $td = $td->new if (!ref($td));
   confess(ref($td), "::tokenize($doc->{xmlfile}): no dtatw-tokenize-dummy program") if (!$td->{tokenize});
