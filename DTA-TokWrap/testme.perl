@@ -5,11 +5,17 @@ use DTA::TokWrap;
 use DTA::TokWrap::Utils qw(:all);
 
 ##----------------------------------------------------------------------
+## Test: logger
+BEGIN {
+  DTA::TokWrap::Logger->logInit();
+}
+
+##----------------------------------------------------------------------
 ## Test: document
 sub test_doc {
-  our $test1 = DTA::TokWrap::Document->new('xmlfile'=>'test1.chr.xml');
-  our $ex1   = DTA::TokWrap::Document->new('xmlfile'=>'ex1.chr.xml');
-  our $ex2   = DTA::TokWrap::Document->new('xmlfile'=>'../test/ex2.chr.xml');
+  our $test1 = DTA::TokWrap::Document->open('test1.chr.xml');
+  our $ex1   = DTA::TokWrap::Document->open('ex1.chr.xml');
+  our $ex2   = DTA::TokWrap::Document->open('../test/ex2.chr.xml');
   our $testdoc = $test1;
   return $testdoc;
 }
@@ -153,18 +159,51 @@ sub test_deps {
   $doc = $testdoc if (!$doc);
 
   ##-- mark all data as stale
-  system('touch',$doc->{xmlfile});
+  system('touch', abs_path($doc->{xmlfile}));
+
+  ##-- test trace
+  #@$doc{qw(traceMake traceGen)} = (1,1);
 
   ##-- re-generate index
   #$doc->makeKey('cxfile');
   #$doc->makeKey('bxdata');
-  $doc->makeKey('bxfile');
-  $doc->forceKey('bxfile');
+  ##--
+  #$doc->makeKey('bxfile');
+  #$doc->remakeKey('bxfile');
+  ##--
+  $doc->makeKey('all');
 
   print STDERR "$0: test_deps(): done\n";
 }
 #test_deps();
-test_deps($ex1);
+#test_deps($ex1);
+
+##----------------------------------------------------------------------
+## Test: open/close
+
+sub test_openclose {
+  my $xmlfile = shift || $testdoc->{xmlfile};
+  my $tw = DTA::TokWrap->new();
+  my ($doc);
+  my %opts = (traceMake=>1);
+
+  ##-- mark source file as newest & make (should re-make all)
+  #system('touch', abs_path($xmlfile);
+  $doc = $tw->open($xmlfile, %opts);
+  $doc->makeKey('bx0doc');
+  #$doc->makeKey('all');
+  $doc->close();
+
+  ##-- perl-only: mark all data as stale & make (should re-make all)
+  #$doc = $tw->open($xmlfile, %opts);
+  #$doc->remakeKey('all');
+  #$doc->close();
+
+  print STDERR ("$0: test_openclose(): done\n");
+}
+test_openclose('test1.chr.xml');
+#test_openclose('ex1.chr.xml');
+#test_openclose('../test/ex2.chr.xml');
 
 ##----------------------------------------------------------------------
 ## MAIN

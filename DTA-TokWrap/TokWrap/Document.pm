@@ -8,13 +8,13 @@ package DTA::TokWrap::Document;
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Utils qw(:libxml :files :time);
-use DTA::TokWrap::mkindex;
-use DTA::TokWrap::mkbx0;
-use DTA::TokWrap::mkbx;
-use DTA::TokWrap::tokenize;
-use DTA::TokWrap::tokenize::dummy;
-use DTA::TokWrap::tok2xml;
-use DTA::TokWrap::standoff;
+use DTA::TokWrap::Processor::mkindex;
+use DTA::TokWrap::Processor::mkbx0;
+use DTA::TokWrap::Processor::mkbx;
+use DTA::TokWrap::Processor::tokenize;
+use DTA::TokWrap::Processor::tokenize::dummy;
+use DTA::TokWrap::Processor::tok2xml;
+use DTA::TokWrap::Processor::standoff;
 
 use Time::HiRes ('tv_interval','gettimeofday');
 use File::Basename qw(basename dirname);
@@ -29,8 +29,8 @@ our @ISA = qw(DTA::TokWrap::Base Exporter);
 
 ## $TOKENIZE_CLASS
 ##  + default tokenizer class
-#our $TOKENIZE_CLASS = 'DTA::TokWrap::tokenize';
-our $TOKENIZE_CLASS = 'DTA::TokWrap::tokenize::dummy';
+#our $TOKENIZE_CLASS = 'DTA::TokWrap::Processor::tokenize';
+our $TOKENIZE_CLASS = 'DTA::TokWrap::Processor::tokenize::dummy';
 
 ## $CX_ID   : {cxdata} index of id field
 ## $CX_XOFF : {cxdata} index of XML byte-offset field
@@ -62,6 +62,8 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    ##-- generator data (optional)
 ##    tw => $tw,            ##-- a DTA::TokWrap object storing individual generators
 ##    force => \@keys,      ##-- force re-generation of all dependencies for @keys
+##    traceMake => $bool,   ##-- do trace-level logging for makeKey() ? (default=0)
+##    traceGen => $bool,    ##-- do trace-level logging for genKey()  ? (default=0)
 ##
 ##    ##-- generated data (common)
 ##    outdir => $outdir,    ##-- output directory for generated data (default=.)
@@ -70,31 +72,32 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    outbase => $filebase, ##-- output basename (default=`basename $xmlbase .xml`)
 ##    format => $level,     ##-- default formatting level for XML output
 ##
-##    ##-- mkindex data (see DTA::TokWrap::mkindex)
+##    ##-- mkindex data (see DTA::TokWrap::Processor::mkindex)
 ##    cxfile => $cxfile,    ##-- character index file (default="$tmpdir/$outbase.cx")
 ##    cxdata => $cxdata,    ##-- character index data (see loadCxFile() method)
+
 ##    sxfile => $sxfile,    ##-- structure index file (default="$tmpdir/$outbase.sx")
 ##    txfile => $txfile,    ##-- raw text index file (default="$tmpdir/$outbase.tx")
 ##
-##    ##-- mkbx0 data (see DTA::TokWrap::mkbx0)
+##    ##-- mkbx0 data (see DTA::TokWrap::Processor::mkbx0)
 ##    bx0doc  => $bx0doc,   ##-- pre-serialized block-index XML::LibXML::Document
 ##    bx0file => $bx0file,  ##-- pre-serialized block-index XML file (default="$outbase.bx0"; optional)
 ##
-##    ##-- mkbx data (see DTA::TokWrap::mkbx)
+##    ##-- mkbx data (see DTA::TokWrap::Processor::mkbx)
 ##    bxdata  => \@bxdata,  ##-- block-list, see DTA::TokWrap::mkbx::mkbx() for details
 ##    bxfile  => $bxfile,   ##-- serialized block-index CSV file (default="$outbase.bx"; optional)
 ##    txtfile => $txtfile,  ##-- serialized & hinted text file (default="$outbase.txt"; optional)
 ##
-##    ##-- tokenize data (see DTA::TokWrap::tokenize, DTA::TokWrap::tokenize::dummy)
+##    ##-- tokenize data (see DTA::TokWrap::Processor::tokenize, DTA::TokWrap::Processor::tokenize::dummy)
 ##    tokdata => $tokdata,  ##-- tokenizer output data (slurped string)
 ##    tokfile => $tokfile,  ##-- tokenizer output file (default="$outbase.t"; optional)
 ##
-##    ##-- tokenizer xml data (see DTA::TokWrap::tok2xml)
+##    ##-- tokenizer xml data (see DTA::TokWrap::Processor::tok2xml)
 ##    xtokdata => $xtokdata,  ##-- XML-ified tokenizer output data
 ##    xtokfile => $xtokfile,  ##-- XML-ified tokenizer output file (default="$outbase.t.xml")
 ##    xtokdoc  => $xtokdoc,   ##-- XML::LibXML::Document for $xtokdata (parsed from string)
 ##
-##    ##-- standoff xml data (see DTA::TokWrap::standoff)
+##    ##-- standoff xml data (see DTA::TokWrap::Processor::standoff)
 ##    sosdoc  => $sosdata,   ##-- XML::LibXML::Document: sentence standoff data
 ##    sowdoc  => $sowdata,   ##-- XML::LibXML::Document: token standoff data
 ##    soadoc  => $soadata,   ##-- XML::LibXML::Document: analysis standoff data
@@ -115,6 +118,8 @@ sub defaults {
 	  ##-- generator data (optional)
 	  #tw => undef,
 	  #force => 0,
+	  #traceMake => 0,
+	  #traceGen => 0,
 
 	  ##-- generated data (common)
 	  outdir => '.',
@@ -307,7 +312,7 @@ sub tempfiles {
 our %KEYGEN =
   (
    xmlfile => sub { $_[0]; },
-   (map {$_=>'mkindex'} qw(bxfile cxfile sxfile)),
+   (map {$_=>'mkindex'} qw(cxfile sxfile txfile)),
    cxdata => \&loadCxFile,
    bx0doc => 'mkbx0',
    bxdata => 'mkbx',
@@ -324,6 +329,8 @@ our %KEYGEN =
    sosfile => \&saveSosFile,
    sowfile => \&saveSowFile,
    soafile => \&saveSoaFile,
+   sofiles => \&saveStandoffFiles,
+   all => sub { 1 },
   );
 
 ## %KEYDEPS = ($dataKey => \@depsForKey, ...)
@@ -391,31 +398,67 @@ BEGIN {
 ##--------------------------------------------------------------
 ## Methods: Dependency Tracking: Lookup
 
+## @uniqKeys = uniqKeys(@keys)
+sub uniqKeys {
+  my %known = qw();
+  my @uniq  = qw();
+  foreach (@_) {
+    push(@uniq,$_) if (!exists($known{$_}));
+    $known{$_}=undef;
+  }
+  return @uniq;
+}
+
+## @deps0 = PACKAGE::keyDeps0(@docKeys)
+##  + immediate dependencies for @docKeys
+sub keyDeps0 {
+  return uniqKeys(map { @{$KEYDEPS_0{$_}||[]} } @_);
+}
+
 ## @deps = PACKAGE::keyDeps(@docKeys)
 sub keyDeps {
-  return @{$KEYDEPS{$_[0]}||[]} if ($#_ == 0);
-  my %knowndeps = qw();
-  my @alldeps   = qw();
-  my ($keydeps);
+  return uniqKeys(map { @{$KEYDEPS{$_}||[]} } @_);
+}
+
+## $greatest = PACKAGE::_max_(@numbers)
+sub _max_ {
+  my $max=undef;
   foreach (@_) {
-    $keydeps = $KEYDEPS{$_} || [];
-    push(@alldeps, grep {!exists($knowndeps{$_})} @$keydeps);
-    @knowndeps{@$keydeps} = qw();
+    $max=$_ if (!defined($max) || $max < $_);
   }
-  return @alldeps;
+  return $max;
 }
 
 ## $floating_secs_or_undef = $doc->keyStamp($key)
+## $floating_secs_or_undef = $doc->keyStamp($key, $requireKey)
 ##  + gets $doc->{"${key}_stamp"} if it exists
 ##  + implicitly creates $doc->{"${key}_stamp"} for readable files
 ##  + returned value is (floating point) seconds since epoch
 sub keyStamp {
-  my ($doc,$key) = @_;
+  my ($doc,$key,$reqKey) = @_;
   return $doc->{"${key}_stamp"}
     if (defined($doc->{"${key}_stamp"}));
   return $doc->{"${key}_stamp"} = file_mtime($doc->{$key})
-    if ($key =~ /file$/ && defined($doc->{$key}) && -r $doc->{$key});
-  return undef;
+    if ($key =~ m/file$/ && defined($doc->{$key}) && -r $doc->{$key});
+  return $doc->{"${key}_stamp"} = timestamp()
+    if ($key !~ m/file$/ && defined($doc->{$key}));
+  return undef
+    if ($reqKey);
+  return $doc->depStamp($doc->keyDeps0($key));
+}
+
+## $floating_secs_or_undef = $doc->depStamp($key,$reqDeps)
+##  + gets stamp of newest dependency for $key
+sub depStamp {
+  my ($doc,$key,$reqDeps) = @_;
+  my $newest = undef;
+  my ($depStamp);
+  foreach ($doc->keyDeps($key)) {
+    $depStamp = $doc->keyStamp($_, $reqDeps);
+    return undef if ($reqDeps && !defined($depStamp));
+    $newest = $depStamp if (!defined($newest) || $depStamp > $newest);
+  }
+  return $newest;
 }
 
 ## @newerDeps = $doc->keyNewerDeps($key)
@@ -448,7 +491,7 @@ sub keyIsCurrent {
 ##  + unconditionally (re-)generate a data key (single step only)
 sub genKey {
   my ($doc,$key) = @_;
-  $doc->trace("genKey($key)");
+  $doc->trace("$doc->{xmlbase}: genKey($key)") if ($doc->{traceGen});
   my $gen = $KEYGEN{$key};
   if (!defined($gen)) {
     carp(ref($doc), "::genKey(): no generator defined for key '$key'");
@@ -466,11 +509,14 @@ sub genKey {
 }
 
 ## $keyval_or_undef = $doc->makeKey($key)
+## $keyval_or_undef = $doc->makeKey($key,\%queued)
 ##  + conditionally (re-)generate a data key, checking dependencies
 sub makeKey {
   my ($doc,$key) = @_;
-  $doc->trace("makeKey($key)");
-  $doc->makeKey($_) foreach ($doc->keyDeps($key));
+  $doc->trace("$doc->{xmlbase}: makeKey($key)") if ($doc->{traceMake});
+  foreach ($doc->keyDeps0($key)) {
+    $doc->makeKey($_) if (!defined($doc->{"${_}_stamp"}) || !$doc->keyIsCurrent($_));
+  }
   return $doc->genKey($key) if (!$doc->keyIsCurrent($key));
   return $doc->{$key};
 }
@@ -496,7 +542,7 @@ sub remakeKey {
   #$doc->genKey($_) foreach ($doc->keyDeps($key));
   #return $doc->genKey($key);
   ##--
-  $doc->trace("remakeKey($key)");
+  $doc->trace("$doc->{xmlbase}: remakeKey($key)") if ($doc->{traceMake});
   $doc->forceStale($doc->keyDeps($key),$key);
   return $doc->makeKey($key);
 }
@@ -509,28 +555,28 @@ sub remakeKey {
 
 ## $doc_or_undef = $doc->mkindex($mkindex)
 ## $doc_or_undef = $doc->mkindex()
-##  + see DTA::TokWrap::mkindex::mkindex()
+##  + see DTA::TokWrap::Processor::mkindex::mkindex()
 sub mkindex {
-  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{mkindex}) || 'DTA::TokWrap::mkindex')->mkindex($_[0]);
+  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{mkindex}) || 'DTA::TokWrap::Processor::mkindex')->mkindex($_[0]);
 }
 
 ## $doc_or_undef = $doc->mkbx0($mkbx0)
 ## $doc_or_undef = $doc->mkbx0()
-##  + see DTA::TokWrap::mkbx0::mkbx0()
+##  + see DTA::TokWrap::Processor::mkbx0::mkbx0()
 sub mkbx0 {
-  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{mkbx0}) || 'DTA::TokWrap::mkbx0')->mkbx0($_[0]);
+  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{mkbx0}) || 'DTA::TokWrap::Processor::mkbx0')->mkbx0($_[0]);
 }
 
 ## $doc_or_undef = $doc->mkbx($mkbx)
 ## $doc_or_undef = $doc->mkbx()
-##  + see DTA::TokWrap::mkbx::mkbx()
+##  + see DTA::TokWrap::Processor::mkbx::mkbx()
 sub mkbx {
-  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{mkbx}) || 'DTA::TokWrap::mkbx')->mkbx($_[0]);
+  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{mkbx}) || 'DTA::TokWrap::Processor::mkbx')->mkbx($_[0]);
 }
 
 ## $doc_or_undef = $doc->tokenize($tokenize)
 ## $doc_or_undef = $doc->tokenize()
-##  + see DTA::TokWrap::tokenize::tokenize()
+##  + see DTA::TokWrap::Processor::tokenize::tokenize()
 ##  + default tokenizer class is given by package-global $TOKENIZE_CLASS
 sub tokenize {
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tokenize}) || $TOKENIZE_CLASS)->tokenize($_[0]);
@@ -538,38 +584,38 @@ sub tokenize {
 
 ## $doc_or_undef = $doc->tok2xml($tok2xml)
 ## $doc_or_undef = $doc->tok2xml()
-##  + see DTA::TokWrap::tok2xml::tok2xml()
+##  + see DTA::TokWrap::Processor::tok2xml::tok2xml()
 sub tok2xml {
-  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tok2xml}) || 'DTA::TokWrap::tok2xml')->tok2xml($_[0]);
+  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tok2xml}) || 'DTA::TokWrap::Processor::tok2xml')->tok2xml($_[0]);
 }
 
 ## $doc_or_undef = $doc->sosxml($so)
 ## $doc_or_undef = $doc->sosxml()
-##  + see DTA::TokWrap::standoff::sosxml()
+##  + see DTA::TokWrap::Processor::standoff::sosxml()
 sub sosxml {
-  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::standoff')->sosxml($_[0]);
+  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::Processor::standoff')->sosxml($_[0]);
 }
 
 ## $doc_or_undef = $doc->sowxml($so)
 ## $doc_or_undef = $doc->sowxml()
-##  + see DTA::TokWrap::standoff::sowxml()
+##  + see DTA::TokWrap::Processor::standoff::sowxml()
 sub sowxml {
-  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::standoff')->sowxml($_[0]);
+  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::Processor::standoff')->sowxml($_[0]);
 }
 
 ## $doc_or_undef = $doc->soaxml($so)
 ## $doc_or_undef = $doc->soaxml()
-##  + see DTA::TokWrap::standoff::soaxml()
+##  + see DTA::TokWrap::Processor::standoff::soaxml()
 sub soaxml {
-  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::standoff')->soaxml($_[0]);
+  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::Processor::standoff')->soaxml($_[0]);
 }
 
 ## $doc_or_undef = $doc->standoff($so)
 ## $doc_or_undef = $doc->standoff()
 ##  + wrapper for sosxml(), sowxml(), soaxml()
-##  + see DTA::TokWrap::standoff::standoff()
+##  + see DTA::TokWrap::Processor::standoff::standoff()
 sub standoff {
-  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::standoff')->standoff($_[0]);
+  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::Processor::standoff')->standoff($_[0]);
 }
 
 ##==============================================================================
@@ -636,7 +682,8 @@ sub loadCxFile {
   }
   $fh->close() if (!ref($file));
 
-  $_[0]{cxdata_stamp} = Time::HiRes::time();
+  #$_[0]{cxdata_stamp} = Time::HiRes::time();
+  $doc->{cxdata_stamp} = file_mtime($file);
   return $cx;
 }
 

@@ -1,14 +1,15 @@
 ## -*- Mode: CPerl -*-
 
-## File: DTA::TokWrap::standoff.pm
+## File: DTA::TokWrap::Processor::standoff.pm
 ## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
 ## Descript: DTA tokenizer wrappers: t.xml -> (s.xml, w.xml, a.xml)
 
-package DTA::TokWrap::standoff;
+package DTA::TokWrap::Processor::standoff;
 
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Utils qw(:progs :libxml :libxslt :slurp :time);
+use DTA::TokWrap::Processor;
 
 use XML::LibXML;
 use XML::LibXSLT;
@@ -21,7 +22,7 @@ use strict;
 ##==============================================================================
 ## Constants
 ##==============================================================================
-our @ISA = qw(DTA::TokWrap::Base);
+our @ISA = qw(DTA::TokWrap::Processor);
 
 ##==============================================================================
 ## Constructors etc.
@@ -320,22 +321,23 @@ sub standoff {
 sub sosxml {
   my ($so,$doc) = @_;
 
-  $so->info("sosxml($doc->{xmlfile})"); ##-- log
+  ##-- log, stamp
+  $so->info("sosxml($doc->{xmlbase})");
+  $doc->{sosxml_stamp0} = timestamp();
 
   ##-- sanity check(s)
   $so = $so->new() if (!ref($so));
-  $so->ensure_stylesheets()
-    or confess(ref($so), "::sosxml($doc->{xmlfile}): could not compile XSL stylesheet(s)");
-  my $xtdoc = $doc->xtokDoc()
-    or confess(ref($so), "::sosxml($doc->{xmlfile}: could not create/parse .t.xml document: $!");
-
-  $doc->{sosxml_stamp0} = timestamp(); ##-- stamp
+  $so->logconfess("sosxml($doc->{xmlbase}): could not compile XSL stylesheet(s)")
+    if (!$so->ensure_stylesheets());
+  $so->logconfess("sosxml($doc->{xmlbase}): no xtokdoc key defined")
+    if (!$doc->{xtokdoc});
+  my $xtdoc = $doc->{xtokdoc};
 
   ##-- apply XSL stylesheet
   $doc->{sosdoc} = $so->{t2s_stylesheet}->transform($xtdoc,
 						    xmlbase=>("'".basename($doc->{sowfile})."'"),
 						   )
-    or confess(ref($so), "::sosxml($doc->{xmlfile}): could not apply t2s_stylesheet: $!");
+    or $so->logconfess("sosxml($doc->{xmlbase}): could not apply t2s_stylesheet: $!");
 
   $doc->{sosxml_stamp} = $doc->{sosdoc_stamp} = timestamp(); ##-- stamp
 
@@ -349,30 +351,32 @@ sub sosxml {
 ##    xtokdoc  => $xtokdoc,  ##-- (input) XML-ified tokenizer output data, as XML::LibXML::Document
 ##    xtokdata => $xtokdata, ##-- (input) fallback: string source for $xtokdoc
 ##    sowdoc   => $sowdoc,   ##-- (output) standoff token data, refers to 'sowdoc'
-##    sosxml_stamp0 => $f,   ##-- (output) timestamp of operation begin
-##    sosxml_stamp  => $f,   ##-- (output) timestamp of operation end
-##    sosdoc_stamp => $f,    ##-- (output) timestamp of operation end
+##    sowxml_stamp0 => $f,   ##-- (output) timestamp of operation begin
+##    sowxml_stamp  => $f,   ##-- (output) timestamp of operation end
+##    sowdoc_stamp => $f,    ##-- (output) timestamp of operation end
 sub sowxml {
   my ($so,$doc) = @_;
 
-  $so->info("sowxml($doc->{xmlfile})"); ##-- log
+  ##-- log, stamp
+  $so->info("sowxml($doc->{xmlbase})");
+  $doc->{sowxml_stamp0} = timestamp();
 
   ##-- sanity check(s)
   $so = $so->new() if (!ref($so));
-  $so->ensure_stylesheets()
-    or confess(ref($so), "::sowxml($doc->{xmlfile}): could not compile XSL stylesheet(s)");
-  my $xtdoc = $doc->xtokDoc()
-    or confess(ref($so), "::sowxml($doc->{xmlfile}: could not create/parse .t.xml document: $!");
-
-  $doc->{sowxml_stamp0} = timestamp(); ##-- stamp
+  $so->logconfess("sowxml($doc->{xmlbase}): could not compile XSL stylesheet(s)")
+    if (!$so->ensure_stylesheets());
+  $so->logconfess("sowxml($doc->{xmlbase}): no xtokdoc key defined")
+    if (!$doc->{xtokdoc});
+  my $xtdoc = $doc->{xtokdoc};
 
   ##-- apply XSL stylesheet
   $doc->{sowdoc} = $so->{t2w_stylesheet}->transform($xtdoc,
 						   xmlbase=>("'".$doc->{xmlbase}."'"),
 						  )
-    or confess(ref($so), "::sosxml($doc->{xmlfile}): could not apply t2w_stylesheet: $!");
+    or $so->logconfess("sowxml($doc->{xmlbase}): could not apply t2w_stylesheet: $!");
 
-  $doc->{sowxml_stamp0} = $doc->{sowdoc_stamp} = timestamp(); ##-- stamp
+
+  $doc->{sowxml_stamp} = $doc->{sowdoc_stamp} = timestamp(); ##-- stamp
 
   return $doc;
 }
@@ -390,22 +394,23 @@ sub sowxml {
 sub soaxml {
   my ($so,$doc) = @_;
 
-  $so->info("soaxml($doc->{xmlfile})"); ##-- log
+  ##-- log, stamp
+  $so->info("soaxml($doc->{xmlbase})");
+  $doc->{soaxml_stamp0} = timestamp();
 
   ##-- sanity check(s)
   $so = $so->new() if (!ref($so));
-  $so->ensure_stylesheets()
-    or confess(ref($so), "::soaxml($doc->{xmlfile}): could not compile XSL stylesheet(s)");
-  my $xtdoc = $doc->xtokDoc()
-    or confess(ref($so), "::soaxml($doc->{xmlfile}: could not create/parse .t.xml document: $!");
-
-  $doc->{soaxml_stamp0} = timestamp(); ##-- stamp
+  $so->logconfess("soaxml($doc->{xmlbase}): could not compile XSL stylesheet(s)")
+    if (!$so->ensure_stylesheets());
+  $so->logconfess("soaxml($doc->{xmlbase}): no xtokdoc key defined")
+    if (!$doc->{xtokdoc});
+  my $xtdoc = $doc->{xtokdoc};
 
   ##-- apply XSL stylesheet
   $doc->{soadoc} = $so->{t2a_stylesheet}->transform($xtdoc,
 						   xmlbase=>("'".basename($doc->{sowfile})."'"),
 						  )
-    or confess(ref($so), "::soaxml($doc->{xmlfile}): could not apply t2a_stylesheet: $!");
+    or $so->logconfess("soaxml($doc->{xmlbase}): could not apply t2a_stylesheet: $!");
 
   $doc->{soaxml_stamp} = $doc->{soadoc_stamp} = timestamp(); ##-- stamp
 

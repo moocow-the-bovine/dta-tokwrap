@@ -1,14 +1,15 @@
 ## -*- Mode: CPerl -*-
 
-## File: DTA::TokWrap::mkbx.pm
+## File: DTA::TokWrap::Processor::mkbx.pm
 ## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
 ## Descript: DTA tokenizer wrappers: (bx0doc,tx) -> bxdata
 
-package DTA::TokWrap::mkbx;
+package DTA::TokWrap::Processor::mkbx;
 
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Utils qw(:progs :libxml :libxslt :slurp :time);
+use DTA::TokWrap::Processor;
 
 use XML::Parser;
 use IO::File;
@@ -18,7 +19,7 @@ use strict;
 ##==============================================================================
 ## Constants
 ##==============================================================================
-our @ISA = qw(DTA::TokWrap::Base);
+our @ISA = qw(DTA::TokWrap::Processor);
 
 ##==============================================================================
 ## Constructors etc.
@@ -192,18 +193,20 @@ sub initXmlParser {
 sub mkbx {
   my ($mbx,$doc) = @_;
 
-  $mbx->info("mkbx($doc->{xmlfile})"); ##-- log
+  ##-- log, stamp
+  $mbx->info("mkbx($doc->{xmlfile})");
+  $doc->{mkbx_stamp0} = timestamp();
 
   ##-- sanity check(s)
   $mbx = $mbx->new() if (!ref($mbx));
-  $doc->mkbx0() if (!$doc->{bx0doc});
-  confess(ref($mbx), "::mkbx($doc->{xmlfile}): no .tx file defined")
+  #$doc->mkbx0() if (!$doc->{bx0doc});
+  $mbx->logconfess("mkbx($doc->{xmlbase}): no bx0doc key defined")
+    if (!$doc->{bx0doc});
+  $mbx->logconfess("mkbx($doc->{xmlbase}): no .tx file defined")
     if (!$doc->{txfile});
-  $doc->mkindex() if (!-r $doc->{txfile});
+  #$doc->mkindex() if (!-r $doc->{txfile});
   confess(ref($mbx), "::mkbx0($doc->{xmlfile}): .tx file '$doc->{txfile}' not readable")
     if (!-r $doc->{txfile});
-
-  $doc->{mkbx_stamp0} = timestamp(); ##-- stamp
 
   ##-- parse bx0doc
   my $bx0str = $doc->{bx0doc}->toString(0);

@@ -19,6 +19,9 @@ WriteMakefile
 		    'Getopt::Long'=>undef,
 		    'Pod::Usage'=>undef,
 		    'Env::Path' =>undef,
+		    'File::Basename'=>undef,
+		    'Cwd'=>undef,
+		    'Log::Log4perl'=>undef,
 		    ##--
 		    #'Tie::Cache'=>undef,
 		    #'File::Basename'=>undef,

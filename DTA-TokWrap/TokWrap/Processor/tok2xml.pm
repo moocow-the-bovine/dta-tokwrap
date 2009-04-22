@@ -1,14 +1,15 @@
 ## -*- Mode: CPerl -*-
 
-## File: DTA::TokWrap::tok2xml.pm
+## File: DTA::TokWrap::Processor::tok2xml.pm
 ## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
 ## Descript: DTA tokenizer wrappers: t -> t.xml
 
-package DTA::TokWrap::tok2xml;
+package DTA::TokWrap::Processor::tok2xml;
 
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Utils qw(:progs :libxml :libxslt :slurp :time);
+use DTA::TokWrap::Processor;
 
 use IO::File;
 use Carp;
@@ -17,7 +18,7 @@ use strict;
 ##==============================================================================
 ## Constants
 ##==============================================================================
-our @ISA = qw(DTA::TokWrap::Base);
+our @ISA = qw(DTA::TokWrap::Processor);
 
 #our ($CX_ID,$CX_XOFF,$CX_XLEN,$CX_TOFF,$CX_TLEN,$CX_TEXT);
 #BEGIN {
@@ -86,17 +87,23 @@ sub defaults {
 sub tok2xml {
   my ($t2x,$doc) = @_;
 
-  $t2x->info("tok2xml($doc->{xmlfile})"); ##-- log
+  ##-- log, stamp
+  $t2x->info("tok2xml($doc->{xmlbase})");
+  $doc->{tok2xml_stamp0} = timestamp();
 
   ##-- sanity check(s)
   $t2x = $t2x->new() if (!ref($t2x));
-  $doc->mkbx() if (!$doc->{bxdata});
-  $doc->loadCxFile() if (!$doc->{cxdata});
-  confess(ref($t2x), "::tok2xml($doc->{xmlfile}): failed to load .cx data") if (!$doc->{cxdata});
-  $doc->tokenize() if (!defined($doc->{tokdata}));
-  confess(ref($t2x), "::tok2xml($doc->{xmlfile}): no tokenizer output data") if (!defined($doc->{tokdata}));
-
-  $doc->{tok2xml_stamp0} = timestamp(); ##-- stamp
+  #$doc->mkbx() if (!$doc->{bxdata});
+  $t2x->logconfess("tok2xml($doc->{xmlbase}): no bxdata key defined")
+    if (!$doc->{bxdata});
+  #$doc->loadCxFile() if (!$doc->{cxdata});
+  #$t2x->logconfess("tok2xml($doc->{xmlbase}): failed to load .cx data") if (!$doc->{cxdata});
+  $t2x->logconfess("tok2xml($doc->{xmlbase}): no cxdata key defined")
+    if (!$doc->{cxdata});
+  $t2x->logconfess("tok2xml($doc->{xmlbase}): no tokdata key defined")
+    if (!defined($doc->{tokdata}));
+  #$doc->tokenize() if (!defined($doc->{tokdata}));
+  #$t2x->logconfess("tok2xml($doc->{xmlbase}): no tokenizer output data")
 
   ##-- create $tb2ci, $ob2ci index vectors
   $t2x->txbyte_to_ci($doc->{cxdata});

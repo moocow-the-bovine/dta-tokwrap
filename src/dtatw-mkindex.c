@@ -55,7 +55,8 @@ typedef struct {
 char *prog = "dtatw-mkindex";
 
 //-- want_profile: if true, some profiling information will be printed to stderr
-int want_profile = 1;
+//int want_profile = 1;
+int want_profile = 0;
 
 //-- want_outfile_comments: if true, some explanatory comments will be printed to the output file
 int want_outfile_comments = 1;

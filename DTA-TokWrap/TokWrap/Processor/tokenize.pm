@@ -1,14 +1,15 @@
 ## -*- Mode: CPerl -*-
 
-## File: DTA::TokWrap::tokenize.pm
+## File: DTA::TokWrap::Processor::tokenize.pm
 ## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
 ## Descript: DTA tokenizer wrappers: tokenizer: placeholder for tomasoblabla
 
-package DTA::TokWrap::tokenize;
+package DTA::TokWrap::Processor::tokenize;
 
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Utils qw(:time);
+use DTA::TokWrap::Processor;
 
 use Carp;
 use strict;
@@ -16,7 +17,7 @@ use strict;
 ##==============================================================================
 ## Constants
 ##==============================================================================
-our @ISA = qw(DTA::TokWrap::Base);
+our @ISA = qw(DTA::TokWrap::Processor);
 
 ##==============================================================================
 ## Constructors etc.
@@ -27,7 +28,7 @@ our @ISA = qw(DTA::TokWrap::Base);
 ##    (none yet)
 sub new {
   my $that = shift;
-  confess((ref($that)||$that), "::new(): not yet implemented: use DTA::TokWrap::tokenize::dummy!");
+  $that->logconfess((ref($that)||$that), "::new(): not yet implemented: use DTA::TokWrap::tokenize::dummy!");
 }
 
 ## %defaults = CLASS->defaults()
@@ -58,7 +59,7 @@ sub defaults {
 sub tokenize {
   my ($td,$doc) = @_;
 
-  confess((ref($td)||$td), "::tokenize(): not yet implemented: use DTA::TokWrap::tokenize::dummy!");
+  $td->logconfess((ref($td)||$td), "::tokenize(): not yet implemented: use DTA::TokWrap::tokenize::dummy!");
 
   #return $doc;
   return undef;

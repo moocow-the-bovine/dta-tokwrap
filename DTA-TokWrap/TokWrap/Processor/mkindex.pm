@@ -1,14 +1,15 @@
 ## -*- Mode: CPerl -*-
 
-## File: DTA::TokWrap::mkindex
+## File: DTA::TokWrap::Processor::mkindex
 ## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
 ## Descript: DTA tokenizer wrappers: dtatw-mkindex
 
-package DTA::TokWrap::mkindex;
+package DTA::TokWrap::Processor::mkindex;
 
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Utils qw(:progs :time);
+use DTA::TokWrap::Processor;
 
 use File::Basename qw(basename dirname);
 
@@ -18,7 +19,7 @@ use strict;
 ##==============================================================================
 ## Constants
 ##==============================================================================
-our @ISA = qw(DTA::TokWrap::Base);
+our @ISA = qw(DTA::TokWrap::Processor);
 
 ##==============================================================================
 ## Constructors etc.
@@ -47,7 +48,7 @@ sub init {
   if (!defined($mi->{mkindex})) {
     $mi->{mkindex} = path_prog('dtatw-mkindex',
 			       prepend=>($mi->{inplace} ? ['.','../src'] : undef),
-			       warnsub=>\&croak,
+			       warnsub=>sub {$mi->logconfess(@_)},
 			      );
   }
 
@@ -73,18 +74,19 @@ sub init {
 sub mkindex {
   my ($mi,$doc) = @_;
 
-  $mi->info("mkindex($doc->{xmlfile})"); ##-- log
+  ##-- log, stamp
+  $mi->info("mkindex($doc->{xmlbase})");
+  $doc->{mkindex_stamp0} = timestamp(); ##-- stamp
 
   ##-- sanity check(s)
   $mi = $mi->new if (!ref($mi));
-  confess(ref($mi), "::mkindex(): no dtatw-mkindex program") if (!$mi->{mkindex});
-
-  $doc->{mkindex_stamp0} = timestamp(); ##-- stamp
+  $mi->logconfess("mkindex($doc->{xmlbase}): no dtatw-mkindex program") if (!$mi->{mkindex});
+  $mi->logconfess("mkindex($doc->{xmlbase}): XML source file not readable") if (!-r $doc->{xmlfile});
 
   ##-- run program
   my $rc = runcmd($mi->{mkindex}, @$doc{qw(xmlfile cxfile sxfile txfile)});
-  croak(ref($mi)."::mkindex() failed for XML document '$doc->{xmlfile}': $!") if ($rc!=0);
-  croak(ref($mi)."::mkindex() failed to create output file(s) for '$doc->{xmlfile}'")
+  $mi->logconfess(ref($mi)."::mkindex($doc->{xmlbase}) mkindex program failed: $!") if ($rc!=0);
+  $mi->logconfess(ref($mi)."::mkindex($doc->{xmlbase}) failed to create output file(s)")
     if ( ($doc->{cxfile} && !-e $doc->{cxfile})
 	 || ($doc->{sxfile} && !-e $doc->{sxfile})
 	 || ($doc->{txfile} && !-e $doc->{txfile}) );

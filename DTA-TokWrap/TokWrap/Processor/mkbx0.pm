@@ -1,14 +1,15 @@
 ## -*- Mode: CPerl -*-
 
-## File: DTA::TokWrap::mkbx0.pm
+## File: DTA::TokWrap::Processor::mkbx0.pm
 ## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
 ## Descript: DTA tokenizer wrappers: sxfile -> bx0doc
 
-package DTA::TokWrap::mkbx0;
+package DTA::TokWrap::Processor::mkbx0;
 
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Utils qw(:progs :libxml :libxslt :slurp :time);
+use DTA::TokWrap::Processor;
 
 use XML::LibXML;
 use XML::LibXSLT;
@@ -20,7 +21,7 @@ use strict;
 ##==============================================================================
 ## Constants
 ##==============================================================================
-our @ISA = qw(DTA::TokWrap::Base);
+our @ISA = qw(DTA::TokWrap::Processor);
 
 ##==============================================================================
 ## Constructors etc.
@@ -112,7 +113,7 @@ sub init {
   if (!defined($mbx0->{rmns})) {
     $mbx0->{rmns} = path_prog('xml-rm-namespaces',
 			    prepend=>($mbx0->{inplace} ? ['.','../src'] : undef),
-			    warnsub=>\&croak,
+			    warnsub=>sub {$mbx0->logconfess(@_)},
 			   );
   }
 
@@ -334,26 +335,24 @@ sub dump_sort_stylesheet {
 sub mkbx0 {
   my ($mbx0,$doc) = @_;
 
-  $mbx0->info("mkbx0($doc->{xmlfile})"); ##-- log
+  ##-- log, stamp
+  $mbx0->info("mkbx0($doc->{xmlbase})");
+  $doc->{mkbx0_stamp0} = timestamp();
 
   ##-- sanity check(s)
   $mbx0 = $mbx0->new() if (!ref($mbx0));
-  confess(ref($mbx0), "::mkbx0($doc->{xmlfile}): no xml-rm-namespaces program")
+  $mbx0->logconfess("mkbx0($doc->{xmlbase}): no xml-rm-namespaces program")
     if (!$mbx0->{rmns});
-  $mbx0->ensure_stylesheets()
-    or confess(ref($mbx0), "::mkbx0($doc->{xmlfile}): could not compile XSL stylesheets");
-  $doc->mkindex()
-    if (!$doc->{sxfile} || !-r $doc->{sxfile});
-  confess(ref($mbx0), "::mkbx0($doc->{xmlfile}): no .sx file defined")
+  $mbx0->logconfess("mkbx0($doc->{xmlbase}): could not compile XSL stylesheets")
+    if (!$mbx0->ensure_stylesheets);
+  $mbx0->logconfess("mbx0($doc->{xmlbase}): no .sx file defined")
     if (!$doc->{sxfile});
-  confess(ref($mbx0), "::mkbx0($doc->{xmlfile}): .sx file '$doc->{sxfile}' not readable")
+  $mbx0->logconfess("mbx0($doc->{xmlbase}): .sx file unreadable: $!")
     if (!-r $doc->{sxfile});
-
-  $doc->{mkbx0_stamp0} = timestamp(); ##-- stamp
 
   ##-- run command, buffer output to string
   my $cmdfh = IO::File->new("'$mbx0->{rmns}' '$doc->{sxfile}'|")
-    or confess(ref($mbx0),"::mkbx0($doc->{xmlfile}): open failed for pipe from '$mbx0->{rmns}': $!");
+    or $mbx0->logconfess("mkbx0($doc->{xmlbase}): open failed for pipe from '$mbx0->{rmns}': $!");
   my $sxbuf = '';
   slurp_fh($cmdfh, \$sxbuf);
   $cmdfh->close();
@@ -361,13 +360,13 @@ sub mkbx0 {
   ##-- parse buffer
   my $xmlparser = libxml_parser(keep_blanks=>0);
   my $sxdoc = $xmlparser->parse_string($sxbuf)
-    or confess(ref($mbx0), "::mkbx0($doc->{xmlfile}): could not parse namespace-hacked .sx document '$doc->{sxfile}': $!");
+    or $mbx0->logconfess("mkbx0($doc->{xmlbase}): could not parse namespace-hacked .sx document '$doc->{sxfile}': $!");
 
   ##-- apply XSL stylesheets
   $sxdoc = $mbx0->{hint_stylesheet}->transform($sxdoc)
-    or confess(ref($mbx0), "::mkbx0($doc->{xmlfile}): could not apply hint stylesheet to .sx document '$doc->{sxfile}': $!");
+    or $mbx0->logconfess("mkbx0($doc->{xmlbase}): could not apply hint stylesheet to .sx document '$doc->{sxfile}': $!");
   $sxdoc = $mbx0->{sort_stylesheet}->transform($sxdoc)
-    or confess(ref($mbx0), "::mkbx0($doc->{xmlfile}): could not apply sortkey stylesheet to .sx document '$doc->{sxfile}': $!");
+    or $mbx0->logconfess("mkbx0($doc->{xmlfile}): could not apply sortkey stylesheet to .sx document '$doc->{sxfile}': $!");
 
   ##-- adjust $doc
   $doc->{bx0doc} = $sxdoc;
