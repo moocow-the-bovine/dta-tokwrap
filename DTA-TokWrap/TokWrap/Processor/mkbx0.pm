@@ -336,7 +336,7 @@ sub mkbx0 {
   my ($mbx0,$doc) = @_;
 
   ##-- log, stamp
-  $mbx0->info("mkbx0($doc->{xmlbase})");
+  $mbx0->vlog($mbx0->{traceLevel},"mkbx0($doc->{xmlbase})");
   $doc->{mkbx0_stamp0} = timestamp();
 
   ##-- sanity check(s)

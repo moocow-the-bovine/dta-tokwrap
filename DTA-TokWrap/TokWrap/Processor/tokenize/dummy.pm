@@ -72,7 +72,7 @@ sub tokenize {
   my ($td,$doc) = @_;
 
   ##-- log, stamp
-  $td->info("tokenize($doc->{xmlbase})");
+  $td->vlog($td->{traceLevel},"tokenize($doc->{xmlbase})");
   $doc->{tokenize_stamp0} = timestamp();
 
   ##-- sanity check(s)

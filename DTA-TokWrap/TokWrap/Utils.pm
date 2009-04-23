@@ -12,7 +12,7 @@ use XML::LibXML;
 use XML::LibXSLT;
 use Time::HiRes;
 use File::Basename qw(basename dirname);
-use Cwd 'abs_path';
+use Cwd; ##-- for abs_path()
 use IO::File;
 use Exporter;
 use Carp;
@@ -25,20 +25,21 @@ our @ISA = qw(Exporter DTA::TokWrap::Logger);
 
 our @EXPORT = qw();
 our %EXPORT_TAGS = (
-		    files => [qw(file_mtime file_is_newer file_try_open abs_path)],
+		    files => [qw(file_mtime file_is_newer  file_try_open abs_path str2file ref2file)],
 		    slurp => [qw(slurp_file slurp_fh)],
-		    progs => [qw(path_prog runcmd)],
+		    progs => ['path_prog','runcmd','$TRACE_RUNCMD'],
 		    libxml => [qw(libxml_parser)],
 		    libxslt => [qw(xsl_stylesheet)],
 		    time => [qw(timestamp)],
+		    si => [qw(sistr)],
 		   );
 $EXPORT_TAGS{all} = [map {@$_} values(%EXPORT_TAGS)];
 our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 
 
-## $TRACE_RUNCMD
-##  + if true, trace messages will be printed to STDERR for runcmd()
-our $TRACE_RUNCMD = 1;
+## $TRACE_RUNCMD = $level
+##  + log-level for tracing runcmd() calls
+our $TRACE_RUNCMD = 'trace';
 
 ##==============================================================================
 ## Utils: path search (program location)
@@ -70,7 +71,7 @@ sub path_prog {
 ## $system_rc = PACKAGE::runcmd(@cmd)
 sub runcmd {
   my @argv = @_;
-  __PACKAGE__->trace("runcmd(): ", join(' ', map {$_=~/\s/ ? "\"$_\"" : $_} @argv))
+  __PACKAGE__->vlog($TRACE_RUNCMD,"runcmd(): ", join(' ', map {$_=~/\s/ ? "\"$_\"" : $_} @argv))
     if ($TRACE_RUNCMD);
   return system(@argv);
 }
@@ -231,13 +232,54 @@ sub file_try_open {
 ## $abs_path_to_file = abs_path($file)
 ##  + de-references symlinks
 ##  + imported from Cwd
+sub abs_path { Cwd::abs_path(@_); }
+
+## $bool = str2file($string,$filename_or_fh,\%opts)
+##  + dumps $string to $filename_or_fh
+##  + %opts: see ref2file()
+sub str2file { ref2file(\$_[0],@_[1..$#_]); }
+
+## $bool = ref2file($stringRef,$filename_or_fh,\%opts)
+##  + dumps $$stringRef to $filename_or_fh
+##  + %opts:
+##     binmode => $layer,  ##-- binmode layer (e.g. ':raw') for $filename_or_fh? (default=none)
+sub ref2file {
+  my ($ref,$file,$opts) = @_;
+  my $fh = ref($file) ? $file : IO::File->new(">$file");
+  #__PACKAGE__->logconfess("ref2file(): open failed for '$file': $!") if (!$fh);
+  return undef if (!$fh);
+  if ($opts && $opts->{binmode}) {
+    $fh->binmode($opts->{binmode}) || return undef;
+  }
+  $fh->print($$ref) || return undef;
+  if (!ref($file)) { $fh->close() || return undef; }
+  return 1;
+}
 
 ##==============================================================================
-## Utils: Timing
+## Utils: Time
 ##==============================================================================
 
 ## $floating_seconds_since_epoch = PACAKGE::timestamp()
 BEGIN { *timestamp = \&Time::HiRes::time; }
+
+##==============================================================================
+## Utils: SI
+##==============================================================================
+
+## $si_str = sistr($val, $printfFormatChar, $printfFormatPrecision)
+sub sistr {
+  my ($x, $how, $prec) = @_;
+  $how  = 'f' if (!defined($how));
+  $prec = '.2' if (!defined($prec));
+  my $fmt = "%${prec}${how}";
+  return sprintf("$fmt T", $x/10**12) if ($x >= 10**12);
+  return sprintf("$fmt G", $x/10**9)  if ($x >= 10**9);
+  return sprintf("$fmt M", $x/10**6)  if ($x >= 10**6);
+  return sprintf("$fmt K", $x/10**3)  if ($x >= 10**3);
+  return sprintf("$fmt ", $x);
+}
+
 
 ##==============================================================================
 ## Utils: Misc

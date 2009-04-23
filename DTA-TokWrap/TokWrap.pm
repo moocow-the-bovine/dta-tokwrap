@@ -27,8 +27,9 @@ our @ISA = qw(DTA::TokWrap::Base);
 ## $tw = CLASS_OR_OBJ->new(%args)
 ##  + %args, %$tw:
 ##    (
-##     ##-- Program and generation options
-##     inplace => $bool,      ##-- use in-place programs if available? (default=1)
+##     ##-- Sub-Processor options
+##     inplacePrograms => $bool,      ##-- use in-place programs if available? (default=1)
+##     procOpts        => \%opts,     ##-- common options for DTA::TokWrap::Processor sub-classes
 ##     ##
 ##     ##-- Document options
 ##     outdir => $outdir,     ##-- passed to $doc->{outdir}; default='.'
@@ -43,13 +44,19 @@ our @ISA = qw(DTA::TokWrap::Base);
 ##     tokenize => $tok,       ##-- DTA::TokWrap::Processor::tokenize object, subclass object, or option-hash
 ##     tok2xml  => $tok2xml,   ##-- DTA::TokWrap::Processor::tok2xml object, or option-hash
 ##     standoff => $standoff,  ##-- DTA::TokWrap::Processor::standoff object, or option-hash
+##     ##
+##     ##-- Profiling information (on $doc->close())
+##     ntoks => $ntoks,          ##-- total number of tokens processed (if known)
+##     nxbytes => $nxbytes,      ##-- total number of source XML bytes processed (if known)
+##     ${proc}_elapsed => $secs, ##-- total number of seconds spent in processor ${proc}
 ##    )
 
 ## %defaults = CLASS->defaults()
 sub defaults {
   return (
 	  ##-- General options
-	  inplace => 1,
+	  inplacePrograms => 1,
+	  #procOpts => {},
 	  ##
 	  ##-- Document options
 	  outdir => '.',
@@ -77,10 +84,10 @@ sub init {
 
   ##-- Defaults: Processing objects
   my %key2opts = (
-		  mkindex => {inplace=>$tw->{inplace}},
-		  mkbx0 => {inplace=>$tw->{inplace}},
-		  tokenize => {inplace=>$tw->{inplace}},
-		  ALL => {},
+		  mkindex => {inplace=>$tw->{inplacePrograms}},
+		  mkbx0 => {inplace=>$tw->{inplacePrograms}},
+		  tokenize => {inplace=>$tw->{inplacePrograms}},
+		  ALL => ($tw->{procOpts}||{}),
 		 );
   my ($class,%newopts);
   foreach (qw(mkindex mkbx0 mkbx tokenize tok2xml standoff)) {
@@ -114,7 +121,10 @@ sub open {
 
 ## $bool = $tw->close($doc)
 ##  + Really just a wrapper for $doc->close()
-sub close { $_[1]->close(); }
+sub close {
+  $_[1]{tw} = $_[0];
+  $_[1]->close();
+}
 
 ##==============================================================================
 ## Methods: Document Processing

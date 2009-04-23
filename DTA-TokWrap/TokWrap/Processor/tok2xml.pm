@@ -88,7 +88,7 @@ sub tok2xml {
   my ($t2x,$doc) = @_;
 
   ##-- log, stamp
-  $t2x->info("tok2xml($doc->{xmlbase})");
+  $t2x->vlog($t2x->{traceLevel},"tok2xml($doc->{xmlbase})");
   $doc->{tok2xml_stamp0} = timestamp();
 
   ##-- sanity check(s)

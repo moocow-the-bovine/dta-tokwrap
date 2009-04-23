@@ -75,7 +75,7 @@ sub mkindex {
   my ($mi,$doc) = @_;
 
   ##-- log, stamp
-  $mi->info("mkindex($doc->{xmlbase})");
+  $mi->vlog($mi->{traceLevel},"mkindex($doc->{xmlbase})");
   $doc->{mkindex_stamp0} = timestamp(); ##-- stamp
 
   ##-- sanity check(s)

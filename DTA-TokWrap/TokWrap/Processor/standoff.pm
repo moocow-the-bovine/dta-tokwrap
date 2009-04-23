@@ -322,7 +322,7 @@ sub sosxml {
   my ($so,$doc) = @_;
 
   ##-- log, stamp
-  $so->info("sosxml($doc->{xmlbase})");
+  $so->vlog($so->{traceLevel},"sosxml($doc->{xmlbase})");
   $doc->{sosxml_stamp0} = timestamp();
 
   ##-- sanity check(s)
@@ -358,7 +358,7 @@ sub sowxml {
   my ($so,$doc) = @_;
 
   ##-- log, stamp
-  $so->info("sowxml($doc->{xmlbase})");
+  $so->vlog($so->{traceLevel},"sowxml($doc->{xmlbase})");
   $doc->{sowxml_stamp0} = timestamp();
 
   ##-- sanity check(s)
@@ -395,7 +395,7 @@ sub soaxml {
   my ($so,$doc) = @_;
 
   ##-- log, stamp
-  $so->info("soaxml($doc->{xmlbase})");
+  $so->vlog($so->{traceLevel},"soaxml($doc->{xmlbase})");
   $doc->{soaxml_stamp0} = timestamp();
 
   ##-- sanity check(s)
