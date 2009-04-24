@@ -9,7 +9,6 @@
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- parameters -->
   <xsl:param name="locations" select="0"/> <!-- whether to output locations -->
-  <xsl:param name="analyses" select="1"/>  <!-- whether to output analyses -->
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- options -->
@@ -41,9 +40,7 @@
     <xsl:if test="$locations">
       <xsl:text>&#09;</xsl:text><xsl:value-of select="@b"/>
     </xsl:if>
-    <xsl:if test="$analyses">
-      <xsl:apply-templates select="./a"/>
-    </xsl:if>
+    <xsl:apply-templates select="./a"/>
     <xsl:text>&#10;</xsl:text>
   </xsl:template>
 
