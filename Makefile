@@ -150,6 +150,15 @@ no-tt-xml: no-t-xml
 CLEAN_FILES += *.t.xml *.tokd.xml
 
 ##======================================================================
+## Rules: tokenized: master xml output -> .tt
+
+%.t.xml.t: ../scripts/dtatw-txml2tt.xsl %.t.xml
+	xsltproc --param locations 0 --param analyses 1 -o "$@" $^
+xml-t: $(XML_SOURCES:.xml=.t.xml.t)
+no-xml-t: ; rm -f *.t.xml.t
+CLEAN_FILES += *.t.xml.t
+
+##======================================================================
 ## Rules: standoff (via xsl)
 
 ##-- standoff: top level
