@@ -78,7 +78,6 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    ##-- mkindex data (see DTA::TokWrap::Processor::mkindex)
 ##    cxfile => $cxfile,    ##-- character index file (default="$tmpdir/$outbase.cx")
 ##    cxdata => $cxdata,    ##-- character index data (see loadCxFile() method)
-
 ##    sxfile => $sxfile,    ##-- structure index file (default="$tmpdir/$outbase.sx")
 ##    txfile => $txfile,    ##-- raw text index file (default="$tmpdir/$outbase.tx")
 ##
@@ -269,23 +268,36 @@ sub close {
     $rc=0 if (!unlink($_));
   }
 
-  ##-- stop here for destructor
-  return $rc if ($is_destructor);
-
   ##-- update {tw} profiling information
   if ($doc->{tw}) {
-    my ($key,$stamp,$stamp0);
-    foreach $key (grep { defined($doc->{"${_}_stamp0"}) && defined($doc->{"${_}_stamp"}) } keys(%{$doc->{tw}})) {
-      ($stamp0,$stamp) = @$doc{"${key}_stamp0","${key}_stamp"};
-      next if ($stamp0 < 0 || $stamp < 0);  ##-- (hack): ignore forced pseudo-stamps
-      $doc->{tw}{"${key}_elapsed"} += $stamp - $stamp0;
-    }
-    $doc->{tw}{"total_elapsed"} += timestamp()-$doc->{open_stamp}  if (defined($doc->{open_stamp}));
-    my $ntoks = $doc->nTokens;
-    my $nxbytes = $doc->nXmlBytes;
-    $doc->{tw}{ntoks}   += $ntoks if (defined($ntoks));
-    $doc->{tw}{nxbytes} += $nxbytes if (defined($nxbytes));
+    my $ntoks = $doc->nTokens() || 0;
+    my $nxbytes = $doc->nXmlBytes() || 0;
+    my ($keystamp,$key,$stamp,$stamp0,$prof);
+    foreach $keystamp (
+		       #grep {UNIVERSAL::isa($doc->{tw}{$_},'DTA::TokWrap::Processor')} keys(%{$doc->{tw}})
+		       grep {$_ =~ /_stamp$/ && defined($doc->{"${_}0"})} keys(%$doc)
+		      )
+      {
+	($key = $keystamp) =~ s/_stamp$//;
+	($stamp0,$stamp) = @$doc{"${key}_stamp0","${key}_stamp"};
+	next if (!defined($stamp0) || !defined($stamp));  ##-- ignore processors which haven't run for this doc
+	next if ($stamp0 < 0 || $stamp < 0);              ##-- (hack): ignore forced pseudo-stamps
+	$prof = $doc->{tw}{profile}{$key} = {} if (!defined($prof=$doc->{tw}{profile}{$key}));
+	$prof->{ndocs}++;
+	$prof->{ntoks}   += $ntoks;
+	$prof->{nxbytes} += $nxbytes;
+	$prof->{elapsed} += $stamp - $stamp0;
+      }
+    $prof = $doc->{tw}{profile}{''} = {} if (!defined($prof = $doc->{tw}{profile}{''}));
+    $prof->{ndocs}++;
+    $prof->{ntoks}   += $ntoks;
+    $prof->{nxbytes} += $nxbytes;
+    $prof->{elapsed} += timestamp()-$doc->{open_stamp}  if (defined($doc->{open_stamp}));
   }
+
+  ##-- stop here for destructor
+  delete($doc->{tw});
+  return $rc if ($is_destructor);
 
   ##-- drop $doc references
   %$doc = (ref($doc)||$doc)->defaults();
@@ -1034,9 +1046,6 @@ sub nTokens { return $_[0]{ntoks}; }
 
 ## $nxbytes_or_undef = $doc->nXmlBytes()
 sub nXmlBytes { return (-s $_[0]{xmlfile}); }
-
-## undef = $doc->logProfile()
-##???
 
 1; ##-- be happy
 

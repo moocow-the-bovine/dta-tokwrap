@@ -3,7 +3,6 @@
 use lib ('.');
 use DTA::TokWrap;
 use DTA::TokWrap::Utils qw(:si);
-#use Time::HiRes ('tv_interval','gettimeofday');
 use File::Basename qw(basename);
 use IO::File;
 
@@ -209,6 +208,9 @@ foreach $f (@ARGV) {
 
 ##-- profiling: totals
 if ($logProfile) {
+  $tw->logProfile($logProfile);
+}
+elsif (0) {
   our ($ntoks,$nxbytes) = @$tw{qw(ntoks nxbytes)};
   #our $elapsed = tv_interval($tv_started,[gettimeofday]);
   our $elapsed = $tw->{total_elapsed};

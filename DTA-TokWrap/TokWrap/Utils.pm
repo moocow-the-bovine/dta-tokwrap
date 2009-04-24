@@ -277,7 +277,10 @@ sub sistr {
   return sprintf("$fmt G", $x/10**9)  if ($x >= 10**9);
   return sprintf("$fmt M", $x/10**6)  if ($x >= 10**6);
   return sprintf("$fmt K", $x/10**3)  if ($x >= 10**3);
-  return sprintf("$fmt ", $x);
+  return sprintf("$fmt  ", $x)        if ($x >=  1);
+  return sprintf("$fmt m", $x*10**3)  if ($x >= 10**-3);
+  return sprintf("$fmt u", $x*10**6)  if ($x >= 10**-6);
+  return sprintf("$fmt  ", $x); ##-- default
 }
 
 

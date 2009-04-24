@@ -13,6 +13,7 @@ use strict;
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Logger;
 use DTA::TokWrap::Base;
+use DTA::TokWrap::Utils qw(:si);
 use DTA::TokWrap::Document qw(:tok);
 
 ##==============================================================================
@@ -45,10 +46,16 @@ our @ISA = qw(DTA::TokWrap::Base);
 ##     tok2xml  => $tok2xml,   ##-- DTA::TokWrap::Processor::tok2xml object, or option-hash
 ##     standoff => $standoff,  ##-- DTA::TokWrap::Processor::standoff object, or option-hash
 ##     ##
-##     ##-- Profiling information (on $doc->close())
-##     ntoks => $ntoks,          ##-- total number of tokens processed (if known)
-##     nxbytes => $nxbytes,      ##-- total number of source XML bytes processed (if known)
-##     ${proc}_elapsed => $secs, ##-- total number of seconds spent in processor ${proc}
+##     ##-- Profiling information (set on $doc->close())
+##     ##   + pseudo-processor '' represents all processor for TokWrap object
+##     profile => {
+##       ${proc} => {
+##         ndocs => $ndocs,          ##-- total number of documents processed by ${proc} (if known)
+##         ntoks => $ntoks,          ##-- total number of tokens processed by ${proc} (if known)
+##         nxbytes => $nxbytes,      ##-- total number of source XML bytes processed by ${proc} (if known)
+##         elapsed => $secs,         ##-- total number of seconds spent in processor ${proc}
+##       },
+##     },
 ##    )
 
 ## %defaults = CLASS->defaults()
@@ -131,5 +138,34 @@ sub close {
 ##  + nothing here (yet); see DTA::TokWrap::Document e.g. $doc->makeKey()
 ##==============================================================================
 
+##==============================================================================
+## Methods: Profiling
+##==============================================================================
+
+## undef = $tw->logProfile($logLevel)
+sub logProfile {
+  my ($tw,$level) = @_;
+  return if (!$level);
+  my $logstr = "Summary:";
+  my $profh = $tw->{profile};
+  my @procs = (qw(mkindex mkbx0 mkbx tokenize tok2xml sowxml soaxml sosxml),'');
+  my $format = "\n%9s: %4d doc, %8stok, %8sbyte in %8ssec: %8stok/sec ~ %8sbyte/sec";
+  my ($proc,$prof,$elapsed,$toksPerSec,$xbytesPerSec);
+  foreach $proc (@procs) {
+    $prof         = $profh->{$proc};
+    $elapsed      = ($prof->{elapsed}||0);
+    $toksPerSec   = $elapsed > 0 ? sistr(($prof->{ntoks}||0)/$elapsed) : 'inf  ';
+    $xbytesPerSec = $elapsed > 0 ? sistr(($prof->{nxbytes}||0)/$elapsed) : 'inf  ';
+    $logstr .= sprintf($format,
+		       ($proc eq '' ? 'TOTAL' : $proc),
+		       ($prof->{ndocs}||0),
+		       sistr(($prof->{ntoks}||0),'f','.1'),
+		       sistr(($prof->{nxbytes}||0),'f','.1'),
+		       sistr($elapsed, 'f', '.1'),
+		       $toksPerSec,
+		       $xbytesPerSec);
+  }
+  $tw->vlog($level,$logstr);
+}
 
 1; ##-- be happy
