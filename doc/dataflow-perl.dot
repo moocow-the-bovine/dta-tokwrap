@@ -24,6 +24,11 @@ digraph dataflow {
   sxfile -> mkbx0;
   mkbx0 -> bx0doc;
 
+  hint_xsl [label="hint.xsl",shape=rectangle,style=filled,fillcolor=yellow];
+  sort_xsl [label="sort.xsl",shape=rectangle,style=filled,fillcolor=yellow];
+  mkbx0 -> hint_xsl;
+  mkbx0 -> sort_xsl;
+  
   bx0file [label="bx0file: *.bx0",shape=rectangle,style=filled,fillcolor=grey90];
   bx0doc -> bx0file;
   bx0file -> bx0doc [color=red];
@@ -71,6 +76,13 @@ digraph dataflow {
 
   standoff [label="DTA::TokWrap::standoff",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
   xtokdoc -> standoff;
+
+  t2s_xsl [label="t2s.xsl",shape=rectangle,style=filled,fillcolor=yellow];
+  t2w_xsl [label="t2w.xsl",shape=rectangle,style=filled,fillcolor=yellow];
+  t2a_xsl [label="t2a.xsl",shape=rectangle,style=filled,fillcolor=yellow];
+  standoff -> t2s_xsl;
+  standoff -> t2w_xsl;
+  standoff -> t2a_xsl;
 
   sowdoc [label="sowdoc"];
   standoff -> sowdoc;

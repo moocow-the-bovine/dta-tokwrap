@@ -19,11 +19,14 @@ our ($help);
 our $verbose = 1;      ##-- verbosity
 
 ##-- DTA::TokWrap options
+my %bx0opts = DTA::TokWrap::Processor::mkbx0->defaults();
 our %twopts = (
 	       inplacePrograms=>1,
 	       keeptmp => 1,
 	       procOpts => {
 			    traceLevel => 'trace',
+			    hint_sb_xpaths => $bx0opts{hint_sb_xpaths},
+			    hint_wb_xpaths => $bx0opts{hint_wb_xpaths},
 			   },
 	      );
 our %docopts = (
@@ -58,6 +61,7 @@ our @targets = qw();
 our @defaultTargets = qw(all);
 
 ##-- debugging options
+our $dump_xsl_prefix = undef;
 our @traceOptions = (
 		     {opt=>'traceMake',ref=>\$docopts{traceMake}},
 		     {opt=>'traceGen',ref=>\$docopts{traceGen}},
@@ -90,6 +94,8 @@ GetOptions(
 	   ##-- DTA::TokWrap::Processor options
 	   'inplacePrograms|inplace|i!' => \$twopts{inplacePrograms},
 	   'processor-option|procopt|po=s%' => \$twopts{procOpts},
+	   'sentence-break-xpath|sbx|sb=s@' => $twopts{procOpts}{hint_sb_xpaths},
+	   'word-break-xpath|wbx|wb=s@' => $twopts{procOpts}{hint_wb_xpaths},
 
 	   ##-- DTA::TokWrap options: I/O
 	   'outdir|od|d=s' => \$twopts{outdir},
@@ -115,6 +121,8 @@ GetOptions(
 	   "trace:s" => sub { ${$_->{ref}} = $_[1] ? $_[1] : 'trace' foreach (@traceOptions); },
 	   "notrace:s" => sub { ${$_->{ref}} = undef foreach (@traceOptions); },
 	   "dummy|no-act|n!" => \$docopts{dummy},
+
+	   'dump-xsl-stylesheets|dump-xsl:s' => \$dump_xsl_prefix,
 	  );
 
 
@@ -173,15 +181,15 @@ sub processFile {
 if (defined($logConfFile)) {
   DTA::TokWrap->logInit($logConfFile);
 } else {
-  $logConf =qq{
+  $logConf ="
 ##-- Loggers
 log4perl.oneMessagePerAppender = 1     ##-- suppress duplicate messages to the same appender
 log4perl.rootLogger     = WARN, AppStderr
-log4perl.logger.DTA.TokWrap = }. join(', ',
+log4perl.logger.DTA.TokWrap = ". join(', ',
 				      '__DTA_TOKWRAP_DEFAULT_LOGLEVEL__',
 				      ($logToStderr ? 'AppStderr' : qw()),
 				      ($logFile     ? 'AppFile'   : qw()),
-				     ) . qq{
+				     ) . "
 
 ##-- Appenders: Utilities
 log4perl.PatternLayout.cspec.G = sub { return '$prog'; }
@@ -194,10 +202,10 @@ log4perl.appender.AppStderr.layout.ConversionPattern = %G[%P] %p: %c: %m%n
 
 ##-- Appender: AppFile
 log4perl.appender.AppFile = Log::Log4perl::Appender::File
-log4perl.appender.AppFile.filename = } . ($logFile || 'dta-tokwrap.log') .qq{
+log4perl.appender.AppFile.filename = " . ($logFile || 'dta-tokwrap.log') . "
 log4perl.appender.AppFile.layout = Log::Log4perl::Layout::PatternLayout
 log4perl.appender.AppFile.layout.ConversionPattern = %d{yyyy-mm-dd hh:mm:ss} %G[%P] %p: %c: %m%n
-  };
+  ";
   DTA::TokWrap->logInit(\$logConf);
 }
 
@@ -211,6 +219,16 @@ if (!@targets) {
 ##-- create $tw
 our $tw = DTA::TokWrap->new(%twopts)
   or die("$prog: could not create DTA::TokWrap object");
+
+##-- debug: dump XSL?
+if (defined($dump_xsl_prefix)) {
+  $tw->{mkbx0}->dump_hint_stylesheet($dump_xsl_prefix."mkbx0_hint.xsl");
+  $tw->{mkbx0}->dump_sort_stylesheet($dump_xsl_prefix."mkbx0_sort.xsl");
+  $tw->{standoff}->dump_t2s_stylesheet($dump_xsl_prefix."standoff_t2s.xsl");
+  $tw->{standoff}->dump_t2w_stylesheet($dump_xsl_prefix."standoff_t2w.xsl");
+  $tw->{standoff}->dump_t2a_stylesheet($dump_xsl_prefix."standoff_t2a.xsl");
+  exit(0);
+}
 
 ##-- options: pseudo-make: make|gen
 our $makeKeySub = $docopts{class}->can("${makeKeyAct}Key")
