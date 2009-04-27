@@ -15,6 +15,7 @@ use DTA::TokWrap::Logger;
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Utils qw(:si);
 use DTA::TokWrap::Document qw(:tok);
+use DTA::TokWrap::Document::Maker;
 
 ##==============================================================================
 ## Constants
@@ -54,6 +55,7 @@ our @ISA = qw(DTA::TokWrap::Base);
 ##         ntoks => $ntoks,          ##-- total number of tokens processed by ${proc} (if known)
 ##         nxbytes => $nxbytes,      ##-- total number of source XML bytes processed by ${proc} (if known)
 ##         elapsed => $secs,         ##-- total number of seconds spent in processor ${proc}
+##         laststamp => $stamp,      ##-- last end stamp for ${proc}
 ##       },
 ##     },
 ##    )
@@ -148,14 +150,23 @@ sub logProfile {
   return if (!$level);
   my $logstr = "Summary:";
   my $profh = $tw->{profile};
-  my @procs = (qw(mkindex mkbx0 mkbx tokenize tok2xml sowxml soaxml sosxml),'');
-  my $format = "\n%9s: %4d doc, %8stok, %8sbyte in %8ssec: %8stok/sec ~ %8sbyte/sec";
+  #my @procs = (qw(mkindex mkbx0 mkbx tokenize tok2xml sowxml soaxml sosxml),'');
+  my @procs = (
+	       sort {
+		 (
+		  (($profh->{$a}{laststamp}||0) <=> ($profh->{$b}{laststamp}||0))
+		  ||
+		  ($a cmp $b)
+		 )
+	       } keys(%{$tw->{profile}})
+	      );
+  my $format = "\n%9s: %4d doc, %7stok, %7sbyte in %7ssec: %7stok/sec ~ %7sbyte/sec";
   my ($proc,$prof,$elapsed,$toksPerSec,$xbytesPerSec);
   foreach $proc (@procs) {
     $prof         = $profh->{$proc};
     $elapsed      = ($prof->{elapsed}||0);
-    $toksPerSec   = $elapsed > 0 ? sistr(($prof->{ntoks}||0)/$elapsed) : 'inf  ';
-    $xbytesPerSec = $elapsed > 0 ? sistr(($prof->{nxbytes}||0)/$elapsed) : 'inf  ';
+    $toksPerSec   = $elapsed > 0 ? sistr((($prof->{ntoks}||0)/$elapsed),'f','.1') : 'inf  ';
+    $xbytesPerSec = $elapsed > 0 ? sistr((($prof->{nxbytes}||0)/$elapsed),'f','.1') : 'inf  ';
     $logstr .= sprintf($format,
 		       ($proc eq '' ? 'TOTAL' : $proc),
 		       ($prof->{ndocs}||0),

@@ -26,11 +26,19 @@ our %twopts = (
 			   },
 	      );
 our %docopts = (
-		#traceMake => 'trace',
-		#traceGen  => 'trace',
+		##-- Document class options
+		class => 'DTA::TokWrap::Document::Maker',
+
+		##-- DTA::TokWrap::Document options
 		traceOpen => 'trace',
 		#traceClose => 'trace',
 		format => 1,
+
+		##-- DTA::TokWrap::Document::Maker options
+		#traceMake => 'trace',
+		#traceGen  => 'trace',
+		#genDummy => 0,
+		#force => 0,  ##-- propagated from DTA::TokWrap $doc->{tw}
 	       );
 
 ##-- Logging options
@@ -63,10 +71,10 @@ GetOptions(
 	   'help|h' => \$help,
 	   'verbose|V=i' => \$verbose,
 
-	   ##-- DTA::TokWrap options: generation
-	   'make|m' => sub { $makeAct='make'; },
-	   'generate|gen|g'  => sub { $makeAct='gen'; },
-	   'remake|r!' => sub { $makeAct='remake'; },
+	   ##-- pseudo-make
+	   'make|m' => sub { $docopts{class}='DTA::TokWrap::Document::Maker'; $makeAct='make'; },
+	   'generate|gen|g'  => sub { $docopts{class}='DTA::TokWrap::Document::Maker'; $makeAct='gen'; },
+	   'remake|r!' => sub { $docopts{class}='DTA::TokWrap::Document::Maker'; $makeAct='remake'; },
 	   'targets|target|t=s' => \@targets,
 	   'force-target|ft=s' => sub { push(@{$twopts{force}},$_[1]) },
 	   'force|f' => sub { push(@{$twopts{force}},'all') },
@@ -174,8 +182,8 @@ our $tw = DTA::TokWrap->new(%twopts)
   or die("$prog: could not create DTA::TokWrap object");
 
 ##-- options: make|gen
-our $makeSub = DTA::TokWrap::Document->can("${makeAct}Key")
-  or die("$prog: no DTA::TokWrap::Document::${makeAct}Key() method");
+our $makeSub = $docopts{class}->can("${makeAct}Key")
+  or die("$prog: no $docopts{class}::${makeAct}Key() method");
 
 ##-- profiling
 #our $tv_started = [gettimeofday];
@@ -206,22 +214,8 @@ foreach $f (@ARGV) {
   }
 }
 
-##-- profiling: totals
-if ($logProfile) {
-  $tw->logProfile($logProfile);
-}
-elsif (0) {
-  our ($ntoks,$nxbytes) = @$tw{qw(ntoks nxbytes)};
-  #our $elapsed = tv_interval($tv_started,[gettimeofday]);
-  our $elapsed = $tw->{total_elapsed};
-  our $toksPerSec   = sistr($elapsed > 0 ? ($ntoks/$elapsed) : -1);
-  our $xbytesPerSec = sistr($elapsed > 0 ? ($nxbytes/$elapsed) : -1);
-
-  DTA::TokWrap->vlog($logProfile,
-		     sprintf("processed %stok ~ %sbyte in %.2f sec: %stok/sec ~ %sbyte/sec",
-			     sistr($ntoks,'f','.1'),sistr($nxbytes,'f','.1'), $elapsed, $toksPerSec, $xbytesPerSec),
-		    );
-}
+##-- profiling
+$tw->logProfile($logProfile) if ($logProfile);
 
 
 exit($progrc); ##-- exit status
