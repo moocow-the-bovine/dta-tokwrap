@@ -39,7 +39,8 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 
 ## $TRACE_RUNCMD = $level
 ##  + log-level for tracing runcmd() calls
-our $TRACE_RUNCMD = 'trace';
+#our $TRACE_RUNCMD = 'trace';
+our $TRACE_RUNCMD = undef;
 
 ##==============================================================================
 ## Utils: path search (program location)

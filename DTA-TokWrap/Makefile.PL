@@ -35,7 +35,7 @@ WriteMakefile
 		   },
 
    EXE_FILES   => [
-		   #'dta-tokwrap.perl',
+		   'dta-tokwrap.perl',
 		  ],
   );
 

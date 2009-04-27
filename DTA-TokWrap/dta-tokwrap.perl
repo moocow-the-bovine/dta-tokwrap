@@ -24,7 +24,7 @@ our %twopts = (
 	       inplacePrograms=>1,
 	       keeptmp => 1,
 	       procOpts => {
-			    traceLevel => 'trace',
+			    #traceLevel => 'trace',
 			    hint_sb_xpaths => $bx0opts{hint_sb_xpaths},
 			    hint_wb_xpaths => $bx0opts{hint_wb_xpaths},
 			   },
@@ -35,10 +35,10 @@ our %docopts = (
 		#class => 'DTA::TokWrap::Document::Maker',
 
 		##-- DTA::TokWrap::Document options
-		traceOpen => 'trace',
+		#traceOpen => 'trace',
 		#traceClose => 'trace',
-		traceLoad   => 'trace',
-		traceSave   => 'trace',
+		#traceLoad   => 'trace',
+		#traceSave   => 'trace',
 		format => 1,
 
 		##-- DTA::TokWrap::Document::Maker options
@@ -63,10 +63,12 @@ our @defaultTargets = qw(all);
 ##-- debugging options
 our $dump_xsl_prefix = undef;
 our @traceOptions = (
-		     {opt=>'traceMake',ref=>\$docopts{traceMake}},
-		     {opt=>'traceGen',ref=>\$docopts{traceGen}},
 		     {opt=>'traceOpen',ref=>\$docopts{traceOpen}},
 		     {opt=>'traceClose',ref=>\$docopts{traceClose}},
+		     {opt=>'traceLoad',ref=>\$docopts{traceLoad}},
+		     {opt=>'traceSave',ref=>\$docopts{traceSave}},
+		     {opt=>'traceMake',ref=>\$docopts{traceMake}},
+		     {opt=>'traceGen',ref=>\$docopts{traceGen}},
 		     {opt=>'traceProc',ref=>\$twopts{procOpts}{traceLevel}},
 		     {opt=>'traceRun', ref=>\$DTA::TokWrap::Utils::TRACE_RUNCMD},
 		    );
@@ -105,16 +107,17 @@ GetOptions(
 	   'noformat-xml|noformat|nofmt|nopretty-xml|nopretty|nofx|nopx'  => sub { $docopts{format} = 0; },
 
 	   ##-- Log options
-	   'logconf|logrc|lc=s' => \$logConfFile,
-	   'loglevel|ll=s' => \$DTA::TokWrap::Logger::DEFAULT_LOGLEVEL,
-	   'logfile|lf=s' => \$logFile,
+	   'log-config|logconfig|logconf|log-rc|logrc|lc=s' => \$logConfFile,
+	   'log-level|loglevel|ll=s' => \$DTA::TokWrap::Logger::DEFAULT_LOGLEVEL,
+	   'log-file|logfile|lf=s' => \$logFile,
 	   'log-stderr|le!' => \$logToStderr,
 	   'log-profile|profile|p!' => sub { $logProfile=$_[1] ? 'info' : undef; },
 
 	   ##-- Debugging options
 	   (map {
 	     my ($opt,$ref) = @$_{qw(opt ref)};
-	     ("${opt}:s" => sub { $$ref = $_[1] ? $_[1] : 'trace' },
+	     ("${opt}" => sub { $$ref = 'trace' },
+	      "${opt}Level|${opt}-level=s" => sub { $$ref = $_[1] },
 	      (map { ("no$_" => sub { $$ref=undef }) } split(/\|/, $opt))
 	     )
 	   } @traceOptions),
