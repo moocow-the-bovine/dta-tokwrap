@@ -65,6 +65,20 @@ TOKWRAP_DEPS=
 
 endif
 
+##======================================================================
+## Variables: archiving & distribution
+
+ARC_DIR  ?=.
+ARC_NAME ?=dta-tokwrap-data.$(shell date +"%Y-%m-%d").$(shell hostname -s)
+ARC_TARGETS ?= \
+	Makefile \
+	$(XML) \
+	$(XML:.xml=.t.xml) \
+	$(XML:.xml=.s.xml) \
+	$(XML:.xml=.w.xml) \
+	$(XML:.xml=.a.xml)
+ARC_FILE = $(ARC_DIR)/$(ARC_NAME).tar.gz
+
 
 ##======================================================================
 ## Rules: top-level
@@ -106,6 +120,7 @@ tokwrap: $(TOKWRAP)
 config:
 	@echo "INPLACE=$(INPLACE)"
 	@echo "TOKWRAP=$(TOKWRAP)"
+	@echo "TOKWRAP_DEPS=$(TOKWRAP_DEPS)"
 
 ##======================================================================
 ## Rules: XML preprocessing: add linebreaks
@@ -228,6 +243,8 @@ CLEAN_FILES += *.bx *.txt bx.stamp txt.stamp
 ##======================================================================
 ## Rules: tokenization: dummy, via flex for speed: .t
 
+#tt: t
+
 t: t-iter
 #t: t.stamp
 
@@ -236,7 +253,7 @@ t.stamp: txt.stamp $(TOKWRAP_DEPS)
 	touch $@
 
 t-iter: $(XML:.xml=.t)
-%.t: %.txt $(TOKWRAP)
+%.t: %.txt $(TOKWRAP_DEPS)
 	$(TOKWRAP) -t tokenize $(<:.txt=.xml)
 
 no-t: ; rm -f *.t t.stamp
@@ -256,7 +273,7 @@ t-xml.stamp: t.stamp $(TOKWRAP_DEPS)
 	touch $@
 
 t-xml-iter: $(XML:.xml=.t.xml)
-%.t.xml: %.t %.bx %.cx $(TOKWRAP)
+%.t.xml: %.t %.bx %.cx $(TOKWRAP_DEPS)
 	$(TOKWRAP) -t tok2xml $(<:.t=.xml)
 
 no-t-xml: ; rm -f *.t.xml t-xml.stamp
@@ -350,7 +367,6 @@ a-xml-iter: $(XML:.xml=.a.xml)
 no-a-xml: ; rm -f *.a.xml a-xml.stamp
 CLEAN_FILES += *.a.xml a-xml.stamp
 
-
 ##-- running time summary / ex1 (kraepelin) / uhura
 ## xml -> cx,sx,tx   1.2s  ~  75.9 Ktok/sec ~ 502.3 Kchr/sec
 ## sx -> bx0         0.11s ~ 842.8 Ktok/sec ~   5.6 Mchr/sec
@@ -361,7 +377,6 @@ CLEAN_FILES += *.a.xml a-xml.stamp
 ## t.xml -> w.xml    8.62s ~  10.6 Ktok/sec ~  70.0 Kchr/sec  *** SLOW (xsl) ***
 ## t.xml -> a.xml    2.08s ~  43.8 Ktok/sec ~ 289.8 Kchr/sec
 ## TOTAL            27.31s ~   3.3 Ktok/sec ~  22.1 Kchr/sec
-
 
 
 ##======================================================================
@@ -391,6 +406,20 @@ CLEAN_FILES += tw-all.stamp
 ##	user	0m44.351s
 ##	sys	0m1.636s
 
+
+##======================================================================
+## Rules: archiving
+
+arc: $(ARC_FILE)
+no-arc: ; rm -f $(ARC_FILE)
+$(ARC_FILE): $(ARC_TARGETS)
+	rm -rf $(ARC_NAME) $(ARC_FILE)
+	mkdir $(ARC_NAME)
+	for f in $(ARC_TARGETS); do \
+	  ln $$f $(ARC_NAME)/$$f; \
+	done
+	tar czf $@ $(ARC_NAME)
+	rm -rf $(ARC_NAME)
 
 
 ##======================================================================
