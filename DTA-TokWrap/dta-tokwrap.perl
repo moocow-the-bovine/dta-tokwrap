@@ -96,7 +96,7 @@ GetOptions(
 
 	   ##-- DTA::TokWrap::Processor options
 	   'inplacePrograms|inplace|i!' => \$twopts{inplacePrograms},
-	   'processor-option|procopt|po=s%' => \$twopts{procOpts},
+	   'processor-option|procopt|po=s%' => $twopts{procOpts},
 	   'sentence-break-xpath|sbx|sb=s@' => $twopts{procOpts}{hint_sb_xpaths},
 	   'word-break-xpath|wbx|wb=s@' => $twopts{procOpts}{hint_wb_xpaths},
 

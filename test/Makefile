@@ -35,6 +35,7 @@ SCRIPTS_DIR ?= ../scripts
 #TOKWRAP_OPTS ?= -keep -trace
 TOKWRAP_OPTS ?= -keep -q
 
+TOKENIZER ?= $(PROGDIR)dtatw-tokenize-dummy
 
 ##======================================================================
 ## Variables: in-place execution (use local development code, or don't)
@@ -50,15 +51,18 @@ TOKWRAP_DIR=../DTA-TokWrap
 ifeq "$(INPLACE)" "yes"
 
 CSRC_DEPS=programs
+PROGDIR=$(CSRC_DIR)/
 
 TOKWRAP=$(PERL) -Mlib=$(TOKWRAP_DIR)/blib/lib $(TOKWRAP_DIR)/blib/script/dta-tokwrap.perl -i $(TOKWRAP_OPTS)
 TOKWRAP_DEPS=pm
+
 
 PREPEND_TARGETS = programs pm
 
 else
 
 CSRC_DEPS=
+PROGDIR=
 
 TOKWRAP=$(shell which dta-tokwrap.perl) $(TOKWRAP_OPTS)
 TOKWRAP_DEPS=
@@ -173,12 +177,14 @@ xx.stamp: $(XML) $(TOKWRAP_DEPS)
 	touch $@
 
 ##-- xml -> (cx,sx,tx): individual rule
-%.xx: ; $(MAKE) $*.cx $*.sx $*.tx
+#%.xx: ; $(MAKE) $*.cx $*.sx $*.tx
+%.xx: %.cx %.sx %.tx
 %.cx: %.cx %.sx %.tx
 %.sx: %.cx %.sx %.tx
 %.tx: %.cx %.sx %.tx
-%.cx %.sx %.tx: %.xml $(TOKWRAP_DEPS)
-	$(TOKWRAP) -t mkindex $<
+%.cx %.sx %.tx: %.xml $(TOKWRAP_DEPS) $(CSRC_DEPS)
+#	$(TOKWRAP) -t mkindex $<
+	$(PROGDIR)dtatw-mkindex $< $*.cx $*.sx $*.tx
 CLEAN_FILES += *.cx *.sx *.tx *.xx *.stamp
 
 sx-fmt: $(XML:.xml=.sx.fmt)
@@ -203,7 +209,7 @@ bx0.stamp: xx.stamp $(TOKWRAP_DEPS)
 
 bx0-iter: $(XML:.xml=.bx0)
 %.bx0: %.sx $(TOKWRAP_DEPS)
-	$(TOKWRAP) -t mkbx0 $(<:.sx=.xml)
+	$(TOKWRAP) -t mkbx0 $*.xml
 
 no-bx0: ; rm -f *.bx0 bx0.stamp
 CLEAN_FILES += *.bx0 bx0.stamp
@@ -232,9 +238,9 @@ txt-iter: $(XML:.xml=.txt)
 %.txt: %.bx %.txt
 
 %.bx: %.bx0 %.tx $(TOKWRAP_DEPS)
-	$(TOKWRAP) -t bx $(<:.bx0=.xml)
+	$(TOKWRAP) -t bx $*.xml
 %.txt: %.bx0 %.tx $(TOKWRAP_DEPS)
-	$(TOKWRAP) -t bx $(<:.bx0=.xml)
+	$(TOKWRAP) -t bx $*.xml
 
 no-bx: ; rm -f *.bx bx.stamp *.txt txt.stamp
 no-txt: no-bx
@@ -253,8 +259,9 @@ t.stamp: txt.stamp $(TOKWRAP_DEPS)
 	touch $@
 
 t-iter: $(XML:.xml=.t)
-%.t: %.txt $(TOKWRAP_DEPS)
-	$(TOKWRAP) -t tokenize $(<:.txt=.xml)
+%.t: %.txt $(TOKWRAP_DEPS) $(CSRC_DEPS)
+#	$(TOKWRAP) -t tokenize $*.xml
+	$(TOKENIZER) $< $@
 
 no-t: ; rm -f *.t t.stamp
 CLEAN_FILES += *.t t.stamp
@@ -273,8 +280,8 @@ t-xml.stamp: t.stamp $(TOKWRAP_DEPS)
 	touch $@
 
 t-xml-iter: $(XML:.xml=.t.xml)
-%.t.xml: %.t %.bx %.cx $(TOKWRAP_DEPS)
-	$(TOKWRAP) -t tok2xml $(<:.t=.xml)
+%.t.xml: %.t %.bx %.cx $(TOKWRAP_DEPS) $(CSRC_DEPS)
+	$(TOKWRAP) -t tok2xml $*.xml
 
 no-t-xml: ; rm -f *.t.xml t-xml.stamp
 no-tokd-xml: no-t-xml
@@ -328,7 +335,8 @@ s-xml.stamp: t-xml.stamp $(TOKWRAP_DEPS)
 
 s-xml-iter: $(XML:.xml=.s.xml)
 %.s.xml: standoff_t2s.xsl %.t.xml
-#	$(TOKWRAP) -t sosxml $(<:.t.xml=.xml) ##-- BROKEN with `make -j2`: race condition?
+#	##-- BROKEN with `make -j2`: race condition?
+#	$(TOKWRAP) -t sosxml $*.xml
 	xsltproc -o $@ $^
 
 
@@ -344,9 +352,16 @@ w-xml.stamp: t-xml.stamp $(TOKWRAP_DEPS)
 	touch $@
 
 w-xml-iter: $(XML:.xml=.w.xml)
-%.w.xml: standoff_t2w.xsl %.t.xml
-#	$(TOKWRAP) -t sowxml $(<:.t.xml=.xml) ##-- BROKEN with `make -j2`: race condition?
-	xsltproc -o $@ $^
+#%.w.xml: %.t.xml $(TOKWRAP_DEPS)
+#	##-- BROKEN with `make -j2`: race condition?
+#	$(TOKWRAP) -t sowxml $*.xml
+##--
+#%.w.xml: standoff_t2w.xsl %.t.xml
+#	xsltproc -o $@ $^
+##--
+%.w.xml: %.t.xml $(CSRC_DEPS)
+	$(PROGDIR)dtatw-txml2wxml $< $@ $*.xml
+
 
 no-w-xml: ; rm -f *.w.xml w-xml.stamp
 CLEAN_FILES += *.w.xml w-xml.stamp
@@ -361,7 +376,8 @@ a-xml.stamp: t-xml.stamp $(TOKWRAP_DEPS)
 
 a-xml-iter: $(XML:.xml=.a.xml)
 %.a.xml: standoff_t2a.xsl %.t.xml
-#	$(TOKWRAP) -t soaxml $(<:.t.xml=.xml) ##-- BROKEN with `make -j2`: race condition?
+#	##-- BROKEN with `make -j2`: race condition?
+#	$(TOKWRAP) -t soaxml $*.xml
 	xsltproc -o $@ $^
 
 no-a-xml: ; rm -f *.a.xml a-xml.stamp
