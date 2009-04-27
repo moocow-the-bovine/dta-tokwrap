@@ -3,43 +3,108 @@ XML_TXTLB = test-raw.txt+lb.xml $(XML_TXT:.txt.xml=.txt+lb.xml)
 XML_CHR   = test1.chr.xml test-3k.chr.xml ex1.chr.xml $(XML_TXTLB:.txt+lb.xml=.chr.xml)
 
 XML = $(XML_CHR)
+#XML = test1.chr.xml test-3k.chr.xml
 XML_SOURCES = $(XML)
 
-TARGETS = $(XML)
+PERL ?=perl
+
+TARGETS = $(XML) t-xml standoff
 
 ##======================================================================
-## Variables: Programs
+## Variables: scripts
 
-MKINDEX   ?= ../src/dtatw-mkindex
-RMNS      ?= ../src/xml-rm-namespaces
-TOKENIZER ?= ../src/dtatw-tokenize-dummy
+## XSL_DIR
+##  + directory containing miscellaneous XSL scripts
+XSL_DIR ?= ../scripts
 
-LSBLOCKS  ?= ../scripts/dtatw-lsblocks.perl
-TT2XML    ?= ../scripts/dtatw-tt2xml.perl
+## SCRIPTS_DIR
+##  + directory containing miscellaneous perl scripts
+SCRIPTS_DIR ?= ../scripts
 
-PROGRAMS = $(MKINDEX) $(RMNS) $(TOKENIZER)
+##======================================================================
+## Variables: tokwrap
+
+## TOKWRAP_OPTS
+##  + options for dta-tokwrap.perl
+#TOKWRAP_OPTS ?= -keeptmp -log-level=INFO
+#TOKWRAP_OPTS ?= -keeptmp -log-level=TRACE -traceOpen
+#TOKWRAP_OPTS ?= -keeptmp -trace -notraceProc
+TOKWRAP_OPTS ?= -keeptmp -trace
+
+
+##======================================================================
+## Variables: in-place execution (use local development code, or don't)
+
+## INPLACE
+##  + set to something other than "yes" to avoid using local code ../src and ../DTA-TokWrap
+INPLACE ?= yes
+
+CSRC_DIR=../src
+CSRC_PROGRAMS = $(patsubst %,../src/%,dtatw-mkindex xml-rm-namespaces dtatw-tokenize-dummy)
+TOKWRAP_DIR=../DTA-TokWrap
+
+ifeq "$(INPLACE)" "yes"
+
+CSRC_DEPS=programs
+
+TOKWRAP=$(PERL) -Mlib=$(TOKWRAP_DIR)/blib/lib $(TOKWRAP_DIR)/blib/script/dta-tokwrap.perl -inplacePrograms $(TOKWRAP_OPTS)
+TOKWRAP_DEPS=pm
+
+PREPEND_TARGETS = programs pm
+
+else
+
+CSRC_DEPS=
+
+TOKWRAP=$(shell which dta-tokwrap.perl) $(TOKWRAP_OPTS)
+TOKWRAP_DEPS=
+
+endif
+
 
 ##======================================================================
 ## Rules: top-level
 
-all: $(PROGRAMS) $(TARGETS)
+all: $(PREPEND_TARGETS) $(TARGETS)
 
 .SECONDARY: 
 
 ##======================================================================
 ## Rules: programs
 
-programs: $(PROGRAMS)
+programs: $(CSRC_PROGRAMS)
 
-$(MKINDEX): ../src/dtatw-mkindex.c
-$(RMNS): ../src/xml-rm-namespaces.c
-$(TOKENIZER): ../src/dtatw-tokenize-dummy.l
+$(CSRC_DIR)/dtatw-mkindex: $(CSRC_DIR)/dtatw-mkindex.c
+$(CSRC_DIR)/xml-rm-namespaces: $(CSRC_DIR)/xml-rm-namespaces.c
+$(CSRC_DIR)/dtatw-tokenize-dummy: $(CSRC_DIR)/dtatw-tokenize-dummy.l
 
-../src/%:
-	$(MAKE) -C ../src "$*"
+$(CSRC_DIR)/%:
+	$(MAKE) -C $(CSRC_DIR) "$*"
 
 ##======================================================================
-## Rules: add linebreaks
+## Rules: perl module
+
+pm: $(TOKWRAP_DIR)/Makefile
+	$(MAKE) -C $(TOKWRAP_DIR)
+
+$(TOKWRAP_DIR)/Makefile: $(TOKWRAP_DIR)/Makefile.PL
+	(cd $(TOKWRAP_DIR); $(PERL) Makefile.PL)
+
+ifeq "$(INPLACE)" "yes"
+$(TOKWRAP): $(CSRC_DEPS) $(TOKWRAP_DEPS)
+endif
+
+tokwrap: $(TOKWRAP)
+
+##======================================================================
+## Rules: show configuration
+
+config:
+	@echo "INPLACE=$(INPLACE)"
+	@echo "TOKWRAP=$(TOKWRAP)"
+
+##======================================================================
+## Rules: XML preprocessing: add linebreaks
 
 %.txt+lb.xml: ../scripts/dtatw-add-lb.xsl %.txt.xml
 	xsltproc -o "$@" $^
@@ -49,7 +114,7 @@ no-lb: ; rm -f $(XML_TXT:.txt.xml=.txt+lb.xml)
 REALCLEAN_FILES += $(XML_TXT:.txt.xml=.txt+lb.xml)
 
 ##======================================================================
-## Rules: add <c> elements
+## Rules: XML preprocessing: add <c> elements
 
 %.chr.xml: %.txt+lb.xml ../scripts/dtatw-add-c.perl
 	../scripts/dtatw-add-c.perl $< -o $@
@@ -71,122 +136,199 @@ CLEAN_FILES += *.fmt
 CLEAN_FILES += *.nons
 
 ##======================================================================
-## Rules: mkindex: xx=(cx,sx,tx)
+## Rules: mkindex: xml -> xx=(cx,sx,tx)
 
-xx: cx sx tx
-cx: $(XML_SOURCES:.xml=.cx)
-sx: $(XML_SOURCES:.xml=.sx)
-tx: $(XML_SOURCES:.xml=.tx)
-no-cx: ; rm -f $(XML_SOURCES:.xml=.cx)
-no-sx: ; rm -f $(XML_SOURCES:.xml=.sx)
-no-tx: ; rm -f $(XML_SOURCES:.xml=.tx)
-no-xx: no-cx no-sx no-tx
+#xx: cx sx tx
+xx: xx.stamp
 
+cx: $(XML:.xml=.cx)
+sx: $(XML:.xml=.sx)
+tx: $(XML:.xml=.tx)
+no-cx: ; rm -f $(XML:.xml=.cx)
+no-sx: ; rm -f $(XML:.xml=.sx)
+no-tx: ; rm -f $(XML:.xml=.tx)
+no-xx: no-cx no-sx no-tx ; rm -f *.xx xx.stamp
+
+##-- xml -> (cx,sx,tx): batch rule
+xx.stamp: $(XML) $(TOKWRAP_DEPS)
+	$(TOKWRAP) -t mkindex $(XML)
+	touch $@
+
+##-- xml -> (cx,sx,tx): individual rule
+%.xx: ; $(MAKE) $*.cx $*.sx $*.tx
 %.cx: %.cx %.sx %.tx
 %.sx: %.cx %.sx %.tx
 %.tx: %.cx %.sx %.tx
-%.cx %.sx %.tx: %.xml $(MKINDEX)
-	$(MKINDEX) $< $*.cx $*.sx $*.tx
-CLEAN_FILES += *.cx *.sx *.tx
+%.cx %.sx %.tx: %.xml $(TOKWRAP_DEPS)
+	$(TOKWRAP) -t mkindex $<
+CLEAN_FILES += *.cx *.sx *.tx *.xx *.stamp
 
-sx-fmt: $(XML_SOURCES:.xml=.sx.fmt)
+sx-fmt: $(XML:.xml=.sx.fmt)
 no-sx-fmt: ; rm -f *.sx.fmt
 
-sx-nons: $(XML_SOURCES:.xml=.sx.nons)
+sx-nons: $(XML:.xml=.sx.nons)
 no-sx-nons: ; rm -f *.sx.nons *.sx.nons.fmt
 
-sx-nons-fmt: $(XML_SOURCES:.xml=.sx.nons.fmt)
+sx-nons-fmt: $(XML:.xml=.sx.nons.fmt)
 no-sx-nons-fmt: ; rm -f *.sx.nons.fmt
 CLEAN_FILES += *.sx.nons *.sx.fmt *.sx.nons.fmt *.sx.fmt.nons
 
 ##======================================================================
 ## Rules: serialization (serialized block index: bx0)
 
-%.bx0: %.sx $(RMNS) ../scripts/dtatw-insert-hints.xsl ../scripts/dtatw-mark-sortkeys.xsl
-	$(RMNS) $< \
-	 | xsltproc ../scripts/dtatw-insert-hints.xsl - \
-	 | xsltproc ../scripts/dtatw-mark-sortkeys.xsl - \
-	 | xmllint --format - \
-	 > $@ || (rm -f $@; false)
-bx0: $(XML_SOURCES:.xml=.bx0)
-no-bx0: ; rm -f *.bx0
-CLEAN_FILES += *.bx0
+#bx0: bx0-iter
+bx0-iter: $(XML:.xml=.bx0)
+bx0: bx0.stamp
+
+bx0.stamp: xx.stamp $(TOKWRAP_DEPS)
+	$(TOKWRAP) -t bx0 $(XML)
+	touch $@
+
+%.bx0: %.sx $(TOKWRAP_DEPS)
+	$(TOKWRAP) $(<:.sx=.xml)
+
+no-bx0: ; rm -f *.bx0 bx0.stamp
+CLEAN_FILES += *.bx0 bx0.stamp
 
 ##======================================================================
 ## Rules: serialized text + index (bx, txt)
 
 serialize: txt
-bx: $(XML_SOURCES:.xml=.bx)
-txt: $(XML_SOURCES:.xml=.txt)
-no-bx: ; rm -f *.bx0 *.bx
-no-txt: ; rm -f *.txt
+
+#bx: bx-iter
+#txt: txt-iter
+bx: bx.stamp
+txt: txt.stamp
+
+bx-iter: $(XML:.xml=.bx)
+txt-iter: $(XML:.xml=.txt)
+
+bx.stamp: bx0.stamp $(TOKWRAP_DEPS)
+	$(TOKWRAP) -t bx $(XML)
+	touch $@
+
+txt.stamp: bx.stamp
+	touch $@
+
+no-bx: ; rm -f *.bx bx.stamp *.txt txt.stamp
+no-txt: no-bx
 
 %.bx:  %.bx %.txt
 %.txt: %.bx %.txt
-%.bx %.txt: %.bx0 %.tx $(LSBLOCKS)
-	$(LSBLOCKS) "$*.bx0" "$*.tx" "$*.bx" "$*.txt"
-CLEAN_FILES += *.bx
+
+%.bx: %.bx0 %.tx $(TOKWRAP_DEPS)
+	$(TOKWRAP) -t bx $(<:.bx0=.xml)
+%.txt: %.bx0 %.tx $(TOKWRAP_DEPS)
+	$(TOKWRAP) -t bx $(<:.bx0=.xml)
+CLEAN_FILES += *.bx *.txt bx.stamp txt.stamp
 
 ##======================================================================
 ## Rules: tokenization: dummy, via flex for speed: .t
 
-%.t: %.txt $(TOKENIZER)
-	$(TOKENIZER) < "$<" > "$@" || (rm -f "$@"; false)
-t: $(XML_SOURCES:.xml=.t)
-no-t: ; rm -f *.t
-CLEAN_FILES += *.t
+#t: t-iter
+t: t.stamp
+
+t.stamp: txt.stamp $(TOKWRAP_DEPS)
+	$(TOKWRAP) -t tokenize $(XML)
+	touch $@
+
+t-iter: $(XML:.xml=.t)
+%.t: %.txt $(TOKWRAP)
+	$(TOKWRAP) -t tokenize $(<:.txt=.xml)
+
+no-t: ; rm -f *.t t.stamp
+CLEAN_FILES += *.t t.stamp
 
 ##======================================================================
 ## Rules: tokenized: master xml output
 
-%.t.xml: %.t %.bx %.cx $(TT2XML)
-	$(TT2XML) "$*.t" "$*.bx" "$*.cx" -o "$@" -f
-t-xml: $(XML_SOURCES:.xml=.t.xml)
-no-t-xml: ; rm -f *.t.xml
 tokd-xml: t-xml
-no-tokd-xml: no-t-xml
 tt-xml: t-xml
+
+#t-xml: t-xml-iter
+t-xml: t-xml.stamp
+
+t-xml.stamp: t.stamp $(TOKWRAP_DEPS)
+	$(TOKWRAP) -t tok2xml $(XML)
+	touch $@
+
+t-xml-iter: $(XML:.xml=.t.xml)
+%.t.xml: %.t %.bx %.cx $(TOKWRAP)
+	$(TOKWRAP) -t tok2xml $(<:.t=.xml)
+
+no-t-xml: ; rm -f *.t.xml t-xml.stamp
+no-tokd-xml: no-t-xml
 no-tt-xml: no-t-xml
-CLEAN_FILES += *.t.xml *.tokd.xml
+CLEAN_FILES += *.t.xml t-xml.stamp
 
 ##======================================================================
-## Rules: tokenized: master xml output -> .tt
+## Rules: tokenized: xml-t: master xml output -> .tt
 
-%.t.xml.t: ../scripts/dtatw-txml2tt.xsl %.t.xml
-	xsltproc --param locations 0 --param analyses 1 -o "$@" $^
-xml-t: $(XML_SOURCES:.xml=.t.xml.t)
+%.t.xml.t: $(XSL_DIR)/dtatw-txml2tt.xsl %.t.xml
+	xsltproc --param locations 0 -o "$@" $^
+xml-t: $(XML:.xml=.t.xml.t)
 no-xml-t: ; rm -f *.t.xml.t
 CLEAN_FILES += *.t.xml.t
 
 ##======================================================================
 ## Rules: standoff (via xsl)
 
-##-- standoff: top level
-standoff: s-xml w-xml a-xml
-no-standoff: no-s-xml no-w-xml no-a-xml
+##-- standoff: top-level
+standoff: standoff.stamp
+standoff.stamp: t-xml.stamp $(TOKWRAP_DEPS)
+	$(TOKWRAP) -t standoff $(XML)
+	touch $@
+
+standoff-iter: s-xml-iter w-xml-iter a-xml-iter
+no-standoff: no-s-xml no-w-xml no-a-xml ; rm -f standoff.stamp
 %-standoff:
 	$(MAKE) $*.s.xml $*.w.xml $*.a.xml
 
 ##-- standoff: .s.xml
-%.s.xml: ../scripts/dtatw-txml2sxml.xsl %.t.xml
-	xsltproc --stringparam xmlbase "$*.w.xml" -o "$@" $^
-s-xml: $(XML_SOURCES:.xml=.s.xml)
-no-s-xml: ; rm -f *.s.xml
-CLEAN_FILES += *.s.xml
+#s-xml: s-xml-iter
+s-xml: s-xml.stamp
+
+s-xml.stamp: t-xml.stamp $(TOKWRAP_DEPS)
+	$(TOKWRAP) -t sosxml $(XML)
+	touch $@
+
+s-xml-iter: $(XML:.xml=.s.xml)
+%.s.xml: %.t.xml $(TOKWRAP_DEPS)
+	$(TOKWRAP) -t sosxml $(<:.t.xml=.xml)
+
+no-s-xml: ; rm -f *.s.xml s-xml.stamp
+CLEAN_FILES += *.s.xml s-xml.stamp
 
 ##-- standoff: .w.xml
-%.w.xml: ../scripts/dtatw-txml2wxml.xsl %.t.xml
-	xsltproc --stringparam xmlbase "$*.xml" -o "$@" $^
-w-xml: $(XML_SOURCES:.xml=.w.xml)
-no-w-xml: ; rm -f *.w.xml
-CLEAN_FILES += *.w.xml
+#w-xml: w-xml-iter
+w-xml: w-xml.stamp
+
+w-xml.stamp: t-xml.stamp $(TOKWRAP_DEPS)
+	$(TOKWRAP) -t sowxml $(XML)
+	touch $@
+
+w-xml-iter: $(XML:.xml=.w.xml)
+%.w.xml: %.t.xml $(TOKWRAP_DEPS)
+	$(TOKWRAP) -t sowxml $(<:.t.xml=.xml)
+
+no-w-xml: ; rm -f *.w.xml w-xml.stamp
+CLEAN_FILES += *.w.xml w-xml.stamp
 
 ##-- standoff: .a.xml
-%.a.xml: ../scripts/dtatw-txml2axml.xsl %.t.xml
-	xsltproc --stringparam xmlbase "$*.w.xml" -o "$@" $^
-a-xml: $(XML_SOURCES:.xml=.a.xml)
-no-a-xml: ; rm -f *.a.xml
-CLEAN_FILES += *.a.xml
+#a-xml: a-xml-iter
+a-xml: a-xml.stamp
+
+a-xml.stamp: t-xml.stamp $(TOKWRAP_DEPS)
+	$(TOKWRAP) -t soaxml $(XML)
+	touch $@
+
+a-xml-iter: $(XML:.xml=.a.xml)
+%.a.xml: %.t.xml $(TOKWRAP_DEPS)
+	$(TOKWRAP) -t soaxml $(<:.t.xml=.xml)
+
+no-a-xml: ; rm -f *.a.xml a-xml.stamp
+CLEAN_FILES += *.a.xml a-xml.stamp
+
 
 ##-- running time summary / ex1 (kraepelin) / uhura
 ## xml -> cx,sx,tx   1.2s  ~  75.9 Ktok/sec ~ 502.3 Kchr/sec
@@ -198,6 +340,15 @@ CLEAN_FILES += *.a.xml
 ## t.xml -> w.xml    8.62s ~  10.6 Ktok/sec ~  70.0 Kchr/sec  *** SLOW (xsl) ***
 ## t.xml -> a.xml    2.08s ~  43.8 Ktok/sec ~ 289.8 Kchr/sec
 ## TOTAL            27.31s ~   3.3 Ktok/sec ~  22.1 Kchr/sec
+
+##======================================================================
+## Rules: full processing pipeline
+
+tw-all: tw-all.stamp
+tw-all.stamp: $(XML) $(TOKWRAP_DEPS)
+	$(TOKWRAP) -t all $(XML)
+	touch $@
+CLEAN_FILES += tw-all.stamp
 
 
 ##======================================================================
