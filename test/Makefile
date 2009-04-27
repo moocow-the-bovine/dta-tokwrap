@@ -2,6 +2,9 @@ XML_TXT   = ex2.txt.xml
 XML_TXTLB = test-raw.txt+lb.xml $(XML_TXT:.txt.xml=.txt+lb.xml)
 XML_CHR   = test1.chr.xml test-3k.chr.xml ex1.chr.xml $(XML_TXTLB:.txt+lb.xml=.chr.xml)
 
+##-- test robustness via `make -k`
+#XML_CHR += NOT_HERE.chr.xml
+
 XML = $(XML_CHR)
 #XML = test1.chr.xml test-3k.chr.xml
 XML_SOURCES = $(XML)
@@ -139,9 +142,7 @@ CLEAN_FILES += *.nons
 ##======================================================================
 ## Rules: mkindex: xml -> xx=(cx,sx,tx)
 
-#xx: xx-iter
-xx-iter: cx sx tx
-xx: xx.stamp
+xx: cx sx tx
 
 cx: $(XML:.xml=.cx)
 sx: $(XML:.xml=.sx)
@@ -178,14 +179,14 @@ CLEAN_FILES += *.sx.nons *.sx.fmt *.sx.nons.fmt *.sx.fmt.nons
 ##======================================================================
 ## Rules: serialization (serialized block index: bx0)
 
-#bx0: bx0-iter
-bx0-iter: $(XML:.xml=.bx0)
-bx0: bx0.stamp
+bx0: bx0-iter
+#bx0: bx0.stamp
 
 bx0.stamp: xx.stamp $(TOKWRAP_DEPS)
 	$(TOKWRAP) -t bx0 $(XML)
 	touch $@
 
+bx0-iter: $(XML:.xml=.bx0)
 %.bx0: %.sx $(TOKWRAP_DEPS)
 	$(TOKWRAP) -t mkbx0 $(<:.sx=.xml)
 
@@ -197,13 +198,10 @@ CLEAN_FILES += *.bx0 bx0.stamp
 
 serialize: txt
 
-#bx: bx-iter
-#txt: txt-iter
-bx: bx.stamp
-txt: txt.stamp
-
-bx-iter: $(XML:.xml=.bx)
-txt-iter: $(XML:.xml=.txt)
+bx: bx-iter
+txt: txt-iter
+#bx: bx.stamp
+#txt: txt.stamp
 
 bx.stamp: bx0.stamp $(TOKWRAP_DEPS)
 	$(TOKWRAP) -t bx $(XML)
@@ -212,8 +210,8 @@ bx.stamp: bx0.stamp $(TOKWRAP_DEPS)
 txt.stamp: bx.stamp
 	touch $@
 
-no-bx: ; rm -f *.bx bx.stamp *.txt txt.stamp
-no-txt: no-bx
+bx-iter: $(XML:.xml=.bx)
+txt-iter: $(XML:.xml=.txt)
 
 %.bx:  %.bx %.txt
 %.txt: %.bx %.txt
@@ -222,13 +220,16 @@ no-txt: no-bx
 	$(TOKWRAP) -t bx $(<:.bx0=.xml)
 %.txt: %.bx0 %.tx $(TOKWRAP_DEPS)
 	$(TOKWRAP) -t bx $(<:.bx0=.xml)
+
+no-bx: ; rm -f *.bx bx.stamp *.txt txt.stamp
+no-txt: no-bx
 CLEAN_FILES += *.bx *.txt bx.stamp txt.stamp
 
 ##======================================================================
 ## Rules: tokenization: dummy, via flex for speed: .t
 
-#t: t-iter
-t: t.stamp
+t: t-iter
+#t: t.stamp
 
 t.stamp: txt.stamp $(TOKWRAP_DEPS)
 	$(TOKWRAP) -t tokenize $(XML)
@@ -247,8 +248,8 @@ CLEAN_FILES += *.t t.stamp
 tokd-xml: t-xml
 tt-xml: t-xml
 
-#t-xml: t-xml-iter
-t-xml: t-xml.stamp
+t-xml: t-xml-iter
+#t-xml: t-xml.stamp
 
 t-xml.stamp: t.stamp $(TOKWRAP_DEPS)
 	$(TOKWRAP) -t tok2xml $(XML)
@@ -276,17 +277,20 @@ CLEAN_FILES += *.t.xml.t
 ## Rules: standoff (via xsl)
 
 ##-- standoff: top-level
-standoff: standoff.stamp
+standoff: standoff-iter
+#standoff: standoff.stamp
+
+standoff-iter: s-xml-iter w-xml-iter a-xml-iter
+
 standoff.stamp: t-xml.stamp $(TOKWRAP_DEPS)
 	$(TOKWRAP) -t standoff $(XML)
 	touch $@
 
-standoff-iter: s-xml-iter w-xml-iter a-xml-iter
 no-standoff: no-s-xml no-w-xml no-a-xml ; rm -f standoff.stamp
 %-standoff:
 	$(MAKE) $*.s.xml $*.w.xml $*.a.xml
 
-##-- standoff: xsl
+##-- standoff: xsl (workaround for broken `dta-tokwrap.perl -t so*xml` with `make -j2`)
 standoff-xsl:
 	$(MAKE) standoff_t2s.xsl standoff_t2w.xsl standoff_t2a.xsl
 
@@ -295,11 +299,11 @@ standoff_t2s.xsl standoff_t2w.xsl standoff_t2a.xsl: $(TOKWRAP_DEPS)
 
 no-standoff-xsl: ; rm -f standoff_t2[swa].xsl
 no-xsl: ; rm -f *.xsl
-CLEAN_FILES += standoff_t2[swa].xsl
+CLEAN_FILES += standoff_t2[swa].xsl mkbx0_*.xsl
 
 ##-- standoff: .s.xml
-#s-xml: s-xml-iter
-s-xml: s-xml.stamp
+s-xml: s-xml-iter
+#s-xml: s-xml.stamp
 
 s-xml.stamp: t-xml.stamp $(TOKWRAP_DEPS)
 	$(TOKWRAP) -t sosxml $(XML)
@@ -307,7 +311,7 @@ s-xml.stamp: t-xml.stamp $(TOKWRAP_DEPS)
 
 s-xml-iter: $(XML:.xml=.s.xml)
 %.s.xml: standoff_t2s.xsl %.t.xml
-#	$(TOKWRAP) -t sosxml $(<:.t.xml=.xml)
+#	$(TOKWRAP) -t sosxml $(<:.t.xml=.xml) ##-- BROKEN with `make -j2`: race condition?
 	xsltproc -o $@ $^
 
 
@@ -315,8 +319,8 @@ no-s-xml: ; rm -f *.s.xml s-xml.stamp
 CLEAN_FILES += *.s.xml s-xml.stamp
 
 ##-- standoff: .w.xml
-#w-xml: w-xml-iter
-w-xml: w-xml.stamp
+w-xml: w-xml-iter
+#w-xml: w-xml.stamp
 
 w-xml.stamp: t-xml.stamp $(TOKWRAP_DEPS)
 	$(TOKWRAP) -t sowxml $(XML)
@@ -324,15 +328,15 @@ w-xml.stamp: t-xml.stamp $(TOKWRAP_DEPS)
 
 w-xml-iter: $(XML:.xml=.w.xml)
 %.w.xml: standoff_t2w.xsl %.t.xml
-#	$(TOKWRAP) -t sowxml $(<:.t.xml=.xml)
+#	$(TOKWRAP) -t sowxml $(<:.t.xml=.xml) ##-- BROKEN with `make -j2`: race condition?
 	xsltproc -o $@ $^
 
 no-w-xml: ; rm -f *.w.xml w-xml.stamp
 CLEAN_FILES += *.w.xml w-xml.stamp
 
 ##-- standoff: .a.xml
-#a-xml: a-xml-iter
-a-xml: a-xml.stamp
+a-xml: a-xml-iter
+#a-xml: a-xml.stamp
 
 a-xml.stamp: t-xml.stamp $(TOKWRAP_DEPS)
 	$(TOKWRAP) -t soaxml $(XML)
@@ -340,7 +344,7 @@ a-xml.stamp: t-xml.stamp $(TOKWRAP_DEPS)
 
 a-xml-iter: $(XML:.xml=.a.xml)
 %.a.xml: standoff_t2a.xsl %.t.xml
-#	$(TOKWRAP) -t soaxml $(<:.t.xml=.xml)
+#	$(TOKWRAP) -t soaxml $(<:.t.xml=.xml) ##-- BROKEN with `make -j2`: race condition?
 	xsltproc -o $@ $^
 
 no-a-xml: ; rm -f *.a.xml a-xml.stamp
@@ -358,10 +362,16 @@ CLEAN_FILES += *.a.xml a-xml.stamp
 ## t.xml -> a.xml    2.08s ~  43.8 Ktok/sec ~ 289.8 Kchr/sec
 ## TOTAL            27.31s ~   3.3 Ktok/sec ~  22.1 Kchr/sec
 
+
+
 ##======================================================================
 ## Rules: full processing pipeline
 
-tw-all: tw-all.stamp
+tw-all: tw-all-iter
+#tw-all: tw-all.stamp
+
+tw-all-iter: t-xml-iter standoff-iter
+
 tw-all.stamp: $(XML) $(TOKWRAP_DEPS)
 	$(TOKWRAP) -t all $(XML)
 	touch $@
