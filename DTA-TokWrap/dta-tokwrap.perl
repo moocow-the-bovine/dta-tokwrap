@@ -62,15 +62,16 @@ our @defaultTargets = qw(all);
 
 ##-- debugging options
 our $dump_xsl_prefix = undef;
+our $traceLevel = 'trace'; ##-- trace level for '-trace' options
 our @traceOptions = (
-		     {opt=>'traceOpen',ref=>\$docopts{traceOpen}},
-		     {opt=>'traceClose',ref=>\$docopts{traceClose}},
-		     {opt=>'traceLoad',ref=>\$docopts{traceLoad}},
-		     {opt=>'traceSave',ref=>\$docopts{traceSave}},
-		     {opt=>'traceMake',ref=>\$docopts{traceMake}},
-		     {opt=>'traceGen',ref=>\$docopts{traceGen}},
-		     {opt=>'traceProc',ref=>\$twopts{procOpts}{traceLevel}},
-		     {opt=>'traceRun', ref=>\$DTA::TokWrap::Utils::TRACE_RUNCMD},
+		     {opt=>'traceOpen',ref=>\$docopts{traceOpen},default=>1},
+		     {opt=>'traceClose',ref=>\$docopts{traceClose},default=>0},
+		     {opt=>'traceLoad',ref=>\$docopts{traceLoad},default=>1},
+		     {opt=>'traceSave',ref=>\$docopts{traceSave},default=>1},
+		     {opt=>'traceMake',ref=>\$docopts{traceMake},default=>1},
+		     {opt=>'traceGen',ref=>\$docopts{traceGen},default=>0},
+		     {opt=>'traceProc',ref=>\$twopts{procOpts}{traceLevel},default=>1},
+		     {opt=>'traceRun', ref=>\$DTA::TokWrap::Utils::TRACE_RUNCMD,default=>0},
 		    );
 
 ##------------------------------------------------------------------------------
@@ -112,17 +113,19 @@ GetOptions(
 	   'log-file|logfile|lf=s' => \$logFile,
 	   'log-stderr|le!' => \$logToStderr,
 	   'log-profile|profile|p!' => sub { $logProfile=$_[1] ? 'info' : undef; },
+	   'silent|quiet|q' => sub { $DTA::TokWrap::Logger::DEFAULT_LOGLEVEL='FATAL'; },
 
 	   ##-- Debugging options
 	   (map {
 	     my ($opt,$ref) = @$_{qw(opt ref)};
-	     ("${opt}" => sub { $$ref = 'trace' },
+	     ("${opt}" => sub { $$ref = $traceLevel },
 	      "${opt}Level|${opt}-level=s" => sub { $$ref = $_[1] },
 	      (map { ("no$_" => sub { $$ref=undef }) } split(/\|/, $opt))
 	     )
 	   } @traceOptions),
-	   "trace:s" => sub { ${$_->{ref}} = $_[1] ? $_[1] : 'trace' foreach (@traceOptions); },
-	   "notrace:s" => sub { ${$_->{ref}} = undef foreach (@traceOptions); },
+	   "traceLevel|trace-level=s" => \$traceLevel,
+	   "trace!" => sub { ${$_->{ref}} = $_[1] ? $traceLevel : undef foreach (grep {$_->{default}} @traceOptions) },
+	   "traceAll|trace-all!" => sub { ${$_->{ref}} = $_[1] ? $traceLevel : undef foreach (@traceOptions) },
 	   "dummy|no-act|n!" => \$docopts{dummy},
 
 	   'dump-xsl-stylesheets|dump-xsl:s' => \$dump_xsl_prefix,

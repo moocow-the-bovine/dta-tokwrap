@@ -26,10 +26,11 @@ SCRIPTS_DIR ?= ../scripts
 
 ## TOKWRAP_OPTS
 ##  + options for dta-tokwrap.perl
-#TOKWRAP_OPTS ?= -keeptmp -log-level=INFO
-#TOKWRAP_OPTS ?= -keeptmp -log-level=TRACE -traceOpen
-#TOKWRAP_OPTS ?= -keeptmp -trace -notraceProc
-TOKWRAP_OPTS ?= -keeptmp -trace
+#TOKWRAP_OPTS ?= -keep -log-level=INFO
+#TOKWRAP_OPTS ?= -keep -log-level=TRACE -traceOpen
+#TOKWRAP_OPTS ?= -keep -trace -notraceProc
+#TOKWRAP_OPTS ?= -keep -trace
+TOKWRAP_OPTS ?= -keep -q
 
 
 ##======================================================================
@@ -47,7 +48,7 @@ ifeq "$(INPLACE)" "yes"
 
 CSRC_DEPS=programs
 
-TOKWRAP=$(PERL) -Mlib=$(TOKWRAP_DIR)/blib/lib $(TOKWRAP_DIR)/blib/script/dta-tokwrap.perl -inplacePrograms $(TOKWRAP_OPTS)
+TOKWRAP=$(PERL) -Mlib=$(TOKWRAP_DIR)/blib/lib $(TOKWRAP_DIR)/blib/script/dta-tokwrap.perl -i $(TOKWRAP_OPTS)
 TOKWRAP_DEPS=pm
 
 PREPEND_TARGETS = programs pm
@@ -138,7 +139,8 @@ CLEAN_FILES += *.nons
 ##======================================================================
 ## Rules: mkindex: xml -> xx=(cx,sx,tx)
 
-#xx: cx sx tx
+#xx: xx-iter
+xx-iter: cx sx tx
 xx: xx.stamp
 
 cx: $(XML:.xml=.cx)
@@ -185,7 +187,7 @@ bx0.stamp: xx.stamp $(TOKWRAP_DEPS)
 	touch $@
 
 %.bx0: %.sx $(TOKWRAP_DEPS)
-	$(TOKWRAP) $(<:.sx=.xml)
+	$(TOKWRAP) -t mkbx0 $(<:.sx=.xml)
 
 no-bx0: ; rm -f *.bx0 bx0.stamp
 CLEAN_FILES += *.bx0 bx0.stamp
@@ -284,6 +286,17 @@ no-standoff: no-s-xml no-w-xml no-a-xml ; rm -f standoff.stamp
 %-standoff:
 	$(MAKE) $*.s.xml $*.w.xml $*.a.xml
 
+##-- standoff: xsl
+standoff-xsl:
+	$(MAKE) standoff_t2s.xsl standoff_t2w.xsl standoff_t2a.xsl
+
+standoff_t2s.xsl standoff_t2w.xsl standoff_t2a.xsl: $(TOKWRAP_DEPS)
+	$(TOKWRAP) -dump-xsl= -
+
+no-standoff-xsl: ; rm -f standoff_t2[swa].xsl
+no-xsl: ; rm -f *.xsl
+CLEAN_FILES += standoff_t2[swa].xsl
+
 ##-- standoff: .s.xml
 #s-xml: s-xml-iter
 s-xml: s-xml.stamp
@@ -293,8 +306,10 @@ s-xml.stamp: t-xml.stamp $(TOKWRAP_DEPS)
 	touch $@
 
 s-xml-iter: $(XML:.xml=.s.xml)
-%.s.xml: %.t.xml $(TOKWRAP_DEPS)
-	$(TOKWRAP) -t sosxml $(<:.t.xml=.xml)
+%.s.xml: standoff_t2s.xsl %.t.xml
+#	$(TOKWRAP) -t sosxml $(<:.t.xml=.xml)
+	xsltproc -o $@ $^
+
 
 no-s-xml: ; rm -f *.s.xml s-xml.stamp
 CLEAN_FILES += *.s.xml s-xml.stamp
@@ -308,8 +323,9 @@ w-xml.stamp: t-xml.stamp $(TOKWRAP_DEPS)
 	touch $@
 
 w-xml-iter: $(XML:.xml=.w.xml)
-%.w.xml: %.t.xml $(TOKWRAP_DEPS)
-	$(TOKWRAP) -t sowxml $(<:.t.xml=.xml)
+%.w.xml: standoff_t2w.xsl %.t.xml
+#	$(TOKWRAP) -t sowxml $(<:.t.xml=.xml)
+	xsltproc -o $@ $^
 
 no-w-xml: ; rm -f *.w.xml w-xml.stamp
 CLEAN_FILES += *.w.xml w-xml.stamp
@@ -323,8 +339,9 @@ a-xml.stamp: t-xml.stamp $(TOKWRAP_DEPS)
 	touch $@
 
 a-xml-iter: $(XML:.xml=.a.xml)
-%.a.xml: %.t.xml $(TOKWRAP_DEPS)
-	$(TOKWRAP) -t soaxml $(<:.t.xml=.xml)
+%.a.xml: standoff_t2a.xsl %.t.xml
+#	$(TOKWRAP) -t soaxml $(<:.t.xml=.xml)
+	xsltproc -o $@ $^
 
 no-a-xml: ; rm -f *.a.xml a-xml.stamp
 CLEAN_FILES += *.a.xml a-xml.stamp
@@ -349,6 +366,21 @@ tw-all.stamp: $(XML) $(TOKWRAP_DEPS)
 	$(TOKWRAP) -t all $(XML)
 	touch $@
 CLEAN_FILES += tw-all.stamp
+
+##-- iter vs. all
+## + time make -j2 standoff-iter ~ 971.9 Kbyte/sec
+##	real	0m28.879s
+##	user	0m45.739s
+##	sys	0m1.776s
+## + time make TOKWRAP_OPTS="-keep -trace" tw-all ~ 784.5 Kbyte/sec
+##	real	0m35.778s
+##	user	0m34.778s
+##	sys	0m0.984s
+## + time make -j1 standoff-iter ~ 609.4 Kbyte/sec
+##	real	0m46.060s
+##	user	0m44.351s
+##	sys	0m1.636s
+
 
 
 ##======================================================================
