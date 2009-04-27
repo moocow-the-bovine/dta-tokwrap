@@ -8,9 +8,9 @@ digraph dataflow {
   mkindex [label="DTA::TokWrap::mkindex",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
   xml -> mkindex;
 
-  cxfile [label="cxfile: *.cx",shape=rectangle,style=filled,fillcolor=grey90];
   sxfile [label="sxfile: *.sx",shape=rectangle,style=filled,fillcolor=grey90];
   txfile [label="txfile: *.tx",shape=rectangle,style=filled,fillcolor=grey90];
+  cxfile [label="cxfile: *.cx",shape=rectangle,style=filled,fillcolor=grey90];
   mkindex -> cxfile;
   mkindex -> sxfile;
   mkindex -> txfile;
@@ -24,6 +24,10 @@ digraph dataflow {
   sxfile -> mkbx0;
   mkbx0 -> bx0doc;
 
+  bx0file [label="bx0file: *.bx0",shape=rectangle,style=filled,fillcolor=grey90];
+  bx0doc -> bx0file;
+  bx0file -> bx0doc [color=red];
+
   bxdata [label="bxdata"];
   mkbx [label="DTA::TokWrap::mkbx",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
   bx0doc -> mkbx;
@@ -36,6 +40,8 @@ digraph dataflow {
   txtfile [label="txtfile: *.txt",shape=rectangle,style=filled,fillcolor=grey90];
   bxdata -> bxfile;
   bxdata -> txtfile;
+  bxfile -> bxdata [color=red];
+  txtfile -> bxdata [color=red];
   //{rank=same; bxfile txtfile}
 
   tokdata [label="tokdata"];
@@ -45,12 +51,14 @@ digraph dataflow {
 
   tokfile [label="tokfile: *.t",shape=rectangle,style=filled,fillcolor=grey90];
   tokdata -> tokfile;
+  tokfile -> tokdata [color=red];
   //{rank=same; tokdata tokfile;}
 
   xtokdata [label="xtokdata"];
   xtokfile [label="xtokfile: *.t.xml",shape=rectangle,style=filled,fillcolor=grey90];
   xtokdoc  [label="xtokdoc"];
   xtokdata -> xtokfile;
+  xtokfile -> xtokdata [color=red];
   xtokdata -> xtokdoc;
   //{rank=same; xtokdata xtokfile;}
 
