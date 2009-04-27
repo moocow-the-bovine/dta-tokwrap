@@ -21,17 +21,21 @@ our $verbose = 1;      ##-- verbosity
 ##-- DTA::TokWrap options
 our %twopts = (
 	       inplacePrograms=>1,
+	       keeptmp => 1,
 	       procOpts => {
 			    traceLevel => 'trace',
 			   },
 	      );
 our %docopts = (
 		##-- Document class options
-		class => 'DTA::TokWrap::Document::Maker',
+		class => 'DTA::TokWrap::Document',
+		#class => 'DTA::TokWrap::Document::Maker',
 
 		##-- DTA::TokWrap::Document options
 		traceOpen => 'trace',
 		#traceClose => 'trace',
+		traceLoad   => 'trace',
+		traceSave   => 'trace',
 		format => 1,
 
 		##-- DTA::TokWrap::Document::Maker options
@@ -49,7 +53,7 @@ our $logFile     = undef;  ##-- log to file?
 our $logProfile  = 'info'; ##-- log-level for profiling information?
 
 ##-- make/generate options
-our $makeAct = 'make';   ##-- one of 'make', 'gen'
+our $makeKeyAct = 'make';   ##-- one of 'make', 'gen'
 our @targets = qw();
 our @defaultTargets = qw(all);
 
@@ -71,10 +75,13 @@ GetOptions(
 	   'help|h' => \$help,
 	   'verbose|V=i' => \$verbose,
 
+	   ##-- document class
+	   'class|c=s' => \$docopts{class},
+
 	   ##-- pseudo-make
-	   'make|m' => sub { $docopts{class}='DTA::TokWrap::Document::Maker'; $makeAct='make'; },
-	   'generate|gen|g'  => sub { $docopts{class}='DTA::TokWrap::Document::Maker'; $makeAct='gen'; },
-	   'remake|r!' => sub { $docopts{class}='DTA::TokWrap::Document::Maker'; $makeAct='remake'; },
+	   'make|m' => sub { $docopts{class}='DTA::TokWrap::Document::Maker'; $makeKeyAct='make'; },
+	   'nomake|M' => sub { $docopts{class}='DTA::TokWrap::Document'; },
+	   'remake|r!' => sub { $docopts{class}='DTA::TokWrap::Document::Maker'; $makeKeyAct='remake'; },
 	   'targets|target|t=s' => \@targets,
 	   'force-target|ft=s' => sub { push(@{$twopts{force}},$_[1]) },
 	   'force|f' => sub { push(@{$twopts{force}},'all') },
@@ -138,6 +145,26 @@ sub vmsg1 {
 }
 
 
+##--------------------------------------------------------------
+## Subs: File processing
+
+## $bool = processFile($argvFile)
+##  + process a single file
+sub processFile {
+  my $f = shift;
+  my $rc = 1;
+  eval {
+    $rc &&= ($doc = $tw->open($f,%docopts));
+    foreach $target (@targets) {
+      last if (!$rc);
+      $rc &&= defined($makeKeySub->($doc,$target));
+    }
+    $rc &&= $doc->close();
+  };
+  return $rc;
+}
+
+
 ##==============================================================================
 ## MAIN
 ##==============================================================================
@@ -175,15 +202,19 @@ log4perl.appender.AppFile.layout.ConversionPattern = %d{yyyy-mm-dd hh:mm:ss} %G[
 }
 
 ##-- defaults: targets
-@targets = @defaultTargets if (!@targets);
+if (!@targets) {
+  @targets = @defaultTargets;
+} else {
+ @targets = map { split(/[\,\;\s]+/,$_) } @targets;
+}
 
 ##-- create $tw
 our $tw = DTA::TokWrap->new(%twopts)
   or die("$prog: could not create DTA::TokWrap object");
 
-##-- options: make|gen
-our $makeSub = $docopts{class}->can("${makeAct}Key")
-  or die("$prog: no $docopts{class}::${makeAct}Key() method");
+##-- options: pseudo-make: make|gen
+our $makeKeySub = $docopts{class}->can("${makeKeyAct}Key")
+  or die("$prog: no method for $docopts{class}->${makeKeyAct}Key()");
 
 ##-- profiling
 #our $tv_started = [gettimeofday];
@@ -193,21 +224,7 @@ our ($doc);
 our $progrc=0;
 our ($filerc,$target);
 foreach $f (@ARGV) {
-  $filerc = 1;
-  eval {
-    $filerc &&= ($doc = $tw->open($f,%docopts));
-    foreach $target (@targets) {
-      last if (!$filerc);
-      $filerc &&= defined($makeSub->($doc,$target));
-    }
-#    ##-- profiling? --> see $doc->close()
-#    if ($doc && $logProfile) {
-#      #$filerc &&= $doc->logProfile();
-#      $ntoks   += $doc->nTokens();
-#      $nxbytes += $doc->nXmlBytes();
-#    }
-    $filerc &&= $doc->close();
-  };
+  $filerc = processFile($f);
   if ($@ || !$filerc) {
     vmsg1(0,"error processing XML file '$f': $@");
     ++$progrc;
@@ -215,7 +232,7 @@ foreach $f (@ARGV) {
 }
 
 ##-- profiling
-$tw->logProfile($logProfile) if ($logProfile);
+$tw->logProfile($logProfile) if ($logProfile && $progrc==0);
 
 
 exit($progrc); ##-- exit status

@@ -22,9 +22,6 @@ our @ISA = qw(DTA::TokWrap::Document);
 ##  + additional %args, %$doc:
 ##    ##-- pseudo-make options
 ##    force     => \@keys,  ##-- force re-generation of all dependencies for @keys
-##    traceMake => $level,  ##-- log-level for makeKey() trace (e.g. 'debug'; default=undef (none))
-##    traceGen  => $level,  ##-- log-level for genKey() trace (e.g. 'trace'; default=undef (none))
-##    genDummy  => $bool,   ##-- if true, generator will not actually run (a la `make -n`)
 ##
 ##    ##-- timestamp data
 ##    "${key}_stamp"   => $stamp,   ##-- timestamp for data keys; see keyStamp() method
@@ -38,7 +35,7 @@ sub defaults {
 	  ##-- inherited defaults
 	  $_[0]->SUPER::defaults(),
 
-	  ##-- make options
+	  ##-- pseudo-make options
 	  #force => 0,
 	  #traceMake => 'trace',
 	  #traceGen => 'trace',
@@ -83,8 +80,12 @@ sub init {
 ##  + $generatorSpec is one of:
 ##     $key      : calls $doc->can($key)->($doc)
 ##     \&coderef : calls &coderef($doc)
+##     \@array   : array of atomic $generatorSpecs (keys or CODE-refs)
 our %KEYGEN =
   (
+   #%DTA::TokWrap::Document::KEYGEN, ##-- inherited defaults
+
+   ##-- overrides
    xmlfile => sub { $_[0]; },
    (map {$_=>'mkindex'} qw(cxfile sxfile txfile)),
    cxdata => 'loadCxFile',
@@ -250,30 +251,16 @@ sub keyIsCurrent {
 ##--------------------------------------------------------------
 ## Methods: Pseudo-make: (Re-)generation
 
-## $keyval_or_undef = $doc->genKey($key)
+## $bool = $doc->genKey($key)
+## $bool = $doc->genKey($key,\%KEYGEN)
 ##  + unconditionally (re-)generate a data key (single step only)
+##  + passes on local \%KEYGEN
 sub genKey {
-  my ($doc,$key) = @_;
-  $doc->vlog($doc->{traceGen},"$doc->{xmlbase}: genKey($key)") if ($doc->{traceGen});
-  my $gen = $KEYGEN{$key};
-  if (!defined($gen)) {
-    $doc->logcarp("$doc->{xmlbase}: genKey($key): no generator defined for key '$key'");
-    return undef;
-  }
-  return $doc->{genDummy} if ($doc->{genDummy});
-  if (UNIVERSAL::isa($gen,'CODE')) {
-    ##-- CODE-ref
-    $gen->($doc) || return undef;
-  }
-  else {
-    ##-- default: string
-    $doc->can($gen)->($doc) || return undef;
-  }
-  return $doc->{$key};
+  return $_[0]->SUPER::genKey($_[1], ($_[2] || \%KEYGEN));
 }
 
-## $keyval_or_undef = $doc->makeKey($key)
-## $keyval_or_undef = $doc->makeKey($key,\%queued)
+## $bool = $doc->makeKey($key)
+## $bool = $doc->makeKey($key,\%queued)
 ##  + conditionally (re-)generate a data key, checking dependencies
 sub makeKey {
   my ($doc,$key) = @_;
@@ -284,6 +271,10 @@ sub makeKey {
   }
   return $doc->genKey($key) if (!$doc->keyIsCurrent($key));
 }
+
+## $bool = $doc->makeAll()
+##  + alias for $doc->makeKey('all')
+sub makeAll { return $_[0]->makeKey('all'); }
 
 ## undef = $doc->forceStale(@keys)
 ##  + forces all keys @keys to be considered stale by setting $doc->{"${key}_stamp"}=-$ix,

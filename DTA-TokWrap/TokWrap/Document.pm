@@ -7,7 +7,7 @@
 package DTA::TokWrap::Document;
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Version;
-use DTA::TokWrap::Utils qw(:libxml :files :time :si);
+use DTA::TokWrap::Utils qw(:libxml :files :slurp :time :si);
 use DTA::TokWrap::Processor::mkindex;
 use DTA::TokWrap::Processor::mkbx0;
 use DTA::TokWrap::Processor::mkbx;
@@ -60,6 +60,13 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    ##-- Source data
 ##    xmlfile => $xmlfile,  ##-- source filename
 ##    xmlbase => $xmlbase,  ##-- xml:base for generated files (default=basename($xmlfile))
+##
+##    ##-- pseudo-make options
+##    traceMake => $level,  ##-- log-level for makeKey() trace (e.g. 'debug'; default=undef (none))
+##    traceGen  => $level,  ##-- log-level for genKey() trace (e.g. 'trace'; default=undef (none))
+##    traceLoad => $level,  ##-- log-level for load* trace (default=none)
+##    traceSave => $level,  ##-- log-level for save* trace (default=none)
+##    genDummy  => $bool,   ##-- if true, generator will not actually run (a la `make -n`)
 ##
 ##    ##-- generator data (optional)
 ##    tw => $tw,              ##-- a DTA::TokWrap object storing individual generators
@@ -126,10 +133,17 @@ sub defaults {
 	  xmlfile => undef,
 	  xmlbase => undef,
 
+	  ##-- pseudo-make options
+	  #traceMake => 'trace',
+	  #traceGen => 'trace',
+	  #genDummy => 0,
+
 	  ##-- generator data (optional)
 	  #tw => undef,
 	  #traceOpen => 'trace',
 	  #traceClose => 'trace',
+	  #traceLoad=>'trace',
+	  #traceSave=>'trace',
 
 	  ##-- generated data (common)
 	  outdir => '.',
@@ -188,6 +202,7 @@ sub init {
     $doc->{outdir} = $doc->{tw}{outdir};
     $doc->{tmpdir} = $doc->{tw}{tmpdir};
     $doc->{keeptmp} = $doc->{tw}{keeptmp};
+    $doc->{genDummy} = $doc->{tw}{genDummy} if (exists($doc->{tw}{genDummy}) && !exists($doc->{genDummy}));
   }
   $doc->{outdir} = '.' if (!$doc->{outdir});
   $doc->{tmpdir} = $doc->{outdir} if (!$doc->{tmpdir});
@@ -334,6 +349,100 @@ sub tempfiles {
 }
 
 ##==============================================================================
+## Methods: pseudo-pseudo-make
+##==============================================================================
+
+##--------------------------------------------------------------
+## Methods: Pseudo-make: Initialization
+
+## %KEYGEN = ($dataKey => $generatorSpec, ...)
+##  + maps data keys to the generating processes (subroutines, classes, ...)
+##  + $generatorSpec is one of:
+##     $key      : calls $doc->can($key)->($doc)
+##     \&coderef : calls &coderef($doc)
+##     \@array   : array of atomic $generatorSpecs (keys or CODE-refs)
+our (%KEYGEN);
+BEGIN {
+  my ($spec);
+  %KEYGEN =
+    (
+     ##-- real data keys
+     xmlfile => sub { -r $_[0]{xmlfile} },
+
+     ##-- aliases
+     (map {$_=>'mkindex'} qw(mkindex cx sx tx xx)),
+     (map {$_=>[qw(mkbx0 saveBx0File)]} qw(mkbx0 bx0)),
+     (map {$_=>[qw(loadBx0File mkbx saveBxFile saveTxtFile)]} qw(mkbx mktxt bx txt)),
+     (map {$_=>[qw(tokenize saveTokFile)]} qw(mktok tokenize tok t tt)),
+     (map {$_=>[qw(loadTokFile loadBxFile loadCxFile tok2xml saveXtokFile)]} qw(tok2xml xtok txml ttxml tokxml)),
+     (map {
+       $spec = ["loadXtokFile","xtokDoc","so${_}xml","saveSo${_}File"];
+       map {$_=>$spec} ("so${_}xml","so${_}file","${_}xml")
+     } ('s','w','a')),
+
+     (map {$_=>[qw(loadXtokFile xtokDoc standoff saveStandoffFiles)]} qw(mkstandoff standoff so mkso)),
+
+     all => [qw(mkindex),
+	     qw(mkbx0 saveBx0File),
+	     qw(mkbx saveBxFile saveTxtFile),
+	     qw(tokenize saveTokFile),
+	     qw(loadCxFile tok2xml saveXtokFile),
+	     qw(standoff saveStandoffFiles),
+	    ],
+    );
+}
+
+##--------------------------------------------------------------
+## Methods: Pseudo-make: (re-)generation
+
+## $bool = $doc->genKey($key)
+## $bool = $doc->genKey($key,\%KEYGEN)
+##  + (re-)generate a data key (single step only)
+##  + keys without a value $KEYGEN{$key}
+sub genKey {
+  my ($doc,$key,$keygen) = @_;
+  $doc->vlog($doc->{traceGen},"$doc->{xmlbase}: genKey($key)") if ($doc->{traceGen});
+  $keygen = \%KEYGEN if (!$keygen);
+  my $gen = exists($keygen->{$key}) ? $keygen->{$key} : $key;
+
+  ##-- puke if no generator is defined
+  if (!defined($gen)) {
+    $doc->logcarp("$doc->{xmlbase}: genKey($key): no generator defined for key '$key'");
+    return undef;
+  }
+  return $doc->{genDummy} if ($doc->{genDummy});
+
+  my $rc = 1;
+  my ($spec,$sub);
+  foreach $spec (UNIVERSAL::isa($gen,'ARRAY') ? @$gen : $gen) {
+    if (UNIVERSAL::isa($spec,'CODE')) {
+      ##-- CODE-ref
+      $rc &&= $spec->($doc);
+    }
+    elsif (defined($sub=$doc->can($spec))) {
+      ##-- method name
+      $rc &&= $sub->($doc);
+    }
+    else {
+      $doc->logcroak("$doc->{xmlbase}: genKey($key): no method for KEYGEN specification '$spec'");
+      $rc = 0;
+    }
+    last if (!$rc);
+  }
+  return $rc;
+}
+
+## $keyval_or_undef = $doc->makeKey($key)
+##  + just an alias for $doc->genKey($key)
+##  + see DTA::TokWrap::Document::Maker for a more sophisticated implementation
+sub makeKey {
+  my ($doc,$key) = @_;
+  $doc->vlog($doc->{traceMake},"$doc->{xmlbase}: makeKey($key)") if ($doc->{traceMake});
+  return $doc->genKey($key);
+}
+
+
+##==============================================================================
 ## Methods: Low-Level: generator-subclass wrappers
 ##==============================================================================
 
@@ -417,30 +526,91 @@ sub xtokDoc {
   $xtdatar = \$doc->{xtokdata} if (!$xtdatar);
   if (!$xtdatar || !defined($$xtdatar)) {
     $doc->tok2xml()
-      or $doc->logconfess("xtokDoc($doc->{xmlbase}): tok2xml() failed for document '$doc->{xmlfile}': $!");
+      or $doc->logconfess("$doc->{xmlbase}: xtokDoc(): tok2xml() failed for document '$doc->{xmlfile}': $!");
     $xtdatar = \$doc->{xtokdata};
   }
 
   ##-- get xml parser
   my $xmlparser = libxml_parser(keep_blanks=>0);
   my $xtdoc = $doc->{xtokdoc} = $xmlparser->parse_string($$xtdatar)
-    or $doc->logconfess("xtokDoc($doc->{xmlbase}): could not parse t.xml data as XML: $!");
+    or $doc->logconfess("$doc->{xmlbase}: xtokDoc(): could not parse t.xml data as XML: $!");
 
   $doc->{xtokdoc_stamp} = timestamp(); ##-- stamp
   return $doc->{xtokdoc};
 }
 
 ##==============================================================================
-## Methods: I/O
+## Methods: Member I/O
 ##==============================================================================
 
 ##----------------------------------------------------------------------
-## Methods: I/O: input
+## Methods: Member I/O: input
+
+## $bx0doc_or_undef = $doc->loadBx0File($filename_or_fh)
+## $bx0doc_or_undef = $doc->loadBx0File()
+##  + loads $doc->{bx0doc} from $filename_or_fh (default=$doc->{bx0file})
+sub loadBx0File {
+  my ($doc,$file) = @_;
+
+  ##-- get file
+  $file = $doc->{bx0file} if (!$file);
+  $doc->logconfess("$doc->{xmlbase}: loadBx0File(): no .bx0 file defined") if (!defined($file));
+  $doc->vlog($doc->{traceLoad}, "$doc->{xmlbase}: loadBx0File($file)") if ($doc->{traceLoad});
+
+  my $xmlparser = libxml_parser(keep_blanks=>0);
+  if (ref($file)) {
+    $doc->{bx0doc} = $xmlparser->parse_fh($file);
+  } else {
+    $doc->{bx0doc} = $xmlparser->parse_file($file);
+  }
+  $doc->logconfess("$doc->{xmlbase}: loadBx0File(): could not parse .bx0 file '$file'") if (!$doc->{bx0doc});
+
+  $doc->{bx0doc_stamp} = file_mtime($file);
+  return $doc->{bx0doc};
+}
+
+## $cxdata_or_undef = $doc->loadBxFile($bxfile_or_fh,$txtfile_or_fh)
+## $cxdata_or_undef = $doc->loadBxFile()
+##  + loads $doc->{bxdata} from @$doc{qw(bxfile txtfile)}
+##  + requires $doc->{txfile}
+sub loadBxFile {
+  my ($doc,$bxfile,$txtfile) = @_;
+
+  ##-- get .bx file
+  $bxfile  = $doc->{bxfile}  if (!$bxfile);
+  $txtfile = $doc->{txtfile} if (!$txtfile);
+  $doc->logconfess("$doc->{xmlbase}: loadBxFile(): no .bx file defined") if (!defined($bxfile));
+  $doc->logconfess("$doc->{xmlbase}: loadBxFile(): no .txt file defined") if (!defined($txtfile));
+  $doc->vlog($doc->{traceLoad}, "$doc->{xmlbase}: loadBxFile($bxfile, $txtfile)") if ($doc->{traceLoad});
+
+  ##-- load .txt file
+  my $txtdata = '';
+  slurp_file($txtfile, \$txtdata)
+    or $doc->logconfess("$doc->{xmlbase}: slurp_file() failed for .txt file '$txtfile': $!");
+
+  ##-- load .bx file
+  my $bxdata = $doc->{bxdata} = [];
+  my $fh = ref($bxfile) ? $bxfile : IO::File->new("<$bxfile");
+  $doc->logconfess("$doc->{xmlbase}: loadBxFile(): open failed for .bx file '$bxfile': $!") if (!$fh);
+  $fh->binmode() if (!ref($bxfile));
+  my ($blk);
+  while (<$fh>) {
+    chomp;
+    next if (/^%%/ || /^\s*$/);
+    push(@$bxdata,$blk={});
+    @$blk{qw(key elt xoff xlen toff tlen otoff otlen)} = split(/\t/,$_);
+    $blk->{otext} = substr($txtdata, $blk->{otoff}, $blk->{otlen});
+  }
+  $fh->close() if (!ref($bxfile));
+
+  $doc->{bxdata_stamp} = file_mtime($txtfile);
+  return $doc->{bxdata};
+}
+
 
 ## $cxdata_or_undef = $doc->loadCxFile($filename_or_fh)
 ## $cxdata_or_undef = $doc->loadCxFile()
 ##  + loads $doc->{cxdata} from $filename_or_fh (default=$doc->{cxfile})
-##  + may implicitly call $doc->mkindex()
 ##  + $doc->{cxdata} = [ $cx0, ... ]
 ##    - where each $cx = [ $id, $xoff,$xlen, $toff,$tlen, $text ]
 ##    - globals $CX_ID, $CX_XOFF, etc. are indices for $cx arrays
@@ -449,15 +619,12 @@ sub loadCxFile {
 
   ##-- get file
   $file = $doc->{cxfile} if (!$file);
-  if (!$file || (!ref($file) && !-r $file)) {
-    $doc->mkindex()
-      or $doc->logconfess("loadCxFile($doc->{xmlbase}): mkindex()() failed for document '$doc->{xmlfile}': $!");
-    $file = $doc->{cxfile};
-  }
+  $doc->logconfess("$doc->{xmlbase}: loadCxFile(): no .cx file defined") if (!defined($file));
+  $doc->vlog($doc->{traceLoad}, "$doc->{xmlbase}: loadCxFile($file)") if ($doc->{traceLoad});
 
   my $cx = $doc->{cxdata} = [];
   my $fh = ref($file) ? $file : IO::File->new("<$file");
-  $doc->logconfess("loadCxFile(): open failed for .cx file '$file': $!") if (!$fh);
+  $doc->logconfess("$doc->{xmlbase}: loadCxFile(): open failed for .cx file '$file': $!") if (!$fh);
   $fh->binmode() if (!ref($file));
   while (<$fh>) {
     chomp;
@@ -470,8 +637,45 @@ sub loadCxFile {
   return $cx;
 }
 
+## \$tokdata_or_undef = $doc->loadTokFile($filename_or_fh)
+## \$tokdata_or_undef = $doc->loadTokFile()
+##  + loads $doc->{tokdata} from $filename_or_fh (default=$doc->{tokfile})
+sub loadTokFile {
+  my ($doc,$file) = @_;
+
+  ##-- get file
+  $file = $doc->{tokfile} if (!$file);
+  $doc->logconfess("$doc->{xmlbase}: loadTokFile(): no .t file defined") if (!defined($file));
+  $doc->vlog($doc->{traceLoad}, "$doc->{xmlbase}: loadTokFile($file)") if ($doc->{traceLoad});
+
+  slurp_file($file,\$doc->{tokdata})
+    or $doc->logconfess("$doc->{xmlbase}: slurp_file() failed for token file '$file': $!");
+
+  $doc->{tokdata_stamp} = file_mtime($file);
+  return \$doc->{tokfile};
+}
+
+## \$xtokdata_or_undef = $doc->loadXtokFile($filename_or_fh)
+## \$xtokdata_or_undef = $doc->loadXtokFile()
+##  + loads $doc->{xtokdata} from $filename_or_fh (default=$doc->{xtokfile})
+##  + see also $doc->xtokDoc()
+sub loadXtokFile {
+  my ($doc,$file) = @_;
+
+  ##-- get file
+  $file = $doc->{xtokfile} if (!$file);
+  $doc->logconfess("$doc->{xmlbase}: loadXtokFile(): no .t.xml file defined") if (!defined($file));
+  $doc->vlog($doc->{traceLoad}, "$doc->{xmlbase}: loadXtokFile($file)") if ($doc->{traceLoad});
+
+  slurp_file($file,\$doc->{xtokdata})
+    or $doc->logconfess("$doc->{xmlbase}: slurp_file() failed for XML-tokenized file '$file': $!");
+
+  $doc->{xtokdata_stamp} = file_mtime($file);
+  return \$doc->{xtokdata};
+}
+
 ##----------------------------------------------------------------------
-## Methods: I/O: output
+## Methods: Member I/O: output
 
 ## $file_or_undef = $doc->saveBx0File($filename_or_fh,$bx0doc,%opts)
 ## $file_or_undef = $doc->saveBx0File($filename_or_fh)
@@ -488,23 +692,20 @@ sub saveBx0File {
 
   ##-- get bx0doc
   $bx0doc = $doc->{bx0doc} if (!$bx0doc);
-  if (!$bx0doc) {
-    $doc->mkbx0()
-      or $doc->logconfess("saveBx0File(): mkbx0() failed for document '$doc->{xmlfile}': $!");
-    $bx0doc = $doc->{bx0doc};
-  }
+  $doc->logconfess("$doc->{xmlbase}: saveBx0File(): no 'bx0doc' key defined") if (!$bx0doc);
 
   ##-- get file
   $file = $doc->{bx0file} if (!defined($file));
   $file = "$doc->{outdir}/$doc->{outbase}.bx0" if (!defined($file));
   $doc->{bx0file} = $file if (!ref($file));
+  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveBx0File($file)") if ($doc->{traceSave});
 
   ##-- actual save
   my $format = (exists($opts{format}) ? $opts{format} : $doc->{format})||0;
   if (ref($file)) {
-    $bx0doc->toFh($format);
+    $bx0doc->toFh($file,$format);
   } else {
-    $bx0doc->toFile($format);
+    $bx0doc->toFile($file,$format);
   }
 
   $doc->{bx0file_stamp} = timestamp(); ##-- stamp
@@ -533,6 +734,7 @@ sub saveBxFile {
   $file = $doc->{bxfile} if (!defined($file));
   $file = "$doc->{outdir}/$doc->{outbase}.bx" if (!defined($file));
   $doc->{bxfile} = $file if (!ref($file));
+  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveBxFile($file)") if ($doc->{traceSave});
 
   ##-- get filehandle & print
   my $fh = ref($file) ? $file : IO::File->new(">$file");
@@ -577,6 +779,7 @@ sub saveTxtFile {
   $file = $doc->{txtfile} if (!defined($file));
   $file = "$doc->{outdir}/$doc->{outbase}.txt" if (!defined($file));
   $doc->{txtfile} = $file if (!ref($file));
+  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveTxtFile($file)") if ($doc->{traceSave});
 
   ##-- get filehandle & print
   my $fh = ref($file) ? $file : IO::File->new(">$file");
@@ -618,6 +821,7 @@ sub saveTokFile {
   $file = $doc->{tokfile} if (!defined($file));
   $file = "$doc->{outdir}/$doc->{outbase}.t" if (!defined($file));
   $doc->{tokfile} = $file if (!ref($file));
+  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveTokFile($file)") if ($doc->{traceSave});
 
   ##-- get filehandle & print
   my $fh = ref($file) ? $file : IO::File->new(">$file");
@@ -653,6 +857,7 @@ sub saveXtokFile {
   $file = $doc->{xtokfile} if (!defined($file));
   $file = "$doc->{outdir}/$doc->{outbase}.t.xml" if (!defined($file));
   $doc->{xtokfile} = $file if (!ref($file));
+  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveXtokFile($file)") if ($doc->{traceSave});
 
   ##-- get filehandle & print
   my $fh = ref($file) ? $file : IO::File->new(">$file");
@@ -694,6 +899,7 @@ sub saveSosFile {
   $file = $doc->{sosfile} if (!defined($file));
   $file = "$doc->{outdir}/$doc->{outbase}.s.xml" if (!defined($file));
   $doc->{sosfile} = $file if (!ref($file));
+  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveSosFile($file)") if ($doc->{traceSave});
 
   ##-- dump
   my $format = (exists($opts{format}) ? $opts{format} : $doc->{format})||0;
@@ -731,6 +937,7 @@ sub saveSowFile {
   $file = $doc->{sowfile} if (!defined($file));
   $file = "$doc->{outdir}/$doc->{outbase}.s.xml" if (!defined($file));
   $doc->{sowfile} = $file if (!ref($file));
+  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveSowFile($file)") if ($doc->{traceSave});
 
   ##-- dump
   my $format = (exists($opts{format}) ? $opts{format} : $doc->{format})||0;
@@ -760,7 +967,7 @@ sub saveSoaFile {
   $soadoc = $doc->{soadoc} if (!$soadoc);
   if (!$soadoc) {
     $doc->soaxml()
-      or $doc->logconfess("saveSoaFile(): soaxml() failed for document '$doc->{xmlfile}': $!");
+      or $doc->logconfess("$doc->{xmlbase}: saveSoaFile(): soaxml() failed for document '$doc->{xmlfile}': $!");
     $soadoc = $doc->{soadoc};
   }
 
@@ -768,6 +975,7 @@ sub saveSoaFile {
   $file = $doc->{soafile} if (!defined($file));
   $file = "$doc->{outdir}/$doc->{outbase}.s.xml" if (!defined($file));
   $doc->{soafile} = $file if (!ref($file));
+  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveSoaFile($file)") if ($doc->{traceSave});
 
   my $format = (exists($opts{format}) ? $opts{format} : $doc->{format})||0;
   if (ref($file)) {
@@ -787,6 +995,7 @@ sub saveSoaFile {
 ##     format => $level,
 sub saveStandoffFiles {
   my ($doc,%opts) = @_;
+  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveStandoffFiles()") if ($doc->{traceSave});
   $doc->saveSosFile(undef,undef,%opts);
   $doc->saveSowFile(undef,undef,%opts);
   $doc->saveSoaFile(undef,undef,%opts);
