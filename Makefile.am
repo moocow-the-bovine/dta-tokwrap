@@ -28,7 +28,10 @@ PODS = README.pod
 ## Targets: docs
 
 pkgdoc_DATA = $(PODS:.pod=.txt)
-#$(PODS:.pod=.html)
+
+if HAVE_POD2HTML
+pkgdoc_DATA += $(PODS:.pod=.html)
+endif
 
 ##-----------------------------------------------------------------------
 ## Subdirs: perl
