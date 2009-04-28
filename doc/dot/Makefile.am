@@ -72,7 +72,8 @@ endif
 
 if HAVE_DOT
 if HAVE_EPSTOPDF
-.eps.pdf:
+#.eps.pdf:
+.ps.pdf:
 	epstopdf $< -o $@
 else
 if HAVE_PS2PDF
