@@ -166,8 +166,13 @@ which is itself a descendant of a C<E<lt>textE<gt>> element (XPath C<//text//c//
 
 =item *
 
-the document should contain exactly one such C<E<lt>cE<lt>> element for each I<character>
-to be tokenized,
+the document should contain exactly one such C<E<lt>cE<gt>> element for
+I<each logical character>
+which may be passed to the tokenizer,
+
+=item *
+
+no C<E<lt>cE<gt>> element may be a descendant of another C<E<lt>cE<gt>> element,
 and
 
 =item *
