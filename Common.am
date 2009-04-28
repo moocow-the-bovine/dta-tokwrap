@@ -64,7 +64,8 @@ endif
 ## Cleanup
 
 ##--- clean: built by 'make'
-CLEANFILES =
+CLEANFILES = \
+	pod2htm*.tmp
 
 ##--- distclean: built by 'configure'
 DISTCLEANFILES = \

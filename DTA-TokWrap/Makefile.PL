@@ -103,13 +103,12 @@ sub MY::distdir {
 '
 ##-- distdir_am: hacked create_distdir for superordinate automake
 DISTDIR_AM ?= $(DISTNAME).am
-distdir_am: distdir
+distdir_am:
 	$(RM_RF) $(DISTDIR_AM)
-	$(MV) $(DISTVNAME) $(DISTDIR_AM)
-';
-#	$(PERLRUN) "-MExtUtils::Manifest=manicopy,maniread" \\
-#	           -e "manicopy(maniread(),\'$(DISTDIR_AM)\', \'$(DIST_CP)\');"
+	$(PERLRUN) "-MExtUtils::Manifest=manicopy,maniread" \\
+	           -e "manicopy(maniread(),\'$(DISTDIR_AM)\', \'$(DIST_CP)\');"
 
+';
   return $inherited.$local;
 }
 

@@ -18,6 +18,9 @@ AC_DEFUN([AX_ARG_DISTCHECK],
    test -z "$POD2X" && POD2LATEX=no
    test -z "$FLEX"  && FLEX=no
    test -z "$BISON" && BISON=no
+   test -z "$EPSTOPDF" && EPSTOPDF=no
+   test -z "$PS2PDF" && PS2PDF=no
+   test -z "$DOT" && DOT=no
  fi
 ## /DISTCHECK
 ##^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

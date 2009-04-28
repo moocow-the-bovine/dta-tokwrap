@@ -19,6 +19,14 @@ AUTOMAKE_OPTIONS = foreign
 SUBDIRS = src doc
 #SUBDIRS += DTA-TokWrap  ##-- works (kinda), but breaks 'make clean'
 
+## --- distcheck stuff
+DISTCHECK_CONFIGURE_FLAGS =
+DISTCHECK_CONFIGURE_FLAGS += PERL="$(PERL)" DISTCHECK=1
+
+## --- ignore 'uninstall' for 'make distcheck', since perl doesn't like it
+distuninstallcheck:
+	@:
+
 ##-----------------------------------------------------------------------
 ## PODs
 
@@ -37,19 +45,37 @@ endif
 ## Subdirs: perl
 
 ALL_LOCAL_DEPS += DTA-TokWrap/Makefile
+PERL_MFLAGS = DESTDIR="$(DESTDIR)" PREFIX="$(prefix)" DISTDIR_AM="../$(distdir)/DTA-TokWrap"
+
 all-local: $(ALL_LOCAL_DEPS)
 	$(MAKE) -C DTA-TokWrap
 
 DTA-TokWrap/Makefile:
-	(cd DTA-TokWrap; $(PERL) Makefile.PL)
+	(cd DTA-TokWrap; $(PERL) Makefile.PL $(PERL_MFLAGS))
 
 install-exec-local: DTA-TokWrap/Makefile
-	$(MAKE) -C DTA-TokWrap install
+	$(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) install
+
+uninstall-local: DTA-TokWrap/Makefile
+	$(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) uninstall
 
 ##-- dist-hook requires "distdir_am" target in perl sub-module
 dist-hook:
-	$(MAKE) -C perlpd DISTDIR_AM="$(distdir)/DTA-TokWrap" distdir_am
+	$(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) distdir_am
 
 ##-- 'SUBDIRS = DTA-TokWrap' causes multiple 'make cleans' to puke
 clean-local:
-	if test -f DTA-TokWrap/Makefile ; then $(MAKE) -C DTA-TokWrap clean; fi
+	if test -f DTA-TokWrap/Makefile ; then $(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) clean; fi
+
+##-- distcheck hacks
+distclean-local:
+	if test -f DTA-TokWrap/Makefile ; then $(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) distclean; fi
+	if test "$(srcdir)" != "."; then chmod -R u+w DTA-TokWrap; rm -rf DTA-TokWrap; fi
+
+##-----------------------------------------------------------------------
+## clean
+
+if HAVE_POD2HTML
+CLEANFILES += $(PODS:.pod=.html)
+endif
+

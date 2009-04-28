@@ -98,11 +98,19 @@ AC_CONFIG_LINKS(src/dtaTwConfigNoAuto.h:src/dtaTwConfigAuto.h.in)
 ## Subdirs:perl
 ##
 AC_MSG_NOTICE([perparing perl module DTA::TokWrap])
-(cd DTA-TokWrap; $PERL Makefile.PL)
+
+##-- hack for 'make distcheck'
+if test "$srcdir" != "."; then
+   mkdir DTA-TokWrap
+   cp -r $srcdir/DTA-TokWrap/* DTA-TokWrap
+fi
+
+##-- TODO: pass options down to 'perl Makefile.PL'
+AC_ARG_VAR(MAKEPLFLAGS,[Additional flags to pass to `perl Makefile.PL`])
+(cd DTA-TokWrap; $PERL Makefile.PL $MAKEPLFLAGS)
 ##
 ## /subdirs:perl
 ##^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 
 
 ##----------------------------------------------------------------------

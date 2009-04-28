@@ -246,6 +246,17 @@ CLEANFILES = \
 	*.dvi *.ps *.pdf \
 	*.log *.aux *.toc *.idx *~~ *.tmp
 
+## --- distclean: built by 'configure'
+DISTCLEANFILES = \
+	*.gog acknowledge.pod
+
+## -- maintainerclean: built by maintainer / by hand
+MAINTAINERCLEANFILES = \
+	*~ .*~ Makefile Makefile.in \
+	*.man *.1 *.5 *.html *.txt *.tex \
+	$(CLEANFILES) \
+	$(DYNAMIC_PODS)
+
 if HAVE_OPTGEN
 CLEANFILES += $(DYNAMIC_PODS)
 endif
@@ -261,17 +272,6 @@ endif
 if HAVE_POD2LATEX
 CLEANFILES += *.tex
 endif
-
-## --- distclean: built by 'configure'
-DISTCLEANFILES = \
-	*.gog acknowledge.pod
-
-## -- maintainerclean: built by maintainer / by hand
-MAINTAINERCLEANFILES = \
-	*~ .*~ Makefile Makefile.in \
-	*.man *.1 *.5 *.html *.txt *.tex \
-	$(CLEANFILES) \
-	$(DYNAMIC_PODS)
 
 ##-----------------------------------------------------------------------
 ## Variables: distribution
