@@ -225,9 +225,6 @@ TOOLS
         Converts "master" tokenized XML output format (*.t.xml) to
         token-level stand-off XML format (*.w.xml).
 
-    ##======================================================================
-    =pod
-
 SEE ALSO
     perl(1).
 
