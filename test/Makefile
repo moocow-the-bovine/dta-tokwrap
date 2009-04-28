@@ -45,7 +45,7 @@ TOKENIZER ?= $(PROGDIR)dtatw-tokenize-dummy
 INPLACE ?= yes
 
 CSRC_DIR=../src
-CSRC_PROGRAMS = $(patsubst %,../src/%,dtatw-mkindex xml-rm-namespaces dtatw-tokenize-dummy)
+CSRC_PROGRAMS = $(patsubst %,../src/%,dtatw-mkindex dtatw-rm-namespaces dtatw-tokenize-dummy)
 TOKWRAP_DIR=../DTA-TokWrap
 
 ifeq "$(INPLACE)" "yes"
@@ -97,7 +97,7 @@ all: $(PREPEND_TARGETS) $(TARGETS)
 programs: $(CSRC_PROGRAMS)
 
 $(CSRC_DIR)/dtatw-mkindex: $(CSRC_DIR)/dtatw-mkindex.c
-$(CSRC_DIR)/xml-rm-namespaces: $(CSRC_DIR)/xml-rm-namespaces.c
+$(CSRC_DIR)/dtatw-rm-namespaces: $(CSRC_DIR)/dtatw-rm-namespaces.c
 $(CSRC_DIR)/dtatw-tokenize-dummy: $(CSRC_DIR)/dtatw-tokenize-dummy.l
 
 $(CSRC_DIR)/%:

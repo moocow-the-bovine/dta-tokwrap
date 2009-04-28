@@ -1,0 +1,13 @@
+\.chr\.txt$
+\.chr\.xml$
+\.chr\.t$
+\.(cx|sx|tx|bx0|bx)
+^testme\.perl$
+\.svn\b
+~$
+\.old$
+\.cvsignore$
+^Makefile$
+
+
+

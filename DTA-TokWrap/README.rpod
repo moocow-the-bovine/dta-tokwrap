@@ -4,16 +4,74 @@ README for DTA::TokWrap
 
 =head1 ABSTRACT
 
-DTA::TokWrap - Wrapper modules & scripts for DTA corpus tokenization
+DTA::TokWrap - top-level wrapper modules & scripts for DTA corpus tokenization
 
 =head1 REQUIREMENTS
 
+=cut
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=pod
+
+=head2 dta-tokwrap utilities
+
+See F<../README.txt> for details.
+
+=cut
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=pod
+
+=head2 Perl Modules
+
 =over 4
 
-=item perl
+=item Cwd
+
+tested version(s): 3.2501
+
+=item Encode
+
+tested version(s): 2.23
+
+=item Env::Path
+
+tested version(s): 0.18
+
+=item File::Basename
+
+tested version(s): 2.76
+
+=item Getopt::Long
+
+tested version(s): 2.37
+
+=item Pod::Usage
+
+tested version(s): 1.35
+
+=item Time::HiRes
+
+tested version(s): 1.9711
+
+=item XML::LibXML
+
+tested version(s): 1.66
+
+=item XML::LibXSLT
+
+tested version(s): 1.66
+
+=item XML::Parser
+
+tested version(s): 2.36
 
 =back
 
+=cut
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=pod
 
 =head1 DESCRIPTION
 
@@ -32,6 +90,10 @@ Issue the following commands to the shell:
 
 =head1 SEE ALSO
 
+../README.txt,
+perlmodinstall(1),
+dta-tokwrap.perl(1),
+DTA::TokWrap(3pm),
 perl(1).
 
 =head1 AUTHOR

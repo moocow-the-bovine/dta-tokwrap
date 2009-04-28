@@ -16,7 +16,8 @@ ACLOCAL_AMFLAGS = -I m4
 #AUTOMAKE_OPTIONS = foreign dist-bzip2 dist-zip
 AUTOMAKE_OPTIONS = foreign
 
-SUBDIRS = src
+SUBDIRS = src doc
+#SUBDIRS += DTA-TokWrap  ##-- works (kinda), but breaks 'make clean'
 
 ##-----------------------------------------------------------------------
 ## PODs
@@ -24,18 +25,28 @@ SUBDIRS = src
 PODS = README.pod
 
 ##-----------------------------------------------------------------------
+## Targets: docs
+
+pkgdoc_DATA = $(PODS:.pod=.txt)
+#$(PODS:.pod=.html)
+
+##-----------------------------------------------------------------------
 ## Subdirs: perl
 
 ALL_LOCAL_DEPS += DTA-TokWrap/Makefile
+all-local: $(ALL_LOCAL_DEPS)
+	$(MAKE) -C DTA-TokWrap
 
 DTA-TokWrap/Makefile:
 	(cd DTA-TokWrap; $(PERL) Makefile.PL)
 
-all-local: $(ALL_LOCAL_DEPS)
-	$(MAKE) -C DTA-TokWrap
-
-install-data-local: DTA-TokWrap/Makefile
+install-exec-local: DTA-TokWrap/Makefile
 	$(MAKE) -C DTA-TokWrap install
 
-clean-local: DTA-TokWrap/Makefile
-	$(MAKE) -C DTA-TokWrap clean
+##-- dist-hook requires "distdir_am" target in perl sub-module
+dist-hook:
+	$(MAKE) -C perlpd DISTDIR_AM="$(distdir)/DTA-TokWrap" distdir_am
+
+##-- 'SUBDIRS = DTA-TokWrap' causes multiple 'make cleans' to puke
+clean-local:
+	if test -f DTA-TokWrap/Makefile ; then $(MAKE) -C DTA-TokWrap clean; fi

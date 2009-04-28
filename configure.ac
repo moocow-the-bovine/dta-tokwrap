@@ -3,7 +3,7 @@ AC_PREREQ(2.5)
 
 dnl Some handy macros
 define([THE_PACKAGE_NAME],    [dta-tokwrap])
-define([THE_PACKAGE_VERSION], [0.0.1])
+define([THE_PACKAGE_VERSION], [0.01])
 define([THE_PACKAGE_MAINTAINER],  [jurish@bbaw.de])
 
 AC_INIT(THE_PACKAGE_NAME, THE_PACKAGE_VERSION, THE_PACKAGE_MAINTAINER)
@@ -24,7 +24,7 @@ dnl default prefix
 AC_PREFIX_DEFAULT(/usr/local)
 
 ##-- save user flags
-AX_SAVE_USERFLAGS
+AX_SAVE_USERFLAGS()
 
 ##-- check for compilers (may alter CFLAGS, CXXFLAGS)
 AC_PROG_CC
@@ -32,12 +32,13 @@ dnl AC_PROG_CXX
 dnl AC_LANG(C++)
 
 ##-- DISTCHECK: simulate missing development-only packages
-AX_ARG_DISTCHECK
+AX_ARG_DISTCHECK()
 
 ##-- flex, bison (also automake LEX, YACC)
-AX_CHECK_FLEX
-AX_CHECK_BISON
-AX_GNU_LEXYACC
+AX_CHECK_FLEX()
+AX_CHECK_BISON()
+AX_GNU_LEXYACC()
+
 
 dnl v--- needed if Makefile.am uses _LTLIBRARIES targets
 dnl AC_PROG_LIBTOOL
@@ -57,31 +58,35 @@ dnl AX_CHECK_PKGCONFIG
 dnl AX_PKGCONFIG_DIR  dnl-- only for packages which install their own .pc file(s)
 
 ##-- perl
-AX_CHECK_PERL
+AX_CHECK_PERL()
 
 ##-- Getopt::Gen, optgen.perl
-dnl AX_CHECK_GOG
+AX_CHECK_GOG()
 
 ##-- expat
-AX_CHECK_EXPAT
+AX_CHECK_EXPAT()
 if test "$ENABLE_EXPAT" != "yes"; then
   AC_MSG_ERROR([could not find expat XML parser library: refusing to continue!])
 fi
 
 ##-- debug
-AX_CHECK_DEBUG
+AX_CHECK_DEBUG()
 
 ###-- restore user FLAGS
-AX_RESTORE_USERFLAGS
-
+AX_RESTORE_USERFLAGS()
 
 ##vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 ## Documentation
 ##
-dnl AX_DOC_COMMON
-AX_DOC_POD
-dnl AX_DOC_GOG
-dnl AX_DOC_GOG_LINKS
+AX_DOC_COMMON()
+AX_DOC_POD()
+AX_DOC_DOT()
+AX_DOC_GOG()
+dnl AX_DOC_GOG_LINKS()
+
+pkgdocdotdir="\${docdir}/\${PACKAGE}/dot"
+AC_SUBST(pkgdocdotdir)
+AC_CONFIG_LINKS([doc/programs/dta-tokwrap.pod:DTA-TokWrap/dta-tokwrap.perl])
 ##
 ## /Documentation
 ##^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -103,6 +108,10 @@ AC_MSG_NOTICE([perparing perl module DTA::TokWrap])
 ##----------------------------------------------------------------------
 ## output
 ##
+AC_CONFIG_FILES(DTA-TokWrap/TokWrap/Version.pm)
+AC_CONFIG_FILES(doc/programs/Makefile)
+AC_CONFIG_FILES(doc/dot/Makefile)
+AC_CONFIG_FILES(doc/Makefile)
 AC_CONFIG_FILES(src/Makefile)
 AC_CONFIG_FILES(Makefile)
 AC_OUTPUT

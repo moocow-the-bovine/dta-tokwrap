@@ -55,8 +55,9 @@ endif
 #all-local: $(ALL_LOCAL_DEPS)
 
 if HAVE_POD2HTML
+POD2HTML_CSS ?= $(top_srcdir)/doc/programs/dtatw.css
 .pod.html:
-	pod2html -css=doc/dtatw.css $< --outfile=$@
+	pod2html -css=$(POD2HTML_CSS) $< --outfile=$@
 endif
 
 ##-----------------------------------------------------------------------

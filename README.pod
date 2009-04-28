@@ -62,49 +62,8 @@ tested version(s): 1.1.24
 
 =head3 Perl Modules
 
-=over 4
-
-=item Cwd
-
-tested version(s): 3.2501
-
-=item Encode
-
-tested version(s): 2.23
-
-=item Env::Path
-
-tested version(s): 0.18
-
-=item File::Basename
-
-tested version(s): 2.76
-
-=item Getopt::Long
-
-tested version(s): 2.37
-
-=item Pod::Usage
-
-tested version(s): 1.35
-
-=item Time::HiRes
-
-tested version(s): 1.9711
-
-=item XML::LibXML
-
-tested version(s): 1.66
-
-=item XML::LibXSLT
-
-tested version(s): 1.66
-
-=item XML::Parser
-
-tested version(s): 2.36
-
-=back
+See F<DTA-TokWrap/README.txt> for a full list of required
+perl modules.
 
 =cut
 

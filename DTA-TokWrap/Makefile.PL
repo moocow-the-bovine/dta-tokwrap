@@ -44,17 +44,78 @@ WriteMakefile
 ## Extensions
 ##-----------------------------------------------------------------------
 
-sub MY::postamble {
-  # how to format the README file
-  "README.txt : README.rpod\n"
-  ."\tpod2text README.rpod README.txt\n\n";
+##---------------------------------------------------------------
+sub MY::depend {
+  package MY;
+  my $inherited = shift->SUPER::depend(@_);
+  $inherited .= (
+		 ###-- depends -> README.txt
+		 "\n\n"
+		 ."dist: README.txt\n"
+		 ."\n"
+		 ."create_distdir: README.txt\n"
+		 #."distdir_am: README.txt\n"
+		 ."\n"
+		 ."distcheck: README.txt\n"
+		 ."\n"
+		 ."manicheck: README.txt\n"
+		 ."\n"
+		);
+  return $inherited;
 }
 
-sub MY::dist_core {
+##---------------------------------------------------------------
+sub MY::special_targets {
   package MY;
-  my $inherited = shift->SUPER::dist_core(@_);
-  $inherited =~
-    # ... distribution requires current README file
-    s/^dist\s*:/dist\ : README.txt/m;
-  $inherited;
+  my $inherited = shift->SUPER::special_targets(@_);
+  $inherited .=
+"
+.SUFFIXES: .pm .pod .rpod .man .txt .html
+
+.pm.html:
+\tpod2html --outfile \$@ \$<
+
+.pm.txt:
+\tpod2text \$< \$@
+
+.pod.html:
+\tpod2html --outfile \$@ \$<
+
+.pod.txt:
+\tpod2text \$< \$@
+
+.rpod.html:
+\tpod2html --outfile \$@ \$<
+
+.rpod.txt:
+\tpod2text \$< \$@
+
+";
+  return $inherited;
+}
+
+
+##---------------------------------------------------------------
+sub MY::distdir {
+  package MY;
+  my $inherited = shift->SUPER::distdir(@_);
+  my $local =
+'
+##-- distdir_am: hacked create_distdir for superordinate automake
+DISTDIR_AM ?= $(DISTNAME).am
+distdir_am: distdir
+	$(RM_RF) $(DISTDIR_AM)
+	$(MV) $(DISTVNAME) $(DISTDIR_AM)
+';
+#	$(PERLRUN) "-MExtUtils::Manifest=manicopy,maniread" \\
+#	           -e "manicopy(maniread(),\'$(DISTDIR_AM)\', \'$(DIST_CP)\');"
+
+  return $inherited.$local;
+}
+
+##---------------------------------------------------------------
+sub MY::postamble {
+  package MY;
+  my $inherited = shift->SUPER::postamble(@_);
+  return $inherited;
 }

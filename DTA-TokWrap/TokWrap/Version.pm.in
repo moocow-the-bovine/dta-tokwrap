@@ -11,8 +11,8 @@ use strict;
 ##==============================================================================
 ## Constants
 ##==============================================================================
-our $VERSION = "0.01";
-our $PACKAGE_VERSION = "0.01";
+our $VERSION = "@VERSION@";
+our $PACKAGE_VERSION = "@PACKAGE_VERSION@";
 our @ISA = qw();
 
 our @EXPORT = ('$VERSION','$PACKAGE_VERSION');

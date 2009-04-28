@@ -48,7 +48,7 @@ else
       OFLAGS=""
       ;;
     *)
-     AC_MSG_NOTICE([GNU C compiler detected: setting appropriate optimization flags])
+     AC_MSG_NOTICE([GNU C compiler detected: setting default optimization flags])
      OFLAGS="-pipe -O2"
      ;;
    esac

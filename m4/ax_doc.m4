@@ -12,6 +12,12 @@ dnl  + input vars: DOXYGEN_SOURCES, DOXY_DEFINES, DOXY_TAGPKGS
 dnl  + AC_SUBST vars: DOXYGEN, DOXY_FILTER, DOXY_INPUT_FILTER, DOXYGEN_SOURCES, DOXY_DEFINES, DOXY_TAGFILES
 dnl  + AM_CONDITIONAL: DOXY_WANT_(MAN|HTML|LATEX)
 dnl
+dnl AX_DOC_DOT()
+dnl  + requires: (?)
+dnl  + input vars: (?)
+dnl  + AC_SUBST vars: DOT, HAVE_DOT, PS2PDF, HAVE_PS2PDF
+dnl  + AM_CONDITIONAL: HAVE_DOT, HAVE_PS2PDF
+dnl
 dnl AX_DOC_POD()
 dnl  + requires: AX_DOC_COMMON
 dnl  + i/o AC_SUBST program vars: POD2TEXT, POD2MAN, POD2HTML, POD2LATEX
@@ -19,6 +25,7 @@ dnl  + i/o AC_SUBST target vars: DOC_MAN1_PODS, DOC_MAN5_PODS
 dnl  + AM_CONDITIONAL: (none?)
 dnl
 dnl AX_DOC_GOG()
+dnl  + requires: AX_CHECK_GOG()
 dnl  + implies AX_DOC_POD
 dnl  + input vars: DOC_MAN1_GOGS, DOC_GOGS, DOC_GOG_SKELS
 dnl  + output vars: DOC_MAN1_PODS
@@ -135,6 +142,81 @@ AC_MSG_RESULT($doc_formats)
   AM_CONDITIONAL(DOC_WANT_PDF,     [test -n "$CONFIG_DOC_WANT_PDF"   -a "$CONFIG_DOC_WANT_PDF"   != "no"])
 ])
 
+dnl=============================================================================
+AC_DEFUN([AX_DOC_DOT],
+[
+##vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+## Documentation: dot
+
+  ##-- dot: prog
+  ##
+  AC_ARG_VAR(DOT,[Path to dot graph formatter; "no" to disable])
+  if test -z "$DOT" ; then
+    AC_PATH_PROG(DOT,dot,[no])
+  fi
+  ##
+  if test -z "$DOT" -o "$DOT" = "no"; then
+    AC_MSG_WARN([dot missing or disabled])
+    AC_MSG_WARN([- graph generation disabled])
+    DOT=no
+    HAVE_DOT=no
+  else
+    HAVE_DOT=yes
+  fi
+  ##-- dot: output
+  dnl AC_MSG_NOTICE([setting DOT=$DOT])
+  AM_CONDITIONAL(HAVE_DOT,     [test -n "$DOT"     -a "$DOT"     != "no"])
+  AC_SUBST(DOT)
+  AC_SUBST(HAVE_DOT)
+  ##
+  ##--/dot
+
+  ##-- ps2pdf : prog
+  ##
+  AC_ARG_VAR(PS2PDF,[Path to ps2pdf converter; "no" to disable])
+  if test -z "$PS2PDF" ; then
+    AC_PATH_PROG(PS2PDF,[ps2pdf],[no])
+  fi
+  ##
+  if test -z "$PS2PDF" -o "$PS2PDF" = "no"; then
+    AC_MSG_WARN([ps2pdf missing or disabled])
+    AC_MSG_WARN([- dot-generated pdf files might look ugly])
+    PS2PDF=no
+    HAVE_PS2PDF=no
+  else
+    HAVE_PS2PDF=yes
+  fi
+  ##-- ps2pdf: output
+  dnl AC_MSG_NOTICE([setting PS2PDF=$PS2PDF])
+  AM_CONDITIONAL(HAVE_PS2PDF,     [test -n "$PS2PDF"     -a "$PS2PDF"     != "no"])
+  AC_SUBST(PS2PDF)
+  AC_SUBST(HAVE_PS2PDf)
+  ##
+  ##--/ps2pdf
+
+  ##-- EPSTODF : prog
+  ##
+  AC_ARG_VAR(EPSTOPDF,[Path to epstopdf converter; "no" to disable])
+  if test -z "$EPSTOPDF" ; then
+    AC_PATH_PROG(EPSTOPDF,[epstopdf],[no])
+  fi
+  ##
+  if test -z "$EPSTOPDF" -o "$EPSTOPDF" = "no"; then
+    AC_MSG_WARN([epstopdf missing or disabled])
+    AC_MSG_WARN([- dot-generated pdf files might look ugly])
+    EPSTOPDF=no
+    HAVE_EPSTOPDF=no
+  else
+    HAVE_EPSTOPDF=yes
+  fi
+  ##-- epstopdf: output
+  dnl AC_MSG_NOTICE([setting EPSTOPDF=$EPSTOPDF])
+  AM_CONDITIONAL(HAVE_EPSTOPDF,     [test -n "$EPSTOPDF"     -a "$EPSTOPDF"     != "no"])
+  AC_SUBST(EPSTOPDF)
+  AC_SUBST(HAVE_EPSTOPDF)
+  ##
+  ##--/epstopdf
+])
 
 dnl=============================================================================
 AC_DEFUN([AX_DOC_DOXYGEN],
@@ -297,6 +379,7 @@ AC_DEFUN([AX_DOC_GOG],
   ##vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
   ## documentation: .gog
 
+  ##-- variables
   DOC_MAN1_PODS="$DOC_MAN1_PODS `echo \"$DOC_GOG_SKELS\" | sed 's/\.skel/\.pod/g'` `echo \"$DOC_MAN1_GOGS\" | sed 's/\.gog/\.pod/g'`"
 
   AC_SUBST(DOC_GOG_SKELS)
@@ -304,7 +387,7 @@ AC_DEFUN([AX_DOC_GOG],
   AC_SUBST(DOC_GOGS)
 
   ##-- re-call DOC_POD
-  AX_DOC_POD
+  AX_DOC_POD()
 ])
 
 dnl=============================================================================

@@ -111,7 +111,7 @@ sub init {
 
   ##-- search for xml-rm-namespaces program
   if (!defined($mbx0->{rmns})) {
-    $mbx0->{rmns} = path_prog('xml-rm-namespaces',
+    $mbx0->{rmns} = path_prog('dtatw-rm-namespaces',
 			    prepend=>($mbx0->{inplace} ? ['.','../src'] : undef),
 			    warnsub=>sub {$mbx0->logconfess(@_)},
 			   );
@@ -341,7 +341,7 @@ sub mkbx0 {
 
   ##-- sanity check(s)
   $mbx0 = $mbx0->new() if (!ref($mbx0));
-  $mbx0->logconfess("mkbx0($doc->{xmlbase}): no xml-rm-namespaces program")
+  $mbx0->logconfess("mkbx0($doc->{xmlbase}): no dtatw-rm-namespaces program")
     if (!$mbx0->{rmns});
   $mbx0->logconfess("mkbx0($doc->{xmlbase}): could not compile XSL stylesheets")
     if (!$mbx0->ensure_stylesheets);
