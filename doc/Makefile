@@ -28,6 +28,11 @@ png: $(DOT:.dot=.png)
 	dot -Tpng $< -o $@
 CLEAN_FILES += $(DOT:.dot=.png)
 
+dia: $(DOT:.dot=.dia)
+%.dia: %.dot
+	dot -Tdia $< -o $@
+CLEAN_FILES += $(DOT:.dot=.dia)
+
 
 ##----------------------------------------------------------------------
 ## Rules: clean

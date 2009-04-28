@@ -1,34 +1,461 @@
 =pod
 
-README for DTA::TokWrap
-
 =head1 ABSTRACT
 
-DTA::TokWrap - Wrapper modules & scripts for DTA corpus tokenization
+README for dta-tokwrap - programs, scripts, and perl modules for DTA XML corpus tokenization
 
-=head1 REQUIREMENTS
+=cut
 
-=over 4
-
-=item perl
-
-=back
-
+##======================================================================
+=pod
 
 =head1 DESCRIPTION
 
-The DTA::TokWrap distribution provides wrapper modules and
-scripts for tokenization of DTA "base-format" XML documents.
+This package contains various utilities for
+tokenization of DTA "base-format" XML documents.
+see L</INSTALLATION> for requirements and installation instructions,
+see L</USAGE> for a brief introduction to the high-level command-line interface,
+and
+see L</TOOLS> for an overview of the individual tools included in this distribution.
+
+=cut
+
+##======================================================================
+=pod
 
 =head1 INSTALLATION
 
-Issue the following commands to the shell:
+=cut
 
- bash$ cd DTA-TokWrap-0.01   # (or wherever you unpacked this distribution)
- bash$ perl Makefile.PL      # check requirements, etc.
- bash$ make                  # build the module
- bash$ make test             # (optional): test module before installing
- bash$ make install          # install the module on your system
+##--------------------------------------------------------------
+=pod
+
+=head2 Requirements
+
+=cut
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=pod
+
+=head3 C Libraries
+
+=over 4
+
+=item expat
+
+tested version(s): 1.95.8
+
+=item libxml2
+
+tested version(s): 2.7.3
+
+=item libxslt
+
+tested version(s): 1.1.24
+
+=back
+
+=cut
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=pod
+
+=head3 Perl Modules
+
+=over 4
+
+=item Cwd
+
+tested version(s): 3.2501
+
+=item Encode
+
+tested version(s): 2.23
+
+=item Env::Path
+
+tested version(s): 0.18
+
+=item File::Basename
+
+tested version(s): 2.76
+
+=item Getopt::Long
+
+tested version(s): 2.37
+
+=item Pod::Usage
+
+tested version(s): 1.35
+
+=item Time::HiRes
+
+tested version(s): 1.9711
+
+=item XML::LibXML
+
+tested version(s): 1.66
+
+=item XML::LibXSLT
+
+tested version(s): 1.66
+
+=item XML::Parser
+
+tested version(s): 2.36
+
+=back
+
+=cut
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=pod
+
+=head3 Development Tools
+
+=over 4
+
+=item C compiler
+
+tested version(s): gcc v4.3.3 / linux
+
+=item GNU flex
+
+tested version(s): 2.5.33
+
+=item GNU autoconf (SVN only)
+
+tested version(s): 2.61
+
+Required for building from SVN sources.
+
+=item GNU automake (SVN only)
+
+tested version(s): 1.9.6
+
+Required for building from SVN sources.
+
+=back
+
+=cut
+
+##--------------------------------------------------------------
+=pod
+
+=head2 Building from SVN
+
+To build this package from SVN sources, you must first run the shell command:
+
+ bash$ sh ./autoreconf.sh
+
+from the distribution root directory B<BEFORE> running F<./configure>.
+Building from SVN sources requires additional development tools to present
+on the build system.  Then, follow the instructions in L</"Building from Source">.
+
+=cut
+
+##--------------------------------------------------------------
+=pod
+
+=head2 Building from Source
+
+To build and install the entire package, issue the following commands to the shell:
+
+ bash$ cd dta-tokwrap-0.01   # (or wherever you unpacked this distribution)
+ bash$ sh ./configure        # configure the package
+ bash$ make                  # build the package
+ bash$ make install          # install the package on your system
+
+More details on the top-level installation process can be found in
+the file F<INSTALL> in the distribution root directory.
+
+More details on building and installing the DTA::TokWrap perl module included in this distribution
+can be found in the F<perlmodinstall(1)> manpage.
+
+=cut
+
+##======================================================================
+=pod
+
+=head1 USAGE
+
+The perl program F<dta-tokwrap.perl> installed from the F<DTA-TokWrap/>
+distribution subdirectory provides a flexible high-level command-line interface
+to the tokenization of DTA XML documents.
+
+=cut
+
+##--------------------------------------------------------------
+=pod
+
+=head2 Input Format
+
+The F<dta-tokwrap.perl> script takes as its input DTA "base-format" XML files,
+which are simply (TEI-conformant) UTF-8 encoded XML files with one C<E<lt>cE<gt>>
+element per character:
+
+=over 4
+
+=item *
+
+the document B<MUST> be encoded in UTF-8,
+
+=item *
+
+all text nodes to be tokenized should be descendants of a C<E<lt>cE<gt>> element
+which is itself a descendant of a C<E<lt>textE<gt>> element (XPath C<//text//c//text()>),
+
+=item *
+
+the document should contain exactly one such C<E<lt>cE<lt>> element for each I<character>
+to be tokenized,
+and
+
+=item *
+
+if stand-off annotations are desired (the default),
+each C<c> element should have a valid C<xml:id> attribute.
+
+=back
+
+=cut
+
+##--------------------------------------------------------------
+=pod
+
+=head2 Example: Tokenizing a single XML file
+
+Assume we wish to tokenize a single DTA "base-format" XML file F<doc1.xml>.
+Issue the following command to the shell:
+
+ bash$ dta-tokwrap.perl doc1.xml
+
+... This will create the following output files:
+
+=over 4
+
+=item F<doc1.t.xml>
+
+"Master" tokenizer output file encoding sentence boundaries, token boundaries,
+and tokenizer-provided token analyses.  Source for various stand-off annotation formats.
+
+=item F<doc1.w.xml>
+
+Stand-off XML file encoding token boundaries.
+Contains references to C<//c/@xml:id> attributes of F<doc1.xml>.
+
+=item F<doc1.s.xml>
+
+Stand-off XML file encoding token boundaries.
+Contains references to C<//w/@xml:id> attributes of F<doc1.w.xml>.
+
+=item F<doc1.a.xml>
+
+Stand-off XML file encoding tokenizer-provided token analyses.
+Contains references to C<//w/@xml:id> attributes of F<doc1.w.xml>.
+
+=back
+
+=cut
+
+##--------------------------------------------------------------
+=pod
+
+=head2 Example: Tokenizing multiple XML files
+
+Assume we wish to tokenize a corpus of three DTA "base-format" XML files
+F<doc1.xml>, F<doc2.xml>, and F<doc3.xml>.
+This is as easy as:
+
+ bash$ dta-tokwrap.perl doc1.xml doc2.xml doc3.xml
+
+For each input document specified on the command line,
+master output files and stand-off annotation files will be created.
+
+See the F<dta-tokwrap.perl> documentation for more details.
+
+=head2 Example: Tracing execution progess
+
+Assume we wish to tokenize a large corpus of XML input files F<doc*.xml>,
+and would like to have some feedback on the progress of the
+tokenization process.
+Try:
+
+ bash$ dta-tokwrap.perl -verbose=1 doc*.xml
+
+or:
+
+ bash$ dta-tokwrap.perl -verbose=2 doc*.xml
+
+or even:
+
+ bash$ dta-tokwrap.perl -traceAll doc*.xml
+
+=cut
+
+##======================================================================
+=pod
+
+=head1 TOOLS
+
+This section provides a brief overview of the individual tools included
+in the dta-tokwrap distribution.
+
+=cut
+
+##--------------------------------------------------------------
+=pod
+
+=head2 Perl Scipts and Programs
+
+=over 4
+
+=item dta-tokwrap.perl
+
+Top-level wrapper script for document tokenization
+using the L</"DTA::TokWrap"> perl API.
+
+=item dtatw-add-c.perl
+
+Script to insert C<E<lt>cE<gt>> elements into an
+XML document which does not yet contain them.
+Not very robust, but useful for testing.
+
+=item dtatw-rm-c.perl
+
+Script to remove C<E<lt>cE<gt>> elements from an XML document.
+Regex hack, fast but not robust, use with caution.
+See also L</"dtatw-rm-c.xsl">
+
+=item file-substr.perl
+
+Script to extract a portion of a file,
+specified by byte offset and length.
+Useful for debugging index files created by other tools.
+
+=back
+
+=cut
+
+##--------------------------------------------------------------
+=pod
+
+=head2 Perl Modules
+
+=over 4
+
+=item DTA::TokWrap
+
+Top-level tokenization-wrapper module, used by F<dta-tokwrap.perl>
+
+=item DTA::TokWrap::Document
+
+Object-oriented wrapper for documents to be processed.
+
+=item DTA::TokWrap::Processor
+
+Abstract base class for elementary document-processing operations.
+
+=back
+
+See the C<DTA::TokWrap> module documentation for more details
+on included modules, APIs, calling conventions, etc.
+
+=cut
+
+
+##--------------------------------------------------------------
+=pod
+
+=head2 XSL stylesheets
+
+The XSL stylesheets included with this distribution are installed
+by default in F</usr/local/share/dta-tokwrap/stylesheets>.
+
+=over 4
+
+=item dtatw-add-lb.xsl
+
+Replaces newlines with C<E<lt>lb/E<gt>> elements in input document.
+
+=item dtatw-assign-cids.xsl
+
+Assigns missing C<//c/@xml:id> attributes using the XSL C<generate-id()> function.
+
+=item dtatw-rm-c.xsl
+
+Removes C<E<lt>cE<gt>> elements from the input document.
+Slow but robust.
+
+=item dtatw-rm-lb.xsl
+
+Replaces C<E<lt>lb/E<gt>> elements with newlines.
+
+=item dtatw-txml2tt.xsl
+
+Converts "master" tokenized XML output format (F<*.t.xml>) to
+TAB-separated one-word-per-line format
+(F<*.mr.t> aka F<*.t> aka F<*.tt> aka "tt" aka "CSV" aka "TnT" aka "TreeTagger" aka "vertical" aka "moot-native" aka ...).
+See the F<mootfiles(5)> manpage for details.
+
+=back
+
+=cut
+
+
+##--------------------------------------------------------------
+=pod
+
+=head2 C Programs
+
+Several C programs are included with the distribution.
+These are used by the F<dta-tokwrap.perl> script
+to perform various intermediate document processing operations,
+and should not need to be called by the user directly.
+
+B<Caveat Scriptor>: The following programs are meant for
+internal use by the F<DTA::TokWrap> modules only, and their
+names, calling conventions, and very presence is subject to change
+without notice.
+
+=over 4
+
+=item dtatw-mkindex
+
+Splits input document F<doc.xml>
+into
+a "character index" F<doc.cx> (CSV),
+a "structural index" F<doc.sx> (XML),
+and a
+"text index" F<doc.tx> (UTF-8 text).
+
+=item dtatw-rm-namespaces
+
+Removes namespaces from any XML document by
+renaming "C<xmlns>" attributes to "C<xmlns_>"
+and "C<xmlns:*>" attributes to "C<xmlns_*>".
+Useful because XSL's namespace handling is annoyingly slow and ugly.
+
+=item dtatw-tokenize-dummy
+
+Dummy C<flex> tokenizer.  Useful for testing.
+
+=item dtatw-txml2wxml
+
+Converts "master" tokenized XML output format (F<*.t.xml>) to
+token-level stand-off XML format (F<*.w.xml>).
+
+=back
+
+=cut
+
+##======================================================================
+=pod
+
+
+
+##======================================================================
+=pod
 
 =head1 SEE ALSO
 

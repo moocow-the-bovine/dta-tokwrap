@@ -13,7 +13,7 @@ bin_PROGRAMS = \
 	dtatw-mkindex \
 	dtatw-tokenize-dummy \
 	dtatw-txml2wxml \
-	xml-rm-namespaces
+	dtatw-rm-namespaces
 
 dtatw_mkindex_SOURCES = dtatw-mkindex.c
 
@@ -23,7 +23,7 @@ else
 dtatw_tokenize_dummy_SOURCES = dtatw-tokenize-dummy.c
 endif
 
-xml_rm_namespaces_SOURCES = xml-rm-namespaces.c
+dtatw_rm_namespaces_SOURCES = dtatw-rm-namespaces.c
 
 ##-----------------------------------------------------------------------
 ## Dist

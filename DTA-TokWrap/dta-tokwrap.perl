@@ -16,13 +16,13 @@ use Pod::Usage;
 ##-- general
 our $prog = basename($0);
 our ($help);
-our $verbose = 1;      ##-- verbosity
+our $verbose = 0;      ##-- verbosity
 
 ##-- DTA::TokWrap options
 my %bx0opts = DTA::TokWrap::Processor::mkbx0->defaults();
 our %twopts = (
 	       inplacePrograms=>1,
-	       keeptmp => 1,
+	       keeptmp => 0,
 	       procOpts => {
 			    #traceLevel => 'trace',
 			    hint_sb_xpaths => $bx0opts{hint_sb_xpaths},
@@ -64,14 +64,14 @@ our @defaultTargets = qw(all);
 our $dump_xsl_prefix = undef;
 our $traceLevel = 'trace'; ##-- trace level for '-trace' options
 our @traceOptions = (
-		     {opt=>'traceOpen',ref=>\$docopts{traceOpen},default=>1},
-		     {opt=>'traceClose',ref=>\$docopts{traceClose},default=>0},
-		     {opt=>'traceLoad',ref=>\$docopts{traceLoad},default=>1},
-		     {opt=>'traceSave',ref=>\$docopts{traceSave},default=>1},
-		     {opt=>'traceMake',ref=>\$docopts{traceMake},default=>1},
-		     {opt=>'traceGen',ref=>\$docopts{traceGen},default=>0},
-		     {opt=>'traceProc',ref=>\$twopts{procOpts}{traceLevel},default=>1},
-		     {opt=>'traceRun', ref=>\$DTA::TokWrap::Utils::TRACE_RUNCMD,default=>0},
+		     {opt=>'traceOpen',ref=>\$docopts{traceOpen},vlevel=>1},
+		     {opt=>'traceClose',ref=>\$docopts{traceClose},vlevel=>3},
+		     {opt=>'traceLoad',ref=>\$docopts{traceLoad},vlevel=>2},
+		     {opt=>'traceSave',ref=>\$docopts{traceSave},vlevel=>2},
+		     {opt=>'traceMake',ref=>\$docopts{traceMake},vlevel=>2},
+		     {opt=>'traceGen',ref=>\$docopts{traceGen},vlevel=>3},
+		     {opt=>'traceProc',ref=>\$twopts{procOpts}{traceLevel},vlevel=>3},
+		     {opt=>'traceRun', ref=>\$DTA::TokWrap::Utils::TRACE_RUNCMD,vlevel=>3},
 		    );
 
 ##------------------------------------------------------------------------------
@@ -80,7 +80,10 @@ our @traceOptions = (
 GetOptions(
 	   ##-- General
 	   'help|h' => \$help,
-	   'verbose|V=i' => \$verbose,
+	   'verbose|v=i' => sub {
+	     $verbose=$_[1];
+	     ${$_->{ref}} = $traceLevel foreach (grep {$verbose>=$_->{vlevel}} @traceOptions)
+	   },
 
 	   ##-- document class
 	   'class|c=s' => \$docopts{class},
@@ -124,7 +127,7 @@ GetOptions(
 	     )
 	   } @traceOptions),
 	   "traceLevel|trace-level=s" => \$traceLevel,
-	   "trace!" => sub { ${$_->{ref}} = $_[1] ? $traceLevel : undef foreach (grep {$_->{default}} @traceOptions) },
+	   "trace!" => sub { ${$_->{ref}} = $_[1] ? $traceLevel : undef foreach (grep {$verbose>=$_->{vlevel}} @traceOptions) },
 	   "traceAll|trace-all!" => sub { ${$_->{ref}} = $_[1] ? $traceLevel : undef foreach (@traceOptions) },
 	   "dummy|no-act|n!" => \$docopts{dummy},
 
