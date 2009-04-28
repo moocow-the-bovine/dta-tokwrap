@@ -84,8 +84,10 @@ USAGE
         element which is itself a descendant of a "<text>" element (XPath
         "//text//c//text()"),
 
-    *   the document should contain exactly one such "<c<" element for each
-        *character* to be tokenized, and
+    *   the document should contain exactly one such "<c>" element for *each
+        logical character* which may be passed to the tokenizer,
+
+    *   no "<c>" element may be a descendant of another "<c>" element, and
 
     *   if stand-off annotations are desired (the default), each "c" element
         should have a valid "xml:id" attribute.
