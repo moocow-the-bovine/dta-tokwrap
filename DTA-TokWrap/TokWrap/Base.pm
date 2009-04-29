@@ -99,6 +99,10 @@ DTA::TokWrap::Base - DTA tokenizer wrappers: base class
 
 =head1 DESCRIPTION
 
+DTA::TokWrap::Base provides an abstract base class for all object classes
+in the
+DTA::TokWrap distribution
+
 =cut
 
 ##----------------------------------------------------------------

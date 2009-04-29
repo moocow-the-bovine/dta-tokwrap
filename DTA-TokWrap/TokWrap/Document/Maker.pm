@@ -344,6 +344,11 @@ DTA::TokWrap::Document::Maker - DTA tokenizer wrappers: document wrapper: make-m
 
 =head1 DESCRIPTION
 
+DTA::TokWrap::Document::Maker provides an experimental
+L<DTA::TokWrap::Document|DTA::TokWrap::Document>
+subclass which attempts to perform C<make>-like dependency
+tracking on document data keys.
+
 =cut
 
 ##----------------------------------------------------------------

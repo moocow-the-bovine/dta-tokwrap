@@ -198,6 +198,9 @@ DTA::TokWrap::Logger - DTA::Tokwrap logging facility using Log::Log4perl
 
 =head1 DESCRIPTION
 
+DTA::TokWrap::Logger provides an abstract base class for
+object-oriented access to the Log::Log4perl logging facility.
+
 =cut
 
 ##----------------------------------------------------------------

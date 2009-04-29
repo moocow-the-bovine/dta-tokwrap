@@ -358,6 +358,10 @@ DTA::TokWrap::Utils - DTA tokenizer wrappers: generic utilities
 
 =head1 DESCRIPTION
 
+DTA::TokWrap::Utils provides diverse assorted miscellaneous utilities
+which don't fit well anywhere else and which don't on their own justify
+the creation of a new package
+
 =cut
 
 ##----------------------------------------------------------------
