@@ -67,25 +67,28 @@ sub MY::depend {
 ##---------------------------------------------------------------
 sub MY::special_targets {
   package MY;
+  my $css = 'dtatw.css';
   my $inherited = shift->SUPER::special_targets(@_);
   $inherited .=
 "
 .SUFFIXES: .pm .pod .rpod .man .txt .html
 
+CSS ?= $css
+
 .pm.html:
-\tpod2html --outfile \$@ \$<
+\tpod2html --css \"\$(CSS)\" --outfile \$@ \$<
 
 .pm.txt:
 \tpod2text \$< \$@
 
 .pod.html:
-\tpod2html --outfile \$@ \$<
+\tpod2html --css \"\$(CSS)\" --outfile \$@ \$<
 
 .pod.txt:
 \tpod2text \$< \$@
 
 .rpod.html:
-\tpod2html --outfile \$@ \$<
+\tpod2html --css \"\$(CSS)\" --outfile \$@ \$<
 
 .rpod.txt:
 \tpod2text \$< \$@
