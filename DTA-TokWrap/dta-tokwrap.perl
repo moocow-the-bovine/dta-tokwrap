@@ -84,13 +84,13 @@ our $verbose_max = 255;
 ##  + set trace options by verbosity level
 sub setVerboseTrace {
   my $_verbose = defined($_[2]) ? $_[2] : $_verbose;
-  ${$_->{ref}} = $_[1] ? $traceLevel : undef foreach (grep {$_verbose>=$_->{vlevel}} @traceOptions) },
+  ${$_->{ref}} = $_[1] ? $traceLevel : undef foreach (grep {$_verbose>=$_->{vlevel}} @traceOptions);
 }
 
 GetOptions(
 	   ##-- General
 	   'help|h' => \$help,
-	   'verbose|v=i' => sub { $verbose=$_[1]; setVerboseTrace(1); }
+	   'verbose|v=i' => sub { $verbose=$_[1]; setVerboseTrace(1); },
 
 	   ##-- pseudo-make
 	   'make|m' => sub { $docopts{class}='DTA::TokWrap::Document::Maker'; $makeKeyAct='make'; },
