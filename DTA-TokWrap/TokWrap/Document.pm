@@ -24,7 +24,7 @@ use strict;
 ##==============================================================================
 ## Globals
 ##==============================================================================
-our @ISA = ('DTA::TokWrap::Base Exporter');
+our @ISA = ('DTA::TokWrap::Base','Exporter');
 
 ## $TOKENIZE_CLASS
 ##  + default tokenizer class
