@@ -109,8 +109,12 @@ DISTDIR_AM ?= $(DISTNAME).am
 distdir_am:
 	$(RM_RF) $(DISTDIR_AM)
 	$(PERLRUN) "-MExtUtils::Manifest=manicopy,maniread" \\
-	           -e "manicopy(maniread(),\'$(DISTDIR_AM)\', \'$(DIST_CP)\');"
+	  -e "manicopy(maniread(),\'$(DISTDIR_AM)\', \'$(DIST_CP)\');"
 
+PMLIST_AM ?= ../doc/pm_list
+pm_list: $(PMLIST_AM)
+$(PMLIST_AM): $(TO_INST_PM)
+	echo "$(TO_INST_PM)" | xargs -n 1 echo | grep -v "\.in$$" > $@
 ';
   return $inherited.$local;
 }

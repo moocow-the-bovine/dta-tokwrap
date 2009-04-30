@@ -8,7 +8,7 @@
 ##-----------------------------------------------------------------------
 
 ## --- recursion subdirectories
-SUBDIRS = dot programs
+SUBDIRS = dot programs DTA-TokWrap
 
 #-----------------------------------------------------------------------
 # Variables: cleanup

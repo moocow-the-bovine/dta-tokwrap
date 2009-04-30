@@ -87,6 +87,7 @@ dnl AX_DOC_GOG_LINKS()
 pkgdocdotdir="\${docdir}/\${PACKAGE}/dot"
 AC_SUBST(pkgdocdotdir)
 AC_CONFIG_LINKS([doc/programs/dta-tokwrap.pod:DTA-TokWrap/dta-tokwrap.perl])
+AC_CONFIG_LINKS([doc/README.pod:README.pod])
 ##
 ## /Documentation
 ##^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -119,6 +120,7 @@ AC_MSG_NOTICE([cd DTA-TokWrap; $PERL Makefile.PL $MAKEPLFLAGS])
 ## output
 ##
 AC_CONFIG_FILES(DTA-TokWrap/TokWrap/Version.pm)
+AC_CONFIG_FILES(doc/DTA-TokWrap/Makefile)
 AC_CONFIG_FILES(doc/programs/Makefile)
 AC_CONFIG_FILES(doc/dot/Makefile)
 AC_CONFIG_FILES(doc/Makefile)

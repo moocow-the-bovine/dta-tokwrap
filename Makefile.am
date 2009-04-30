@@ -32,14 +32,9 @@ distuninstallcheck:
 
 PODS = README.pod
 
-##-----------------------------------------------------------------------
-## Targets: docs
+#pkgdoc_DATA = $(PODS:.pod=.txt)
 
-pkgdoc_DATA = $(PODS:.pod=.txt)
-
-if HAVE_POD2HTML
-pkgdoc_DATA += $(PODS:.pod=.html)
-endif
+all-local: $(PODS:.pod=.txt)
 
 ##-----------------------------------------------------------------------
 ## Subdirs: perl
