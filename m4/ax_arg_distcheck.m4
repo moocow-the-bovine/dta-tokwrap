@@ -22,6 +22,7 @@ AC_DEFUN([AX_ARG_DISTCHECK],
    test -z "$PS2PDF" && PS2PDF=no
    test -z "$DOT" && DOT=no
  fi
+ AM_CONDITIONAL(IS_DISTCHECK, [test -n "$DISTCHECK"])
 ## /DISTCHECK
 ##^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ]

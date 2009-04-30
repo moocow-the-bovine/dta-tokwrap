@@ -45,13 +45,16 @@ endif
 ## Subdirs: perl
 
 ALL_LOCAL_DEPS += DTA-TokWrap/Makefile
-PERL_MFLAGS = DESTDIR="$(DESTDIR)" PREFIX="$(prefix)" DISTDIR_AM="../$(distdir)/DTA-TokWrap"
+PERL_MFLAGS = DESTDIR="$(DESTDIR)" DISTDIR_AM="../$(distdir)/DTA-TokWrap"
+if IS_DISTCHECK
+PERL_MFLAGS += PREFIX="$(prefix)"
+endif
 
 all-local: $(ALL_LOCAL_DEPS)
-	$(MAKE) -C DTA-TokWrap
+	$(MAKE) -C DTA-TokWrap $(PERL_MFLAGS)
 
 DTA-TokWrap/Makefile:
-	(cd DTA-TokWrap; $(PERL) Makefile.PL $(PERL_MFLAGS))
+	(cd DTA-TokWrap; $(PERL) Makefile.PL $(MAKEPLFLAGS))
 
 install-exec-local: DTA-TokWrap/Makefile
 	$(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) install
