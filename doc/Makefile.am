@@ -15,16 +15,47 @@ SUBDIRS = dot programs
 #-----------------------------------------------------------------------
 
 ## --- mostlyclean: built by 'make' & commonly rebuilt
-#MOSTLYCLEANFILES =
+MOSTLYCLEANFILES = pod2htm*.tmp
 
 ## --- clean:  built by 'make'
-#CLEANFILES =
+CLEANFILES =
 
 ## --- distclean: built by 'configure'
-#DISTCLEANFILES =
+DISTCLEANFILES = README.pod
 
 ## -- maintainerclean: built by maintainer / by hand
 MAINTAINERCLEANFILES = *~ .*~ Makefile Makefile.in
+
+#-----------------------------------------------------------------------
+# Variables: primaries
+#-----------------------------------------------------------------------
+
+pkgdoc_DATA = dtatw.css
+DOC_PODS = README.pod
+
+POD2HTMLFLAGS = --css=dtatw.css --podpath="$(srcdir):.:DTA-TokWrap:programs" --htmlroot="."
+
+SUFFIXES = .pod .txt .html
+
+txt: $(DOC_PODS:.pod=.txt)
+html: $(DOC_PODS:.pod=.html)
+
+if HAVE_POD2TEXT
+pkgdoc_DATA += $(DOC_PODS:.pod=.txt)
+.pod.txt:
+	$(POD2TEXT) $< $@
+CLEANFILES += $(DOC_PODS:.pod=.txt)
+endif
+
+if HAVE_POD2HTML
+pkgdoc_DATA += $(DOC_PODS:.pod=.html)
+.pod.html:
+	$(POD2HTML) $(POD2HTMLFLAGS) --infile=$< --outfile=$@
+CLEANFILES += $(DOC_PODS:.pod=.html)
+endif
+
+
+
 
 #-----------------------------------------------------------------------
 # Variables: (un)install
