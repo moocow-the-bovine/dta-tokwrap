@@ -8,6 +8,4 @@
 \.old$
 \.cvsignore$
 ^Makefile$
-
-
-
+^footer\.rpod$

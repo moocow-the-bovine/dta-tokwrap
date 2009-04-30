@@ -360,7 +360,7 @@ DTA::TokWrap::Utils - DTA tokenizer wrappers: generic utilities
 
 DTA::TokWrap::Utils provides diverse assorted miscellaneous utilities
 which don't fit well anywhere else and which don't on their own justify
-the creation of a new package
+the creation of a new package.
 
 =cut
 
