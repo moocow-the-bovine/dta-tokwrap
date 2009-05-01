@@ -4,135 +4,138 @@
 ##-----------------------------------------------------------------------
 
 ##-----------------------------------------------------------------------
-## Literals
+## Overrides
 ##-----------------------------------------------------------------------
 
-LIBPREFIX=DTA
-LIBCSS=../dtatw.css
+## CSS file, relative to $(PWD)
+CSS_SRC ?= $(srcdir)/../dtatw.css
+PKGDOC_SUBDIR = $(DESTDIR)$(pkgdocdir)/$(notdir $(PWD))
 
 ##-----------------------------------------------------------------------
-## Get list of modules to document
+## Globals
 ##-----------------------------------------------------------------------
 
-PMSRC = $(top_srcdir)/DTA-TokWrap
+PMSRC = $(top_builddir)/DTA-TokWrap
 
 $(PMSRC)/Makefile: $(PMSRC)/Makefile.PL
-	cd $(PMSRC); $(PERL) Makefile.PL
+	cd $(PMSRC); $(PERL) Makefile.PL $(MAKEPLFLAGS)
 
-pm_list: $(PMSRC)/Makefile
-	$(MAKE) -C $(PMSRC) PMLIST_AM="$(PWD)/$@" pm_list
+PMDEPS = $(PMSRC)/Makefile
 
-no_pm_list:
-	rm -f pm_list
-
-
-##-----------------------------------------------------------------------
-## modules to document... 
-##-----------------------------------------------------------------------
-
-SUFFIXES = .pm .pod .html .txt
-
+ALL_LOCAL_DEPS =
 CLEAN_LOCAL_DEPS =
+PKGDOC_DIRS =
+
+all-local: $(ALL_LOCAL_DEPS)
 clean-local: $(CLEAN_LOCAL_DEPS)
 
 ##-----------------------------------------------------------------------
-## POD
+## POD (debug)
 
-POD_DIR ?= pod/$(LIBPREFIX)
-PROG_POD_DIR ?= ../programs
+POD_DIR ?= pod
 
 pod: pod.stamp
 
-CLEAN_LOCAL_DEPS += no-pod
+#if HAVE_PODSELECT
+pod.stamp: $(PMDEPS)
+	$(MAKE) -C $(PMSRC) INST_PODDIR=$(PWD)/$(POD_DIR) podifypods
+	touch $@
+#else
+#pod.stamp:
+#	mkdir $(POD_DIR)
+#	touch $@
+#endif
+
 no-pod:
-	rm -rf pod programs pod.stamp pod.prog.stamp pod.pm.stamp
+	rm -rf $(POD_DIR) pod.stamp
 
-pod.stamp: pod.pm.stamp pod.prog.stamp
-	touch $@
+#if DOC_WANT_POD
+#ALL_LOCAL_DEPS += pod.stamp
+#PKGDOC_DIRS += $(POD_DIR)
+#endif
 
-pod.prog.stamp:
-	if test -n "$(PROG_POD_DIR)" ; then \
-	  mkdir pod/programs; \
-	  for f in $(PROG_POD_DIR)/*.pod ; do \
-	    cp $$f pod/programs; \
-	  done; \
-	fi;
-	touch $@
-
-pod.pm.stamp: pm_list
-	for f in `cat pm_list`; do \
-	  d=`dirname $$f`; \
-	  b=`basename $$f .pod`; \
-	  b=`basename $$b .pm`; \
-	  mkdir -p $(POD_DIR)/$$d; \
-	  rm -f $(POD_DIR)/$$d/"$$b.pod"; \
-	  cp $(PMSRC)/$$f $(POD_DIR)/$$d/$$b.pod; \
-	done
-	touch $@
+#if HAVE_PODSELECT
+CLEAN_LOCAL_DEPS += no-pod
+#endif
 
 ##-----------------------------------------------------------------------
 ## text
 
-TXT_DIR ?= txt/$(LIBPREFIX)
+TXT_DIR ?= txt
+
 txt: txt.stamp
 
-no-txt:
-	rm -rf txt txt.stamp
-
 if HAVE_POD2TEXT
-CLEAN_LOCAL_DEPS += no-txt
-txt.stamp: pm_list
-	for f in `cat pm_list`; do \
-	  d=`dirname $$f`; \
-	  b=`basename $$f .pod`; \
-	  b=`basename $$b .pm`; \
-	  mkdir -p $(TXT_DIR)/$$d; \
-	  rm -f $(TXT_DIR)/$$d/"$$b.txt"; \
-	  echo " $(POD2TEXT) $(PMSRC)/$$f $(TXT_DIR)/$$d/$$b.txt"; \
-	  $(POD2TEXT) $(PMSRC)/$$f $(TXT_DIR)/$$d/$$b.txt; \
-	done
+txt.stamp: $(PMDEPS)
+	$(MAKE) -C $(PMSRC) INST_TEXTDIR=$(PWD)/$(TXT_DIR) textifypods
 	touch $@
+CLEAN_LOCAL_DEPS += no-txt
 else
 txt.stamp:
+	mkdir $(TXT_DIR)
 	touch $@
+endif
+
+no-txt:
+	rm -rf $(TXT_DIR) txt.stamp
+
+if DOC_WANT_TXT
+ALL_LOCAL_DEPS += txt.stamp
+PKGDOC_DIRS += $(TXT_DIR)
 endif
 
 ##-----------------------------------------------------------------------
 ## html
 
-HTML_DIR ?= html/$(LIBPREFIX)
+HTML_DIR ?= html
+CSS = $(notdir $(CSS_SRC))
 
-html: html.stamp
+css: $(HTML_DIR)/$(CSS)
+$(HTML_DIR)/$(CSS): $(CSS_SRC)
+	rm -f $@
+	cp $< $@
+no-html-css:
+	rm -f $(HTML_DIR)/$(CSS)
+CLEAN_LOCAL_DEPS += no-html-css
 
-no-html:
-	rm -rf html html.stamp
-
-POD2HTMLFLAGS = \
-	--podroot=$(POD_DIR) \
-	--htmlroot=$$topd/html \
-	--css=$$topd/$(LIBCSS) \
-	--podpath=../programs
+html: html.stamp css
 
 if HAVE_POD2HTML
-CLEAN_LOCAL_DEPS += no-html
-html.stamp: pm_list pod.stamp
-	for f in `cat pm_list`; do \
-	  d=`dirname $$f`; \
-	  b=`basename $$f .pod`; \
-	  b=`basename $$b .pm`; \
-	  topd=`dirname $(HTML_DIR)/$$f`; \
-	  if test "$$topd" != "."; then topd=`echo "$$topd" | sed -e 's/[^\/][^\/]*/\.\./g'`; fi; \
-	  mkdir -p $(HTML_DIR)/$$d; \
-	  rm -f $(HTML_DIR)/$$d/"$$b.html"; \
-	  echo " $(POD2HTML) $(POD2HTMLFLAGS) --infile=$(PMSRC)/$$f --outfile=$(HTML_DIR)/$$d/$$b.html"; \
-	  $(POD2HTML) $(POD2HTMLFLAGS) --infile=$(PMSRC)/$$f --outfile=$(HTML_DIR)/$$d/$$b.html \
-	    || break; \
-	done
+html.stamp: $(PMDEPS)
+	$(MAKE) -C $(PMSRC) INST_HTMLDIR=$(PWD)/$(HTML_DIR) INST_CSS=$(CSS) htmlifypods
 	touch $@
+CLEAN_LOCAL_DEPS += no-html
+
 else
 html.stamp:
+	mkdir $(HTML_DIR)
 	touch $@
 endif
+
+no-html:
+	rm -rf $(HTML_DIR) html.stamp
+
+if DOC_WANT_HTML
+ALL_LOCAL_DEPS += html
+PKGDOC_DIRS += $(HTML_DIR)
+endif
+
+##-----------------------------------------------------------------------
+## Install: local
+##-----------------------------------------------------------------------
+
+install-data-local:
+	$(mkdir_p) $(PKGDOC_SUBDIR) ;\
+	for d in $(PKGDOC_DIRS); do \
+	  test -d "$$d" || continue; \
+	  $(mkdir_p) $(PKGDOC_SUBDIR)/$$d ;\
+	  for f in "$$d"/* ; do \
+	    $(INSTALL_DATA) $$f $(PKGDOC_SUBDIR)/$$d ;\
+	  done ;\
+	done
+
+uninstall-local:
+	rm -rf $(PKGDOC_SUBDIR)
 
 #-----------------------------------------------------------------------
 # Variables: cleanup
@@ -143,15 +146,15 @@ MOSTLYCLEANFILES = pod2htm*.tmp
 
 ## --- clean:  built by 'make'
 CLEANFILES = \
-	pod.stamp txt.stamp html.stamp
+	pod.stamp txt.stamp html.stamp \
+	$(CSS_LOCAL)
 
 ## --- distclean: built by 'configure'
 #DISTCLEANFILES =
 
 ## -- maintainerclean: built by maintainer / by hand
 MAINTAINERCLEANFILES = \
-	*~ .*~ Makefile Makefile.in \
-	pm_list
+	*~ .*~ Makefile Makefile.in
 
 #-----------------------------------------------------------------------
 # Rules: cleanup

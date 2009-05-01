@@ -4,7 +4,8 @@ dnl  + common documentation stuff
 dnl  + vars: doc_formats
 dnl  + args: --with-docdir, --with-doc-formats
 dnl  + AC_SUBST directory vars: pkgdocdir, pkgdocprogdir, pkgdoctutdir, pkgdoclibdir
-dnl  + AM_CONDITIONAL: CONFIG_DOC_WANT_(TXT|MAN|HTML|LATEX|DVI|PS|PDF)
+dnl  + AC_SUBST:      CONFIG_DOC_WANT_(TXT|MAN|HTML|LATEX|DVI|PS|PDF)
+dnl  + AM_CONDITIONAL:       DOC_WANT_(TXT|MAN|HTML|LATEX|DVI|PS|PDF)
 dnl
 dnl AX_DOC_DOXYGEN()
 dnl  + requires: AX_DOC_COMMON

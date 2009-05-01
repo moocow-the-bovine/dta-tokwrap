@@ -1,0 +1,149 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>DTA::TokWrap::Processor::tokenize - DTA tokenizer wrappers: tokenizer: default</title>
+<link rel="stylesheet" href="dtatw.css" type="text/css" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#constants">Constants</a></li>
+		<li><a href="#constructors_etc_">Constructors etc.</a></li>
+		<li><a href="#methods">Methods</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>DTA::TokWrap::Processor::tokenize - DTA tokenizer wrappers: tokenizer: default (NYI)</p>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use DTA::TokWrap::Processor::tokenize;
+ 
+ $tz = DTA::TokWrap::Processor::tokenize-&gt;new(%args);
+ $doc_or_undef = $tz-&gt;tokenize($doc);</pre>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><strong>WARNING</strong>: this class is currently just a placeholder for the
+``official'' low-level tokenizer (ToMaSoTaTh).  Until such time
+as the official tokenizer is functional, please use the
+<a href="DTA.TokWrap.Processor.tokenize.dummy.html">DTA::TokWrap::Processor::tokenize::dummy</a>
+sub-class, which uses a simple locally-built low-level tokenizer.</p>
+<p>DTA::TokWrap::Processor::tokenize provides an object-oriented
+<a href="DTA.TokWrap.Processor.html">DTA::TokWrap::Processor</a> wrapper
+for the tokenization of serialized text files
+for <a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> objects.</p>
+<p>Most users should use the high-level
+<a href="DTA.TokWrap.html">DTA::TokWrap</a> wrapper class
+instead of using this module directly.</p>
+<p>
+</p>
+<h2><a name="constants">Constants</a></h2>
+<dl>
+<dt><strong><a name="item__isa">@ISA</a></strong></dt>
+
+<dd>
+<p>DTA::TokWrap::Processor::tokenize
+inherits from
+<a href="DTA.TokWrap.Processor.html">DTA::TokWrap::Processor</a>.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="constructors_etc_">Constructors etc.</a></h2>
+<dl>
+<dt><strong><a name="item_new">new</a></strong></dt>
+
+<dd>
+<pre>
+ $tz = $CLASS_OR_OBJ-&gt;new(%args);</pre>
+<p>%args, %$tz: (none yet)</p>
+</dd>
+<dt><strong><a name="item_defaults">defaults</a></strong></dt>
+
+<dd>
+<pre>
+ %defaults = CLASS-&gt;defaults();</pre>
+<p>Static class-dependent defaults.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="methods">Methods</a></h2>
+<dl>
+<dt><strong><a name="item_tokenize">tokenize</a></strong></dt>
+
+<dd>
+<pre>
+ $doc_or_undef = $CLASS_OR_OBJECT-&gt;tokenize($doc);</pre>
+<p>Runs the low-level tokenizer on the
+serialized text from the
+<a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> object $doc.</p>
+<p>Relevant %$doc keys:</p>
+<pre>
+ txtfile =&gt; $txtfile,  ##-- (input) serialized text file (uses $doc-&gt;{bxdata} if $doc-&gt;{txtfile} is not defined)
+ bxdata  =&gt; \@bxdata,  ##-- (input) block data, used to generate $doc-&gt;{txtfile} if not present
+ tokdata =&gt; $tokdata,  ##-- (output) tokenizer output data (string)
+ ##
+ tokenize_stamp0 =&gt; $f, ##-- (output) timestamp of operation begin
+ tokenize_stamp  =&gt; $f, ##-- (output) timestamp of operation end
+ tokdata_stamp =&gt; $f,   ##-- (output) timestamp of operation end</pre>
+<p>may implicitly call $doc-&gt;<code>mkbx()</code> and/or $doc-&gt;<code>saveTxtFile()</code>
+(but shouldn't).</p>
+</dd>
+</dl>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="DTA.TokWrap.Intro.html">DTA::TokWrap::Intro(3pm)</a>,
+<a href="dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a>,
+...</p>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Bryan Jurish &lt;<a href="mailto:jurish@bbaw.de">jurish@bbaw.de</a>&gt;</p>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="copyright_and_license">COPYRIGHT AND LICENSE</a></h1>
+<p>Copyright (C) 2009 by Bryan Jurish</p>
+<p>This package is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.7 or,
+at your option, any later version of Perl 5 you may have available.</p>
+<p><a href="#__index__"><small>(Back to Top)</small></a></p>
+
+</body>
+
+</html>

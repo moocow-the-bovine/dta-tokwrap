@@ -1,0 +1,257 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>DTA::TokWrap::Intro - a gentle introduction to the DTA::TokWrap distribution</title>
+<link rel="stylesheet" href="dtatw.css" type="text/css" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#modules">MODULES</a></li>
+	<ul>
+
+		<li><a href="#dta__tokwrap">DTA::TokWrap</a></li>
+		<li><a href="#dta__tokwrap__document">DTA::TokWrap::Document</a></li>
+		<ul>
+
+			<li><a href="#dta__tokwrap__document__maker">DTA::TokWrap::Document::Maker</a></li>
+		</ul>
+
+		<li><a href="#dta__tokwrap__processor">DTA::TokWrap::Processor</a></li>
+		<ul>
+
+			<li><a href="#dta__tokwrap__processor__mkindex">DTA::TokWrap::Processor::mkindex</a></li>
+			<li><a href="#dta__tokwrap__processor__mkbx0">DTA::TokWrap::Processor::mkbx0</a></li>
+			<li><a href="#dta__tokwrap__processor__mkbx">DTA::TokWrap::Processor::mkbx</a></li>
+			<li><a href="#dta__tokwrap__processor__tokenize">DTA::TokWrap::Processor::tokenize</a></li>
+			<li><a href="#dta__tokwrap__processor__tokenize__dummy">DTA::TokWrap::Processor::tokenize::dummy</a></li>
+			<li><a href="#dta__tokwrap__processor__tok2xml">DTA::TokWrap::Processor::tok2xml</a></li>
+			<li><a href="#dta__tokwrap__processor__standoff">DTA::TokWrap::Processor::standoff</a></li>
+		</ul>
+
+		<li><a href="#dta__tokwrap__base">DTA::TokWrap::Base</a></li>
+		<li><a href="#dta__tokwrap__logger">DTA::TokWrap::Logger</a></li>
+		<li><a href="#dta__tokwrap__utils">DTA::TokWrap::Utils</a></li>
+		<li><a href="#dta__tokwrap__version">DTA::TokWrap::Version</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="name">NAME</a></h1>
+<p>DTA::TokWrap::Intro - a gentle introduction to the DTA::TokWrap distribution</p>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The DTA::TokWrap perl distribution contains various modules
+for operations associated with the tokenization of DTA ``base-format'' XML documents.
+The distribution is divided into 1 program and 3 main modules:</p>
+<dl>
+<dt><strong><a name="item_dta_2dtokwrap_2eperl">dta-tokwrap.perl</a></strong></dt>
+
+<dd>
+<p>Top-level command-line interface.  Use this if you can.
+See <a href="dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a> for details.</p>
+</dd>
+<dt><strong><a name="item_module_dta_3a_3atokwrap">Module DTA::TokWrap</a></strong></dt>
+
+<dd>
+<p>Top-level wrappers for persistent data associated with document tokenization.
+Encapsulates all default <a href="#dta__tokwrap__processor">DTA::TokWrap::Processor</a>
+sub-processor objects.
+See <a href="#dta__tokwrap">the DTA::TokWrap section</a> for more details.</p>
+</dd>
+<dt><strong><a name="item_module_dta_3a_3atokwrap_3a_3adocument">Module DTA::TokWrap::Document</a></strong></dt>
+
+<dd>
+<p>Top-level wrappers for per-document data, including temporary files, indices,
+and in-memory data structures.
+See <a href="#dta__tokwrap__document">the DTA::TokWrap::Document section</a> for more details.</p>
+</dd>
+<dt><strong><a name="item_module_dta_3a_3atokwrap_3a_3aprocessor">Module DTA::TokWrap::Processor</a></strong></dt>
+
+<dd>
+<p>Abstraction level for processing operations on document data.
+See <a href="#dta__tokwrap__document">the DTA::TokWrap::Processor section</a> for more details.</p>
+</dd>
+</dl>
+<p>These and other included modules are briefly described in the
+<a href="#modules">MODULES</a> section, below.</p>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="modules">MODULES</a></h1>
+<p>The following sections are intended to give a brief overview of the modules
+included with this distribution.</p>
+<p>
+</p>
+<h2><a name="dta__tokwrap">DTA::TokWrap</a></h2>
+<p>The DTA::TokWrap module provides top-level object-oriented wrappers
+for (batch) tokenization of DTA ``base-format'' XML documents.
+DTA::TokWrap objects encapsulate all default
+<a href="#dta__tokwrap__processor">DTA::TokWrap::Processor</a> objects under a
+single object.  Most document processing should proceed via
+a DTA::TokWrap object.</p>
+<p>See <a href="DTA.TokWrap.html">DTA::TokWrap(3pm)</a> for more details.</p>
+<p>
+</p>
+<h2><a name="dta__tokwrap__document">DTA::TokWrap::Document</a></h2>
+<p>DTA::TokWrap::Document provides a perl class for representing
+a single DTA base-format XML file and associated indices, temporary files,
+and stand-off files.
+Together with the <a href="#dta__tokwrap">DTA::TokWrap</a> module, this
+class comprises the top-level API of the DTA::TokWrap distribution.</p>
+<p>See <a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document(3pm)</a> for more details.</p>
+<p>
+</p>
+<h3><a name="dta__tokwrap__document__maker">DTA::TokWrap::Document::Maker</a></h3>
+<p>DTA::TokWrap::Document::Maker provides an experimental
+<a href="#dta__tokwrap__document">DTA::TokWrap::Document</a>
+subclass which attempts to perform <code>make</code>-like dependency
+tracking on document data keys.</p>
+<p>See <a href="DTA.TokWrap.Document.Maker.html">DTA::TokWrap::Document::Maker(3pm)</a> for more details.</p>
+<p>
+</p>
+<h2><a name="dta__tokwrap__processor">DTA::TokWrap::Processor</a></h2>
+<p>The DTA::TokWrap::Processor package provides an abstract base class
+which subsumes document-processing modules included in the DTA::TokWrap
+distribution.</p>
+<p>See <a href="DTA.TokWrap.Processor.html">DTA::TokWrap::Processor(3pm)</a>
+for details on the API.</p>
+<p>
+</p>
+<h3><a name="dta__tokwrap__processor__mkindex">DTA::TokWrap::Processor::mkindex</a></h3>
+<p>DTA::TokWrap::Processor::mkindex provides an object-oriented
+<a href="#dta__tokwrap__processor">DTA::TokWrap::Processor</a> wrapper
+around the <em>dtatw-mkindex</em> C program
+for <a href="#dta__tokwrap__document">DTA::TokWrap::Document</a> objects.</p>
+<p>See <a href="DTA.TokWrap.Processor.mkindex.html">DTA::TokWrap::Processor::mkindex(3pm)</a>
+for details.</p>
+<p>
+</p>
+<h3><a name="dta__tokwrap__processor__mkbx0">DTA::TokWrap::Processor::mkbx0</a></h3>
+<p>DTA::TokWrap::Processor::mkindex provides an object-oriented
+<a href="#dta__tokwrap__processor">DTA::TokWrap::Processor</a> wrapper
+for
+hint insertion and serialization sort-key generation
+on a text-free ``structure index'' (.sx) XML file.</p>
+<p>See <a href="DTA.TokWrap.Processor.mkbx0.html">DTA::TokWrap::Processor::mkbx0(3pm)</a>
+for details.</p>
+<p>
+</p>
+<h3><a name="dta__tokwrap__processor__mkbx">DTA::TokWrap::Processor::mkbx</a></h3>
+<p>DTA::TokWrap::Processor::mkbx provides an object-oriented
+<a href="#dta__tokwrap__processor">DTA::TokWrap::Processor</a> wrapper
+for the creation of in-memory serialized text-block-indices.</p>
+<p>See <a href="DTA.TokWrap.Processor.mkbx.html">DTA::TokWrap::Processor::mkbx(3pm)</a>
+for details.</p>
+<p>
+</p>
+<h3><a name="dta__tokwrap__processor__tokenize">DTA::TokWrap::Processor::tokenize</a></h3>
+<p><strong>WARNING</strong>: this class is currently just a placeholder for the
+``official'' low-level tokenizer (ToMaSoTaTh).  Until such time
+as the official tokenizer is functional, please use the
+<a href="DTA.TokWrap.Processor.tokenize.dummy.html">DTA::TokWrap::Processor::tokenize::dummy</a>
+sub-class, which uses a simple locally-built low-level tokenizer.</p>
+<p>DTA::TokWrap::Processor::tokenize provides an object-oriented
+<a href="#dta__tokwrap__processor">DTA::TokWrap::Processor</a> wrapper
+for the tokenization of serialized text files
+for <a href="#dta__tokwrap__document">DTA::TokWrap::Document</a> objects.</p>
+<p>See <a href="DTA.TokWrap.Processor.tokenize.html">DTA::TokWrap::Processor::tokenize(3pm)</a>
+for details.</p>
+<p>
+</p>
+<h3><a name="dta__tokwrap__processor__tokenize__dummy">DTA::TokWrap::Processor::tokenize::dummy</a></h3>
+<p>DTA::TokWrap::Processor::tokenize::dummy provides a package-local
+alternative to the ``official'' low-level tokenizer class
+<a href="DTA.TokWrap.Processor.tokenize.html">DTA::TokWrap::Processor::tokenize</a>.</p>
+<p>See <a href="DTA.TokWrap.Processor.tokenize.dummy.html">DTA::TokWrap::Processor::tokenize::dummy(3pm)</a>
+for details.</p>
+<p>
+</p>
+<h3><a name="dta__tokwrap__processor__tok2xml">DTA::TokWrap::Processor::tok2xml</a></h3>
+<p>DTA::TokWrap::Processor::tok2xml provides an object-oriented
+<a href="#dta__tokwrap__processor">DTA::TokWrap::Processor</a> wrapper
+for converting ``raw'' CSV-format (.t) low-level tokenizer output
+to a ``master'' tokenized XML (.t.xml) format,
+for use with <a href="#dta__tokwrap__document">DTA::TokWrap::Document</a> objects.</p>
+<p>See <a href="DTA.TokWrap.Processor.tok2xml.html">DTA::TokWrap::Processor::tok2xml(3pm)</a>
+for details.</p>
+<p>
+</p>
+<h3><a name="dta__tokwrap__processor__standoff">DTA::TokWrap::Processor::standoff</a></h3>
+<p>DTA::TokWrap::Processor::standoff provides an object-oriented
+<a href="#dta__tokwrap__processor">DTA::TokWrap::Processor</a> wrapper
+for generation of various standoff XML formats
+for <a href="#dta__tokwrap__document">DTA::TokWrap::Document</a> objects.</p>
+<p>See <a href="DTA.TokWrap.Processor.standoff.html">DTA::TokWrap::Processor::standoff(3pm)</a>
+for details.</p>
+<p>
+</p>
+<h2><a name="dta__tokwrap__base">DTA::TokWrap::Base</a></h2>
+<p>DTA::TokWrap::Base provides an abstract base class for all object classes
+in the
+DTA::TokWrap distribution</p>
+<p>See <a href="DTA.TokWrap.Base.html">DTA::TokWrap::Base(3pm)</a>
+for details.</p>
+<p>
+</p>
+<h2><a name="dta__tokwrap__logger">DTA::TokWrap::Logger</a></h2>
+<p>DTA::TokWrap::Logger provides an abstract base class for
+object-oriented access to the Log::Log4perl logging facility.</p>
+<p>See <a href="DTA.TokWrap.Logger.html">DTA::TokWrap::Logger(3pm)</a>
+for details.</p>
+<p>
+</p>
+<h2><a name="dta__tokwrap__utils">DTA::TokWrap::Utils</a></h2>
+<p>DTA::TokWrap::Utils provides diverse assorted miscellaneous utilities
+which don't fit well anywhere else and which don't on their own justify
+the creation of a new package.</p>
+<p>See <a href="DTA.TokWrap.Logger.html">DTA::TokWrap::Logger(3pm)</a>
+for details.</p>
+<p>
+</p>
+<h2><a name="dta__tokwrap__version">DTA::TokWrap::Version</a></h2>
+<p>Version constants for DTA::TokWrap.
+Intended for (direct) use only by DTA::TokWrap sub-modules.</p>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a>,
+<a href="DTA.TokWrap.html">DTA::TokWrap(3pm)</a>,
+<a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document(3pm)</a>,
+<a href="DTA.TokWrap.Processor.html">DTA::TokWrap::Processor(3pm)</a>,
+...</p>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Bryan Jurish &lt;<a href="mailto:jurish@bbaw.de">jurish@bbaw.de</a>&gt;</p>
+<p><a href="#__index__"><small>(Back to Top)</small></a></p>
+
+</body>
+
+</html>

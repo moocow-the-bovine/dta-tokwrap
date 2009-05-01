@@ -98,13 +98,15 @@ AC_CONFIG_LINKS(src/dtaTwConfigNoAuto.h:src/dtaTwConfigAuto.h.in)
 ##vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 ## Subdirs:perl
 ##
-AC_MSG_NOTICE([perparing perl module DTA::TokWrap])
+AC_MSG_NOTICE([(re-)configuring perl module DTA::TokWrap])
+AC_MSG_NOTICE([+ ignore any warnings from Makefile.PL about missing Version.pm])
 
 ##-- TODO: pass options down to 'perl Makefile.PL'
 AC_ARG_VAR(MAKEPLFLAGS,[Additional flags to pass to `perl Makefile.PL`])
 
-##-- hack for 'make distcheck'
+##-- hack for 'make distcheck' / non-inplace builds
 if test "$srcdir" != "."; then
+   AC_MSG_NOTICE([+ non-inplace build detected: copying $srcdir/DTA-TokWrap/* to DTA-TokWrap/])
    mkdir DTA-TokWrap
    cp -r $srcdir/DTA-TokWrap/* DTA-TokWrap
 fi

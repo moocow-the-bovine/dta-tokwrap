@@ -111,15 +111,17 @@ sub MY::special_targets {
 sub MY::manifypods {
   package MY;
   my $inherited = shift->SUPER::manifypods(@_);
-  my $new = $inherited;
+  my $out = $inherited;
 
+  my $new = $inherited;
   my $html_ns_sep = ".";
   $new =~ s/.*(?=^manifypods\b)//sm;
   $new =~ s/\n\n.*//s;
   my ($deps0,$rules0) = split(/(?<!\\)\n/, $new, 2);
   my ($deps,$rules);
 
-  ##-- HTML
+  ##-----------------------
+  ## html
   my $htmlvars ='
 
 ##--- pod -> HTML
@@ -127,7 +129,7 @@ sub MY::manifypods {
 .SUFFIXES: .html
 
 INST_CSS ?= ../../$(CSS)
-POD2HTMLFLAGS ?= --css="$(INST_CSS)" --backlink --podroot=blib --podpath=script
+POD2HTMLFLAGS ?= --css="$(INST_CSS)" --backlink="(Back to Top)" --podroot=blib --podpath=script
 POD2HTML ?= pod2html $(POD2HTMLFLAGS)
 
 INST_HTMLDIR ?= blib/html
@@ -159,9 +161,10 @@ $(INST_HTMLDIR)$(DFSEP).exists :: Makefile.PL
                );
   #$hackit = ' | cat - ';
   $rules =~ s/\t\s+(\S+)\s+(\S+)/\t\$(POD2HTML) --infile=$1 ${hackit} \\\n\t > $2 || (rm -f $2 && false)/sg;
-  my $htmlmak = $htmlvars.$deps."\n".$rules."\n\n";
+  $out .= $htmlvars.$deps."\n".$rules."\n\n";
 
-  ##-- text
+  ##-----------------------
+  ## text
   my $text_ns_sep = $html_ns_sep;
   my $textvars ='
 
@@ -193,10 +196,45 @@ $(INST_TEXTDIR)$(DFSEP).exists :: Makefile.PL
   $rules =~ s/\\\n/\n/sg;
   $rules =~ s/\t\s+(\S+)\s+(\S+)/\t\$(POD2TEXT) $1 $2/sg;
   $rules .= "\n\ntxtifypods: textifypods\n\n";
-  my $textmak = $textvars.$deps."\n".$rules."\n\n";
+  $out .= $textvars.$deps."\n".$rules."\n\n";
+
+  ##-----------------------
+  ## pod
+  my $pod_ns_sep = $html_ns_sep;
+  my $podvars ='
+
+##--- pod+perl -> pod
+
+.SUFFIXES: .pod
+
+POD2POD ?= podselect -section ""
+
+INST_PODDIR ?= blib/pod
+POD_EXT ?= pod
+POD1EXT ?= $(POD_EXT)
+POD3EXT ?= $(POD_EXT)
+
+##-- lifted from MakeMaker blibdir section
+$(INST_PODDIR)$(DFSEP).exists :: Makefile.PL
+	$(NOECHO) $(MKPATH) $(INST_PODDIR)
+	$(NOECHO) $(CHMOD) 755 $(INST_PODDIR)
+	$(NOECHO) $(TOUCH) $(INST_PODDIR)$(DFSEP).exists
+
+';
+  ($deps,$rules) = ($deps0,$rules0);
+  $deps =~ s/^manifypods\b/podifypods/;
+  $deps .= "\\\n\t".'$(INST_PODDIR)$(DFSEP).exists';
+  $rules =~ s/POD2MAN/POD2POD/g;
+  $rules =~ s/MAN(\d)EXT/POD$1EXT/g;
+  $rules =~ s/INST_MAN\dDIR/INST_PODDIR/g;
+  $rules =~ s/^\s+\$\(NOECHO\).*?\n//smg;
+  $rules =~ s/::/${pod_ns_sep}/sg if ($pod_ns_sep ne '::');
+  $rules =~ s/\\\n/\n/sg;
+  $rules =~ s/\t\s+(\S+)\s+(\S+)/\t\$(POD2POD) $1 > $2/sg;
+  $out .= $podvars.$deps."\n".$rules."\n\n";
 
   ##-- return
-  return $inherited.$htmlmak.$textmak;
+  return $out;
 }
 
 ##---------------------------------------------------------------

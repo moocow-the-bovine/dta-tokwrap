@@ -1,0 +1,164 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>DTA::TokWrap - DTA tokenizer wrappers: top level</title>
+<link rel="stylesheet" href="dtatw.css" type="text/css" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#constants">Constants</a></li>
+		<li><a href="#constructors_etc_">Constructors etc.</a></li>
+		<li><a href="#methods__document_pseudoi_o">Methods: Document pseudo-I/O</a></li>
+		<li><a href="#methods__profiling">Methods: Profiling</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>DTA::TokWrap - DTA tokenizer wrappers: top level</p>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use DTA::TokWrap;
+ 
+ ##========================================================================
+ ## Constructors etc.
+ 
+ $tw = DTA::TokWrap-&gt;new(%options);       ##-- constructor
+ %defaults = DTA::TokWrap-&gt;defaults();    ##-- static default options
+ $tw = $tw-&gt;init();                       ##-- dynamic default options
+ 
+ ##========================================================================
+ ## Methods: Document pseudo-I/O
+ 
+ $doc = $CLASS_OR_OBJECT-&gt;open($xmlfile,%docNewOptions);
+ $bool = $tw-&gt;close($doc);
+ 
+ ##========================================================================
+ ## Methods: Profiling
+ 
+ $tw-&gt;logProfile($logLevel);</pre>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This manpage describes the DTA::TokWrap <strong>module</strong>.
+For an introduction to the DTA::TokWrap <strong>distribution</strong>, see
+<a href="DTA.TokWrap.Intro.html">the DTA::TokWrap::Intro manpage</a>.</p>
+<p>The DTA::TokWrap package provides top-level object-oriented wrappers
+for (batch) tokenization of DTA ``base-format'' XML documents.</p>
+<p>
+</p>
+<h2><a name="constants">Constants</a></h2>
+<dl>
+<dt><strong><a name="item_variable_3a__40isa">Variable: @ISA</a></strong></dt>
+
+<dd>
+<p>The DTA::TokWrap class inherits from <a href="DTA.TokWrap.Base.html">DTA::TokWrap::Base</a>.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="constructors_etc_">Constructors etc.</a></h2>
+<dl>
+<dt><strong><a name="item_defaults">defaults</a></strong></dt>
+
+<dd>
+<pre>
+ %defaults = CLASS-&gt;defaults();</pre>
+<p>Static default options; see <a href="DTA.TokWrap.Base.html">the DTA::TokWrap::Base manpage</a>.</p>
+</dd>
+<dt><strong><a name="item_init">init</a></strong></dt>
+
+<dd>
+<pre>
+ $tw = $tw-&gt;init();</pre>
+<p>Set dynamic default object structure; see <a href="DTA.TokWrap.Base.html">the DTA::TokWrap::Base manpage</a>.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="methods__document_pseudoi_o">Methods: Document pseudo-I/O</a></h2>
+<dl>
+<dt><strong><a name="item_open">open</a></strong></dt>
+
+<dd>
+<pre>
+ $doc = $CLASS_OR_OBJECT-&gt;open($xmlfile,%docNewOptions);</pre>
+<p>Wrapper for <a href="DTA.TokWrap.Document.html#open">DTA::TokWrap::Document-&gt;open($xmlfile,tw=&gt;$tw,%docNewOptions)</a></p>
+</dd>
+<dt><strong><a name="item_close">close</a></strong></dt>
+
+<dd>
+<pre>
+ $bool = $tw-&gt;close($doc);</pre>
+<p>Wrapper for <a href="DTA.TokWrap.Document.html#close">$doc-&gt;close()</a></p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="methods__profiling">Methods: Profiling</a></h2>
+<dl>
+<dt><strong><a name="item_logprofile">logProfile</a></strong></dt>
+
+<dd>
+<pre>
+ undef = $tw-&gt;logProfile($logLevel);</pre>
+<p>Logs profiling information (throughput) at $logLevel
+using the Log::Log4perl mechanism via DTA::TokWrap::Logger.
+See <a href="DTA.TokWrap.Logger.html">the DTA::TokWrap::Logger manpage</a>.</p>
+</dd>
+</dl>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="DTA.TokWrap.Intro.html">DTA::TokWrap::Intro(3pm)</a>,
+<a href="dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a>,
+...</p>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Bryan Jurish &lt;<a href="mailto:jurish@bbaw.de">jurish@bbaw.de</a>&gt;</p>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="copyright_and_license">COPYRIGHT AND LICENSE</a></h1>
+<p>Copyright (C) 2009 by Bryan Jurish</p>
+<p>This package is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.7 or,
+at your option, any later version of Perl 5 you may have available.</p>
+<p><a href="#__index__"><small>(Back to Top)</small></a></p>
+
+</body>
+
+</html>

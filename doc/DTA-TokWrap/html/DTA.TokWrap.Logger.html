@@ -1,0 +1,251 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>DTA::TokWrap::Logger - DTA::Tokwrap logging facility using Log::Log4perl</title>
+<link rel="stylesheet" href="dtatw.css" type="text/css" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body>
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#functions__initialization">Functions: Initialization</a></li>
+		<li><a href="#methods__get_logger">Methods: get logger</a></li>
+		<li><a href="#methods__messages">Methods: messages</a></li>
+		<li><a href="#methods__carp__croak___friends">Methods: carp, croak &amp; friends</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>DTA::TokWrap::Logger - DTA::Tokwrap logging facility using Log::Log4perl</p>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use DTA::TokWrap::Logger;
+ 
+ ##========================================================================
+ ## Functions: Initialization
+ 
+ PACKAGE-&gt;logInit();
+ PACKAGE-&gt;ensureLog();
+ $bool = CLASS_OR_OBJECT-&gt;logInitialized();
+ 
+ ##========================================================================
+ ## Methods: get logger
+ 
+ $logger = $class_or_obj-&gt;logger();
+ 
+ ##========================================================================
+ ## Methods: messages
+ 
+ $class_or_obj-&gt;trace (@msg);  ##-- 'TRACE'-level message
+ $class_or_obj-&gt;debug (@msg);  ##-- 'DEBUG'-level message
+ $class_or_obj-&gt;info  (@msg);  ##-- 'INFO'-level message
+ $class_or_obj-&gt;warn  (@msg);  ##-- 'WARN'-level message
+ $class_or_obj-&gt;error (@msg);  ##-- 'ERROR'-level message
+ $class_or_obj-&gt;fatal (@msg);  ##-- 'FATAL'-level message
+ 
+ $class_or_obj-&gt;llog($level, @msg);  ##-- variable-level message (numeric)
+ $class_or_obj-&gt;vlog($how,   @msg);  ##-- variable-level message (symbolic)
+ 
+ ##========================================================================
+ ## Methods: carp, croak &amp; friends
+ 
+ $class_or_obj-&gt;logwarn  (@msg);   ##-- warn w/o stack trace
+ $class_or_obj-&gt;logcarp  (@msg);   ##-- warn w/ 1-level stack trace
+ $class_or_obj-&gt;logcluck (@msg);   ##-- warn w/ full stack trace
+ 
+ $class_or_obj-&gt;logdie    (@msg);  ##-- die w/o stack trace
+ $class_or_obj-&gt;logcroak  (@msg);  ##-- die w/ 1-level stack trace
+ $class_or_obj-&gt;logconfess(@msg);  ##-- die w/ full stack trace</pre>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>DTA::TokWrap::Logger provides an abstract base class for
+object-oriented access to the Log::Log4perl logging facility.</p>
+<p>
+</p>
+<h2><a name="functions__initialization">Functions: Initialization</a></h2>
+<dl>
+<dt><strong><a name="item_loginit">logInit</a></strong></dt>
+
+<dd>
+<pre>
+ $PACKAGE-&gt;logInit()             ##-- use default configuration
+ $PACKAGE-&gt;logInit($file)        ##-- read configuration from a file
+ $PACKAGE-&gt;logInit(\$str)        ##-- read configuration from a string
+ $PACKAGE-&gt;logInit($file,$watch) ##-- watch configuration file</pre>
+<p>Initialize the logging facility.</p>
+<p>All log calls in the 'DTA::TokWrap' namespace should use a subcategory of 'DTA::TokWrap'.
+This function only needs to be called once; see
+<a href="Log.Log4perl.html">Log::Log4perl-&gt;initialized()</a> for details.</p>
+</dd>
+<dt><strong><a name="item_ensurelog">ensureLog</a></strong></dt>
+
+<dd>
+<pre>
+ PACKAGE-&gt;ensureLog()</pre>
+<p>Ensures that <a href="Log.Log4perl.html">Log::Log4perl</a> has been initialized.</p>
+</dd>
+<dt><strong><a name="item_loginitialized">logInitialized</a></strong></dt>
+
+<dd>
+<pre>
+ $bool = CLASS_OR_OBJECT-&gt;logInitialized();</pre>
+<p>Wrapper for <a href="Log.Log4perl.html">Log::Log4perl</a>-&gt;initialized().</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="methods__get_logger">Methods: get logger</a></h2>
+<dl>
+<dt><strong><a name="item_logger">logger</a></strong></dt>
+
+<dd>
+<pre>
+ $logger = $class_or_obj-&gt;logger();
+ $logger = $class_or_obj-&gt;logger($category)</pre>
+<p>Wrapper for <a href="Log.Log4perl.html">Log::Log4perl</a>::get_logger($category).</p>
+<p>$category defaults to ref($class_or_obj)||$class_or_obj</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="methods__messages">Methods: messages</a></h2>
+<dl>
+<dt><strong><a name="item_trace">trace</a></strong></dt>
+
+<dt><strong><a name="item_debug">debug</a></strong></dt>
+
+<dt><strong><a name="item_info">info</a></strong></dt>
+
+<dt><strong><a name="item_warn">warn</a></strong></dt>
+
+<dt><strong><a name="item_error">error</a></strong></dt>
+
+<dt><strong><a name="item_fatal">fatal</a></strong></dt>
+
+<dd>
+<pre>
+ $class_or_obj-&gt;trace (@msg);  ##-- 'TRACE'-level message
+ $class_or_obj-&gt;debug (@msg);  ##-- 'DEBUG'-level message
+ $class_or_obj-&gt;info  (@msg);  ##-- 'INFO'-level message
+ $class_or_obj-&gt;warn  (@msg);  ##-- 'WARN'-level message
+ $class_or_obj-&gt;error (@msg);  ##-- 'ERROR'-level message
+ $class_or_obj-&gt;fatal (@msg);  ##-- 'FATAL'-level message</pre>
+<p>Log messages at an explicit log-level.</p>
+<p>Be sure you have called <a href="Log.Log4perl.html">Log::Log4perl</a>::init() or similar first,
+e.g. <a href="#item_loginit">DTA::TokWrap::Logger::logInit()</a>.</p>
+</dd>
+<dt><strong><a name="item_llog">llog</a></strong></dt>
+
+<dd>
+<pre>
+ $class_or_obj-&gt;llog($level, @msg);</pre>
+<p>Log message @msg at log-level $level, which should be a (numeric)
+constant exported by Log::Log4perl::Level.</p>
+</dd>
+<dt><strong><a name="item_vlog">vlog</a></strong></dt>
+
+<dd>
+<pre>
+ $class_or_obj-&gt;vlog($how, @msg);</pre>
+<p>Log message @msg at log-level $how, which may be one of the
+following:</p>
+<ul>
+<li>
+<p>a CODE reference (e.g. $how=\&amp;logsub) will cause
+$how-&gt;($class_or_obj,@msg) to be called.</p>
+</li>
+<li>
+<p>a method name (e.g. $how='trace') will case
+calls $class_or_obj-&gt;${how}(@msg) to be called.</p>
+</li>
+<li>
+<p>anything else (e.g. $how='none', $how=undef, ...)
+will be ignored.</p>
+</li>
+</ul>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="methods__carp__croak___friends">Methods: carp, croak &amp; friends</a></h2>
+<dl>
+<dt><strong><a name="item_logwarn">logwarn</a></strong></dt>
+
+<dt><strong><a name="item_logcarp">logcarp</a></strong></dt>
+
+<dt><strong><a name="item_logcluck">logcluck</a></strong></dt>
+
+<dd>
+<pre>
+ $class_or_obj-&gt;logwarn  (@msg);   ##-- warn w/o stack trace
+ $class_or_obj-&gt;logcarp  (@msg);   ##-- warn w/ 1-level stack trace
+ $class_or_obj-&gt;logcluck (@msg);   ##-- warn w/ full stack trace</pre>
+</dd>
+<dt><strong><a name="item_logdie">logdie</a></strong></dt>
+
+<dt><strong><a name="item_logcroak">logcroak</a></strong></dt>
+
+<dt><strong><a name="item_logconfess">logconfess</a></strong></dt>
+
+<dd>
+<pre>
+ $class_or_obj-&gt;logdie    (@msg);  ##-- die w/o stack trace
+ $class_or_obj-&gt;logcroak  (@msg);  ##-- die w/ 1-level stack trace
+ $class_or_obj-&gt;logconfess(@msg);  ##-- die w/ full stack trace</pre>
+</dd>
+</dl>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="DTA.TokWrap.Intro.html">DTA::TokWrap::Intro(3pm)</a>,
+<a href="dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a>,
+...</p>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Bryan Jurish &lt;<a href="mailto:jurish@bbaw.de">jurish@bbaw.de</a>&gt;</p>
+<p>
+<a href="#__index__"><small>(Back to Top)</small></a>
+</p>
+<hr />
+<h1><a name="copyright_and_license">COPYRIGHT AND LICENSE</a></h1>
+<p>Copyright (C) 2009 by Bryan Jurish</p>
+<p>This package is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.7 or,
+at your option, any later version of Perl 5 you may have available.</p>
+<p><a href="#__index__"><small>(Back to Top)</small></a></p>
+
+</body>
+
+</html>

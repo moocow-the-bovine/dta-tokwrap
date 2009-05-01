@@ -8,7 +8,8 @@
 ## Misc flags
 ##-----------------------------------------------------------------------
 
-HTML_CSS_FILE       =../dtatw.css
+HTML_CSS_SRC        =../dtatw.css
+HTML_CSS_LOCAL      = $(notdir $(HTML_CSS_SRC))
 POD2MAN_CENTER_STR  ="DTA Tokenization Utilities"
 POD2MAN_RELEASE_STR ="dta-tokwrap v$(VERSION)"
 
@@ -42,8 +43,7 @@ DOC_MAN_TARGETS  = $(DOC_MAN1_TARGETS) $(DOC_MAN5_TARGETS)
 DOC_TXT_TARGETS = $(DOC_PODS:.pod=.txt)
 
 ##-- html
-#DOC_HTML_STATIC  = $(HTML_CSS_FILE)
-DOC_HTML_STATIC  = 
+DOC_HTML_STATIC  = $(HTML_CSS_LOCAL)
 DOC_HTML_TARGETS = $(DOC_PODS:.pod=.html)
 
 ##-- latex
@@ -197,7 +197,11 @@ POD2MANFLAGS = \
 	--center  $(POD2MAN_CENTER_STR) \
 	--release $(POD2MAN_RELEASE_STR)
 
-POD2HTMLFLAGS = --podpath="$(srcdir):." --htmlroot="." --css="$(HTML_CSS_FILE)"
+$(HTML_CSS_LOCAL): $(HTML_CSS_SRC)
+	rm -f $@
+	cp $< $@
+
+POD2HTMLFLAGS = --podpath="$(srcdir):." --htmlroot="." --css="$(HTML_CSS_LOCAL)"
 
 if HAVE_POD2MAN
 .pod.1:
@@ -284,7 +288,7 @@ EXTRA_DIST = \
 	$(DOC_PODS) \
 	$(DOC_MAN_TARGETS) \
 	$(DOC_HTML_TARGETS) \
-	$(HTML_CSS_FILE)
+	$(HTML_CSS_LOCAL)
 
 ## --- recursion subdirectories for 'make dist'
 #DIST_SUBDIRS = $(SUBDIRS)

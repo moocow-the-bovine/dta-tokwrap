@@ -33,7 +33,7 @@ MAINTAINERCLEANFILES = *~ .*~ Makefile Makefile.in
 pkgdoc_DATA = dtatw.css
 DOC_PODS = README.pod
 
-POD2HTMLFLAGS = --css=dtatw.css --podpath="$(srcdir):.:DTA-TokWrap:programs" --htmlroot="."
+POD2HTMLFLAGS = --css=dtatw.css --podroot="$(top_srcdir)/DTA-TokWrap/blib" --podpath="script" --header --backlink="(Back to Top)"
 
 SUFFIXES = .pod .txt .html
 
@@ -71,7 +71,8 @@ uninstall-local:
 #-----------------------------------------------------------------------
 
 ## --- extra distribution files
-#EXTRA_DIST = $(man_MANS) $(pkgdata_DATA)
+EXTRA_DIST = \
+	$(pkgdoc_DATA)
 
 ## --- recursion subdirectories for 'make dist'
 #DIST_SUBDIRS =

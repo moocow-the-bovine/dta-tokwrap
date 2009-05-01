@@ -39,7 +39,10 @@ all-local: $(PODS:.pod=.txt)
 ##-----------------------------------------------------------------------
 ## Subdirs: perl
 
-ALL_LOCAL_DEPS += DTA-TokWrap/Makefile
+PMDEPS = DTA-TokWrap/Makefile
+ALL_LOCAL_DEPS += $(PMDEPS)
+
+
 PERL_MFLAGS = DESTDIR="$(DESTDIR)" DISTDIR_AM="../$(distdir)/DTA-TokWrap"
 if IS_DISTCHECK
 PERL_MFLAGS += PREFIX="$(prefix)"
@@ -51,14 +54,15 @@ all-local: $(ALL_LOCAL_DEPS)
 DTA-TokWrap/Makefile:
 	(cd DTA-TokWrap; $(PERL) Makefile.PL $(MAKEPLFLAGS))
 
-install-exec-local: DTA-TokWrap/Makefile
+install-exec-local: $(PMDEPS)
 	$(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) install
 
-uninstall-local: DTA-TokWrap/Makefile
-	$(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) uninstall
+##-- uninstall via MakeMaker is broken (Fri, 01 May 2009 22:30:24 +0200)
+#uninstall-local: $(PMDEPS)
+#	$(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) uninstall
 
 ##-- dist-hook requires "distdir_am" target in perl sub-module
-dist-hook:
+dist-hook: $(PMDEPS)
 	$(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) distdir_am
 
 ##-- 'SUBDIRS = DTA-TokWrap' causes multiple 'make cleans' to puke
