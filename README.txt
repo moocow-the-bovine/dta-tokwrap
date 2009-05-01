@@ -1,4 +1,4 @@
-ABSTRACT
+NAME
     README for dta-tokwrap - programs, scripts, and perl modules for DTA XML
     corpus tokenization
 
