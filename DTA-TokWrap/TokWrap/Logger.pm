@@ -270,10 +270,15 @@ $category defaults to ref($class_or_obj)||$class_or_obj
 =over 4
 
 =item trace
+
 =item debug
+
 =item info
+
 =item warn
+
 =item error
+
 =item fatal
 
  $class_or_obj->trace (@msg);  ##-- 'TRACE'-level message

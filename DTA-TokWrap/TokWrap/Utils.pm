@@ -545,7 +545,7 @@ the relevant OS error message.
 
 Get absolute path for a file or directory. De-references symlinks.
 
-Imported from the L<Cwd|Cwd> module.
+Imported from the C<Cwd> module.
 
 =item str2file
 

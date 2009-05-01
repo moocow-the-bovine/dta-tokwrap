@@ -86,7 +86,7 @@ dnl AX_DOC_GOG_LINKS()
 
 pkgdocdotdir="\${docdir}/\${PACKAGE}/dot"
 AC_SUBST(pkgdocdotdir)
-AC_CONFIG_LINKS([doc/programs/dta-tokwrap.pod:DTA-TokWrap/dta-tokwrap.perl])
+AC_CONFIG_LINKS([doc/programs/dta-tokwrap.perl.pod:DTA-TokWrap/dta-tokwrap.perl])
 AC_CONFIG_LINKS([doc/README.pod:README.pod])
 ##
 ## /Documentation

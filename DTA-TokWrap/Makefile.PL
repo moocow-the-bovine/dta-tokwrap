@@ -45,6 +45,19 @@ WriteMakefile
 ##-----------------------------------------------------------------------
 
 ##---------------------------------------------------------------
+sub MY::constants {
+  package MY;
+  my $css = 'dtatw.css';
+  my $inherited = shift->SUPER::constants(@_);
+  $inherited .= (
+		 ###-- constants: html css
+		 "\n"
+		 ."CSS ?= $css\n"
+		);
+  return $inherited;
+}
+
+##---------------------------------------------------------------
 sub MY::depend {
   package MY;
   my $inherited = shift->SUPER::depend(@_);
@@ -67,28 +80,25 @@ sub MY::depend {
 ##---------------------------------------------------------------
 sub MY::special_targets {
   package MY;
-  my $css = 'dtatw.css';
   my $inherited = shift->SUPER::special_targets(@_);
   $inherited .=
 "
 .SUFFIXES: .pm .pod .rpod .man .txt .html
 
-CSS ?= $css
-
 .pm.html:
-\tpod2html --css \"\$(CSS)\" --outfile \$@ \$<
+\tpod2html --css=\$(CSS) --infile=\$< --outfile=\$@
 
 .pm.txt:
 \tpod2text \$< \$@
 
 .pod.html:
-\tpod2html --css \"\$(CSS)\" --outfile \$@ \$<
+\tpod2html --css=\$(CSS) --infile=\$< --outfile=\$@
 
 .pod.txt:
 \tpod2text \$< \$@
 
 .rpod.html:
-\tpod2html --css \"\$(CSS)\" --outfile \$@ \$<
+\tpod2html --css=\$(CSS) --infile=\$< --outfile=\$@
 
 .rpod.txt:
 \tpod2text \$< \$@
@@ -97,6 +107,97 @@ CSS ?= $css
   return $inherited;
 }
 
+##---------------------------------------------------------------
+sub MY::manifypods {
+  package MY;
+  my $inherited = shift->SUPER::manifypods(@_);
+  my $new = $inherited;
+
+  my $html_ns_sep = ".";
+  $new =~ s/.*(?=^manifypods\b)//sm;
+  $new =~ s/\n\n.*//s;
+  my ($deps0,$rules0) = split(/(?<!\\)\n/, $new, 2);
+  my ($deps,$rules);
+
+  ##-- HTML
+  my $htmlvars ='
+
+##--- pod -> HTML
+
+.SUFFIXES: .html
+
+INST_CSS ?= ../../$(CSS)
+POD2HTMLFLAGS ?= --css="$(INST_CSS)" --backlink --podroot=blib --podpath=script
+POD2HTML ?= pod2html $(POD2HTMLFLAGS)
+
+INST_HTMLDIR ?= blib/html
+
+HTML_EXT ?= html
+HTML1EXT ?= $(HTML_EXT)
+HTML3EXT ?= $(HTML_EXT)
+
+##-- lifted from MakeMaker blibdir section
+$(INST_HTMLDIR)$(DFSEP).exists :: Makefile.PL
+	$(NOECHO) $(MKPATH) $(INST_HTMLDIR)
+	$(NOECHO) $(CHMOD) 755 $(INST_HTMLDIR)
+	$(NOECHO) $(TOUCH) $(INST_HTMLDIR)$(DFSEP).exists
+
+';
+  ($deps,$rules) = ($deps0,$rules0);
+  $deps =~ s/^manifypods\b/htmlifypods/;
+  $deps .= "\\\n\t".'$(INST_HTMLDIR)$(DFSEP).exists';
+  $rules =~ s/POD2MAN/POD2HTML/g;
+  $rules =~ s/MAN(\d)EXT/HTML$1EXT/g;
+  $rules =~ s/INST_MAN\dDIR/INST_HTMLDIR/g;
+  $rules =~ s/^\s+\$\(NOECHO\).*?\n//smg;
+  $rules =~ s/::/${html_ns_sep}/sg if ($html_ns_sep ne '::');
+  $rules =~ s/\\\n/\n/sg;
+  my $hackit = ("\\\n"
+		."\t | ".'$(PERL) -p'." \\\n"
+		."\t   ".'-e\'sub hackhref {($$href=shift)=~s|^/*||; $$href=~s|^script/||; $$href=~s|/|'.$html_ns_sep.'|g; $$href;}\''." \\\n"
+		."\t   ".'-e\'s/<a href="([^"]*)/\'\\\'\'<a href="\'\\\'\'.hackhref($$1)/eg;\''
+               );
+  #$hackit = ' | cat - ';
+  $rules =~ s/\t\s+(\S+)\s+(\S+)/\t\$(POD2HTML) --infile=$1 ${hackit} \\\n\t > $2 || (rm -f $2 && false)/sg;
+  my $htmlmak = $htmlvars.$deps."\n".$rules."\n\n";
+
+  ##-- text
+  my $text_ns_sep = $html_ns_sep;
+  my $textvars ='
+
+##--- pod -> txt
+.SUFFIXES: .txt
+
+POD2TEXT ?= pod2text
+
+INST_TEXTDIR ?= blib/txt
+TEXT_EXT ?= txt
+TEXT1EXT ?= $(TEXT_EXT)
+TEXT3EXT ?= $(TEXT_EXT)
+
+##-- lifted from MakeMaker blibdir section
+$(INST_TEXTDIR)$(DFSEP).exists :: Makefile.PL
+	$(NOECHO) $(MKPATH) $(INST_TEXTDIR)
+	$(NOECHO) $(CHMOD) 755 $(INST_TEXTDIR)
+	$(NOECHO) $(TOUCH) $(INST_TEXTDIR)$(DFSEP).exists
+
+';
+  ($deps,$rules) = ($deps0,$rules0);
+  $deps =~ s/^manifypods\b/textifypods/;
+  $deps .= "\\\n\t".'$(INST_TEXTDIR)$(DFSEP).exists';
+  $rules =~ s/POD2MAN/POD2TEXT/g;
+  $rules =~ s/MAN(\d)EXT/TEXT$1EXT/g;
+  $rules =~ s/INST_MAN\dDIR/INST_TEXTDIR/g;
+  $rules =~ s/^\s+\$\(NOECHO\).*?\n//smg;
+  $rules =~ s/::/${text_ns_sep}/sg if ($text_ns_sep ne '::');
+  $rules =~ s/\\\n/\n/sg;
+  $rules =~ s/\t\s+(\S+)\s+(\S+)/\t\$(POD2TEXT) $1 $2/sg;
+  $rules .= "\n\ntxtifypods: textifypods\n\n";
+  my $textmak = $textvars.$deps."\n".$rules."\n\n";
+
+  ##-- return
+  return $inherited.$htmlmak.$textmak;
+}
 
 ##---------------------------------------------------------------
 sub MY::distdir {

@@ -11,10 +11,32 @@ H1,H2,H3 {
 	text-align: left;
 	color: #000099;
 }
+/*BIG > STRONG { color: #000099; }*/
+STRONG { color: #000099; }
+P > STRONG { color: #000000; }
 H1 { margin-left: 4px; }
-H2,H3,H4,H5,H6,P,CENTER,CL,DIV,TD,TH,DL,DT,DIV {
-	margin-left: 24px;
+H2 { margin-left: 16px; }
+H3 { margin-left: 32px; }
+H4,H5,H6,P,CENTER,CL,DIV,TD,TH,DL,DT,DIV,UL {
+	margin-left: 48px;
 }
+H1,H2,H3,H4,H5,H6,P,CENTER,CL,DIV,TD,TH,DL,DT,DIV,UL {
+	margin-right: 24px;
+}
+
+UL UL { margin-left: 0px; }
+LI > P  {
+  margin-left: 0px;
+}
+P {
+  margin-top: .25em;
+  margin-bottom: .75em;
+}
+
+UL { list-style: square; }
+UL UL { list-style: circle; }
+UL UL UL { list-style: disc; }
+
 PRE {
 	border: 1px dashed #0000ff;
 	background-color: #f5f5f5;
@@ -27,12 +49,8 @@ PRE {
 	padding-top: 4px;
 	padding-bottom: 4px;
 }
-/*UL {
-	background-color: #eeeeee;
+UL {
+	/*background-color: #ffff00;*/
 	margin-top: 4px;
 	margin-bottom: 4px;
-	margin-left: 16px;
-	margin-right: 16px;
-	padding-top: 4px;
-	padding-bottom: 8px;
-}*/
+}
