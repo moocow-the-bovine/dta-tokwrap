@@ -16,11 +16,9 @@ PKGDOC_SUBDIR = $(DESTDIR)$(pkgdocdir)/$(notdir $(PWD))
 ##-----------------------------------------------------------------------
 
 PMSRC = $(top_builddir)/DTA-TokWrap
-
+PMDEPS = $(PMSRC)/Makefile
 $(PMSRC)/Makefile: $(PMSRC)/Makefile.PL
 	cd $(PMSRC); $(PERL) Makefile.PL $(MAKEPLFLAGS)
-
-PMDEPS = $(PMSRC)/Makefile
 
 ALL_LOCAL_DEPS =
 CLEAN_LOCAL_DEPS =
@@ -44,7 +42,7 @@ pod.stamp: $(PMDEPS)
 	$(MAKE) -C $(PMSRC) INST_PODDIR=$(PWD)/$(POD_DIR) podifypods
 	touch $@
 
-pod-dist: pod.stamp pod-index
+pod-dist: pod.stamp $(POD_DIR)/index.pod
 	$(mkdir_p) $(distdir)/$(POD_DIR)
 	for f in $(POD_DIR)/*.pod ; do \
 	  cp -p $$f $(distdir)/$(POD_DIR) ;\
@@ -94,7 +92,7 @@ TXT_DIR ?= txt
 txt: txt.stamp
 
 if HAVE_POD2TEXT
-txt.stamp: $(PMDEPS) txt-index
+txt.stamp: $(PMDEPS) $(TXT_DIR)/index.txt
 	$(MAKE) -C $(PMSRC) INST_TEXTDIR=$(PWD)/$(TXT_DIR) textifypods
 	touch $@
 
@@ -109,8 +107,7 @@ index.txt: index.pod
 
 CLEAN_LOCAL_DEPS += no-txt
 else
-txt.stamp:
-	$(mkdir_p) $(TXT_DIR)
+txt.stamp: $(TXT_DIR)/index.txt
 	touch $@
 txt-dist: txt.stamp
 	@:
@@ -154,7 +151,7 @@ CLEAN_LOCAL_DEPS += no-html-css
 html: html.stamp css
 
 if HAVE_POD2HTML
-html.stamp: $(PMDEPS) html-index
+html.stamp: $(PMDEPS) $(HTML_DIR)/index.html
 	$(MAKE) -C $(PMSRC) INST_HTMLDIR=$(PWD)/$(HTML_DIR) INST_CSS=$(CSS) htmlifypods
 	touch $@
 
