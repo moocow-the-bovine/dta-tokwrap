@@ -5,7 +5,7 @@ digraph dataflow {
 
   xml [label="xmlfile: *.xml",shape=rectangle,style=filled,fillcolor=grey90];
 
-  mkindex [label="DTA::TokWrap::mkindex",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  mkindex [label="mkindex",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
   xml -> mkindex;
 
   sxfile [label="sxfile: *.sx",shape=rectangle,style=filled,fillcolor=grey90];
@@ -20,7 +20,7 @@ digraph dataflow {
   cxfile -> cxdata;
 
   bx0doc [label="bx0doc"];
-  mkbx0 [label="DTA::TokWrap::mkbx0",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  mkbx0 [label="mkbx0",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
   sxfile -> mkbx0;
   mkbx0 -> bx0doc;
 
@@ -34,7 +34,7 @@ digraph dataflow {
   bx0file -> bx0doc [color=red];
 
   bxdata [label="bxdata"];
-  mkbx [label="DTA::TokWrap::mkbx",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  mkbx [label="mkbx",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
   bx0doc -> mkbx;
   txfile -> mkbx;
   mkbx -> bxdata;
@@ -50,7 +50,7 @@ digraph dataflow {
   //{rank=same; bxfile txtfile}
 
   tokdata [label="tokdata"];
-  tokenize [label="DTA::TokWrap::tokenize(::dummy)",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold",justify="left"];
+  tokenize [label="tokenize(::dummy)",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold",justify="left"];
   txtfile -> tokenize;
   tokenize -> tokdata;
 
@@ -67,14 +67,14 @@ digraph dataflow {
   xtokdata -> xtokdoc;
   //{rank=same; xtokdata xtokfile;}
 
-  tok2xml [label="DTA::TokWrap::tok2xml",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  tok2xml [label="tok2xml",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
   tokdata -> tok2xml;
   bxdata  -> tok2xml;
   cxdata  -> tok2xml;
   tok2xml -> xtokdata;
   {rank=same; cxdata tokdata};
 
-  standoff [label="DTA::TokWrap::standoff",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  standoff [label="standoff",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
   xtokdoc -> standoff;
 
   t2s_xsl [label="t2s.xsl",shape=rectangle,style=filled,fillcolor=yellow];
