@@ -146,6 +146,10 @@ GetOptions(
 	   'dump-xsl-stylesheets|dump-xsl:s' => \$dump_xsl_prefix,
 	  );
 
+if ($version) {
+  print "$prog (DTA::TokWrap version $DTA::TokWrap::VERSION)\n";
+  exit(0);
+}
 
 pod2usage({-exitval=>0, -verbose=>0}) if ($help);
 pod2usage({-exitval=>0, -verbose=>1}) if ($man);
@@ -155,10 +159,6 @@ pod2usage({
 	   -verbose => 0,
 	  }) if (@ARGV < 1);
 
-if ($version) {
-  print "$prog: DTA::TokWrap v$DTA::TokWrap::VERSION\n";
-  exit(0);
-}
 
 
 ##==============================================================================
