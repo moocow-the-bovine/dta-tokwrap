@@ -7,14 +7,14 @@
 typedef struct {
   XML_Parser xp;        //-- expat parser
   FILE *f_out;          //-- output file
+  int s_depth;          //-- number of open 's' elements
+  int w_depth;          //-- number of open 'w' elements in 's' elements
 } ParseData;
 
 //-- indentation/formatting
-const char *indent_w = "\n  ";
-const char *indent_c = "\n    ";
 const char *indent_root = "\n";
-
-#define WANT_T_ATTR 1
+const char *indent_s    = "\n  ";
+const char *indent_w    = "\n    ";
 
 
 /*======================================================================
@@ -24,54 +24,29 @@ const char *indent_root = "\n";
 //--------------------------------------------------------------
 void cb_start(ParseData *data, const XML_Char *name, const XML_Char **attrs)
 {
-  int i;
-  const XML_Char *xml_id=NULL, *ca=NULL,*c_begin,*c_end, *ta=NULL;
-  if (strcmp(name,"w")!=0) return;
-  fprintf(data->f_out, "%s<w", indent_w);
-  for (i=0; attrs[i] && (!xml_id || !ca || !ta); i += 2) {
-    if      (strcmp(attrs[i],"xml:id")==0) xml_id=attrs[i+1];
-    else if (strcmp(attrs[i],"c")==0)          ca=attrs[i+1];
-#ifdef WANT_T_ATTR
-    else if (strcmp(attrs[i],"t")==0)          ta=attrs[i+1];
-#endif
+  const XML_Char *xml_id;
+  if (strcmp(name,"s")==0) {
+    xml_id = get_attr("xml:id", attrs);
+    fprintf(data->f_out, "%s<s xml:id=\"%s\">", indent_s, (xml_id ? xml_id : ""));
+    data->s_depth++;
   }
-  if (xml_id) {
-    fputs(" xml:id=\"", data->f_out);
-    put_escaped_str(data->f_out, xml_id, -1);
-    fputc('"', data->f_out);
+  else if (data->s_depth > 0 && strcmp(name,"w")==0) {
+    xml_id = get_attr("xml:id", attrs);
+    fprintf(data->f_out, "%s<w ref=\"#%s\"/>", indent_w, (xml_id ? xml_id : ""));
+    data->w_depth++;
   }
-#ifdef WANT_T_ATTR
-  if (ta) {
-    fputs(" t=\"", data->f_out);
-    put_escaped_str(data->f_out, ta, -1);
-    fputc('"', data->f_out);
-  }
-#endif
-  fputc('>', data->f_out);
-  if (ca) {
-    for (c_begin=ca; *c_begin; c_begin=c_end) {
-      for ( ; *c_begin && isspace(*c_begin); c_begin++) {
-	;
-      }
-      for (c_end=c_begin; *c_end && !isspace(*c_end); c_end++) {
-	;
-      }
-      if (*c_begin && c_end > c_begin) {
-	fputs(indent_c,data->f_out);
-	fputs("<c ref=\"#", data->f_out);
-	put_escaped_str(data->f_out, c_begin, c_end-c_begin);
-	fputs("\"/>", data->f_out);
-      }
-    }
-  }
-  fputs(indent_w, data->f_out);
-  fputs("</w>", data->f_out);
 }
 
 //--------------------------------------------------------------
 void cb_end(ParseData *data, const XML_Char *name)
 {
-  return;
+  if (data->s_depth > 0 && strcmp(name,"s")==0) {
+    fprintf(data->f_out, "%s</s>", indent_s);
+    data->s_depth--;
+  }
+  else if (data->w_depth > 0 && strcmp(name,"w")==0) {
+    data->w_depth--;
+  }
 }
 
 /*======================================================================
@@ -94,7 +69,7 @@ int main(int argc, char **argv)
   if (argc <= 1) {
     fprintf(stderr, "Usage: %s INFILE [OUTFILE [XMLBASE]]\n", prog);
     fprintf(stderr, " + INFILE  : XML-ified tokenizer output file\n");
-    fprintf(stderr, " + OUTFILE : token-level standoff XML file\n");
+    fprintf(stderr, " + OUTFILE : sentence-level standoff XML file\n");
     exit(1);
   }
   //-- command-line: input file
@@ -142,7 +117,7 @@ int main(int argc, char **argv)
   //-- print header
   fprintf(f_out,
 	  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-	  "<tokens xml:base=\"%s\">",
+	  "<sentences xml:base=\"%s\">",
 	  (xmlbase ? xmlbase : "")
 	  );
 
@@ -150,7 +125,7 @@ int main(int argc, char **argv)
   expat_parse_file(xp, f_in, filename_in);
 
   //-- print footer
-  fprintf(f_out, "%s</tokens>\n", indent_root);
+  fprintf(f_out, "%s</sentences>\n", indent_root);
 
   //-- cleanup
   if (f_in)  fclose(f_in);

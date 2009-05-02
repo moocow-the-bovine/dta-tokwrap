@@ -18,7 +18,7 @@ dnl use automake
 AM_INIT_AUTOMAKE(THE_PACKAGE_NAME, THE_PACKAGE_VERSION)
 
 dnl use autoheader
-AM_CONFIG_HEADER([src/dtaTwConfigAuto.h])
+AM_CONFIG_HEADER([src/dtatwConfigAuto.h])
 
 dnl default prefix
 AC_PREFIX_DEFAULT(/usr/local)
@@ -93,7 +93,7 @@ AC_CONFIG_LINKS([doc/README.pod:README.pod])
 ##^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ##-- no-autoheader stuff
-AC_CONFIG_LINKS(src/dtaTwConfigNoAuto.h:src/dtaTwConfigAuto.h.in)
+AC_CONFIG_LINKS(src/dtatwConfigNoAuto.h:src/dtatwConfigAuto.h.in)
 
 ##vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 ## Subdirs:perl
