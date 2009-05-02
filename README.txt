@@ -223,9 +223,17 @@ TOOLS
     dtatw-tokenize-dummy
         Dummy "flex" tokenizer. Useful for testing.
 
+    dtatw-txml2sxml
+        Converts "master" tokenized XML output format (*.t.xml) to
+        sentence-level stand-off XML format (*.s.xml).
+
     dtatw-txml2wxml
         Converts "master" tokenized XML output format (*.t.xml) to
         token-level stand-off XML format (*.w.xml).
+
+    dtatw-txml2axml
+        Converts "master" tokenized XML output format (*.t.xml) to
+        token-analysis-level stand-off XML format (*.a.xml).
 
 SEE ALSO
     perl(1).

@@ -1,23 +1,8 @@
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
-#include <ctype.h>
-#include <time.h>
-
-#undef XML_DTD
-#undef XML_NS
-#undef XML_UNICODE
-#undef XML_UNICODE_WHAT_T
-#define XML_CONTEXT_BYTES 1024
-#include <expat.h>
+#include "dtatwCommon.h"
 
 /*======================================================================
  * Globals
  */
-
-//-- ENABLE_ASSERT : if defined, debugging assertions will be enabled
-#define ENABLE_ASSERT 1
-//#undef ENABLE_ASSERT
 
 //-- NIL_ID: string used for missing xml:id attributes on <c> elements
 const char *NIL_ID = "-";
@@ -25,12 +10,8 @@ const char *NIL_ID = "-";
 //-- LB_ID : pseudo-ID for <lb/> records
 const char *LB_ID = "$LB$";
 
-#define BUFSIZE     8192 //-- file input buffer size
 #define CTBUFSIZE    256 //-- <c>-local text buffer size
 #define CIDBUFSIZE   256 //-- <c>-local xml:id buffer size
-
-typedef long unsigned int ByteOffset;
-typedef int ByteLen;
 
 typedef struct {
   XML_Parser xp;        //-- expat parser
@@ -51,9 +32,6 @@ typedef struct {
   ByteOffset c_toffset; //-- byte offset in text stream at which current <c> started
 } TokWrapData;
 
-//-- prog: default name of this program (used for error reporting, set from argv[0] later)
-char *prog = "dtatw-mkindex";
-
 //-- want_profile: if true, some profiling information will be printed to stderr
 //int want_profile = 1;
 int want_profile = 0;
@@ -68,14 +46,6 @@ int want_outfile_colnames = 1;
 /*======================================================================
  * Debug
  */
-
-#if !defined(assert)
-# if defined(ENABLE_ASSERT)
-#  define assert(test) if (!(test)) { fprintf(stderr, "%s: %s:%d: assertion failed: (%s)\n", prog, __FILE__, __LINE__, #test); exit(255); }
-# else  /* defined(ENABLE_ASSERT) -> false */
-#  define assert(test) 
-# endif /* defined(ENABLE_ASSERT) */
-#endif /* !defined(assert) */
 
 //-- SX_IGNORE_WS : ignore whitespace-only text events for .sx output
 #define SX_IGNORE_WS 1
@@ -99,16 +69,6 @@ void print_indexfile_header(FILE *f, int argc, char **argv)
   if (want_outfile_colnames) {
     fprintf(f, "%s$ID$\t$XML_OFFSET$\t$XML_LENGTH$\t$TXT_OFFSET$\t$TXT_LEN$\t$TEXT$\n", (want_outfile_comments ? "%% " : ""));
   }
-}
-
-//--------------------------------------------------------------
-const XML_Char *get_attr(const XML_Char *aname, const XML_Char **attrs)
-{
-  int i;
-  for (i=0; attrs[i]; i += 2) {
-    if (strcmp(aname,attrs[i])==0) return attrs[i+1];
-  }
-  return NULL;
 }
 
 /*--------------------------------------------------------------
@@ -183,61 +143,6 @@ void put_record_lb(TokWrapData *data)
 		 );
   put_raw_text(data, 1, "\n");
 }
-
-/*--------------------------------------------------------------
- * get_error_context()
- *  + gets error context
- */
-const char *get_error_context(XML_Parser xp, int ctx_want, int *offset, int *len)
-{
-  int ctx_offset, ctx_size;
-  const char *ctx_buf = XML_GetInputContext(xp, &ctx_offset, &ctx_size);
-  int ctx_mystart, ctx_myend;
-  ctx_mystart = ((ctx_offset <= ctx_want)              ? 0        : (ctx_offset-ctx_want));
-  ctx_myend   = ((ctx_size   <= (ctx_offset+ctx_want)) ? ctx_size : (ctx_offset+ctx_want));
-  *offset = ctx_offset - ctx_mystart;
-  *len    = ctx_myend - ctx_mystart;
-  return ctx_buf + ctx_mystart;
-}
-
-/*--------------------------------------------------------------
- * get_event_context()
- *  + gets current event context (analagous to perl XML::Parser::original_string())
- */
-const char *get_event_context(XML_Parser xp, int *len)
-{
-  int ctx_offset, ctx_size;
-  const char *ctx_buf = XML_GetInputContext(xp, &ctx_offset, &ctx_size);
-  int cur_size = XML_GetCurrentByteCount(xp);
-  assert(ctx_offset >= 0);
-  assert(ctx_offset+cur_size <= ctx_size);
-  *len = cur_size;
-  return ctx_buf + ctx_offset;
-}
-
-
-/*--------------------------------------------------------------
- * g = si_g(f)
- */
-
-double si_val(double g)
-{
-  if (g >= 1e12) return g / 1e12;
-  if (g >= 1e9) return g / 1e9;
-  if (g >= 1e6) return g / 1e6;
-  if (g >= 1e3) return g / 1e3;
-  return g;
-}
-
-const char *si_suffix(double g)
-{
-  if (g >= 1e12) return "T";
-  if (g >= 1e9) return "G";
-  if (g >= 1e6) return "M";
-  if (g >= 1e3) return "K";
-  return "";
-}
-
 
 
 /*======================================================================
@@ -363,8 +268,6 @@ int main(int argc, char **argv)
 {
   TokWrapData data;
   XML_Parser xp;
-  void *buf;
-  int  isFinal = 0;
   char *filename_in = "-";
   char *filename_cx = "-";
   char *filename_sx = NULL;
@@ -469,49 +372,7 @@ int main(int argc, char **argv)
   data.f_tx = f_tx;
 
   //-- parse input file
-  do {
-    size_t nread;
-    int status;
-
-    //-- setup & read into buffer (uses expat functions to avoid double-copy)
-    buf = XML_GetBuffer(xp, BUFSIZE);
-    if (!buf) {
-      fprintf(stderr, "%s: XML_GetBuffer() failed!\n", prog);
-      exit(1);
-    }
-    nread = fread(buf, 1,BUFSIZE, f_in);
-    n_xbytes += nread;
-
-    //-- check for file errors
-    isFinal = feof(f_in);
-    if (ferror(f_in) && !isFinal) {
-      fprintf(stderr, "%s: `%s' (line %d, col %d, byte %ld): I/O error: %s\n",
-	      prog, filename_in,
-	      XML_GetCurrentLineNumber(xp), XML_GetCurrentColumnNumber(xp), XML_GetCurrentByteIndex(xp),
-	      strerror(errno));
-      exit(1);
-    }
-
-    status = XML_ParseBuffer(xp, (int)nread, isFinal);
-
-    //-- check for expat errors
-    if (status != XML_STATUS_OK) {
-      int ctx_offset = 0, ctx_len = 0;
-      const char *ctx_buf;
-      fprintf(stderr, "%s: `%s' (line %d, col %d, byte %ld): XML error: %s\n",
-	      prog, filename_in,
-	      XML_GetCurrentLineNumber(xp), XML_GetCurrentColumnNumber(xp), XML_GetCurrentByteIndex(xp),
-	      XML_ErrorString(XML_GetErrorCode(xp)));
-
-      ctx_buf = get_error_context(xp, 64, &ctx_offset, &ctx_len);
-      fprintf(stderr, "%s: Error Context:\n%.*s%s%.*s\n",
-	      prog,
-	      ctx_offset, ctx_buf,
-	      "\n---HERE---\n",
-	      (ctx_len-ctx_offset), ctx_buf+ctx_offset);
-      exit(2);
-    }
-  } while (!isFinal);
+  n_xbytes = expat_parse_file(xp,f_in,filename_in);
 
   //-- always terminate text file with a newline
   if (f_tx) fputc('\n',f_tx);
