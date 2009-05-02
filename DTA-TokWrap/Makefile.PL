@@ -129,7 +129,7 @@ sub MY::manifypods {
 .SUFFIXES: .html
 
 INST_CSS ?= ../../$(CSS)
-POD2HTMLFLAGS ?= --css="$(INST_CSS)" --backlink="(Back to Top)" --podroot=blib --podpath=script
+POD2HTMLFLAGS ?= --css="$(INST_CSS)" --backlink="(Back to Top)" --podroot=blib --podpath=script --header
 POD2HTML ?= pod2html $(POD2HTMLFLAGS)
 
 INST_HTMLDIR ?= blib/html

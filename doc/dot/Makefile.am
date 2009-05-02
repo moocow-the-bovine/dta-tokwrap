@@ -45,7 +45,7 @@ pkgdocdot_DATA = $(DOT_TARGETS)
 ## sources
 ##-----------------------------------------------------------------------
 
-SUFFIXES = .dot .eps .ps .pdf .png
+SUFFIXES = .dot .eps .ps .pdf .png .xps .xeps .xpdf .xpng
 
 ##-----------------------------------------------------------------------
 ## local hooks & aliases
@@ -85,6 +85,17 @@ else
 endif
 endif
 endif
+
+.ps.xps:
+	gv -spartan -watch -scale=-2 $< &
+.eps.xps:
+	gv -spartan -watch -scale=-2 $< &
+
+.pdf.xpdf:
+	xpdf -z 'page' $< &
+
+.png.xpng:
+	eog $< &
 
 ##-----------------------------------------------------------------------
 ## Variables: cleanup

@@ -15,6 +15,7 @@ TokWrap/Processor/mkbx.pm
 TokWrap/Processor/mkindex.pm
 TokWrap/Processor.pm
 TokWrap/Processor/standoff.pm
+TokWrap/Processor/standoff/xsl.pm
 TokWrap/Processor/tok2xml.pm
 TokWrap/Processor/tokenize/dummy.pm
 TokWrap/Processor/tokenize.pm

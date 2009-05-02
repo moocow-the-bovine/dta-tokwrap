@@ -51,7 +51,11 @@ L<DTA::TokWrap::Processor::mkindex|DTA::TokWrap::Processor::mkindex> - DTA token
 
 =item *
 
-L<DTA::TokWrap::Processor::standoff|DTA::TokWrap::Processor::standoff> - DTA tokenizer wrappers: t.xml -> (s.xml, w.xml, a.xml)
+L<DTA::TokWrap::Processor::standoff|DTA::TokWrap::Processor::standoff> - DTA tokenizer wrappers: t.xml -> (s.xml, w.xml, a.xml) via external filter programs
+
+=item *
+
+L<DTA::TokWrap::Processor::standoff::xsl|DTA::TokWrap::Processor::standoff::xsl> - DTA tokenizer wrappers: t.xml -> (s.xml, w.xml, a.xml) via XSL
 
 =item *
 

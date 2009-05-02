@@ -1,20 +1,17 @@
 ## -*- Mode: CPerl -*-
 
-## File: DTA::TokWrap::Processor::standoff.pm
+## File: DTA::TokWrap::Processor::standoff
 ## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
-## Description: DTA tokenizer wrappers: t.xml -> (s.xml, w.xml, a.xml)
+## Description: DTA tokenizer wrappers: t.xml -> (s.xml, w.xml, a.xml) via dtatw-txml2[swa]xml
 
 package DTA::TokWrap::Processor::standoff;
 
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
-use DTA::TokWrap::Utils qw(:progs :libxml :libxslt :slurp :time);
+use DTA::TokWrap::Utils qw(:progs :time);
 use DTA::TokWrap::Processor;
 
-use XML::LibXML;
-use XML::LibXSLT;
-use IO::File;
-use File::Basename qw(basename);
+use File::Basename qw(basename dirname);
 
 use Carp;
 use strict;
@@ -29,27 +26,21 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##==============================================================================
 
 ## $so = CLASS_OR_OBJ->new(%args)
+##  + %args:
+##    t2w => $path_to_dtatw_txml2wxml, ##-- default: search
+##    t2s => $path_to_dtatw_txml2sxml, ##-- default: search
+##    t2a => $path_to_dtatw_txml2axml, ##-- default: search
+##    inplace => $bool,                ##-- prefer in-place programs for search?
+
 ## %defaults = CLASS->defaults()
-##  + %args, %defaults, %$so:
-##    (
-##     ##
-##     ##-- Stylesheet: tx2sx (t.xml -> s.xml)
-##     t2s_stylestr  => $stylestr,           ##-- xsl stylesheet string
-##     t2s_styleheet => $stylesheet,         ##-- compiled xsl stylesheet
-##     ##
-##     ##-- Styleheet: tx2wx (t.xml -> w.xml)
-##     t2w_stylestr  => $stylestr,           ##-- xsl stylesheet string
-##     t2w_styleheet => $stylesheet,         ##-- compiled xsl stylesheet
-##     ##
-##     ##-- Styleheet: tx2wx (t.xml -> a.xml)
-##     t2a_stylestr  => $stylestr,           ##-- xsl stylesheet string
-##     t2a_styleheet => $stylesheet,         ##-- compiled xsl stylesheet
-##   )
 sub defaults {
   my $that = shift;
   return (
-	  ##-- inherited
 	  $that->SUPER::defaults(),
+	  t2w=>undef,
+	  t2s=>undef,
+	  t2a=>undef,
+	  inplace=>1,
 	 );
 }
 
@@ -57,372 +48,154 @@ sub defaults {
 sub init {
   my $so = shift;
 
-  ##-- create stylesheet strings
-  $so->{t2s_stylestr}   = $so->t2s_stylestr() if (!$so->{t2a_stylestr});
-  $so->{t2w_stylestr}   = $so->t2w_stylestr() if (!$so->{t2w_stylestr});
-  $so->{t2a_stylestr}   = $so->t2a_stylestr() if (!$so->{t2a_stylestr});
-
-  ##-- compile stylesheets
-  #$so->{t2s_stylesheet} = xsl_stylesheet(string=>$so->{t2s_stylestr}) if (!$so->{t2s_stylesheet});
-  #$so->{t2w_stylesheet} = xsl_stylesheet(string=>$so->{t2w_stylestr}) if (!$so->{t2w_stylesheet});
-  #$so->{t2a_stylesheet} = xsl_stylesheet(string=>$so->{t2a_stylestr}) if (!$so->{t2a_stylesheet});
+  ##-- search for program(s)
+  foreach ('s','w','a') {
+    if (!defined($so->{"t2$_"})) {
+      $so->{"t2$_"} = path_prog("dtatw-txml2${_}xml",
+				prepend=>($so->{inplace} ? ['.','../src'] : undef),
+				warnsub=>sub {$so->logconfess(@_)},
+			       );
+    }
+  }
 
   return $so;
 }
 
 ##==============================================================================
-## Methods: XSL stylesheets
+## Methods: Backwards-compatible
 ##==============================================================================
 
-##--------------------------------------------------------------
-## Methods: XSL stylesheets: common
+## $so_xsl = $so->_xsl()
+sub _xsl {
+  require DTA::TokWrap::Processor::standoff::xsl;
+  return $_[0]{_xsl} if (defined($_[0]{_xsl}));
+  return $_[0]{_xsl} = DTA::TokWrap::Processor::standoff::xsl->new(%{$_[0]});
+}
 
 ## $so_or_undef = $so->ensure_stylesheets()
-sub ensure_stylesheets {
-  my $so = shift;
-  $so->{t2s_stylesheet} = xsl_stylesheet(string=>$so->{t2s_stylestr}) if (!$so->{t2s_stylesheet});
-  $so->{t2w_stylesheet} = xsl_stylesheet(string=>$so->{t2w_stylestr}) if (!$so->{t2w_stylesheet});
-  $so->{t2a_stylesheet} = xsl_stylesheet(string=>$so->{t2a_stylestr}) if (!$so->{t2a_stylesheet});
-  return $so;
-}
+sub ensure_stylesheets { $_[0]->_xsl->ensure_stylesheets(); }
 
-##--------------------------------------------------------------
-## Methods: XSL stylesheets: t2s: t.xml -> s.xml
-sub t2s_stylestr {
-  my $so = shift;
-  return '<?xml version="1.0" encoding="ISO-8859-1"?>
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  <xsl:output method="xml" version="1.0" indent="no" encoding="UTF-8"/>
+## $str = $so->t2s_stylestr()
+sub t2s_stylestr { $_[0]->_xsl->t2s_stylestr(); }
 
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- parameters -->
-  <xsl:param name="xmlbase" select="/*/@xml:base"/>
+## $str = $so->t2w_stylestr()
+sub t2w_stylestr { $_[0]->_xsl->t2w_stylestr(); }
 
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- options -->
-  <xsl:strip-space elements="sentences s w a"/>
+## $str = $so->t2a_stylestr()
+sub t2a_stylestr { $_[0]->_xsl->t2a_stylestr(); }
 
-  <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
-  <!-- Mode: main -->
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- main: template: root: traverse -->
-  <xsl:template match="/*">
-    <xsl:element name="sentences">
-      <xsl:attribute name="xml:base"><xsl:value-of select="$xmlbase"/></xsl:attribute>
-      <xsl:apply-templates select="*"/>
-    </xsl:element>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- main: template: s -->
-  <xsl:template match="s">
-    <xsl:element name="s">
-      <xsl:copy-of select="./@xml:id"/>
-      <xsl:apply-templates select="*"/>
-    </xsl:element>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- main: template: w -->
-  <xsl:template match="w">
-    <xsl:element name="w">
-      <xsl:attribute name="ref">#<xsl:value-of select="./@xml:id"/></xsl:attribute>
-      <xsl:apply-templates select="*"/>
-    </xsl:element>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- main: default: just recurse -->
-  <xsl:template match="*|@*|text()|processing-instruction()|comment()" priority="-1">
-    <xsl:apply-templates select="*|@*"/>
-  </xsl:template>
-
-</xsl:stylesheet>
-';
-}
-
-##--------------------------------------------------------------
-## Methods: XSL stylesheets: t2w: t.xml -> w.xml
-sub t2w_stylestr {
-  my $so = shift;
-  return '<?xml version="1.0" encoding="ISO-8859-1"?>
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-
-  <xsl:output method="xml" version="1.0" indent="no" encoding="UTF-8"/>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- parameters -->
-  <xsl:param name="xmlbase" select="/*/@xml:base"/>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- options -->
-  <xsl:strip-space elements="sentences s w a"/>
-
-  <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
-  <!-- Mode: main -->
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- main: template: root: traverse -->
-  <xsl:template match="/*">
-    <xsl:element name="tokens">
-      <xsl:attribute name="xml:base"><xsl:value-of select="$xmlbase"/></xsl:attribute>
-      <xsl:apply-templates select="*"/>
-    </xsl:element>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- main: template: w -->
-  <xsl:template match="w">
-    <xsl:element name="w">
-      <xsl:copy-of select="@xml:id"/>
-      <xsl:copy-of select="@t"/>
-      <xsl:call-template name="w-expand-c"/>
-      <xsl:apply-templates select="*"/>
-    </xsl:element>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- main: default: just recurse -->
-  <xsl:template match="*|@*|text()|processing-instruction()|comment()" priority="-1">
-    <xsl:apply-templates select="*"/>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- named: w-ref -->
-  <xsl:template name="w-expand-c">
-    <xsl:param name="cs" select="concat(@c,\' \')"/>
-    <xsl:if test="$cs != \'\'">
-      <xsl:element name="c">
-	<xsl:attribute name="ref">#<xsl:value-of select="substring-before($cs,\' \')"/></xsl:attribute>
-      </xsl:element>
-      <xsl:call-template name="w-expand-c">
-	<xsl:with-param name="cs" select="substring-after($cs,\' \')"/>
-      </xsl:call-template>
-    </xsl:if>
-  </xsl:template>
-
-</xsl:stylesheet>
-';
-}
-
-##--------------------------------------------------------------
-## Methods: XSL stylesheets: t2w: t.xml -> a.xml
-sub t2a_stylestr {
-  my $so = shift;
-  return '<?xml version="1.0" encoding="ISO-8859-1"?>
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-
-  <xsl:output method="xml" version="1.0" indent="no" encoding="UTF-8"/>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- parameters -->
-  <xsl:param name="xmlbase" select="/*/@xml:base"/>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- options -->
-  <xsl:strip-space elements="sentences s w a"/>
-
-  <!--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
-  <!-- Mode: main -->
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- main: template: root: traverse -->
-  <xsl:template match="/*">
-    <xsl:element name="tokens">
-      <xsl:attribute name="xml:base"><xsl:value-of select="$xmlbase"/></xsl:attribute>
-      <xsl:apply-templates select="*"/>
-    </xsl:element>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- main: template: w -->
-  <xsl:template match="w">
-    <xsl:element name="w">
-      <xsl:attribute name="ref">#<xsl:value-of select="@xml:id"/></xsl:attribute>
-      <!--<xsl:copy-of select="@t"/>-->  <!-- DEBUG: copy text -->
-      <xsl:apply-templates select="*"/>
-    </xsl:element>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- main: template: w/a -->
-  <xsl:template match="w/a">
-    <xsl:element name="a">
-      <xsl:copy-of select="@*"/>
-      <xsl:apply-templates select="*|text()"/>
-    </xsl:element>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- main: template: w/a/text() -->
-  <xsl:template match="w/a/text()">
-    <xsl:copy-of select="."/>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- main: default: just recurse -->
-  <xsl:template match="*|@*|text()|processing-instruction()|comment()" priority="-1">
-    <xsl:apply-templates select="*"/>
-  </xsl:template>
-
-</xsl:stylesheet>
-';
-}
-
-##--------------------------------------------------------------
-## Methods: XSL stylesheets: debug
-
-## undef = $so->dump_string($str,$filename_or_fh)
-sub dump_string {
-  my ($so,$str,$file) = @_;
-  my $fh = ref($file) ? $file : IO::File->new(">$file");
-  $fh->print($str);
-  $fh->close() if (!ref($file));
-}
 
 ## undef = $so->dump_t2s_stylesheet($filename_or_fh)
-sub dump_t2s_stylesheet {
-  $_[0]->dump_string($_[0]{t2s_stylestr}, $_[1]);
-}
+sub dump_t2s_stylesheet { $_[0]->_xsl->dump_t2s_stylesheet(@_[1..$#_]); }
 
 ## undef = $so->dump_t2w_stylesheet($filename_or_fh)
-sub dump_t2w_stylesheet {
-  $_[0]->dump_string($_[0]{t2w_stylestr}, $_[1]);
-}
+sub dump_t2w_stylesheet { $_[0]->_xsl->dump_t2w_stylesheet(@_[1..$#_]); }
 
 ## undef = $so->dump_t2a_stylesheet($filename_or_fh)
-sub dump_t2a_stylesheet {
-  $_[0]->dump_string($_[0]{t2a_stylestr}, $_[1]);
-}
+sub dump_t2a_stylesheet { $_[0]->_xsl->dump_t2a_stylesheet(@_[1..$#_]); }
 
 ##==============================================================================
-## Methods: mkbx0 (apply stylesheets)
+## Methods: document processing
 ##==============================================================================
 
 ## $doc_or_undef = $CLASS_OR_OBJECT->standoff($doc)
-##  + wrapper for sosxml(), sowxml(), soaxml()
+##  + wrapper for sosxml, sowxml, soaxml
 sub standoff {
   my ($so,$doc) = @_;
-  $so = $so->new if (!ref($so));
   return $so->sosxml($doc) && $so->sowxml($doc) && $so->soaxml($doc);
+}
+
+## $doc_or_undef = $CLASS_OR_OBJECT->soxml($doc,$X,$xmlbase)
+## + generic formatter
+## + $doc is a DTA::TokWrap::Document object
+## + $X is a known standoff infix character ('s', 'w', or 'a')
+## + $xml_base is the /*/@xml:base attribute to use (default = $doc->{xmlbase})
+## + (re-)creates ${X}.xml standoff FILE $doc->{so${X}file} from .t.xml source STRING $doc->{xtokdata}
+## + %$doc keys:
+##    xtokdata => $xtokdata, ##-- (input) XML-ified tokenizer output data (string)
+##    so${X}file  => $sosfile,  ##-- (output) standoff file, refers to $xml_base
+##    so${X}xml_stamp0 => $f,   ##-- (output) timestamp of operation begin
+##    so${X}xml_stamp  => $f,   ##-- (output) timestamp of operation end
+##    so${X}file_stamp => $f,   ##-- (output) timestamp of operation end
+sub soxml {
+  my ($so,$doc,$X,$xmlbase) = @_;
+  my $method = "so${X}xml";
+
+  ##-- log, stamp
+  $so->vlog($so->{traceLevel},"$method($doc->{xmlbase})");
+  $doc->{"${method}_stamp0"} = timestamp();
+
+  ##-- sanity check(s)
+  $so = $so->new() if (!ref($so));
+  $so->logconfess("$method($doc->{xmlbase}): no document key 'xtokdata' defined")
+    if (!$doc->{xtokdata});
+  my $t2x = $so->{"t2${X}"};
+  $so->logconfess("$method($doc->{xmlbase}): no processor key 't2${X}' defined!")
+    if (!defined($t2x));
+  my $sofile = $doc->{"so${X}file"};
+  $so->logconfess("$method($doc->{xmlbase}): no document key 'so${X}file' defined!")
+    if (!defined($sofile));
+
+  ##-- run command
+  $xmlbase = $doc->{xmlbase} if (!defined($xmlbase));
+  my $cmdfh = IO::File->new("|'$t2x' - '$sofile' '$xmlbase'")
+    or $so->logconfess("${method}($doc->{xmlbase}): open failed for pipe to '$t2x': $!");
+  $cmdfh->print($doc->{xtokdata});
+  $cmdfh->close();
+
+  $doc->{"${method}_stamp"} = $doc->{"so${X}file_stamp"} = timestamp(); ##-- stamp
+  return $doc;
 }
 
 ## $doc_or_undef = $CLASS_OR_OBJECT->sosxml($doc)
 ## + $doc is a DTA::TokWrap::Document object
-## + (re-)creates s.xml standoff document $doc->{sosdoc} from $doc->{xtokdoc}
+## + (re-)creates s.xml standoff FILE $doc->{sosfile} from .t.xml source STRING $doc->{xtokdata}
 ## + %$doc keys:
-##    xtokdoc  => $xtokdoc,  ##-- (input) XML-ified tokenizer output data, as XML::LibXML::Document
-##    xtokdata => $xtokdata, ##-- (input) fallback: string source for $xtokdoc
-##    sosdoc   => $sosdoc,   ##-- (output) standoff sentence data, refers to 'sowdoc'
+##    xtokdata => $xtokdata, ##-- (input) XML-ified tokenizer output data (string)
+##    sosfile  => $sosfile,  ##-- (output) standoff sentence file, refers to 'sowfile'
 ##    sosxml_stamp0 => $f,   ##-- (output) timestamp of operation begin
 ##    sosxml_stamp  => $f,   ##-- (output) timestamp of operation end
-##    sosdoc_stamp => $f,    ##-- (output) timestamp of operation end
+##    sosfile_stamp => $f,   ##-- (output) timestamp of operation end
 sub sosxml {
   my ($so,$doc) = @_;
-
-  ##-- log, stamp
-  $so->vlog($so->{traceLevel},"sosxml($doc->{xmlbase})");
-  $doc->{sosxml_stamp0} = timestamp();
-
-  ##-- sanity check(s)
-  $so = $so->new() if (!ref($so));
-  $so->logconfess("sosxml($doc->{xmlbase}): could not compile XSL stylesheet(s)")
-    if (!$so->ensure_stylesheets());
-  $so->logconfess("sosxml($doc->{xmlbase}): no xtokdoc key defined")
-    if (!$doc->{xtokdoc});
-  my $xtdoc = $doc->{xtokdoc};
-
-  ##-- apply XSL stylesheet
-  $doc->{sosdoc} = $so->{t2s_stylesheet}->transform($xtdoc,
-						    xmlbase=>("'".basename($doc->{sowfile})."'"),
-						   )
-    or $so->logconfess("sosxml($doc->{xmlbase}): could not apply t2s_stylesheet: $!");
-
-  $doc->{sosxml_stamp} = $doc->{sosdoc_stamp} = timestamp(); ##-- stamp
-
-  return $doc;
+  return $so->soxml($doc,'s',basename($doc->{sowfile}));
 }
 
 ## $doc_or_undef = $CLASS_OR_OBJECT->sowxml($doc)
 ## + $doc is a DTA::TokWrap::Document object
-## + (re-)creates w.xml standoff document $doc->{sowdoc} from $doc->{xtokdoc}
+## + (re-)creates s.xml standoff FILE $doc->{sowfile} from .t.xml source STRING $doc->{xtokdata}
 ## + %$doc keys:
-##    xtokdoc  => $xtokdoc,  ##-- (input) XML-ified tokenizer output data, as XML::LibXML::Document
-##    xtokdata => $xtokdata, ##-- (input) fallback: string source for $xtokdoc
-##    sowdoc   => $sowdoc,   ##-- (output) standoff token data, refers to 'sowdoc'
+##    xtokdata => $xtokdata, ##-- (input) XML-ified tokenizer output data (string)
+##    sowfile  => $sowfile,  ##-- (output) standoff sentence file, refers to 'sowfile'
 ##    sowxml_stamp0 => $f,   ##-- (output) timestamp of operation begin
 ##    sowxml_stamp  => $f,   ##-- (output) timestamp of operation end
-##    sowdoc_stamp => $f,    ##-- (output) timestamp of operation end
+##    sowfile_stamp => $f,   ##-- (output) timestamp of operation end
 sub sowxml {
   my ($so,$doc) = @_;
-
-  ##-- log, stamp
-  $so->vlog($so->{traceLevel},"sowxml($doc->{xmlbase})");
-  $doc->{sowxml_stamp0} = timestamp();
-
-  ##-- sanity check(s)
-  $so = $so->new() if (!ref($so));
-  $so->logconfess("sowxml($doc->{xmlbase}): could not compile XSL stylesheet(s)")
-    if (!$so->ensure_stylesheets());
-  $so->logconfess("sowxml($doc->{xmlbase}): no xtokdoc key defined")
-    if (!$doc->{xtokdoc});
-  my $xtdoc = $doc->{xtokdoc};
-
-  ##-- apply XSL stylesheet
-  $doc->{sowdoc} = $so->{t2w_stylesheet}->transform($xtdoc,
-						   xmlbase=>("'".$doc->{xmlbase}."'"),
-						  )
-    or $so->logconfess("sowxml($doc->{xmlbase}): could not apply t2w_stylesheet: $!");
-
-
-  $doc->{sowxml_stamp} = $doc->{sowdoc_stamp} = timestamp(); ##-- stamp
-
-  return $doc;
+  return $so->soxml($doc,'w',$doc->{xmlbase});
 }
 
 ## $doc_or_undef = $CLASS_OR_OBJECT->soaxml($doc)
 ## + $doc is a DTA::TokWrap::Document object
-## + (re-)creates a.xml standoff document $doc->{soadoc} from $doc->{xtokdoc}
+## + (re-)creates s.xml standoff FILE $doc->{soafile} from .t.xml source STRING $doc->{xtokdata}
 ## + %$doc keys:
-##    xtokdoc  => $xtokdoc,  ##-- (input) XML-ified tokenizer output data, as XML::LibXML::Document
-##    xtokdata => $xtokdata, ##-- (input) fallback: string source for $xtokdoc
-##    soadoc   => $soadoc,   ##-- (output) standoff token-analysis data, refers to 'sowdoc'
+##    xtokdata => $xtokdata, ##-- (input) XML-ified tokenizer output data (string)
+##    soafile  => $soafile,  ##-- (output) standoff sentence file, refers to 'soafile'
 ##    soaxml_stamp0 => $f,   ##-- (output) timestamp of operation begin
 ##    soaxml_stamp  => $f,   ##-- (output) timestamp of operation end
-##    soadoc_stamp => $f,    ##-- (output) timestamp of operation end
+##    soafile_stamp => $f,   ##-- (output) timestamp of operation end
 sub soaxml {
   my ($so,$doc) = @_;
-
-  ##-- log, stamp
-  $so->vlog($so->{traceLevel},"soaxml($doc->{xmlbase})");
-  $doc->{soaxml_stamp0} = timestamp();
-
-  ##-- sanity check(s)
-  $so = $so->new() if (!ref($so));
-  $so->logconfess("soaxml($doc->{xmlbase}): could not compile XSL stylesheet(s)")
-    if (!$so->ensure_stylesheets());
-  $so->logconfess("soaxml($doc->{xmlbase}): no xtokdoc key defined")
-    if (!$doc->{xtokdoc});
-  my $xtdoc = $doc->{xtokdoc};
-
-  ##-- apply XSL stylesheet
-  $doc->{soadoc} = $so->{t2a_stylesheet}->transform($xtdoc,
-						   xmlbase=>("'".basename($doc->{sowfile})."'"),
-						  )
-    or $so->logconfess("soaxml($doc->{xmlbase}): could not apply t2a_stylesheet: $!");
-
-  $doc->{soaxml_stamp} = $doc->{soadoc_stamp} = timestamp(); ##-- stamp
-
-  return $doc;
+  return $so->soxml($doc,'a',basename($doc->{sowfile}));
 }
+
 
 1; ##-- be happy
 
 __END__
 
 ##========================================================================
-## POD DOCUMENTATION, auto-generated by podextract.perl
+## POD DOCUMENTATION, auto-generated by podextract.perl, and edited
 
 ##========================================================================
 ## NAME
@@ -430,7 +203,7 @@ __END__
 
 =head1 NAME
 
-DTA::TokWrap::Processor::standoff - DTA tokenizer wrappers: t.xml -> (s.xml, w.xml, a.xml)
+DTA::TokWrap::Processor::standoff - DTA tokenizer wrappers: t.xml -> (s.xml, w.xml, a.xml) via external filter programs
 
 =cut
 
@@ -443,15 +216,16 @@ DTA::TokWrap::Processor::standoff - DTA tokenizer wrappers: t.xml -> (s.xml, w.x
  use DTA::TokWrap::Processor::standoff;
  
  $so = DTA::TokWrap::Processor::standoff->new(%opts);
- $doc_or_undef = $so->sosxml($doc);
- $doc_or_undef = $so->sowxml($doc);
- $doc_or_undef = $so->soaxml($doc);
- $doc_or_undef = $so->standoff($doc);
+ $doc_or_undef = $CLASS_OR_OBJECT->sosxml($doc);
+ $doc_or_undef = $CLASS_OR_OBJECT->sowxml($doc);
+ $doc_or_undef = $CLASS_OR_OBJECT->soaxml($doc);
+ $doc_or_undef = $CLASS_OR_OBJECT->standoff($doc);
  
- ##-- debugging
+ ##-- backwards-compatibility
  undef = $so->dump_t2s_stylesheet($filename_or_fh);
  undef = $so->dump_t2w_stylesheet($filename_or_fh);
  undef = $so->dump_t2a_stylesheet($filename_or_fh);
+
 
 =cut
 
@@ -460,15 +234,6 @@ DTA::TokWrap::Processor::standoff - DTA tokenizer wrappers: t.xml -> (s.xml, w.x
 =pod
 
 =head1 DESCRIPTION
-
-DTA::TokWrap::Processor::standoff provides an object-oriented
-L<DTA::TokWrap::Processor|DTA::TokWrap::Processor> wrapper
-for generation of various standoff XML formats
-for L<DTA::TokWrap::Document|DTA::TokWrap::Document> objects.
-
-Most users should use the high-level
-L<DTA::TokWrap|DTA::TokWrap> wrapper class
-instead of using this module directly.
 
 =cut
 
@@ -480,7 +245,7 @@ instead of using this module directly.
 
 =over 4
 
-=item @ISA
+=item Variable: @ISA
 
 DTA::TokWrap::Processor::standoff
 inherits from
@@ -506,17 +271,10 @@ Constructor.
 
 %args, %$so:
 
- ##-- Stylesheet: tx2sx (t.xml -> s.xml)
- t2s_stylestr  => $stylestr,           ##-- xsl stylesheet string
- t2s_styleheet => $stylesheet,         ##-- compiled xsl stylesheet
- ##
- ##-- Styleheet: tx2wx (t.xml -> w.xml)
- t2w_stylestr  => $stylestr,           ##-- xsl stylesheet string
- t2w_styleheet => $stylesheet,         ##-- compiled xsl stylesheet
- ##
- ##-- Styleheet: tx2wx (t.xml -> a.xml)
- t2a_stylestr  => $stylestr,           ##-- xsl stylesheet string
- t2a_styleheet => $stylesheet,         ##-- compiled xsl stylesheet
+ t2w => $path_to_dtatw_txml2wxml, ##-- default: search
+ t2s => $path_to_dtatw_txml2sxml, ##-- default: search
+ t2a => $path_to_dtatw_txml2axml, ##-- default: search
+ inplace => $bool,                ##-- prefer in-place programs for search?
 
 =item defaults
 
@@ -535,137 +293,90 @@ Dynamic object-dependent defaults.
 =cut
 
 ##----------------------------------------------------------------
-## DESCRIPTION: DTA::TokWrap::Processor::standoff: Methods: XSL stylesheets
+## DESCRIPTION: DTA::TokWrap::Processor::standoff: Methods: Backwards-compatible
 =pod
 
-=head2 Methods: XSL stylesheets
-
-Low-level utility methods.
-
-The stylesheets returned may or may not accurately
-reflect the documents generated by the
-L<sosxml()|/sosxml>, L<sowxml()|/sowxml>,
-and L<soaxml()|/soaxml> methods.
-
+=head2 Methods: Backwards-compatibility
 
 =over 4
 
-=item ensure_stylesheets
+=item _xsl
 
- $so_or_undef = $so->ensure_stylesheets();
+ $so_xsl = $so->_xsl();
 
-Ensures that required XSL stylesheets have been compiled.
-
-=item t2s_stylestr
-
- $xsl_str = $mbx0->t2s_stylestr();
-
-Returns XSL stylesheet string for generation of
-sentence-level standoff XML (.s.xml)
-from "master" tokenized XML (.t.xml).
-
-=item t2w_stylestr
-
- $xsl_str = $mbx0->t2w_stylestr();
-
-Returns XSL stylesheet string for generation of
-token-level standoff XML (.w.xml)
-from "master" tokenized XML (.t.xml).
-
-=item t2a_stylestr
-
- $xsl_str = $mbx0->t2a_stylestr();
-
-Returns XSL stylesheet string for generation of
-token-analysis-level standoff XML (.a.xml)
-from "master" tokenized XML (.t.xml).
+Return a L<DTA::TokWrap::Processor::standoff::xsl|DTA::TokWrap::Processor::standoff::xsl>
+object which may or may not be logically equivalent to C<$so>.
 
 =item dump_t2s_stylesheet
 
- $so->dump_t2s_stylesheet($filename_or_fh);
+ undef = $so->dump_t2s_stylesheet($filename_or_fh);
 
-Dumps the generated sentence-level standoff stylesheet to $filename_or_fh.
+See L<DTA::TokWrap::Processor::standoff::xsl::dump_t2s_stylesheet()|DTA::TokWrap::Processor::standoff::xsl/item_dump_t2s_stylesheet>.
 
 =item dump_t2w_stylesheet
 
- $so->dump_t2w_stylesheet($filename_or_fh);
+ undef = $so->dump_t2w_stylesheet($filename_or_fh);
 
-Dumps the generated token-level standoff stylesheet to $filename_or_fh.
+See L<DTA::TokWrap::Processor::standoff::xsl::dump_t2w_stylesheet()|DTA::TokWrap::Processor::standoff::xsl/item_dump_t2w_stylesheet>.
 
 =item dump_t2a_stylesheet
 
- $so->dump_t2a_stylesheet($filename_or_fh);
+ undef = $so->dump_t2a_stylesheet($filename_or_fh);
 
-Dumps the generated token-analysis-level standoff stylesheet to $filename_or_fh.
+See L<DTA::TokWrap::Processor::standoff::xsl::dump_t2a_stylesheet()|DTA::TokWrap::Processor::standoff::xsl/item_dump_t2a_stylesheet>.
 
 =back
 
 =cut
 
 ##----------------------------------------------------------------
-## DESCRIPTION: DTA::TokWrap::Processor::standoff: Methods: mkbx0 (apply stylesheets)
+## DESCRIPTION: DTA::TokWrap::Processor::standoff: Methods: document processing
 =pod
 
-=head2 Methods: top-level
+=head2 Methods: document processing
 
 =over 4
 
-=item standoff
+=item soxml
 
- $doc_or_undef = $CLASS_OR_OBJECT->standoff($doc);
+ $doc_or_undef = $CLASS_OR_OBJECT->soxml($doc,$X,$xmlbase);
 
-Wrapper for L<sosxml()|/sosxml()>, L<sowxml()|/sowxml>, L<soaxml()|/soaxml>.
+Low-level generic standoff formatting method.
+Generate C<$X>-level standoff for the
+L<DTA::TokWrap::Document|DTA::TokWrap::Document> object $doc.
+
+Relevant %$doc keys:
+
+ xtokdata    => $xtokdata, ##-- (input) XML-ified tokenizer output data (string)
+ so${X}file  => $sosfile,  ##-- (output) standoff file, refers to $xml_base
+ ##
+ so${X}xml_stamp0 => $f,   ##-- (output) timestamp of operation begin
+ so${X}xml_stamp  => $f,   ##-- (output) timestamp of operation end
+ so${X}file_stamp => $f,   ##-- (output) timestamp of operation end
 
 =item sosxml
 
  $doc_or_undef = $CLASS_OR_OBJECT->sosxml($doc);
 
-Generate sentence-level standoff for the
-L<DTA::TokWrap::Document|DTA::TokWrap::Document> object $doc.
+Just a wrapper for:
 
-Relevant %$doc keys:
-
- xtokdoc  => $xtokdoc,  ##-- (input) XML-ified tokenizer output data, as XML::LibXML::Document
- xtokdata => $xtokdata, ##-- (input) fallback: string source for $xtokdoc
- sosdoc   => $sosdoc,   ##-- (output) standoff sentence data, refers to $doc->{sowfile}
- ##
- sosxml_stamp0 => $f,   ##-- (output) timestamp of operation begin
- sosxml_stamp  => $f,   ##-- (output) timestamp of operation end
- sosdoc_stamp => $f,    ##-- (output) timestamp of operation end
+ $so->soxml($doc,'s',basename($doc->{sowfile}));
 
 =item sowxml
 
  $doc_or_undef = $CLASS_OR_OBJECT->sowxml($doc);
 
-Generate token-level standoff for the
-L<DTA::TokWrap::Document|DTA::TokWrap::Document> object $doc.
+Just a wrapper for:
 
-Relevant %$doc keys:
-
- xtokdoc  => $xtokdoc,  ##-- (input) XML-ified tokenizer output data, as XML::LibXML::Document
- xtokdata => $xtokdata, ##-- (input) fallback: string source for $xtokdoc
- sowdoc   => $sowdoc,   ##-- (output) standoff token data, refers to $doc->{xmlfile}
- ##
- sowxml_stamp0 => $f,   ##-- (output) timestamp of operation begin
- sowxml_stamp  => $f,   ##-- (output) timestamp of operation end
- sowdoc_stamp => $f,    ##-- (output) timestamp of operation end
+ $so->soxml($doc,'w',$doc->{xmlbase});
 
 =item soaxml
 
  $doc_or_undef = $CLASS_OR_OBJECT->soaxml($doc);
 
-Generate token-analysis-level standoff for the
-L<DTA::TokWrap::Document|DTA::TokWrap::Document> object $doc.
+Just a wrapper for:
 
-Relevant %$doc keys:
-
- xtokdoc  => $xtokdoc,  ##-- (input) XML-ified tokenizer output data, as XML::LibXML::Document
- xtokdata => $xtokdata, ##-- (input) fallback: string source for $xtokdoc
- soadoc   => $soadoc,   ##-- (output) standoff token-analysis data, refers to $doc->{sowdoc}
- ##
- sowxml_stamp0 => $f,   ##-- (output) timestamp of operation begin
- sowxml_stamp  => $f,   ##-- (output) timestamp of operation end
- sowdoc_stamp => $f,    ##-- (output) timestamp of operation end
+ $so->soxml($doc,'a',basename($doc->{sowfile}));
 
 =back
 
@@ -705,10 +416,5 @@ Copyright (C) 2009 by Bryan Jurish
 This package is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.7 or,
 at your option, any later version of Perl 5 you may have available.
-
-=cut
-
-=cut
-
 
 =cut

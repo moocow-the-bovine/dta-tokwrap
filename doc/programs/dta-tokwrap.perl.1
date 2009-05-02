@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "DTA-TOKWRAP.PERL 1"
-.TH DTA-TOKWRAP.PERL 1 "2009-05-02" "dta-tokwrap v0.01" "DTA Tokenization Utilities"
+.TH DTA-TOKWRAP.PERL 1 "2009-05-02" "dta-tokwrap v0.02" "DTA Tokenization Utilities"
 .SH "NAME"
 dta\-tokwrap.perl \- top\-level tokenizer wrapper for DTA XML documents
 .SH "SYNOPSIS"
@@ -338,15 +338,16 @@ Any other value for \f(CW\*(C`LEVEL\*(C'\fR causes trace messages not to be logg
 Do/don't log trace messages for the trace flavor \fIX\fR,
 where \fIX\fR is one of the following:
 .Sp
-.Vb 8
-\& Open   # document object open() method
-\& Close  # document object close() method
-\& Load   # load document data file
-\& Save   # save document data file
-\& Make   # document target (re\-)making (including status\-check)
-\& Gen    # document target (re\-)generation
-\& Proc   # subprocessor operation
-\& Run    # external system command
+.Vb 9
+\& Open    # document object open() method
+\& Close   # document object close() method
+\& Proc    # document processing method calls
+\& Load    # load document data file
+\& Save    # save document data file
+\& Make    # document target (re\-)making (including status\-check)
+\& Gen     # document target (re\-)generation
+\& Subproc # low\-level subprocessor calls
+\& Run     # external system command
 .Ve
 .IP "\-traceXLevel \s-1LEVEL\s0" 4
 .IX Item "-traceXLevel LEVEL"

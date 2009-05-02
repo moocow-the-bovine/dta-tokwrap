@@ -39,6 +39,7 @@ our %docopts = (
 		#traceClose => 'trace',
 		#traceLoad   => 'trace',
 		#traceSave   => 'trace',
+		#traceProc => 'trace',
 		format => 1,
 
 		##-- DTA::TokWrap::Document::Maker options
@@ -66,11 +67,12 @@ our $traceLevel = 'trace'; ##-- trace level for '-trace' options
 our @traceOptions = (
 		     {opt=>'traceOpen',ref=>\$docopts{traceOpen},vlevel=>1},
 		     {opt=>'traceClose',ref=>\$docopts{traceClose},vlevel=>3},
+		     {opt=>'traceProc',ref=>\$docopts{traceProc},vlevel=>2},
 		     {opt=>'traceLoad',ref=>\$docopts{traceLoad},vlevel=>2},
 		     {opt=>'traceSave',ref=>\$docopts{traceSave},vlevel=>2},
 		     {opt=>'traceMake',ref=>\$docopts{traceMake},vlevel=>2},
 		     {opt=>'traceGen',ref=>\$docopts{traceGen},vlevel=>3},
-		     {opt=>'traceProc',ref=>\$twopts{procOpts}{traceLevel},vlevel=>3},
+		     {opt=>'traceSubproc',ref=>\$twopts{procOpts}{traceLevel},vlevel=>3},
 		     {opt=>'traceRun', ref=>\$DTA::TokWrap::Utils::TRACE_RUNCMD,vlevel=>3},
 		    );
 our $verbose_max = 255;
@@ -571,14 +573,15 @@ Any other value for C<LEVEL> causes trace messages not to be logged.
 Do/don't log trace messages for the trace flavor I<X>,
 where I<X> is one of the following:
 
- Open   # document object open() method
- Close  # document object close() method
- Load   # load document data file
- Save   # save document data file
- Make   # document target (re-)making (including status-check)
- Gen    # document target (re-)generation
- Proc   # subprocessor operation
- Run    # external system command
+ Open    # document object open() method
+ Close   # document object close() method
+ Proc    # document processing method calls
+ Load    # load document data file
+ Save    # save document data file
+ Make    # document target (re-)making (including status-check)
+ Gen     # document target (re-)generation
+ Subproc # low-level subprocessor calls
+ Run     # external system command
 
 =item -traceXLevel LEVEL
 

@@ -9,6 +9,11 @@
 </head>
 
 <body>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" valign="middle">
+<big><strong><span class="block">&nbsp;DTA::TokWrap::Document - DTA tokenizer wrappers: document wrapper</span></strong></big>
+</td></tr>
+</table>
 
 <p><a name="__index__"></a></p>
 <!-- INDEX BEGIN -->
@@ -98,11 +103,7 @@
  $file_or_undef = $doc-&gt;saveTxtFile();
  $file_or_undef = $doc-&gt;saveTokFile();
  $file_or_undef = $doc-&gt;saveXtokFile();
- $file_or_undef = $doc-&gt;saveSosFile();
- $file_or_undef = $doc-&gt;saveSowFile();
- $file_or_undef = $doc-&gt;saveSoaFile();
- @standoff_files= $doc-&gt;saveStandoffFiles();
- 
+  
  ##========================================================================
  ## Methods: Profiling
  
@@ -477,7 +478,6 @@ and sets both $doc&gt;{bx0file} and $doc-&gt;{bx0file_stamp}.</p>
 <p>%opts:</p>
 <pre>
  format =&gt; $level,  ##-- output format (default=$doc-E&lt;gt&gt;{format})</pre>
-<p>May implicitly call $doc-&gt;<a href="#item_mkbx0"><code>mkbx0()</code></a> (if $bx0doc and $doc-&gt;{bxdata} are both false)</p>
 </dd>
 <dt><strong><a name="item_savebxfile">saveBxFile</a></strong></dt>
 
@@ -489,7 +489,6 @@ and sets both $doc&gt;{bx0file} and $doc-&gt;{bx0file_stamp}.</p>
 <p>Saves text-block data \@blocks (default=$doc-&gt;{bxdata})
 to $filename_of_fh (default=$doc-&gt;{bxfile}),
 and sets both $doc-&gt;{bxfile} and $doc-&gt;{bxfile_stamp}.</p>
-<p>May implicitly call $doc-&gt;<a href="#item_mkbx"><code>mkbx()</code></a> (if \@blocks and $doc-&gt;{bxdata} are both false)</p>
 </dd>
 <dt><strong><a name="item_savetxtfile">saveTxtFile</a></strong></dt>
 
@@ -501,7 +500,6 @@ and sets both $doc-&gt;{bxfile} and $doc-&gt;{bxfile_stamp}.</p>
 <p>Saves serialized text extracted from \@blocks (default=$doc-&gt;{bxdata})
 to $filename_or_fh (default=$doc-&gt;{txtfile}=``$doc-&gt;{outdir}/$doc-&gt;{outbase}.txt''),
 and sets both $doc-&gt;{txtfile} and $doc-&gt;{txtfile_stamp}.</p>
-<p>may implicitly call $doc-&gt;<a href="#item_mkbx"><code>mkbx()</code></a> (if \@blocks is unspecified and $doc-&gt;{bxdata} is false)</p>
 <p>%opts:</p>
 <pre>
  debug=&gt;$bool,  ##-- if true, debugging text will be printed (and saveBxFile() offsets will be wrong)</pre>
@@ -516,7 +514,6 @@ and sets both $doc-&gt;{txtfile} and $doc-&gt;{txtfile_stamp}.</p>
 <p>Saves tokenizer output data string $tokdata (default=$doc-&gt;{tokdata})
 to $filename_or_fh (default=$doc-&gt;{tokfile}=``$doc-&gt;{outdir}/$doc-&gt;{outbase}.t''),
 and sets both $doc-&gt;{tokfile} and $doc-&gt;{tokfile_stamp}.</p>
-<p>May implicitly call $doc-&gt;<a href="#item_tokenize"><code>tokenize()</code></a> (if \$tokdata and $doc-&gt;{tokdata} are both undefined)</p>
 </dd>
 <dt><strong><a name="item_savextokfile">saveXtokFile</a></strong></dt>
 
@@ -528,62 +525,6 @@ and sets both $doc-&gt;{tokfile} and $doc-&gt;{tokfile_stamp}.</p>
 <p>Saves XML-ified master tokenizer data string $xtokdata (default=$doc-&gt;{xtokdata})
 to $filename_or_fh (default=$doc-&gt;{xtokfile}=``$doc-&gt;{outdir}/$doc-&gt;{outbase}.t.xml''),
 and sets both $doc-&gt;{xtokfile} and $doc-&gt;{xtokfile_stamp}.</p>
-</dd>
-<dt><strong><a name="item_savesosfile">saveSosFile</a></strong></dt>
-
-<dd>
-<pre>
- $file_or_undef = $doc-&gt;saveSosFile($filename_or_fh,$sosdoc,%opts);
- $file_or_undef = $doc-&gt;saveSosFile($filename_or_fh);
- $file_or_undef = $doc-&gt;saveSosFile();</pre>
-<p>Save sentence-level standoff XML document $sosdoc (default=$doc-&gt;{sosdoc})
-to $filename_or_fh (default=$doc-&gt;{sosfile}=``$doc-&gt;{outdir}/$doc-&gt;{outbase}.s.xml''),
-and sets both $doc-&gt;{sosfile} and $doc-&gt;{sosfile_stamp}.</p>
-<p>%opts:</p>
-<pre>
- format =&gt; $level, ##-- formatting level (default=$doc-E&lt;gt&gt;{format})</pre>
-<p>may implicitly call $doc-&gt;<a href="#item_sosxml"><code>sosxml()</code></a></p>
-</dd>
-<dt><strong><a name="item_savesowfile">saveSowFile</a></strong></dt>
-
-<dd>
-<pre>
- $file_or_undef = $doc-&gt;saveSowFile($filename_or_fh,$sowdoc,%opts);
- $file_or_undef = $doc-&gt;saveSowFile($filename_or_fh);
- $file_or_undef = $doc-&gt;saveSowFile();</pre>
-<p>Save token-level standoff XML document $sowdoc (default=$doc-&gt;{sowdoc})
-to $filename_or_fh (default=$doc-&gt;{sowfile}=``$doc-&gt;{outdir}/$doc-&gt;{outbase}.w.xml''),
-and sets both $doc-&gt;{sowfile} and $doc-&gt;{sowfile_stamp}.</p>
-<p>%opts:</p>
-<pre>
- format =&gt; $level, ##-- formatting level (default=$doc-E&lt;gt&gt;{format})</pre>
-<p>may implicitly call $doc-&gt;<a href="#item_sowxml"><code>sowxml()</code></a></p>
-</dd>
-<dt><strong><a name="item_savesoafile">saveSoaFile</a></strong></dt>
-
-<dd>
-<pre>
- $file_or_undef = $doc-&gt;saveSoaFile($filename_or_fh,$soadoc,%opts);
- $file_or_undef = $doc-&gt;saveSoaFile($filename_or_fh);
- $file_or_undef = $doc-&gt;saveSoaFile();</pre>
-<p>Save token-analysis-level standoff XML document $soadoc (default=$doc-&gt;{soadoc})
-to $filename_or_fh (default=$doc-&gt;{soafile}=``$doc-&gt;{outdir}/$doc-&gt;{outbase}.a.xml''),
-and sets both $doc-&gt;{soafile} and $doc-&gt;{soafile_stamp}.</p>
-<p>%opts:</p>
-<pre>
- format =&gt; $level, ##-- formatting level (default=$doc-E&lt;gt&gt;{format})</pre>
-<p>may implicitly call $doc-&gt;<a href="#item_soaxml"><code>soaxml()</code></a></p>
-</dd>
-<dt><strong><a name="item_savestandofffiles">saveStandoffFiles</a></strong></dt>
-
-<dd>
-<pre>
- ($sosfile,$sowfile,$soafile) = $doc-&gt;saveStandoffFiles(%opts); ##-- array context;
- [$sosfile,$sowfile,$soafile] = $doc-&gt;saveStandoffFiles(%opts); ##-- scalar context</pre>
-<p>Alias for
-<a href="#item_savesosfile">saveSosFile()</a>,
-<a href="#item_savesowfile">saveSowFile()</a>
-<a href="#item_savesoafile">saveSoaFile()</a>.</p>
 </dd>
 </dl>
 <p>
@@ -630,6 +571,11 @@ and sets both $doc-&gt;{soafile} and $doc-&gt;{soafile_stamp}.</p>
 it under the same terms as Perl itself, either Perl version 5.8.7 or,
 at your option, any later version of Perl 5 you may have available.</p>
 <p><a href="#__index__"><small>(Back to Top)</small></a></p>
+<table border="0" width="100%" cellspacing="0" cellpadding="3">
+<tr><td class="block" valign="middle">
+<big><strong><span class="block">&nbsp;DTA::TokWrap::Document - DTA tokenizer wrappers: document wrapper</span></strong></big>
+</td></tr>
+</table>
 
 </body>
 

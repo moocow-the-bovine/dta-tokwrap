@@ -15,6 +15,7 @@ use DTA::TokWrap::Processor::tokenize;
 use DTA::TokWrap::Processor::tokenize::dummy;
 use DTA::TokWrap::Processor::tok2xml;
 use DTA::TokWrap::Processor::standoff;
+#use DTA::TokWrap::Processor::standoff::xsl;
 
 use File::Basename qw(basename dirname);
 use IO::File;
@@ -64,6 +65,7 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    ##-- pseudo-make options
 ##    traceMake => $level,  ##-- log-level for makeKey() trace (e.g. 'debug'; default=undef (none))
 ##    traceGen  => $level,  ##-- log-level for genKey() trace (e.g. 'trace'; default=undef (none))
+##    traceProc => $level,  ##-- log-levle for document-called processor calls (default=none)
 ##    traceLoad => $level,  ##-- log-level for load* trace (default=none)
 ##    traceSave => $level,  ##-- log-level for save* trace (default=none)
 ##    genDummy  => $bool,   ##-- if true, generator will not actually run (a la `make -n`)
@@ -102,16 +104,12 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    ##-- tokenizer xml data (see DTA::TokWrap::Processor::tok2xml)
 ##    xtokdata => $xtokdata,  ##-- XML-ified tokenizer output data
 ##    xtokfile => $xtokfile,  ##-- XML-ified tokenizer output file (default="$outdir/$outbase.t.xml")
-##    xtokdoc  => $xtokdoc,   ##-- XML::LibXML::Document for $xtokdata (parsed from string)
+##    #xtokdoc  => $xtokdoc,   ##-- XML::LibXML::Document for $xtokdata (parsed from string)
 ##
 ##    ##-- standoff xml data (see DTA::TokWrap::Processor::standoff)
-##    sosdoc  => $sosdata,   ##-- XML::LibXML::Document: sentence standoff data
-##    sowdoc  => $sowdata,   ##-- XML::LibXML::Document: token standoff data
-##    soadoc  => $soadata,   ##-- XML::LibXML::Document: analysis standoff data
-##    ##
-##    sosfile => $sosfile,   ##-- filename for $sosdoc (default="$outdir/$outbase.s.xml")
-##    sowfile => $sowfile,   ##-- filename for $sowdoc (default="$outdir/$outbase.w.xml")
-##    soafile => $soafile,   ##-- filename for $soadoc (default="$outdir/$outbase.a.xml")
+##    sosfile => $sosfile,   ##-- sentence standoff file (default="$outdir/$outbase.s.xml")
+##    sowfile => $sowfile,   ##-- token standoff file (default="$outdir/$outbase.w.xml")
+##    soafile => $soafile,   ##-- token-analysis standoff file (default="$outdir/$outbase.a.xml")
 ##   )
 sub new {
   my ($that,%opts) = @_;
@@ -134,16 +132,19 @@ sub defaults {
 	  xmlbase => undef,
 
 	  ##-- pseudo-make options
-	  #traceMake => 'trace',
-	  #traceGen => 'trace',
 	  #genDummy => 0,
 
-	  ##-- generator data (optional)
-	  #tw => undef,
+	  ##-- trace options
 	  #traceOpen => 'trace',
 	  #traceClose => 'trace',
 	  #traceLoad=>'trace',
 	  #traceSave=>'trace',
+	  #traceProc => 'trace',
+	  #traceMake => 'trace',
+	  #traceGen => 'trace',
+
+	  ##-- generator data (optional)
+	  #tw => undef,
 
 	  ##-- generated data (common)
 	  outdir => '.',
@@ -176,9 +177,9 @@ sub defaults {
 	  xtokfile => undef,
 
 	  ##-- standoff data
-	  sosdoc => undef,
-	  sowdoc => undef,
-	  soadoc => undef,
+	  #sosdoc => undef,
+	  #sowdoc => undef,
+	  #soadoc => undef,
 	  ##
 	  sosfile => undef,
 	  sowfile => undef,
@@ -376,18 +377,20 @@ BEGIN {
      (map {$_=>[qw(tokenize saveTokFile)]} qw(mktok tokenize tok t tt)),
      (map {$_=>[qw(loadTokFile loadBxFile loadCxFile tok2xml saveXtokFile)]} qw(mktxml tok2xml xtok txml ttxml tokxml)),
      (map {
-       $spec = ["loadXtokFile","xtokDoc","so${_}xml","saveSo${_}File"];
+       #$spec = ["loadXtokFile","xtokDoc","so${_}xml","saveSo${_}File"];
+       $spec = ["loadXtokFile","so${_}xml"];
        map {$_=>$spec} ("mk${_}xml", "mkso${_}", "so${_}xml","so${_}file","${_}xml")
      } ('s','w','a')),
 
-     (map {$_=>[qw(loadXtokFile xtokDoc standoff saveStandoffFiles)]} qw(mkstandoff standoff so mkso)),
+     #(map {$_=>[qw(loadXtokFile xtokDoc standoff saveStandoffFiles)]} qw(mkstandoff standoff so mkso)),
+     (map {$_=>[qw(loadXtokFile standoff)]} qw(mkstandoff standoff so mkso)),
 
      all => [qw(mkindex),
 	     qw(mkbx0 saveBx0File),
 	     qw(mkbx saveBxFile saveTxtFile),
 	     qw(tokenize saveTokFile),
 	     qw(loadCxFile tok2xml saveXtokFile),
-	     qw(standoff saveStandoffFiles),
+	     qw(standoff),
 	    ],
     );
 }
@@ -450,6 +453,7 @@ sub makeKey {
 ## $doc_or_undef = $doc->mkindex()
 ##  + see DTA::TokWrap::Processor::mkindex::mkindex()
 sub mkindex {
+  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: mkindex()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{mkindex}) || 'DTA::TokWrap::Processor::mkindex')->mkindex($_[0]);
 }
 
@@ -457,6 +461,7 @@ sub mkindex {
 ## $doc_or_undef = $doc->mkbx0()
 ##  + see DTA::TokWrap::Processor::mkbx0::mkbx0()
 sub mkbx0 {
+  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: mkbx0()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{mkbx0}) || 'DTA::TokWrap::Processor::mkbx0')->mkbx0($_[0]);
 }
 
@@ -464,6 +469,7 @@ sub mkbx0 {
 ## $doc_or_undef = $doc->mkbx()
 ##  + see DTA::TokWrap::Processor::mkbx::mkbx()
 sub mkbx {
+  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: mkbx()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{mkbx}) || 'DTA::TokWrap::Processor::mkbx')->mkbx($_[0]);
 }
 
@@ -472,6 +478,7 @@ sub mkbx {
 ##  + see DTA::TokWrap::Processor::tokenize::tokenize()
 ##  + default tokenizer class is given by package-global $TOKENIZE_CLASS
 sub tokenize {
+  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: tokenize()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tokenize}) || $TOKENIZE_CLASS)->tokenize($_[0]);
 }
 
@@ -479,6 +486,7 @@ sub tokenize {
 ## $doc_or_undef = $doc->tok2xml()
 ##  + see DTA::TokWrap::Processor::tok2xml::tok2xml()
 sub tok2xml {
+  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: tok2xml()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tok2xml}) || 'DTA::TokWrap::Processor::tok2xml')->tok2xml($_[0]);
 }
 
@@ -486,6 +494,7 @@ sub tok2xml {
 ## $doc_or_undef = $doc->sosxml()
 ##  + see DTA::TokWrap::Processor::standoff::sosxml()
 sub sosxml {
+  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: sosxml()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::Processor::standoff')->sosxml($_[0]);
 }
 
@@ -493,6 +502,7 @@ sub sosxml {
 ## $doc_or_undef = $doc->sowxml()
 ##  + see DTA::TokWrap::Processor::standoff::sowxml()
 sub sowxml {
+  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: sowxml()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::Processor::standoff')->sowxml($_[0]);
 }
 
@@ -500,6 +510,7 @@ sub sowxml {
 ## $doc_or_undef = $doc->soaxml()
 ##  + see DTA::TokWrap::Processor::standoff::soaxml()
 sub soaxml {
+  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: soaxml()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::Processor::standoff')->soaxml($_[0]);
 }
 
@@ -508,6 +519,7 @@ sub soaxml {
 ##  + wrapper for sosxml(), sowxml(), soaxml()
 ##  + see DTA::TokWrap::Processor::standoff::standoff()
 sub standoff {
+  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: standoff()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::Processor::standoff')->standoff($_[0]);
 }
 
@@ -630,7 +642,7 @@ sub loadTokFile {
 ## \$xtokdata_or_undef = $doc->loadXtokFile($filename_or_fh)
 ## \$xtokdata_or_undef = $doc->loadXtokFile()
 ##  + loads $doc->{xtokdata} from $filename_or_fh (default=$doc->{xtokfile})
-##  + see also $doc->xtokDoc()
+##  + see also $doc->xtokDoc() [which should be obsolete]
 sub loadXtokFile {
   my ($doc,$file) = @_;
 
@@ -649,7 +661,7 @@ sub loadXtokFile {
 ## $xtokDoc = $doc->xtokDoc(\$xtokdata)
 ## $xtokDoc = $doc->xtokDoc()
 ##  + parse \$xtokdata (default: \$doc->{xtokdata}) string into $doc->{xtokdoc}
-##  + may call $doc->tok2xml()
+##  + should be obsolete
 sub xtokDoc {
   my ($doc,$xtdatar) = @_;
 
@@ -681,7 +693,6 @@ sub xtokDoc {
 ##  + $bx0doc defaults to $doc->{bx0doc}
 ##  + $filename_or_fh defaults to $doc->{bx0file}="$doc->{outdir}/$doc->{outbase}.bx0"
 ##  + sets $doc->{bx0file} if a filename is passed or defaulted
-##  + may implicitly call $doc->mkbx0() (if $bx0doc and $doc->{bxdata} are both false)
 ##  + sets $doc->{bx0file_stamp}
 sub saveBx0File {
   my ($doc,$file,$bx0doc,%opts) = @_;
@@ -713,18 +724,13 @@ sub saveBx0File {
 ## $file_or_undef = $doc->saveBxFile()
 ##  + \@blocks defaults to $doc->{bxdata}
 ##  + $filename_or_fh defaults to $doc->{bxfile}="$doc->{outdir}/$doc->{outbase}.bx"
-##  + may implicitly call $doc->mkbx() (if \@blocks and $doc->{bxdata} are both false)
 ##  + sets $doc->{bxfile_stamp}
 sub saveBxFile {
   my ($doc,$file,$bxdata) = @_;
 
   ##-- get bxdata
   $bxdata = $doc->{bxdata} if (!$bxdata);
-  if (!$bxdata) {
-    $doc->mkbx()
-      or $doc->logconfess("saveBxFile(): mkbx() failed for document '$doc->{xmlfile}': $!");
-    $bxdata = $doc->{bxdata};
-  }
+  $doc->logconfess("$doc->{xmlbase}: saveBxFile(): no bxdata defined") if (!$bxdata);
 
   ##-- get file
   $file = $doc->{bxfile} if (!defined($file));
@@ -755,7 +761,6 @@ sub saveBxFile {
 ##      debug=>$bool,  ##-- if true, debugging text will be printed (and saveBxFile() offsets will be wrong)
 ##  + $filename_or_fh defaults to $doc->{txtfile}="$doc->{outdir}/$doc->{outbase}.txt"
 ##  + \@blocks defaults to $doc->{bxdata}
-##  + may implicitly call $doc->mkbx() (if \@blocks is unspecified and $doc->{bxdata} is false)
 ##  + sets $doc->{txtfile_stamp}
 sub saveTxtFile {
   my ($doc,$file,$bxdata,%opts) = @_;
@@ -765,11 +770,7 @@ sub saveTxtFile {
 
   ##-- get bxdata
   $bxdata = $doc->{bxdata} if (!$bxdata);
-  if (!$bxdata) {
-    $doc->mkbx()
-      or $doc->confess("saveTxtFile(): mkbx() failed for document '$doc->{xmlfile}': $!");
-    $bxdata = $doc->{bxdata};
-  }
+  $doc->logconfess("$doc->{xmlbase}: saveBxFile(): no bxdata defined") if (!$bxdata);
 
   ##-- get file
   $file = $doc->{txtfile} if (!defined($file));
@@ -800,18 +801,13 @@ sub saveTxtFile {
 ## $file_or_undef = $doc->saveTokFile()
 ##  + $filename_or_fh defaults to $doc->{tokfile}="$doc->{outdir}/$doc->{outbase}.t"
 ##  + \$tokdata defaults to \$doc->{tokdata}
-##  + may implicitly call $doc->tokenize() (if \$tokdata and $doc->{tokdata} are both undefined)
 ##  + sets $doc->{tokfile_stamp}
 sub saveTokFile {
   my ($doc,$file,$tokdatar) = @_;
 
   ##-- get data
   $tokdatar = \$doc->{tokdata} if (!$tokdatar);
-  if (!$tokdatar || !defined($$tokdatar)) {
-    $doc->tokenize()
-      or $doc->logconfess("saveTokFile(): tokenize() failed for document '$doc->{xmlfile}': $!");
-    $tokdatar = \$doc->{tokdata};
-  }
+  $doc->logconfess("$doc->{xmlbase}: saveTokFile(): no 'tokdata' defined") if (!$tokdatar || !defined($$tokdatar));
 
   ##-- get file
   $file = $doc->{tokfile} if (!defined($file));
@@ -836,18 +832,13 @@ sub saveTokFile {
 ##    format => $level, ##-- formatting level (default=$doc->{format})
 ##  + $filename_or_fh defaults to $doc->{xtokfile}="$doc->{outdir}/$doc->{outbase}.t.xml"
 ##  + \$xtokdata defaults to \$doc->{xtokdata}
-##  + may implicitly call $doc->tok2xml() (if \$xtokdata and $doc->{xtokdata} are both undefined)
 ##  + sets $doc->{xtokfile_stamp}
 sub saveXtokFile {
   my ($doc,$file,$xtdatar,%opts) = @_;
 
   ##-- get data
   $xtdatar = \$doc->{xtokdata} if (!$xtdatar);
-  if (!$xtdatar || !defined($$xtdatar)) {
-    $doc->tok2xml()
-      or $doc->logconfess("saveXtokFile(): tok2xml() failed for document '$doc->{xmlfile}': $!");
-    $xtdatar = \$doc->{xtokdata};
-  }
+  $doc->logconfess("$doc->{xmlbase}: saveXtokFile(): no 'xtokdata' defined") if (!$xtdatar || !defined($$xtdatar));
 
   ##-- get file
   $file = $doc->{xtokfile} if (!defined($file));
@@ -869,134 +860,6 @@ sub saveXtokFile {
 
   $doc->{xtokfile_stamp} = timestamp(); ##-- stamp
   return $file;
-}
-
-## $file_or_undef = $doc->saveSosFile($filename_or_fh,$sosdoc,%opts)
-## $file_or_undef = $doc->saveSosFile($filename_or_fh)
-## $file_or_undef = $doc->saveSosFile()
-##  + %opts:
-##    format => $level, ##-- formatting level (default=$doc->{format})
-##  + $filename_or_fh defaults to $doc->{sosfile}="$doc->{outdir}/$doc->{outbase}.s.xml"
-##  + $sosdoc defaults to $doc->{sosdoc}
-##  + may implicitly call $doc->sosxml() (if $sosdoc and $doc->{sosdoc} are both undefined)
-##  + sets $doc->{sosfile_stamp}
-sub saveSosFile {
-  my ($doc,$file,$sosdoc,%opts) = @_;
-
-  ##-- get data
-  $sosdoc = $doc->{sosdoc} if (!$sosdoc);
-  if (!$sosdoc) {
-    $doc->sosxml()
-      or $doc->logconfess("saveSosFile(): sosxml() failed for document '$doc->{xmlfile}': $!");
-    $sosdoc = $doc->{sosdoc};
-  }
-
-  ##-- get file
-  $file = $doc->{sosfile} if (!defined($file));
-  $file = "$doc->{outdir}/$doc->{outbase}.s.xml" if (!defined($file));
-  $doc->{sosfile} = $file if (!ref($file));
-  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveSosFile($file)") if ($doc->{traceSave});
-
-  ##-- dump
-  my $format = (exists($opts{format}) ? $opts{format} : $doc->{format})||0;
-  if (ref($file)) {
-    $sosdoc->toFH($file, $format);
-  } else {
-    $sosdoc->toFile($file, $format);
-  }
-
-  $doc->{sosfile_stamp} = timestamp(); ##-- stamp
-  return $file;
-}
-
-## $file_or_undef = $doc->saveSowFile($filename_or_fh,$sowdoc,%opts)
-## $file_or_undef = $doc->saveSowFile($filename_or_fh)
-## $file_or_undef = $doc->saveSowFile()
-##  + %opts:
-##    format => $level, ##-- formatting level
-##  + $filename_or_fh defaults to $doc->{sowfile}="$doc->{outdir}/$doc->{outbase}.s.xml"
-##  + $sowdoc defaults to $doc->{sowdoc}
-##  + may implicitly call $doc->sowxml() (if $sowdoc and $doc->{sowdoc} are both undefined)
-##  + sets $doc->{sowfile_stamp}
-sub saveSowFile {
-  my ($doc,$file,$sowdoc,%opts) = @_;
-
-  ##-- get data
-  $sowdoc = $doc->{sowdoc} if (!$sowdoc);
-  if (!$sowdoc) {
-    $doc->sowxml()
-      or $doc->logconfess("saveSowFile(): sowxml() failed for document '$doc->{xmlfile}': $!");
-    $sowdoc = $doc->{sowdoc};
-  }
-
-  ##-- get file
-  $file = $doc->{sowfile} if (!defined($file));
-  $file = "$doc->{outdir}/$doc->{outbase}.s.xml" if (!defined($file));
-  $doc->{sowfile} = $file if (!ref($file));
-  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveSowFile($file)") if ($doc->{traceSave});
-
-  ##-- dump
-  my $format = (exists($opts{format}) ? $opts{format} : $doc->{format})||0;
-  if (ref($file)) {
-    $sowdoc->toFH($file, $format);
-  } else {
-    $sowdoc->toFile($file, $format);
-  }
-
-  $doc->{sowfile_stamp} = timestamp(); ##-- stamp
-  return $file;
-}
-
-## $file_or_undef = $doc->saveSoaFile($filename_or_fh,$soadoc,%opts)
-## $file_or_undef = $doc->saveSoaFile($filename_or_fh)
-## $file_or_undef = $doc->saveSoaFile()
-##  + %opts:
-##    format => $level, ##-- formatting level
-##  + $filename_or_fh defaults to $doc->{soafile}="$doc->{outdir}/$doc->{outbase}.s.xml"
-##  + $soadoc defaults to $doc->{soadoc}
-##  + may implicitly call $doc->soaxml() (if $soadoc and $doc->{soadoc} are both undefined)
-##  + sets $doc->{soafile_stamp}
-sub saveSoaFile {
-  my ($doc,$file,$soadoc,%opts) = @_;
-
-  ##-- get data
-  $soadoc = $doc->{soadoc} if (!$soadoc);
-  if (!$soadoc) {
-    $doc->soaxml()
-      or $doc->logconfess("$doc->{xmlbase}: saveSoaFile(): soaxml() failed for document '$doc->{xmlfile}': $!");
-    $soadoc = $doc->{soadoc};
-  }
-
-  ##-- get file
-  $file = $doc->{soafile} if (!defined($file));
-  $file = "$doc->{outdir}/$doc->{outbase}.s.xml" if (!defined($file));
-  $doc->{soafile} = $file if (!ref($file));
-  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveSoaFile($file)") if ($doc->{traceSave});
-
-  my $format = (exists($opts{format}) ? $opts{format} : $doc->{format})||0;
-  if (ref($file)) {
-    $soadoc->toFH($file, $format);
-  } else {
-    $soadoc->toFile($file, $format);
-  }
-
-  $doc->{soafile_stamp} = timestamp(); ##-- stamp
-  return $file;
-}
-
-## ($sosfile,$sowfile,$soafile) = $doc->saveStandoffFiles(%opts); ##-- array context
-## [$sosfile,$sowfile,$soafile] = $doc->saveStandoffFiles(%opts); ##-- scalar context
-##  + uses default files
-##  + %opts:
-##     format => $level,
-sub saveStandoffFiles {
-  my ($doc,%opts) = @_;
-  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveStandoffFiles()") if ($doc->{traceSave});
-  $doc->saveSosFile(undef,undef,%opts);
-  $doc->saveSowFile(undef,undef,%opts);
-  $doc->saveSoaFile(undef,undef,%opts);
-  my @files = @$doc{qw(sosfile sowfile soafile)};
-  return wantarray ? @files : \@files;
 }
 
 ##==============================================================================
@@ -1084,17 +947,14 @@ DTA::TokWrap::Document - DTA tokenizer wrappers: document wrapper
  $file_or_undef = $doc->saveTxtFile();
  $file_or_undef = $doc->saveTokFile();
  $file_or_undef = $doc->saveXtokFile();
- $file_or_undef = $doc->saveSosFile();
- $file_or_undef = $doc->saveSowFile();
- $file_or_undef = $doc->saveSoaFile();
- @standoff_files= $doc->saveStandoffFiles();
- 
+  
  ##========================================================================
  ## Methods: Profiling
  
  $ntoks_or_undef = $doc->nTokens();
  $nxbytes_or_undef = $doc->nXmlBytes();
  
+
 
 =cut
 
@@ -1502,8 +1362,6 @@ and sets both $docE<gt>{bx0file} and $doc-E<gt>{bx0file_stamp}.
 
  format => $level,  ##-- output format (default=$doc-E<gt>{format})
 
-May implicitly call $doc-E<gt>mkbx0() (if $bx0doc and $doc-E<gt>{bxdata} are both false)
-
 =item saveBxFile
 
  $file_or_undef = $doc->saveBxFile($filename_or_fh,\@blocks);
@@ -1514,8 +1372,6 @@ Saves text-block data \@blocks (default=$doc-E<gt>{bxdata})
 to $filename_of_fh (default=$doc-E<gt>{bxfile}),
 and sets both $doc-E<gt>{bxfile} and $doc-E<gt>{bxfile_stamp}.
 
-May implicitly call $doc-E<gt>mkbx() (if \@blocks and $doc-E<gt>{bxdata} are both false)
-
 =item saveTxtFile
 
  $file_or_undef = $doc->saveTxtFile($filename_or_fh,\@blocks,%opts);
@@ -1525,8 +1381,6 @@ May implicitly call $doc-E<gt>mkbx() (if \@blocks and $doc-E<gt>{bxdata} are bot
 Saves serialized text extracted from \@blocks (default=$doc-E<gt>{bxdata})
 to $filename_or_fh (default=$doc-E<gt>{txtfile}="$doc-E<gt>{outdir}/$doc-E<gt>{outbase}.txt"),
 and sets both $doc-E<gt>{txtfile} and $doc-E<gt>{txtfile_stamp}.
-
-may implicitly call $doc-E<gt>mkbx() (if \@blocks is unspecified and $doc-E<gt>{bxdata} is false)
 
 %opts:
 
@@ -1543,8 +1397,6 @@ Saves tokenizer output data string $tokdata (default=$doc-E<gt>{tokdata})
 to $filename_or_fh (default=$doc-E<gt>{tokfile}="$doc-E<gt>{outdir}/$doc-E<gt>{outbase}.t"),
 and sets both $doc-E<gt>{tokfile} and $doc-E<gt>{tokfile_stamp}.
 
-May implicitly call $doc-E<gt>tokenize() (if \$tokdata and $doc-E<gt>{tokdata} are both undefined)
-
 =item saveXtokFile
 
  $file_or_undef = $doc->saveXtokFile($filename_or_fh,\$xtokdata,%opts);
@@ -1554,64 +1406,6 @@ May implicitly call $doc-E<gt>tokenize() (if \$tokdata and $doc-E<gt>{tokdata} a
 Saves XML-ified master tokenizer data string $xtokdata (default=$doc-E<gt>{xtokdata})
 to $filename_or_fh (default=$doc-E<gt>{xtokfile}="$doc-E<gt>{outdir}/$doc-E<gt>{outbase}.t.xml"),
 and sets both $doc-E<gt>{xtokfile} and $doc-E<gt>{xtokfile_stamp}.
-
-=item saveSosFile
-
- $file_or_undef = $doc->saveSosFile($filename_or_fh,$sosdoc,%opts);
- $file_or_undef = $doc->saveSosFile($filename_or_fh);
- $file_or_undef = $doc->saveSosFile();
-
-Save sentence-level standoff XML document $sosdoc (default=$doc-E<gt>{sosdoc})
-to $filename_or_fh (default=$doc-E<gt>{sosfile}="$doc-E<gt>{outdir}/$doc-E<gt>{outbase}.s.xml"),
-and sets both $doc-E<gt>{sosfile} and $doc-E<gt>{sosfile_stamp}.
-
-%opts:
-
- format => $level, ##-- formatting level (default=$doc-E<gt>{format})
-
-may implicitly call $doc-E<gt>sosxml()
-
-=item saveSowFile
-
- $file_or_undef = $doc->saveSowFile($filename_or_fh,$sowdoc,%opts);
- $file_or_undef = $doc->saveSowFile($filename_or_fh);
- $file_or_undef = $doc->saveSowFile();
-
-Save token-level standoff XML document $sowdoc (default=$doc-E<gt>{sowdoc})
-to $filename_or_fh (default=$doc-E<gt>{sowfile}="$doc-E<gt>{outdir}/$doc-E<gt>{outbase}.w.xml"),
-and sets both $doc-E<gt>{sowfile} and $doc-E<gt>{sowfile_stamp}.
-
-%opts:
-
- format => $level, ##-- formatting level (default=$doc-E<gt>{format})
-
-may implicitly call $doc-E<gt>sowxml()
-
-=item saveSoaFile
-
- $file_or_undef = $doc->saveSoaFile($filename_or_fh,$soadoc,%opts);
- $file_or_undef = $doc->saveSoaFile($filename_or_fh);
- $file_or_undef = $doc->saveSoaFile();
-
-Save token-analysis-level standoff XML document $soadoc (default=$doc-E<gt>{soadoc})
-to $filename_or_fh (default=$doc-E<gt>{soafile}="$doc-E<gt>{outdir}/$doc-E<gt>{outbase}.a.xml"),
-and sets both $doc-E<gt>{soafile} and $doc-E<gt>{soafile_stamp}.
-
-%opts:
-
- format => $level, ##-- formatting level (default=$doc-E<gt>{format})
-
-may implicitly call $doc-E<gt>soaxml()
-
-=item saveStandoffFiles
-
- ($sosfile,$sowfile,$soafile) = $doc->saveStandoffFiles(%opts); ##-- array context;
- [$sosfile,$sowfile,$soafile] = $doc->saveStandoffFiles(%opts); ##-- scalar context
-
-Alias for
-L<saveSosFile()|/saveSosFile>,
-L<saveSowFile()|/saveSowFile>
-L<saveSoaFile()|/saveSoaFile>.
 
 =back
 
