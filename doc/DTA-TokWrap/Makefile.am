@@ -26,6 +26,7 @@ ALL_LOCAL_DEPS =
 CLEAN_LOCAL_DEPS =
 PKGDOC_DIRS =
 DIST_HOOK_DEPS =
+EXTRA_DIST =
 
 all-local: $(ALL_LOCAL_DEPS)
 clean-local: $(CLEAN_LOCAL_DEPS)
@@ -35,30 +36,45 @@ clean-local: $(CLEAN_LOCAL_DEPS)
 
 POD_DIR ?= pod
 
-pod: pod.stamp
+pod: pod-index
+#pod.stamp
 
-#if HAVE_PODSELECT
+if HAVE_PODSELECT
 pod.stamp: $(PMDEPS)
 	$(MAKE) -C $(PMSRC) INST_PODDIR=$(PWD)/$(POD_DIR) podifypods
 	touch $@
 
-pod-dist: pod.stamp
+pod-dist: pod.stamp pod-index
 	$(mkdir_p) $(distdir)/$(POD_DIR)
 	for f in $(POD_DIR)/*.pod ; do \
 	  cp -p $$f $(distdir)/$(POD_DIR) ;\
 	done
 
-CLEAN_LOCAL_DEPS += no-pod
+index.pod: make-pod-index.perl pod.stamp
+	$(PERL) $< $(filter-out $(POD_DIR)/index.pod,$(wildcard $(POD_DIR)/*.pod)) > $@
 
-#else
-#pod.stamp:
-#	$(mkdir_p) $(POD_DIR)
+CLEAN_LOCAL_DEPS += no-pod
+else
+pod.stamp:
+	$(mkdir_p) $(POD_DIR)
+	touch $@
+pod-dist: pod.stamp
+	@:
+#index.pod:
 #	touch $@
-#endif
+endif
+
+pod-index: $(POD_DIR)/index.pod
+$(POD_DIR)/index.pod: index.pod
+	$(mkdir_p) $(POD_DIR)
+	cp $< $@
+
+EXTRA_DIST += make-pod-index.perl index.pod
 
 no-pod:
 	rm -f pod.stamp
-	rm -f $(POD_DIR)/*.pod || true
+	rm -f index.pod
+	rm -f $(POD_DIR)/*.pod $(POD_DIR)/.exists || true
 	test -d $(POD_DIR) && rmdir $(POD_DIR) || true
 
 #if DOC_WANT_POD
@@ -66,6 +82,9 @@ no-pod:
 #PKGDOC_DIRS += $(POD_DIR)
 #DIST_HOOK_DEPS += pod-dist
 #endif
+
+
+
 
 ##-----------------------------------------------------------------------
 ## text
@@ -75,15 +94,18 @@ TXT_DIR ?= txt
 txt: txt.stamp
 
 if HAVE_POD2TEXT
-txt.stamp: $(PMDEPS)
+txt.stamp: $(PMDEPS) txt-index
 	$(MAKE) -C $(PMSRC) INST_TEXTDIR=$(PWD)/$(TXT_DIR) textifypods
 	touch $@
 
-txt-dist: txt.stamp
+txt-dist: txt.stamp txt-index
 	$(mkdir_p) $(distdir)/$(TXT_DIR)
 	for f in $(TXT_DIR)/*.txt ; do \
 	  cp -p $$f $(distdir)/$(TXT_DIR) ;\
 	done
+
+index.txt: index.pod
+	$(POD2TEXT) $< $@
 
 CLEAN_LOCAL_DEPS += no-txt
 else
@@ -92,17 +114,26 @@ txt.stamp:
 	touch $@
 txt-dist: txt.stamp
 	@:
+index.txt: index.pod
+	cp $< $@
 endif
 
+txt-index: $(TXT_DIR)/index.txt
+$(TXT_DIR)/index.txt: index.txt
+	$(mkdir_p) $(TXT_DIR)
+	cp $< $@
+
 no-txt:
-	rm -f txt.stamp
-	rm -f $(TXT_DIR)/*.txt || true
+	rm -f txt.stamp index.txt
+	rm -f $(TXT_DIR)/*.txt $(TXT_DIR)/.exists || true
 	test -d $(TXT_DIR) && rmdir $(TXT_DIR) || true
+
 
 if DOC_WANT_TXT
 ALL_LOCAL_DEPS += txt.stamp
 PKGDOC_DIRS += $(TXT_DIR)
 DIST_HOOK_DEPS += txt-dist
+EXTRA_DIST += index.txt
 endif
 
 ##-----------------------------------------------------------------------
@@ -123,7 +154,7 @@ CLEAN_LOCAL_DEPS += no-html-css
 html: html.stamp css
 
 if HAVE_POD2HTML
-html.stamp: $(PMDEPS)
+html.stamp: $(PMDEPS) html-index
 	$(MAKE) -C $(PMSRC) INST_HTMLDIR=$(PWD)/$(HTML_DIR) INST_CSS=$(CSS) htmlifypods
 	touch $@
 
@@ -132,6 +163,13 @@ html-dist: html.stamp
 	for f in $(HTML_DIR)/*.html ; do \
 	  cp -p $$f $(distdir)/$(HTML_DIR) ;\
 	done
+
+index.html: index.pod
+	$(POD2HTML) --css=$(CSS) --podroot=$(POD_DIR) --podpath=. --infile=$< \
+	| $(PERL) -p \
+	   -e'sub hackhref {($$href=shift)=~s|^[/\.]*||; $$href=~s|/|.|g; $$href;}' \
+	   -e's/<a href="([^"]*)/'\''<a href="'\''.hackhref($$1)/eg;' \
+	 > $@ || (rm -f $@; false)
 
 CLEAN_LOCAL_DEPS += no-html
 else
@@ -142,15 +180,21 @@ html-dist: html.stamp
 	@:
 endif
 
+html-index: $(HTML_DIR)/index.html
+$(HTML_DIR)/index.html: index.html
+	$(mkdir_p) $(HTML_DIR)
+	cp $< $@
+
 no-html:
-	rm -f html.stamp
-	rm -f $(HTML_DIR)/*.html || true
+	rm -f html.stamp index.html
+	rm -f $(HTML_DIR)/*.html $(HTML_DIR)/.exists || true
 	test -d $(HTML_DIR) && rmdir $(HTML_DIR) || true
 
 if DOC_WANT_HTML
 ALL_LOCAL_DEPS += html
 PKGDOC_DIRS += $(HTML_DIR)
 DIST_HOOK_DEPS += html-dist
+EXTRA_DIST += index.html
 endif
 
 ##-----------------------------------------------------------------------

@@ -341,10 +341,14 @@ if test "$doc_formats" != "none" ; then
 
   ##-- docs:pod2x
   ##
+  AC_ARG_VAR(PODSELECT, [Path to perl 'podselect' script; "no" for none])
   AC_ARG_VAR(POD2TEXT, [Path to perl 'pod2text' script; "no" for none])
   AC_ARG_VAR(POD2MAN,  [Path to perl 'pod2man' script; "no" for none])
   AC_ARG_VAR(POD2HTML, [Path to perl 'pod2html' script; "no" for none])
   AC_ARG_VAR(POD2LATEX,[Path to perl 'pod2latex' script; "no" for none])
+  if test -z "$PODSELECT" ; then
+     AC_PATH_PROG(PODSELECT,podselect,[no])
+  fi
   if test -z "$POD2TEXT" ; then
      AC_PATH_PROG(POD2TEXT,pod2text,[no])
   fi
@@ -362,12 +366,14 @@ if test "$doc_formats" != "none" ; then
 fi; # if test "$doc_formats" != "none" ...
 
 ##-- programs: pod2x
+AC_SUBST(PODSELECT)
 AC_SUBST(POD2TEXT)
 AC_SUBST(POD2MAN)
 AC_SUBST(POD2HTML)
 AC_SUBST(POD2LATEX)
 
 ##-- automake conditionals: pod2x
+AM_CONDITIONAL(HAVE_PODSELECT,   [test -n "$PODSELECT" -a "$PODSELECT"  != "no"])
 AM_CONDITIONAL(HAVE_POD2TEXT,    [test -n "$POD2TEXT"  -a "$POD2TEXT"  != "no"])
 AM_CONDITIONAL(HAVE_POD2MAN,     [test -n "$POD2MAN"   -a "$POD2MAN"   != "no"]) 
 AM_CONDITIONAL(HAVE_POD2HTML,    [test -n "$POD2HTML"  -a "$POD2HTML"  != "no"])

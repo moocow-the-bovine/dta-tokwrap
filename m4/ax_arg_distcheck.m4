@@ -12,6 +12,7 @@ AC_DEFUN([AX_ARG_DISTCHECK],
    test -z "$PERL"  && PERL=no
    test -z "$OPTGEN_PERL" && OPTGEN_PERL=no
    test -z "$DOXYGEN" && DOXYGEN=no
+   test -z "$POD2X" && PODSELECT=no
    test -z "$POD2X" && POD2TEXT=no
    test -z "$POD2X" && POD2MAN=no
    test -z "$POD2X" && POD2HTML=no
