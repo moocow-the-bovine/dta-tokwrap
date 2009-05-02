@@ -32,7 +32,9 @@ SCRIPTS_DIR ?= ../scripts
 #TOKWRAP_OPTS ?= -keep -log-level=TRACE -traceOpen
 #TOKWRAP_OPTS ?= -keep -trace -notraceProc
 #TOKWRAP_OPTS ?= -keep -trace
-TOKWRAP_OPTS ?= -keep -q
+#TOKWRAP_OPTS ?= -keep -q
+TOKWRAP_OPTS ?= -keep -v 1 -noprofile
+#TOKWRAP_OPTS ?= -keep -v 1
 
 TOKENIZER ?= $(PROGDIR)dtatw-tokenize-dummy
 
@@ -44,7 +46,10 @@ TOKENIZER ?= $(PROGDIR)dtatw-tokenize-dummy
 INPLACE ?= yes
 
 CSRC_DIR=../src
-CSRC_PROGRAMS = $(patsubst %,../src/%,dtatw-mkindex dtatw-rm-namespaces dtatw-tokenize-dummy)
+CSRC_PROGRAMS = $(patsubst %,../src/%,\
+	dtatw-mkindex dtatw-rm-namespaces dtatw-tokenize-dummy \
+	dtatw-txml2wxml dtatw-txml2sxml dtatw-txml2axml \
+	)
 TOKWRAP_DIR=../DTA-TokWrap
 
 ifeq "$(INPLACE)" "yes"
@@ -333,10 +338,15 @@ s-xml.stamp: t-xml.stamp $(TOKWRAP_DEPS)
 	touch $@
 
 s-xml-iter: $(XML:.xml=.s.xml)
-%.s.xml: standoff_t2s.xsl %.t.xml
+#%.s.xml: %.t.xml $(TOKWRAP_DEPS)
 #	##-- BROKEN with `make -j2`: race condition?
 #	$(TOKWRAP) -t sosxml $*.xml
-	xsltproc -o $@ $^
+##--
+#%.s.xml: standoff_t2s.xsl %.t.xml
+#	xsltproc -o $@ $^
+##--
+%.s.xml: %.t.xml $(CSRC_DEPS)
+	$(PROGDIR)dtatw-txml2sxml $< $@ $*.w.xml
 
 
 no-s-xml: ; rm -f *.s.xml s-xml.stamp
@@ -374,10 +384,15 @@ a-xml.stamp: t-xml.stamp $(TOKWRAP_DEPS)
 	touch $@
 
 a-xml-iter: $(XML:.xml=.a.xml)
-%.a.xml: standoff_t2a.xsl %.t.xml
+#%.a.xml: %.t.xml $(TOKWRAP_DEPS)
 #	##-- BROKEN with `make -j2`: race condition?
 #	$(TOKWRAP) -t soaxml $*.xml
-	xsltproc -o $@ $^
+##--
+#%.a.xml: standoff_t2a.xsl %.t.xml
+#	xsltproc -o $@ $^
+##--
+%.a.xml: %.t.xml $(CSRC_DEPS)
+	$(PROGDIR)dtatw-txml2axml $< $@ $*.w.xml
 
 no-a-xml: ; rm -f *.a.xml a-xml.stamp
 CLEAN_FILES += *.a.xml a-xml.stamp
