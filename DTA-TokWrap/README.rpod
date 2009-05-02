@@ -46,6 +46,10 @@ tested version(s): 2.76
 
 tested version(s): 2.37
 
+=item Log::Log4perl
+
+tested version(s): 1.21
+
 =item Pod::Usage
 
 tested version(s): 1.35

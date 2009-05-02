@@ -15,7 +15,7 @@ use Pod::Usage;
 
 ##-- general
 our $prog = basename($0);
-our ($help);
+our ($help,$man,$version);
 our $verbose = 0;      ##-- verbosity
 
 ##-- DTA::TokWrap options
@@ -83,14 +83,16 @@ our $verbose_max = 255;
 ## undef = setVerboseTrace($bool,$verbose)
 ##  + set trace options by verbosity level
 sub setVerboseTrace {
-  my $_verbose = defined($_[2]) ? $_[2] : $_verbose;
-  ${$_->{ref}} = $_[1] ? $traceLevel : undef foreach (grep {$_verbose>=$_->{vlevel}} @traceOptions);
+  my $_verbose = defined($_[1]) ? $_[1] : $verbose;
+  ${$_->{ref}} = ($_[0] ? $traceLevel : undef) foreach (grep {$_verbose>=$_->{vlevel}} @traceOptions);
 }
 
 GetOptions(
 	   ##-- General
 	   'help|h' => \$help,
+	   'man' => \$man,
 	   'verbose|v=i' => sub { $verbose=$_[1]; setVerboseTrace(1); },
+	   'verbion|V' => \$version,
 
 	   ##-- pseudo-make
 	   'make|m' => sub { $docopts{class}='DTA::TokWrap::Document::Maker'; $makeKeyAct='make'; },
@@ -135,7 +137,7 @@ GetOptions(
 	     )
 	   } @traceOptions),
 	   "traceLevel|trace-level=s" => \$traceLevel,
-	   "trace!" => \&setVerboseTrace,
+	   "trace!" => sub { setVerboseTrace($_[1]); },
 	   "traceAll|trace-all!" => sub { setVerboseTrace($_[1],$verbose_max); },
 	   "dummy|no-act|n!" => \$docopts{dummy},
 
@@ -144,11 +146,17 @@ GetOptions(
 
 
 pod2usage({-exitval=>0, -verbose=>0}) if ($help);
+pod2usage({-exitval=>0, -verbose=>1}) if ($man);
 pod2usage({
 	   -message => 'No XML source file(s) specified!',
 	   -exitval => 1,
 	   -verbose => 0,
 	  }) if (@ARGV < 1);
+
+if ($version) {
+  print "$prog: DTA::TokWrap v$DTA::TokWrap::VERSION\n";
+  exit(0);
+}
 
 
 ##==============================================================================

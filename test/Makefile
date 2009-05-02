@@ -7,7 +7,6 @@ XML_CHR   = test1.chr.xml test-3k.chr.xml ex1.chr.xml $(XML_TXTLB:.txt+lb.xml=.c
 
 XML = $(XML_CHR)
 #XML = test1.chr.xml test-3k.chr.xml
-XML_SOURCES = $(XML)
 
 PERL ?=perl
 
