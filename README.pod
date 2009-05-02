@@ -404,10 +404,20 @@ Useful because XSL's namespace handling is annoyingly slow and ugly.
 
 Dummy C<flex> tokenizer.  Useful for testing.
 
+=item dtatw-txml2sxml
+
+Converts "master" tokenized XML output format (F<*.t.xml>) to
+sentence-level stand-off XML format (F<*.s.xml>).
+
 =item dtatw-txml2wxml
 
 Converts "master" tokenized XML output format (F<*.t.xml>) to
 token-level stand-off XML format (F<*.w.xml>).
+
+=item dtatw-txml2axml
+
+Converts "master" tokenized XML output format (F<*.t.xml>) to
+token-analysis-level stand-off XML format (F<*.a.xml>).
 
 =back
 
