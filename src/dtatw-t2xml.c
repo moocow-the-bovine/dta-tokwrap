@@ -1,5 +1,6 @@
+#include <locale.h>
 #include "dtatwCommon.h"
-#include "dtatw-cxlexer.h"
+/*#include "dtatw-cxlexer.h"*/
 
 /*======================================================================
  * Globals
@@ -15,66 +16,100 @@ typedef struct {
   ByteOffset xoff;      //-- original xml byte offset
   ByteLen    xlen;      //-- original xml byte length
   ByteOffset toff;      //-- .tx byte offset
-  ByteOffset tlen;      //-- .tx byte length
+  ByteLen    tlen;      //-- .tx byte length
   char      *text;      //-- output text
 } cxRecord;
 
-// CXDATA_INITIAL_ALLOC : original buffer size for cxdata[]
+// CXDATA_INITIAL_ALLOC : original buffer size for cxdata[], in number of records
 #define CXDATA_INITIAL_ALLOC 65536
 
 // cxdata : cxRecord[ncxdata_alloc]
 cxRecord *cxdata = NULL;
-ByteOffset ncxdata_alloc = 0;
-ByteOffset ncxdata = 0;
+ByteOffset ncxdata_alloc = 0;  //-- number of records allocated in cxdata
+ByteOffset ncxdata = 0;        //-- number of records used in cxdata (index of 1st unused record)
 
-//-- definitions from dtatw-cxlexer.l, which I'm too stupid to get flex to export
-extern char cx_id[];
-extern char cx_xoff[];
-extern char cx_xlen[];
-extern char cx_toff[];
-extern char cx_tlen[];
-extern char cx_text[];
+int cxRecordSize = sizeof(cxRecord);
+
+#define STATIC inline static
+//#define STATIC static
+//#define STATIC
 
 /*======================================================================
  * Utils: .cx file
  */
-static void initCxData(void)
+STATIC void initCxData(void)
 {
-  cxdata = (cxRecord*)malloc(CXDATA_INITIAL_ALLOC*sizeof(ncxdata));
+  cxdata = (cxRecord*)malloc(CXDATA_INITIAL_ALLOC*sizeof(cxRecord));
   assert(cxdata != NULL /* memory full on malloc */);
   ncxdata_alloc = CXDATA_INITIAL_ALLOC;
   ncxdata = 0;
 }
 
-static void pushCxRecord(cxRecord *cx)
+STATIC void pushCxRecord(cxRecord *cx)
 {
   if (ncxdata+1 >= ncxdata_alloc) {
     //-- whoops: must reallocate
-    cxdata = (cxRecord*)realloc(cxdata, ncxdata_alloc*2);
+    cxdata = (cxRecord*)realloc(cxdata, ncxdata_alloc*2*sizeof(cxRecord));
     assert(cxdata != NULL /* memory full on realloc */);
     ncxdata_alloc *= 2;
   }
-  //-- just push, strdup()ing strings
-  memcpy(cxdata+ncxdata, cx, sizeof(cxRecord));
-  if (cx->id)   cxdata[ncxdata].id   = strdup(cx->id);
-  if (cx->text) cxdata[ncxdata].text = strdup(cx->text);
+  //-- just push copy raw data, pointers & all
+  memcpy(&cxdata[ncxdata], cx, sizeof(cxRecord));
   ncxdata++;
 }
 
-static void loadCxFile(FILE *f)
+#define INITIAL_LINEBUF_SIZE 8192
+STATIC void loadCxFile(FILE *f)
 {
   cxRecord cx;
-  if (cxdata==NULL) initCxData();
+  char *linebuf=NULL;
+  size_t linebuf_alloc=0;
+  ssize_t linelen;
+  char *id_s, *xoff_s,*xlen_s, *toff_s,*tlen_s, *text_s;
 
+  if (cxdata==NULL) initCxData();
   assert(f!=NULL /* require .cx file */);
-  yyin = f;
-  cx.id   = cx_id;
-  cx.text = cx_text;
-  while (yylex()) {
-    cx.xoff = strtoul(cx_xoff,NULL,0);
-    cx.xlen = strtol (cx_xlen,NULL,0);
-    cx.toff = strtoul(cx_toff,NULL,0);
-    cx.tlen = strtol (cx_tlen,NULL,0);
+
+  //-- init line buffer
+  linebuf = (char*)malloc(INITIAL_LINEBUF_SIZE);
+  assert(linebuf != NULL /* malloc failed */);
+  linebuf_alloc = INITIAL_LINEBUF_SIZE;
+
+  while ( (linelen=getline(&linebuf,&linebuf_alloc,f)) >= 0 ) {
+    char *tail=NULL;
+    if (linebuf[0]=='%' && linebuf[1]=='%') continue;  //-- skip comments
+
+    id_s = linebuf;
+
+    for (xoff_s=id_s;   *xoff_s && *xoff_s!='\t' && *xoff_s!='\n'; xoff_s++) ;
+    *xoff_s='\0';
+    xoff_s++;
+
+    for (xlen_s=xoff_s; *xlen_s && *xlen_s!='\t' && *xlen_s!='\n'; xlen_s++) ;
+    *xlen_s='\0';
+    xlen_s++;
+
+    for (toff_s=xlen_s; *toff_s && (*toff_s!='\t' && *toff_s!='\n'); toff_s++) ;
+    *toff_s='\0';
+    toff_s++;
+
+    for (tlen_s=toff_s; *tlen_s && (*tlen_s!='\t' && *tlen_s!='\n'); tlen_s++) ;
+    *tlen_s='\0';
+    tlen_s++;
+
+    for (text_s=tlen_s; *text_s && (*text_s!='\t' && *text_s!='\n'); text_s++) ;
+    *text_s='\0';
+    text_s++;
+
+    if (linelen>0 && linebuf[linelen-1]=='\n') linebuf[linelen-1] = '\0';
+
+    cx.id   = strdup(id_s);
+    cx.xoff = strtoul(xoff_s,&tail,0);
+    cx.xlen = strtol(xlen_s,&tail,0);
+    cx.toff = strtoul(toff_s,&tail,0);
+    cx.tlen = strtol(tlen_s,&tail,0);
+    cx.text = strdup(text_s);
+
     pushCxRecord(&cx);
   }
 }
@@ -112,6 +147,7 @@ int main(int argc, char **argv)
   FILE *f_out = stdout;  //-- output .xml file
 
   //-- initialize: globals
+  setlocale(LC_ALL, "");
   prog = argv[0];
 
   //-- command-line: usage
