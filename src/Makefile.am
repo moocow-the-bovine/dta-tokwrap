@@ -35,10 +35,8 @@ dtatw_rm_namespaces_SOURCES = dtatw-rm-namespaces.c $(common_deps)
 
 if HAVE_FLEX
 dtatw_cxlexer_SOURCES = dtatw-cxlexer.l $(common_deps)
-dtatw_t2xml_SOURCES = dtatw-t2xml.c dtatw-cxlexer.l dtatw-cxlexer.h $(common_deps)
 else
 dtatw_cxlexer_SOURCES = dtatw-cxlexer.c $(common_deps)
-dtatw_t2xml_SOURCES = dtatw-t2xml.c dtatw-cxlexer.c dtatw-cxlexer.h $(common_deps)
 endif
 
 dtatw_cxlexer_CPPFLAGS = -DCXLEXER_MAIN
@@ -46,6 +44,8 @@ dtatw_cxlexer_CPPFLAGS = -DCXLEXER_MAIN
 if HAVE_FLEX
 dtatw-cxlexer.h: dtatw-cxlexer.c
 endif
+
+dtatw_t2xml_SOURCES = dtatw-t2xml.c $(common_deps)
 
 dtatw_txml2wxml_SOURCES = dtatw-txml2wxml.c $(common_deps)
 dtatw_txml2sxml_SOURCES = dtatw-txml2sxml.c $(common_deps)

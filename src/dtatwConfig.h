@@ -22,5 +22,5 @@
  * the package's autoheader-generated preprocessor symbols (e.g. after
  * (#include)ing in some config.h from another autoheader package
  */
-#include <dtaTwConfigNoAuto.h>
-#include <dtaTwConfigAuto.h>
+#include <dtatwConfigNoAuto.h>
+#include <dtatwConfigAuto.h>

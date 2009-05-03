@@ -33,8 +33,8 @@ SCRIPTS_DIR ?= ../scripts
 #TOKWRAP_OPTS ?= -keep -trace -notraceProc
 #TOKWRAP_OPTS ?= -keep -trace
 #TOKWRAP_OPTS ?= -keep -q
-TOKWRAP_OPTS ?= -keep -v 1 -noprofile
-#TOKWRAP_OPTS ?= -keep -v 1
+#TOKWRAP_OPTS ?= -keep -v 1 -noprofile
+TOKWRAP_OPTS ?= -keep -v 1
 
 TOKENIZER ?= $(PROGDIR)dtatw-tokenize-dummy
 
@@ -397,16 +397,37 @@ a-xml-iter: $(XML:.xml=.a.xml)
 no-a-xml: ; rm -f *.a.xml a-xml.stamp
 CLEAN_FILES += *.a.xml a-xml.stamp
 
-##-- running time summary / ex1 (kraepelin) / uhura
-## xml -> cx,sx,tx   1.2s  ~  75.9 Ktok/sec ~ 502.3 Kchr/sec
-## sx -> bx0         0.11s ~ 842.8 Ktok/sec ~   5.6 Mchr/sec
-## bx0 -> txt        0.30s ~ 303.4 Ktok/sec ~   2.0 Mchr/sec
-## txt -> t          0.08s ~   1.1 Mtok/sec ~   7.5 Mchr/sec
-## t -> t.xml       13.13s ~   6.9 Ktok/sec ~  45.9 Kchr/sec  *** SLOW (perl) ***
-## t.xml -> s.xml    1.79s ~  59.8 Ktok/sec ~ 336.8 Kchr/sec
-## t.xml -> w.xml    8.62s ~  10.6 Ktok/sec ~  70.0 Kchr/sec  *** SLOW (xsl) ***
-## t.xml -> a.xml    2.08s ~  43.8 Ktok/sec ~ 289.8 Kchr/sec
-## TOTAL            27.31s ~   3.3 Ktok/sec ~  22.1 Kchr/sec
+##-- running time summary / ex1 (kraepelin) / uhura: scripts
+## mkindex      : xml -> cx,sx,tx   1.2s  ~  75.9 Ktok/sec ~ 502.3 Kchr/sec
+## mkbx0        : sx -> bx0         0.11s ~ 842.8 Ktok/sec ~   5.6 Mchr/sec
+## mkbx         : bx0 -> txt        0.30s ~ 303.4 Ktok/sec ~   2.0 Mchr/sec
+## tokenize     : txt -> t          0.08s ~   1.1 Mtok/sec ~   7.5 Mchr/sec
+## tok2xml/perl : t -> t.xml       13.13s ~   6.9 Ktok/sec ~  45.9 Kchr/sec  *** SLOW (perl) ***
+## sosxml/xsl   : t.xml -> s.xml    1.79s ~  59.8 Ktok/sec ~ 336.8 Kchr/sec
+## sowxml/xsl   : t.xml -> w.xml    8.62s ~  10.6 Ktok/sec ~  70.0 Kchr/sec  *** SLOW (xsl) ***
+## soaxml/xsl   : t.xml -> a.xml    2.08s ~  43.8 Ktok/sec ~ 289.8 Kchr/sec
+## TOTAL                            27.3s ~   3.3 Ktok/sec ~  22.1 Kchr/sec
+
+##-- /carrot: via dta-tokwrap
+#  mkindex:    1 doc,  90.6 Ktok,  15.6 Mbyte in   1.4  sec:  63.6 Ktok/sec ~  10.9 Mbyte/sec
+#    mkbx0:    1 doc,  90.6 Ktok,  15.6 Mbyte in 105.9 msec: 854.9 Ktok/sec ~ 147.0 Mbyte/sec
+#     mkbx:    1 doc,  90.6 Ktok,  15.6 Mbyte in 190.5 msec: 475.4 Ktok/sec ~  81.8 Mbyte/sec
+# tokenize:    1 doc,  90.6 Ktok,  15.6 Mbyte in  87.9 msec:   1.0 Mtok/sec ~ 177.1 Mbyte/sec
+#  tok2xml:    1 doc,  90.6 Ktok,  15.6 Mbyte in   5.4  sec:  16.8 Ktok/sec ~   2.9 Mbyte/sec
+#   sosxml:    1 doc,  90.6 Ktok,  15.6 Mbyte in 380.0 msec: 238.3 Ktok/sec ~  41.0 Mbyte/sec
+#   sowxml:    1 doc,  90.6 Ktok,  15.6 Mbyte in 694.3 msec: 130.4 Ktok/sec ~  22.4 Mbyte/sec
+#   soaxml:    1 doc,  90.6 Ktok,  15.6 Mbyte in 383.0 msec: 236.5 Ktok/sec ~  40.7 Mbyte/sec
+#    TOTAL:    1 doc,  90.6 Ktok,  15.6 Mbyte in  12.5  sec:   7.2 Ktok/sec ~   1.2 Mbyte/sec
+
+
+##-- carrot, Sun, 03 May 2009 23:12:46 +0200
+## tok2xml/perl   :  1 doc,  90.6 Ktok,  15.6 Mbyte in   5.4  sec:  16.8 Ktok/sec ~   2.9 Mbyte/sec
+## tok2xml/c-pre1 :  1 doc,  90.6 Ktok,  15.6 Mbyte in 688.0 msec: 223.2 Ktok/sec ~  38.5 Mbyte/sec
+
+##-- carrot, Sun, 03 May 2009 23:12:51 +0200
+# sosxml/c:    1 doc,  90.6 Ktok,  15.6 Mbyte in 380.0 msec: 238.3 Ktok/sec ~  41.0 Mbyte/sec
+# sowxml/c:    1 doc,  90.6 Ktok,  15.6 Mbyte in 694.3 msec: 130.4 Ktok/sec ~  22.4 Mbyte/sec
+# soaxml/c:    1 doc,  90.6 Ktok,  15.6 Mbyte in 383.0 msec: 236.5 Ktok/sec ~  40.7 Mbyte/sec
 
 
 ##======================================================================

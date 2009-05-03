@@ -49,7 +49,8 @@ else
       ;;
     *)
      AC_MSG_NOTICE([GNU C compiler detected: setting default optimization flags])
-     OFLAGS="-pipe -O2"
+     #OFLAGS="-pipe -O2"
+     OFLAGS="-pipe -O" ##-- this is actually faster for our c progs!
      ;;
    esac
   else
