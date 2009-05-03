@@ -24,10 +24,8 @@ digraph dataflow {
   sxfile -> mkbx0;
   mkbx0 -> bx0doc;
 
-  hint_xsl [label="hint.xsl",shape=rectangle,style=filled,fillcolor=yellow];
-  sort_xsl [label="sort.xsl",shape=rectangle,style=filled,fillcolor=yellow];
-  mkbx0 -> hint_xsl;
-  mkbx0 -> sort_xsl;
+  bx0_xsl  [label="hint.xsl\nsort.xsl",shape=rectangle,style=filled,fillcolor=yellow];
+  mkbx0 -> bx0_xsl;
   
   bx0file [label="bx0file: *.bx0",shape=rectangle,style=filled,fillcolor=grey90];
   bx0doc -> bx0file;
@@ -61,10 +59,10 @@ digraph dataflow {
 
   xtokdata [label="xtokdata"];
   xtokfile [label="xtokfile: *.t.xml",shape=rectangle,style=filled,fillcolor=grey90];
-  xtokdoc  [label="xtokdoc"];
+  xtokdoc  [label="xtokdoc",style=dashed];
   xtokdata -> xtokfile;
   xtokfile -> xtokdata [color=red];
-  xtokdata -> xtokdoc;
+  xtokdata -> xtokdoc [style=dashed];
   //{rank=same; xtokdata xtokfile;}
 
   tok2xml [label="tok2xml",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
@@ -74,6 +72,19 @@ digraph dataflow {
   tok2xml -> xtokdata;
   {rank=same; cxdata tokdata};
 
+  //-- standoff via C progs
+  standoff [label="standoff",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  xtokdata -> standoff;
+
+  sofiles [label="sosfile: *.s.xml\nsowfile: *.w.xml\nsoafile: *.a.xml",shape=rectangle,style=filled,fillcolor=grey90];
+  standoff -> sofiles;
+
+  //-- standoff: xsl stylesheets (now obsolete)
+  standoff_xsl [label="t2s.xsl\nt2w.xsl\nt2a.xsl",shape=rectangle,style=filled,fillcolor=orange];
+  standoff -> standoff_xsl;
+
+  //-- standoff via xsl
+  /*
   standoff [label="standoff",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
   xtokdoc -> standoff;
 
@@ -98,4 +109,5 @@ digraph dataflow {
   standoff -> soadoc;
   soafile [label="soafile: *.a.xml",shape=rectangle,style=filled,fillcolor=grey90];
   soadoc -> soafile;
+  */
 }
