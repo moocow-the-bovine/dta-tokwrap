@@ -70,7 +70,30 @@ digraph dataflow {
   bxdata  -> tok2xml;
   cxdata  -> tok2xml;
   tok2xml -> xtokdata;
-  {rank=same; cxdata tokdata};
+  //{rank=same; cxdata tokdata};
+
+  //-- tok2xml via c prog
+  tok2xml_c[label="tok2xml/c",shape=rectangle,style=filled,fillcolor=pink,fontname="Courier-Bold"];
+  {rank=same; tok2xml tok2xml_c};
+  /*
+  //-- input from files ; output to file
+  bxfile -> tok2xml_c;
+  cxfile -> tok2xml_c;
+  tokfile -> tok2xml_c;
+  tok2xml_c -> xtokfile;
+  */
+  //-- input from files ; output to xtokdata
+  bxfile -> tok2xml_c;
+  cxfile -> tok2xml_c;
+  tokfile -> tok2xml_c;
+  tok2xml_c -> xtokdata; //xtokfile;
+  /* //-- input from files+tokdata ; output to file
+  bxfile -> tok2xml_c;
+  cxfile -> tok2xml_c;
+  tokdata -> tok2xml_c;
+  tok2xml_c -> xtokfile;
+  */
+  
 
   //-- standoff via C progs
   standoff [label="standoff",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];

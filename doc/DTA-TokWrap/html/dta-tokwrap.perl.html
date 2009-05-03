@@ -334,14 +334,15 @@ Any other value for <code>LEVEL</code> causes trace messages not to be logged.</
 <p>Do/don't log trace messages for the trace flavor <em>X</em>,
 where <em>X</em> is one of the following:</p>
 <pre>
- Open   # document object open() method
- Close  # document object close() method
- Load   # load document data file
- Save   # save document data file
- Make   # document target (re-)making (including status-check)
- Gen    # document target (re-)generation
- Proc   # subprocessor operation
- Run    # external system command</pre>
+ Open    # document object open() method
+ Close   # document object close() method
+ Proc    # document processing method calls
+ Load    # load document data file
+ Save    # save document data file
+ Make    # document target (re-)making (including status-check)
+ Gen     # document target (re-)generation
+ Subproc # low-level subprocessor calls
+ Run     # external system command</pre>
 </dd>
 <dt><strong><a name="item__2dtracexlevel_level">-traceXLevel LEVEL</a></strong></dt>
 
