@@ -45,11 +45,11 @@ sub init {
   my $tz = shift;
 
   ##-- search for tokenizer program
-  if (!defined($tz->{tokenize})) {
-    $tz->{tokenize} = path_prog('dwds_tomasotath',
-				prepend=>($tz->{inplace} ? ['.','../src'] : undef),
-				warnsub=>sub {$tz->logconfess(@_)},
-			       );
+  if (!defined($tz->{tomata2})) {
+    $tz->{tomata2} = path_prog('dwds_tomasotath',
+			       prepend=>($tz->{inplace} ? ['.','../src'] : undef),
+			       warnsub=>sub {$tz->logconfess(@_)},
+			      );
   }
 
   return $tz;
