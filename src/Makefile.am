@@ -21,8 +21,10 @@ bin_PROGRAMS = \
 EXTRA_PROGRAMS = dtatw-cxlexer
 
 common_deps = dtatwCommon.c dtatwCommon.h
+expat_deps = dtatwExpat.c dtatwExpat.h
 
-dtatw_mkindex_SOURCES = dtatw-mkindex.c $(common_deps)
+dtatw_mkindex_SOURCES = dtatw-mkindex.c $(common_deps) $(expat_deps)
+dtatw_mkindex_LDADD = $(EXPAT_LIBS)
 
 if HAVE_FLEX
 dtatw_tokenize_dummy_SOURCES = dtatw-tokenize-dummy.l
@@ -30,8 +32,8 @@ else
 dtatw_tokenize_dummy_SOURCES = dtatw-tokenize-dummy.c
 endif
 
-dtatw_rm_namespaces_SOURCES = dtatw-rm-namespaces.c $(common_deps)
-
+dtatw_rm_namespaces_SOURCES = dtatw-rm-namespaces.c $(common_deps) $(expat_deps)
+dtatw_rm_namespaces_LDADD = $(EXPAT_LIBS)
 
 if HAVE_FLEX
 dtatw_cxlexer_SOURCES = dtatw-cxlexer.l $(common_deps)
@@ -47,9 +49,14 @@ endif
 
 dtatw_t2xml_SOURCES = dtatw-t2xml.c $(common_deps)
 
-dtatw_txml2wxml_SOURCES = dtatw-txml2wxml.c $(common_deps)
-dtatw_txml2sxml_SOURCES = dtatw-txml2sxml.c $(common_deps)
-dtatw_txml2axml_SOURCES = dtatw-txml2axml.c $(common_deps)
+dtatw_txml2wxml_SOURCES = dtatw-txml2wxml.c $(common_deps) $(expat_deps)
+dtatw_txml2wxml_LDADD   = $(EXPAT_LIBS)
+
+dtatw_txml2sxml_SOURCES = dtatw-txml2sxml.c $(common_deps) $(expat_deps)
+dtatw_txml2sxml_LDADD   = $(EXPAT_LIBS)
+
+dtatw_txml2axml_SOURCES = dtatw-txml2axml.c $(common_deps) $(expat_deps)
+dtatw_txml2axml_LDADD   = $(EXPAT_LIBS)
 
 ##-----------------------------------------------------------------------
 ## Dist

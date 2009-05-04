@@ -1,25 +1,53 @@
 #include "dtatwCommon.h"
 #include "dtatwConfig.h"
-/*#include "dtatw-cxlexer.h"*/
 
 /*======================================================================
  * Globals
  */
 
 // VERBOSE_IO : whether to print progress messages for load/save
-#define VERBOSE_IO 1
+//#define VERBOSE_IO 1
+#undef VERBOSE_IO
 
-// CX_USE_TEXT : whether to parse & store text data from .cx file
-//#define CX_USE_TEXT 1
-#undef CX_USE_TEXT
+// CX_WANT_TEXT : whether to parse & store text data from .cx file
+//#define CX_WANT_TEXT 1
+#undef CX_WANT_TEXT
 
+//-- want_profile: if true, some profiling information will be printed to stderr
+//int want_profile = 1;
+int want_profile = 0;
+//
+ByteOffset nxbytes = 0; //-- for profiling: approximate number of xml bytes in original input (from .cx file)
+ByteOffset ntoks   = 0; //-- for profiling: number of tokens (from .t file)
+
+//-- indentation constants (set these to empty strings to output size-optimized XML)
+const char *indent_root = "\n";
+const char *indent_s    = "\n  ";
+const char *indent_w    = "\n    ";
+const char *indent_a    = "\n      ";
+
+//-- xml structure constants (should jive with 'mkbx0', 'mkbx')
+const char *docElt = "sentences";  //-- output document element
+const char *sElt   = "s";          //-- output sentence element
+const char *wElt   = "w";          //-- output token element
+const char *aElt   = "a";          //-- output token-analysis element
+const char *posAttr = "b";         //-- output byte-position attribute
+const char *textAttr = "t";        //-- output token-text attribute
+const char *cAttr    = "c";        //-- output token-chars attribute (space-separated xml:ids from .cx file)
+
+
+/*======================================================================
+ * Utils: .cx file
+ */
+
+// cxRecord : struct for character-index records as loaded from .cx file
 typedef struct {
   char        *id;      //-- xml:id of source <c>
   ByteOffset xoff;      //-- original xml byte offset
   ByteLen    xlen;      //-- original xml byte length
   ByteOffset toff;      //-- .tx byte offset
   ByteLen    tlen;      //-- .tx byte length
-#ifdef CX_USE_TEXT
+#ifdef CX_WANT_TEXT
   char      *text;      //-- output text
 #endif
 } cxRecord;
@@ -31,45 +59,6 @@ typedef struct {
 cxRecord *cxdata = NULL;
 ByteOffset ncxdata_alloc = 0;  //-- number of records allocated in cxdata
 ByteOffset ncxdata = 0;        //-- number of records used in cxdata (index of 1st unused record)
-
-
-typedef struct {
-  char *key;        //-- sort key
-  char *elt;        //-- element name
-  ByteOffset xoff;  //-- xml byte offset
-  ByteOffset xlen;  //-- xml byte length
-  ByteOffset toff;  //-- tx byte offset
-  ByteOffset tlen;  //-- tx byte length
-  ByteOffset otoff; //-- txt byte offset
-  ByteOffset otlen; //-- txt byte length
-} bxRecord;
-
-// BXDATA_INITIAL_ALLOC : original buffer size for cxdata[], in number of records
-#define BXDATA_INITIAL_ALLOC 1024
-
-// bxdata : bxRecord[nbxdata_alloc]
-bxRecord *bxdata = NULL;
-ByteOffset nbxdata_alloc = 0;  //-- number of records allocated in bxdata
-ByteOffset nbxdata = 0;        //-- number of records used in bxdata (index of 1st unused record)
-
-//-- indentation constants
-const char *indent_root = "\n";
-const char *indent_s    = "\n  ";
-const char *indent_w    = "\n    ";
-const char *indent_a    = "\n      ";
-
-//-- xml constants
-const char *docElt = "sentences";  //-- output document element
-const char *sElt   = "s";          //-- output sentence element
-const char *wElt   = "w";          //-- output token element
-const char *aElt   = "a";          //-- output token-analysis element
-const char *posAttr = "b";         //-- output byte-position attribute
-const char *textAttr = "t";        //-- output token-text attribute
-const char *cAttr    = "c";        //-- output token-chars attribute (space-separated xml:ids from .cx file)
-
-/*======================================================================
- * Utils: .cx file
- */
 
 //--------------------------------------------------------------
 static void initCxData(void)
@@ -187,7 +176,7 @@ static void loadCxFile(FILE *f)
     s1 = next_tab(s0);
     cx.tlen = strtol(s0,&tail,0);
 
-#ifdef CX_USE_TEXT
+#ifdef CX_WANT_TEXT
     //-- text
     s0 = s1+1;
     s1 = next_tab_z(s0);
@@ -204,6 +193,26 @@ static void loadCxFile(FILE *f)
 /*======================================================================
  * Utils: .bx file
  */
+
+// bxRecord : struct for block-index records as loaded from .bx file
+typedef struct {
+  char *key;        //-- sort key
+  char *elt;        //-- element name
+  ByteOffset xoff;  //-- xml byte offset
+  ByteOffset xlen;  //-- xml byte length
+  ByteOffset toff;  //-- tx byte offset
+  ByteOffset tlen;  //-- tx byte length
+  ByteOffset otoff; //-- txt byte offset
+  ByteOffset otlen; //-- txt byte length
+} bxRecord;
+
+// BXDATA_INITIAL_ALLOC : original buffer size for cxdata[], in number of records
+#define BXDATA_INITIAL_ALLOC 1024
+
+// bxdata : bxRecord[nbxdata_alloc]
+bxRecord *bxdata = NULL;
+ByteOffset nbxdata_alloc = 0;  //-- number of records allocated in bxdata
+ByteOffset nbxdata = 0;        //-- number of records used in bxdata (index of 1st unused record)
 
 //--------------------------------------------------------------
 static void initBxData(void)
@@ -378,20 +387,35 @@ void init_txtb2ci(void)
  */
 
 //--------------------------------------------------------------
-/* init_txtb2ci()
- *  + allocates & populates txtb2ci lookup vector
+/* bool = cx_id_ok(cx)
+ *  + returns true iff cx is a "real" character record with
+ *    a valid id, etc.
+ *  + ignores ids: NULL, "", CX_NIL_ID, CX_LB_ID (see dtatwCommon.h for the latter)
+ */
+static inline int cx_id_ok(const cxRecord *cx)
+{
+  return (cx
+	  && cx->id
+	  && cx->id[0]
+	  && strcmp(cx->id,CX_NIL_ID)!=0
+	  && strcmp(cx->id,CX_LB_ID) !=0
+	  );
+}
+
+//--------------------------------------------------------------
+/* process_tt_file()
  *  + requires:
  *    - populated cxdata[] vector (see loadCxFile())
  *    - populated txtb2ci[] vector (see init_txtb2ci())
  */
-void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *filename_out)
+static void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *filename_out)
 {
   char *linebuf=NULL, *s0, *s1;
   size_t linebuf_alloc=0;
   ssize_t linelen;
   unsigned int wi=0, si=0; //-- id-generation trackers
   int s_open = 0;          //-- bool: is an <s> element currently open?
-  char *w_text, *w_loc, *w_rest, *w_tail;
+  char *w_text, *w_loc, *w_loc_tail, *w_rest;
   ByteOffset w_loc_off, w_loc_len;
 
 
@@ -420,50 +444,69 @@ void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *filename_
       continue;
     }
 
-    //-- normal token: maybe open new <s>
+    //-- word: maybe open new <s>
     if (!s_open) {
       fprintf(f_out, "%s<%s xml:id=\"s%lu\">", indent_s, sElt, ++si);
       s_open = 1;
     }
 
-    //-- normal token: begin open <w>
+    //-- word: begin open <w>
     fprintf(f_out, "%s<%s xml:id=\"w%lu\"", indent_w, wElt, ++wi);
 
-    //-- normal token: inital parse into (text,loc,rest)
+    //-- word: inital parse into (text,loc,rest)
     w_text = linebuf;
     w_loc  = next_tab_z(w_text)+1;
     w_rest = next_tab_z(w_loc)+1;
 
-    //-- parse & output loc
-    w_loc_off = strtoul(w_loc,  &w_tail, 0);
-    w_loc_len = strtoul(w_tail, NULL,    0);
+    //-- word: parse & output loc
+    w_loc_off = strtoul(w_loc,      &w_loc_tail, 0);
+    w_loc_len = strtoul(w_loc_tail, NULL,        0);
     if (posAttr)
       fprintf(f_out, " %s=\"%lu %lu\"", posAttr, w_loc_off, w_loc_len);
 
-    //-- output text
+    //-- word: output text
     if (textAttr) {
       fprintf(f_out, " %s=\"", textAttr);
       put_escaped_str(f_out, w_text, -1);
       fputc('"', f_out);
     }
 
-    //-- output c-ids
+    //-- word: output c-ids
     if (cAttr) {
+      int i;
+      cxRecord *cx_prev = NULL; //-- previous cx record whose ID we've output, or NULL on first <c>
       fprintf(f_out, " %s=\"", cAttr);
-      fputs("--TODO--", f_out); //-- CONTINUE HERE
+      for (i=0; i < w_loc_len; i++) {
+	cxRecord *cx = txtb2cx[w_loc_off+i];
+	if (!cx_id_ok(cx)) continue;  //-- ignore pseudo-ids
+	if (cx != cx_prev) {
+	  if (cx_prev) fputc(' ',f_out);
+	  if (cx->id)  put_escaped_str(f_out, cx->id, -1);
+	  cx_prev = cx;
+	}
+      }
       fputc('"', f_out);
     }
 
-    //-- output analyses (finishing <w ...>, also writing </w> if required)
+    //-- word: output analyses (finishing <w ...>, also writing </w> if required)
     if (w_rest && *w_rest) {
       fputc('>',f_out);
-      put_escaped_str(f_out, w_rest, -1); //-- HACK
-      fprintf(f_out, "</w>");
+      do {
+	char *tail = next_tab_z(w_rest);
+	fprintf(f_out, "%s<%s>", indent_a, aElt);
+	put_escaped_str(f_out, w_rest, tail-w_rest);
+	fprintf(f_out, "</%s>", aElt);
+	if (tail && *tail) tail++;
+	w_rest = tail;
+      } while (w_rest && *w_rest);
+      fprintf(f_out, "%s</w>", indent_w);
     }
     else {
       fputs("/>", f_out);
     }
 
+    //-- word: update profiling information
+    ++ntoks;
   }
 
   //-- close open sentence if any
@@ -482,7 +525,8 @@ int main(int argc, char **argv)
   char *filename_cx  = NULL;
   char *filename_bx  = NULL;
   char *filename_out = "-";
-  char *xmlbase = NULL;
+  char *xmlbase = NULL;  //-- root @xml:base attribute (or basename)
+  char *xmlsuff = "";    //-- additional suffix for root @xml:base
   FILE *f_in  = stdin;   //-- input .t file
   FILE *f_cx  = NULL;    //-- input .cx file
   FILE *f_bx  = NULL;    //-- input .tx file
@@ -541,21 +585,33 @@ int main(int argc, char **argv)
       exit(1);
     }
   }
+  //-- command-line: xmlbase
   if (argc > 5) {
     xmlbase = argv[5];
-  } else if (strcmp(filename_out,"-")==0) {
-    xmlbase = NULL;
+    xmlsuff = "";
+  } else if (filename_cx && filename_cx[0] && strcmp(filename_cx,"-") != 0) {
+    xmlbase = file_basename(NULL, filename_cx, ".cx", -1,0);
+    xmlsuff = ".xml";
+  } else if (filename_bx && filename_bx[0] && strcmp(filename_bx,"-") != 0) {
+    xmlbase = file_basename(NULL, filename_bx, ".bx", -1,0);
+    xmlsuff = ".xml";
+  } else if (filename_in && filename_in[0] && strcmp(filename_in,"-") != 0) {
+    xmlbase = file_basename(NULL, filename_in, ".t", -1,0);
+    xmlsuff = ".xml";
+  } else if (filename_out && filename_out[0] && strcmp(filename_out,"-") != 0) {
+    xmlbase = file_basename(NULL, filename_out, ".t.xml", -1,0);
+    xmlsuff = ".xml";
   } else {
-    xmlbase = filename_out;
+    xmlbase = NULL; //-- couldn't guess xml:base
   }
 
   //-- print basic XML header
   fprintf(f_out, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
   fprintf(f_out, "<!--\n");
   fprintf(f_out, " ! File created by %s (%s v%s)\n", prog, PACKAGE, PACKAGE_VERSION);
-  fprintf(f_out, " ! Command-line:");
-  for (i=0; i < argc; i++) {
-    fprintf(f_out, " %s", (argv[i][0] ? argv[i] : "''"));
+  fprintf(f_out, " ! Command-line: %s", argv[0]);
+  for (i=1; i < argc; i++) {
+    fprintf(f_out, " '%s'", (argv[i][0] ? argv[i] : ""));
   }
   fprintf(f_out, "\n !-->\n");
 
@@ -574,6 +630,9 @@ int main(int argc, char **argv)
   f_bx = NULL;
 #ifdef VERBOSE_IO
   fprintf(stderr, "%s: parsed %lu records from .bx file '%s'\n", prog, nbxdata, filename_bx);
+  assert(cxdata != NULL /* require cxdata */);
+  assert(ncxdata > 0 /* require non-empty cxdata */);
+  fprintf(stderr, "%s: number of source XML-bytes ~= %lu\n", prog, cxdata[ncxdata-1].xoff);
 #endif
 
   //-- create (tx_byte_index => cx_record) lookup vector
@@ -591,15 +650,35 @@ int main(int argc, char **argv)
   //-- print XML root element
   fprintf(f_out,"<%s",docElt);
   if (xmlbase && *xmlbase) {
-    fprintf(f_out, " xml:base=\"%s\"", xmlbase);
+    fprintf(f_out, " xml:base=\"%s%s\"", xmlbase, xmlsuff);
   }
   fputc('>',f_out);
 
   //-- process .tt-format input data
   process_tt_file(f_in,f_out, filename_in,filename_out);
 
-  //-- print footer
+  //-- print XML footer
   fprintf(f_out, "%s</%s>\n", indent_root, docElt);
+
+  //-- show profile?
+  if (want_profile) {
+    double elapsed = ((double)clock()) / ((double)CLOCKS_PER_SEC);
+    if (elapsed <= 0) elapsed = 1e-5;
+
+    assert(cxdata != NULL /* profile: require cxdata */);
+    assert(ncxdata > 0 /* profile: require non-empty cxdata */);
+    nxbytes = cxdata[ncxdata-1].xoff + cxdata[ncxdata-1].xlen; //-- approximate number of original source XML bytes
+
+
+    fprintf(stderr, "%s: processed %.1f%s tok ~ %.1f%s XML bytes in %.3f sec: %.1f %stok/sec ~ %.1f %sbyte/sec\n",
+	    prog,
+	    si_val(ntoks), si_suffix(ntoks),
+	    si_val(nxbytes), si_suffix(nxbytes),
+	    elapsed,
+	    si_val(ntoks/elapsed), si_suffix(ntoks/elapsed),
+	    si_val(nxbytes/elapsed), si_suffix(nxbytes/elapsed)
+	    );
+  }
 
   //-- cleanup
   if (f_in)  fclose(f_in);

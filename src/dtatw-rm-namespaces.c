@@ -1,4 +1,5 @@
 #include "dtatwCommon.h"
+#include "dtatwExpat.h"
 
 /*======================================================================
  * Globals

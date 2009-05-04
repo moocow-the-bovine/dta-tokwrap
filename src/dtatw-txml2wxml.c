@@ -1,4 +1,5 @@
 #include "dtatwCommon.h"
+#include "dtatwExpat.h"
 
 /*======================================================================
  * Globals
@@ -15,7 +16,6 @@ const char *indent_c = "\n    ";
 const char *indent_root = "\n";
 
 #define WANT_T_ATTR 1
-
 
 /*======================================================================
  * Handlers

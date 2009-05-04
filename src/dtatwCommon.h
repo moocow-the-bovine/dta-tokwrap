@@ -30,6 +30,12 @@ typedef int ByteLen;
 
 extern char *prog;
 
+//-- CX_NIL_ID: pseudo-id used for missing xml:id attributes on <c> elements
+extern char *CX_NIL_ID; //-- default: "-"
+
+//-- CX_LB_ID : pseudo-ID for <lb/> records
+extern char *CX_LB_ID; //-- default: "$LB$"
+
 /*======================================================================
  * Debug
  */
@@ -47,60 +53,6 @@ extern char *prog;
 #endif /* !defined(assert) */
 
 /*======================================================================
- * Utils: attributes
- */
-
-/*--------------------------------------------------------------
- * val = get_attr(name, attrs)
- */
-static inline
-const XML_Char *get_attr(const XML_Char *aname, const XML_Char **attrs)
-{
-  int i;
-  for (i=0; attrs[i]; i += 2) {
-    if (strcmp(aname,attrs[i])==0) return attrs[i+1];
-  }
-  return NULL;
-}
-
-/*======================================================================
- * Utils: context
- */
-
-/*--------------------------------------------------------------
- * get_error_context()
- *  + gets expat error context, with a surrounding window of ctx_want bytes
- */
-static inline
-const char *get_error_context(XML_Parser xp, int ctx_want, int *offset, int *len)
-{
-  int ctx_offset, ctx_size;
-  const char *ctx_buf = XML_GetInputContext(xp, &ctx_offset, &ctx_size);
-  int ctx_mystart, ctx_myend;
-  ctx_mystart = ((ctx_offset <= ctx_want)              ? 0        : (ctx_offset-ctx_want));
-  ctx_myend   = ((ctx_size   <= (ctx_offset+ctx_want)) ? ctx_size : (ctx_offset+ctx_want));
-  *offset = ctx_offset - ctx_mystart;
-  *len    = ctx_myend - ctx_mystart;
-  return ctx_buf + ctx_mystart;
-}
-
-/*--------------------------------------------------------------
- * get_event_context()
- *  + gets current event context (analagous to perl XML::Parser::original_string())
- */
-static inline
-const char *get_event_context(XML_Parser xp, int *len)
-{
-  int ctx_offset, ctx_size;
-  const char *ctx_buf = XML_GetInputContext(xp, &ctx_offset, &ctx_size);
-  int cur_size = XML_GetCurrentByteCount(xp);
-  assert(ctx_offset >= 0);
-  assert(ctx_offset+cur_size <= ctx_size);
-  *len = cur_size;
-  return ctx_buf + ctx_offset;
-}
-
-/*======================================================================
  * Utils: XML-escapes
  */
 
@@ -108,7 +60,8 @@ const char *get_event_context(XML_Parser xp, int *len)
  * put_escaped_char(f,c)
  */
 static inline
-void put_escaped_char(FILE *f_out, XML_Char c)
+//void put_escaped_char(FILE *f_out, XML_Char c)
+void put_escaped_char(FILE *f_out, char c)
 {
   switch (c) {
   case '&': fputs("&amp;", f_out); break;
@@ -127,7 +80,8 @@ void put_escaped_char(FILE *f_out, XML_Char c)
  * put_escaped_str(f,str,len)
  */
 static inline
-void put_escaped_str(FILE *f, const XML_Char *str, int len)
+//void put_escaped_str(FILE *f, const XML_Char *str, int len)
+void put_escaped_str(FILE *f, const char *str, int len)
 {
   int i;
   for (i=0; str[i] && (len < 0 || i < len); i++) {
@@ -135,14 +89,25 @@ void put_escaped_str(FILE *f, const XML_Char *str, int len)
   }
 }
 
+/*======================================================================
+ * Utils: basename
+ */
 
+/*--------------------------------------------------------------
+ * file_basename(dst, src, suff, srclen, dstlen)
+ *  + removes leading directories (if any) and suffix 'suff' from 'src', writing result to 'dst'
+ *  + returns 'dst', allocating if it is passed as a NULL pointer
+ *    - if 'dst' is non-NULL, 'dstlen' should contain the allocated length of 'dst'
+ *    - otherwise, if 'dst' is NULL, 'dstlen' should be <=0 (basename only) or number of additional bytes to allocate
+ */
+extern char *file_basename(char *dst, const char *src, const char *suff, int srclen, int dstlen);
 
 /*======================================================================
  * Utils: si
  */
 
 /*--------------------------------------------------------------
-* g = si_g(f)
+ * g = si_g(f)
  */
 static inline
 double si_val(double g)

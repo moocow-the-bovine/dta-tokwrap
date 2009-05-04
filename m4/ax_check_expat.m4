@@ -3,7 +3,7 @@ dnl -*- Mode: autoconf -*-
 dnl AX_CHECK_EXPAT()
 dnl + configure args: --disable-expat
 dnl + AC_SUBST vars: ENABLE_EXPAT
-dnl + modified vars: LIBS, CONFIG_OPTIONS, DOXY_DEFINES
+dnl + modified vars: EXPAT_LIBS, CONFIG_OPTIONS, DOXY_DEFINES
 
 AC_DEFUN([AX_CHECK_EXPAT],
 [
@@ -11,12 +11,12 @@ dnl vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 dnl check for expat
 dnl
 dnl expat: user-request
-AC_ARG_ENABLE(expat,
-	AC_HELP_STRING([--disable-expat], [Disable expat XML support]),
-	[ac_cv_enable_expat="$enableval"],[ac_cv_enable_expat="yes"])
+dnl AC_ARG_ENABLE(expat,
+dnl 	AC_HELP_STRING([--disable-expat], [Disable expat XML support]),
+dnl	[ac_cv_enable_expat="$enableval"],[ac_cv_enable_expat="yes"])
 
-dnl expat: headers
-if test "$ac_cv_enable_expat" != "no" ; then
+##-- expat: headers
+#if test "$ac_cv_enable_expat" != "no" ; then
  for h in expat.h ; do
   AC_CHECK_HEADER($h,
 	[have_header="yes"], [have_header="no"], [ ])
@@ -27,9 +27,9 @@ if test "$ac_cv_enable_expat" != "no" ; then
     ac_cv_enable_expat="no"
   fi
  done
-fi ;##-- /ac_cv_enable_expat != no
+#fi ;##-- /ac_cv_enable_expat != no
 
-dnl expat: library: compile
+##-- expat: library: compile
 if test "$ac_cv_enable_expat" != "no" ; then
 
  AC_CHECK_LIB(expat,XML_DefaultCurrent,[ac_cv_have_libexpat="yes"])
@@ -39,10 +39,12 @@ if test "$ac_cv_enable_expat" != "no" ; then
     AC_MSG_WARN([ + is the directory containing libexpat.a in your])
     AC_MSG_WARN([   'LDPFLAGS' environment variable?])
     ac_cv_enable_expat="no"
+    EXPAT_LIBS=""
  else
-    LIBS="$LIBS -lexpat"
+    EXPAT_LIBS="-lexpat"
  fi
-fi ;##-- /ac_cv_enable_xml != no
+fi ;##-- /ac_cv_enable_expat != no
+AC_SUBST(EXPAT_LIBS)
 
 ##-- expat: config.h flag
 if test "$ac_cv_enable_expat" = "no" ; then

@@ -1,14 +1,9 @@
 #include "dtatwCommon.h"
+#include "dtatwExpat.h"
 
 /*======================================================================
  * Globals
  */
-
-//-- NIL_ID: string used for missing xml:id attributes on <c> elements
-const char *NIL_ID = "-";
-
-//-- LB_ID : pseudo-ID for <lb/> records
-const char *LB_ID = "$LB$";
 
 #define CTBUFSIZE    256 //-- <c>-local text buffer size
 #define CIDBUFSIZE   256 //-- <c>-local xml:id buffer size
@@ -136,7 +131,7 @@ void put_record_lb(TokWrapData *data)
 {
   ByteOffset c_xlen = XML_GetCurrentByteIndex(data->xp) + XML_GetCurrentByteCount(data->xp) - data->c_xoffset;
   put_record_raw(data->f_cx,
-		 LB_ID,
+		 CX_LB_ID,
 		 data->c_xoffset, c_xlen,
 		 data->c_toffset, 1,
 		 "\n"
@@ -163,8 +158,8 @@ void cb_start(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
       assert(strlen(id) < CIDBUFSIZE);
       strcpy(data->c_id,id);
     } else {
-      assert(strlen(NIL_ID) < CIDBUFSIZE);
-      strcpy(data->c_id,NIL_ID);
+      assert(strlen(CX_NIL_ID) < CIDBUFSIZE);
+      strcpy(data->c_id,CX_NIL_ID);
     }
     data->c_xoffset = XML_GetCurrentByteIndex(data->xp);
     data->c_tlen    = 0;
