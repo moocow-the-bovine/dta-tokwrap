@@ -375,7 +375,12 @@ BEGIN {
      (map {$_=>[qw(mkbx0 saveBx0File)]} qw(mkbx0 bx0)),
      (map {$_=>[qw(loadBx0File mkbx saveBxFile saveTxtFile)]} qw(mkbx mktxt bx txt)),
      (map {$_=>[qw(tokenize saveTokFile)]} qw(mktok tokenize tok t tt)),
-     (map {$_=>[qw(loadTokFile loadBxFile loadCxFile tok2xml saveXtokFile)]} qw(mktxml tok2xml xtok txml ttxml tokxml)),
+
+     (map {
+       #$_=>[qw(loadTokFile loadBxFile loadCxFile tok2xml saveXtokFile)]
+       $_=>[qw(loadTokFile tok2xml saveXtokFile)]
+     } qw(mktxml tok2xml xtok txml ttxml tokxml)),
+
      (map {
        #$spec = ["loadXtokFile","xtokDoc","so${_}xml","saveSo${_}File"];
        $spec = ["loadXtokFile","so${_}xml"];
@@ -389,7 +394,8 @@ BEGIN {
 	     qw(mkbx0 saveBx0File),
 	     qw(mkbx saveBxFile saveTxtFile),
 	     qw(tokenize saveTokFile),
-	     qw(loadCxFile tok2xml saveXtokFile),
+	     #qw(loadCxFile)
+	     qw(tok2xml saveXtokFile),
 	     qw(standoff),
 	    ],
     );

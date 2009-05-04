@@ -13,7 +13,7 @@ bin_PROGRAMS = \
 	dtatw-mkindex \
 	dtatw-rm-namespaces \
 	dtatw-tokenize-dummy \
-	dtatw-t2xml \
+	dtatw-tok2xml \
 	dtatw-txml2wxml \
 	dtatw-txml2sxml \
 	dtatw-txml2axml
@@ -47,7 +47,7 @@ if HAVE_FLEX
 dtatw-cxlexer.h: dtatw-cxlexer.c
 endif
 
-dtatw_t2xml_SOURCES = dtatw-t2xml.c $(common_deps)
+dtatw_tok2xml_SOURCES = dtatw-tok2xml.c $(common_deps)
 
 dtatw_txml2wxml_SOURCES = dtatw-txml2wxml.c $(common_deps) $(expat_deps)
 dtatw_txml2wxml_LDADD   = $(EXPAT_LIBS)

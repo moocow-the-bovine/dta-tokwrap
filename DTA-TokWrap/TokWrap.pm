@@ -10,7 +10,7 @@ use Carp;
 use strict;
 
 ##-- sub-modules
-use DTA::TokWrap::Version;
+use DTA::TokWrap::Version qw();
 use DTA::TokWrap::Logger;
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Utils qw(:si);
@@ -21,6 +21,7 @@ use DTA::TokWrap::Document::Maker;
 ## Constants
 ##==============================================================================
 our @ISA = qw(DTA::TokWrap::Base);
+our $VERSION = $DTA::TokWrap::Version::VERSION;
 
 ##==============================================================================
 ## Constructors etc.

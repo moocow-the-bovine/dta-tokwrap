@@ -18,7 +18,7 @@ use strict;
 ##==============================================================================
 ## Constants
 ##==============================================================================
-our @ISA = qw(DTA::TokWrap::Processor);
+our @ISA = qw(DTA::TokWrap::Processor::tokenize);
 
 ##==============================================================================
 ## Constructors etc.
@@ -28,12 +28,15 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##  + %args:
 ##    tokenize => $path_to_dtatw_tokenize, ##-- default: search
 ##    inplace  => $bool,                   ##-- prefer in-place programs for search?
+sub new { return $_[0]->DTA::TokWrap::Processor::new(@_[1..$#_]); }
 
 ## %defaults = CLASS->defaults()
 sub defaults {
   my $that = shift;
   return (
-	  $that->SUPER::defaults(),
+	  #$that->SUPER::defaults(), ##-- block inheritance from DTA::TokWrap::Processor::tokenize
+	  $that->DTA::TokWrap::Processor::defaults(),
+
 	  tokenize=>undef,
 	  inplace=>1,
 	 );
@@ -64,6 +67,7 @@ sub init {
 ##    txtfile => $txtfile,  ##-- (input) serialized text file (uses $doc->{bxdata} if $doc->{txtfile} is not defined)
 ##    bxdata  => \@bxdata,  ##-- (input) block data, used to generate $doc->{txtfile} if not present
 ##    tokdata => $tokdata,  ##-- (output) tokenizer output data (string)
+##    ntoks => $nTokens,    ##-- (output) number of output tokens (regex hack)
 ##    tokenize_stamp0 => $f, ##-- (output) timestamp of operation begin
 ##    tokenize_stamp  => $f, ##-- (output) timestamp of operation end
 ##    tokdata_stamp => $f,   ##-- (output) timestamp of operation end
@@ -92,6 +96,8 @@ sub tokenize {
   slurp_fh($cmdfh, \$doc->{tokdata});
   $cmdfh->close();
 
+  ##-- finalize
+  $doc->{ntoks} = $td->nTokens(\$doc->{tokdata});
   $doc->{tokenize_stamp} = $doc->{tokdata_stamp} = timestamp(); ##-- stamp
   return $doc;
 }

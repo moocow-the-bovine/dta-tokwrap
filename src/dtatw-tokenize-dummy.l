@@ -60,7 +60,7 @@ ABBR     (Prof|Dr|[[:alpha:]]|([[:alpha:]][[:alpha:]]))\.
 {SENTBREAK}  { thebyte += yyleng; print_eos(); }
 {WORDBREAK}  { thebyte += yyleng; }
 
-{ROMAN_DIGIT}+\.? { print_token("$ROMAN"); thebyte += yyleng; }
+{ROMAN_DIGIT}+\.? { print_token("$ROMAN\t$ABBR"); thebyte += yyleng; }
 
 {DIGIT}+\/{DIGIT}+         { print_token("$FRACTION"); thebyte += yyleng; }
 {DIGIT}+{PUNCT}           { print_token("$CARDPUNCT"); thebyte += yyleng; }

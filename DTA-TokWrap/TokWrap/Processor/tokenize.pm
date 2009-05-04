@@ -66,6 +66,13 @@ sub tokenize {
 }
 
 
+## $ntoks = $tz->nTokens(\$tokdata)
+##  + get number of tokens in \$tokdata (regex hack)
+sub nTokens {
+  #my ($tz,$tokdatar) = @_;
+  return scalar( @{[ ${$_[1]} =~ /^(?!%%).+$/mg ]} );
+}
+
 1; ##-- be happy
 
 __END__

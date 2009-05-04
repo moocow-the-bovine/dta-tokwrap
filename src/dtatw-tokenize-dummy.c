@@ -810,7 +810,7 @@ YY_RULE_SETUP
 case 4:
 YY_RULE_SETUP
 #line 63 "dtatw-tokenize-dummy.l"
-{ print_token("$ROMAN"); thebyte += yyleng; }
+{ print_token("$ROMAN\t$ABBR"); thebyte += yyleng; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP

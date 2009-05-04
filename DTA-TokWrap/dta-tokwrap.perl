@@ -16,7 +16,7 @@ use Pod::Usage;
 ##-- general
 our $prog = basename($0);
 our ($help,$man,$version);
-our $verbose = 0;      ##-- verbosity
+our $verbose = 1;      ##-- verbosity
 
 ##-- DTA::TokWrap options
 my %bx0opts = DTA::TokWrap::Processor::mkbx0->defaults();
@@ -88,6 +88,7 @@ sub setVerboseTrace {
   my $_verbose = defined($_[1]) ? $_[1] : $verbose;
   ${$_->{ref}} = ($_[0] ? $traceLevel : undef) foreach (grep {$_verbose>=$_->{vlevel}} @traceOptions);
 }
+setVerboseTrace(1); ##-- default
 
 GetOptions(
 	   ##-- General

@@ -492,7 +492,7 @@ static void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *fi
     if (w_rest && *w_rest) {
       fputc('>',f_out);
       do {
-	char *tail = next_tab_z(w_rest);
+	char *tail = next_tab(w_rest);
 	fprintf(f_out, "%s<%s>", indent_a, aElt);
 	put_escaped_str(f_out, w_rest, tail-w_rest);
 	fprintf(f_out, "</%s>", aElt);
