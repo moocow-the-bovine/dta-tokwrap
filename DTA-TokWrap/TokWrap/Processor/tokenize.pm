@@ -89,7 +89,7 @@ sub tokenize {
   my $cmd = ("'$tz->{tomata2}'"
 	     .(ref($tz->{tomata2opts})
 	       ? join(' ',map {" '$_'"} @{$tz->{tomata2opts}})
-	       : ($tz->{tomata2opts} ? "'$tz->{tomata2opts}'" : '')
+	       : ($tz->{tomata2opts} ? " $tz->{tomata2opts}" : '') ##-- scalar: assume it's already quoted
 	      )
 	     ." '$doc->{txtfile}'"
 	    );
