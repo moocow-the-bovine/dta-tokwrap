@@ -16,7 +16,7 @@ ACLOCAL_AMFLAGS = -I m4
 #AUTOMAKE_OPTIONS = foreign dist-bzip2 dist-zip
 AUTOMAKE_OPTIONS = foreign
 
-SUBDIRS = src doc
+SUBDIRS = src scripts doc
 #SUBDIRS += DTA-TokWrap  ##-- works (kinda), but breaks 'make clean'
 
 ## --- distcheck stuff

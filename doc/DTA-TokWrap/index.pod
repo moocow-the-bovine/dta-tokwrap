@@ -63,6 +63,10 @@ L<DTA::TokWrap::Processor::tok2xml|DTA::TokWrap::Processor::tok2xml> - DTA token
 
 =item *
 
+L<DTA::TokWrap::Processor::tok2xml::perl|DTA::TokWrap::Processor::tok2xml::perl> - DTA tokenizer wrappers: t -> t.xml, pure-perl (slow, obsolete)
+
+=item *
+
 L<DTA::TokWrap::Processor::tokenize|DTA::TokWrap::Processor::tokenize> - DTA tokenizer wrappers: tokenizer: default (NYI)
 
 =item *

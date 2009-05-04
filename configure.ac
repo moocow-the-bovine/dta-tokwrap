@@ -47,10 +47,19 @@ dnl v--- for static-only libraries (non-libtool)
 dnl AC_PROG_RANLIB
 
 #---------------------------------------------------------------
-# short package includes
+# short package include-dir
 spkgincludedir="\${includedir}/AC_PACKAGE_NAME"
 AC_SUBST(spkgincludedir)
-# short package includes
+# short package include-dir
+#---------------------------------------------------------------
+
+#---------------------------------------------------------------
+# share/package dir
+sharepkgdir="\${prefix}/share/AC_PACKAGE_NAME"
+pkgxsldir="\${sharepkgdir}/stylesheets"
+AC_SUBST(sharepkgdir)
+AC_SUBST(pkgxsldir)
+# share/package dir
 #---------------------------------------------------------------
 
 ##-- pkg-config
@@ -126,6 +135,7 @@ AC_CONFIG_FILES(doc/DTA-TokWrap/Makefile)
 AC_CONFIG_FILES(doc/programs/Makefile)
 AC_CONFIG_FILES(doc/dot/Makefile)
 AC_CONFIG_FILES(doc/Makefile)
+AC_CONFIG_FILES(scripts/Makefile)
 AC_CONFIG_FILES(src/Makefile)
 AC_CONFIG_FILES(Makefile)
 AC_OUTPUT
