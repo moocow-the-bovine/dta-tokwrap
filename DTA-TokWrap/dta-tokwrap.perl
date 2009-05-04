@@ -147,6 +147,9 @@ GetOptions(
 	   "trace!" => sub { setVerboseTrace($_[1]); },
 	   "traceAll|trace-all!" => sub { setVerboseTrace($_[1],$verbose_max); },
 	   "dummy|no-act|n!" => \$docopts{dummy},
+	   "dummytok|dt!" => sub {
+	     $DTA::TokWrap::Document::TOKENIZE_CLASS = 'DTA::TokWrap::Processor::tokenize'.($_[1] ? '::dummy' : '');
+	   },
 
 	   'dump-xsl-stylesheets|dump-xsl:s' => \$dump_xsl_prefix,
 	  );
