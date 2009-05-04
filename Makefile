@@ -33,8 +33,8 @@ SCRIPTS_DIR ?= ../scripts
 #TOKWRAP_OPTS ?= -keep -trace -notraceProc
 #TOKWRAP_OPTS ?= -keep -trace
 #TOKWRAP_OPTS ?= -keep -q
-#TOKWRAP_OPTS ?= -keep -v 1 -noprofile
-TOKWRAP_OPTS ?= -keep -v 1
+TOKWRAP_OPTS ?= -keep -v 1 -noprofile
+#TOKWRAP_OPTS ?= -keep -v 1
 
 TOKENIZER ?= $(PROGDIR)dtatw-tokenize-dummy
 
@@ -47,7 +47,10 @@ INPLACE ?= yes
 
 CSRC_DIR=../src
 CSRC_PROGRAMS = $(patsubst %,../src/%,\
-	dtatw-mkindex dtatw-rm-namespaces dtatw-tokenize-dummy \
+	dtatw-mkindex \
+	dtatw-rm-namespaces \
+	dtatw-tokenize-dummy \
+	dtatw-tok2xml \
 	dtatw-txml2wxml dtatw-txml2sxml dtatw-txml2axml \
 	)
 TOKWRAP_DIR=../DTA-TokWrap
@@ -103,6 +106,10 @@ programs: $(CSRC_PROGRAMS)
 $(CSRC_DIR)/dtatw-mkindex: $(CSRC_DIR)/dtatw-mkindex.c
 $(CSRC_DIR)/dtatw-rm-namespaces: $(CSRC_DIR)/dtatw-rm-namespaces.c
 $(CSRC_DIR)/dtatw-tokenize-dummy: $(CSRC_DIR)/dtatw-tokenize-dummy.l
+$(CSRC_DIR)/dtatw-tok2xml: $(CSRC_DIR)/dtatw-tok2xml.c
+$(CSRC_DIR)/dtatw-txml2sxml: $(CSRC_DIR)/dtatw-txml2sxml.c
+$(CSRC_DIR)/dtatw-txml2wxml: $(CSRC_DIR)/dtatw-txml2wxml.c
+$(CSRC_DIR)/dtatw-txml2axml: $(CSRC_DIR)/dtatw-txml2axml.c
 
 $(CSRC_DIR)/%:
 	$(MAKE) -C $(CSRC_DIR) "$*"
@@ -284,8 +291,9 @@ t-xml.stamp: t.stamp $(TOKWRAP_DEPS)
 	touch $@
 
 t-xml-iter: $(XML:.xml=.t.xml)
-%.t.xml: %.t %.bx %.cx $(TOKWRAP_DEPS) $(CSRC_DEPS)
-	$(TOKWRAP) -t tok2xml $*.xml
+%.t.xml: %.t %.cx %.bx $(TOKWRAP_DEPS) $(CSRC_DEPS)
+#	$(TOKWRAP) -t tok2xml $*.xml
+	$(PROGDIR)dtatw-tok2xml $< $*.cx $*.bx $@ $*.xml
 
 no-t-xml: ; rm -f *.t.xml t-xml.stamp
 no-tokd-xml: no-t-xml
