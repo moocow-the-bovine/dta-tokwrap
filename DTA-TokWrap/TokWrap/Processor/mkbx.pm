@@ -32,6 +32,7 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##     ##-- Block-sorting: hints
 ##     wbStr => $wbStr,                       ##-- word-break hint text
 ##     sbStr => $sbStr,                       ##-- sentence-break hint text
+##     nohints => $bool,                      ##-- if true, set $wbStr=$sbStr="" (don't write hints)
 ##     sortkey_attr => $attr,                 ##-- sort-key attribute (default='dta.tw.key'; should jive with mkbx0)
 ##     ##
 ##     ##-- Block-sorting: low-level data
@@ -56,6 +57,9 @@ sub defaults {
 ## $mbx = $mbx->init()
 sub init {
   my $mbx = shift;
+
+  ##-- ignore hints?
+  $mbx->{wbStr} = $mbx->{sbStr} = '' if ($mbx->{nohints});
 
   ##-- create & initialize XML parser
   $mbx->initXmlParser() if (!defined($mbx->{xp}));

@@ -27,6 +27,7 @@ our %twopts = (
 			    #traceLevel => 'trace',
 			    hint_sb_xpaths => $bx0opts{hint_sb_xpaths},
 			    hint_wb_xpaths => $bx0opts{hint_wb_xpaths},
+			    nohints => 0, ##-- don't generate any hints in output .txt file
 			   },
 	      );
 our %docopts = (
@@ -108,9 +109,11 @@ GetOptions(
 
 	   ##-- DTA::TokWrap::Processor options
 	   'inplacePrograms|inplace|i!' => \$twopts{inplacePrograms},
-	   'processor-option|procopt|po=s%' => $twopts{procOpts},
 	   'sentence-break-xpath|sb-xpath|sbx|sb=s@' => $twopts{procOpts}{hint_sb_xpaths},
 	   'word-break-xpath|wb-xpath|wbx|wb=s@' => $twopts{procOpts}{hint_wb_xpaths},
+	   'weak-hints|whitespace-hints|wh' => sub { $twopts{procOpts}{wbStr}=$twopts{procOpts}{sbStr}="\n\n"; },
+	   'hints!' => sub { $twopts{procOpts}{nohints} = !$_[1]; },
+	   'processor-option|procopt|po=s%' => $twopts{procOpts},
 
 	   ##-- DTA::TokWrap options: I/O
 	   'outdir|od|d=s' => \$twopts{outdir},
@@ -118,6 +121,7 @@ GetOptions(
 	   'keeptmp|keep|k!' => \$twopts{keeptmp},
 	   'format-xml|format|fmt|pretty-xml|pretty|fx|px:i'  => sub { $docopts{format} = $_[1]||1; },
 	   'noformat-xml|noformat|nofmt|nopretty-xml|nopretty|nofx|nopx'  => sub { $docopts{format} = 0; },
+	   'document-option|docopt|do=s%' => \%docopts,
 
 	   ##-- Log options
 	   'log-config|logconfig|logconf|log-rc|logrc|lc=s' => \$logConfFile,
@@ -318,6 +322,8 @@ dta-tokwrap.perl - top-level tokenizer wrapper for DTA XML documents
   -inplace , -noinplace  # do/don't use locally built programs if available (default=do)
   -sb-xpath XPATH        # add sentence-break hints on XPATH (element) open and close
   -wb-xpath XPATH        # add word-break hints on XPATH (element) open and close
+  -hints, -nohints       # do/don't generate "hints" for the tokenizer (default=do)
+  -weak-hints            # use whitespace-only hints rather than defaults ($WB$,$SB$)
   -procopt OPT=VALUE     # set arbitrary subprocessor options
  
  I/O Options:
@@ -325,7 +331,7 @@ dta-tokwrap.perl - top-level tokenizer wrapper for DTA XML documents
   -tmpdir TMPDIR         # set temporary directory (default=$ENV{DTATW_TMP} or OUTDIR)
   -keep , -nokeep        # do/don't keep temporary files (default=don't)
   -format , -noformat    # do/don't pretty-print XML output (default=do)
-  -dump-xsl PREFIX       # dump generated XSL stylesheets to PREFIX*.xsl and exit
+  -docopt OPT=VALUE      # set arbitrary document options (e.g. filenames)
  
  Logging Options:
   -log-config RCFILE     # use Log::Log4perl configuration file RCFILE (default=internal)
@@ -336,6 +342,7 @@ dta-tokwrap.perl - top-level tokenizer wrapper for DTA XML documents
   -silent  , -quiet      # alias for -verbose=0 -log-level=FATAL -notrace
  
  Trace and Debugging Options:
+  -dump-xsl PREFIX       # dump generated XSL stylesheets to PREFIX*.xsl and exit
   -dummy , -nodummy      # don't/do actually run any subprocessors (default=do)
   -trace , -notrace      # do/don't log trace messages (default: depends on -verbose)
   -traceAll              # enable logging of all possible trace messages
@@ -446,9 +453,24 @@ Same caveats as for L</"-sb-xpath XPATH">
 
 This option may be specified more than once.
 
+=item -hints , -nohints
+
+Do/don't generate explicit sentence- and/or token-break "hints" for the tokenizer
+in the temporary .txt file (default=do).  Explicit hint strings can be set
+with
+C<-procopt wbStr=WORDBREAK_HINT_STRING> and/or C<-procopt sbStr=SENTBREAK_HINT_STRING>;
+see L<-procopt|/"-procopt OPT=VALUE"> below for details.
+
+=item -weak-hints
+
+If generating tokenizer "hints", use whitespace-only hints rather than defaults
+"\n$WB$\n", "\n$SB$\n".
+This can be useful if your low-level tokenizer doesn't understand the explicit
+hints, but might be predisposed to break tokens and/or sentences on whitespace.
+
 =item -procopt OPT=VALUE
 
-Set an arbitrary subprocessor option OPT to VALUE.
+Set a literal arbitrary subprocessor option OPT to VALUE.
 See subprocessor module documentation for available options.
 
 =back
@@ -481,17 +503,10 @@ when they are no longer needed (default=don't).
 
 Do/don't pretty-print XML output when possible (default=do).
 
-=item -dump-xsl PREFIX
+=item docopt OPT=VALUE
 
-Dumps generated XSL stylesheets to PREFIX*.xsl and exit.
-Useful for debugging.
-Causes the following files to be written:
-
- ${PREFIX}mkbx0_hint.xsl    # hint insertion
- ${PREFIX}mkbx0_sort.xsl    # serialization sort-key generation
- ${PREFIX}standoff_t2s.xsl  # master XML to sentence standoff
- ${PREFIX}standoff_t2w.xsl  # master XML to token standoff
- ${PREFIX}standoff_t2a.xsl  # master XML to analysis standoff
+Set arbitrary DTA::TokWrap::Document options (e.g. filenames).
+See L<DTA::TokWrap::Document(3pm)|DTA::TokWrap::Document> for details.
 
 =back
 
@@ -544,6 +559,18 @@ Alias for C<-verbose=0 -log-level=FATAL -notrace>.
 =head2 Trace and Debugging Options
 
 =over 4
+
+=item -dump-xsl PREFIX
+
+Dumps generated XSL stylesheets to PREFIX*.xsl and exits.
+Useful for debugging.
+Causes the following files to be written:
+
+ ${PREFIX}mkbx0_hint.xsl    # hint insertion
+ ${PREFIX}mkbx0_sort.xsl    # serialization sort-key generation
+ ${PREFIX}standoff_t2s.xsl  # master XML to sentence standoff
+ ${PREFIX}standoff_t2w.xsl  # master XML to token standoff
+ ${PREFIX}standoff_t2a.xsl  # master XML to analysis standoff
 
 =item -dummy , -nodummy
 
