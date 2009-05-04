@@ -111,7 +111,7 @@ GetOptions(
 	   'inplacePrograms|inplace|i!' => \$twopts{inplacePrograms},
 	   'sentence-break-xpath|sb-xpath|sbx|sb=s@' => $twopts{procOpts}{hint_sb_xpaths},
 	   'word-break-xpath|wb-xpath|wbx|wb=s@' => $twopts{procOpts}{hint_wb_xpaths},
-	   'weak-hints|whitespace-hints|wh' => sub { $twopts{procOpts}{wbStr}=$twopts{procOpts}{sbStr}="\n\n"; },
+	   'weak-hints|weakhints|whitespace-hints|wh' => sub { $twopts{procOpts}{wbStr}=$twopts{procOpts}{sbStr}="\n\n"; },
 	   'hints!' => sub { $twopts{procOpts}{nohints} = !$_[1]; },
 	   'processor-option|procopt|po=s%' => $twopts{procOpts},
 
