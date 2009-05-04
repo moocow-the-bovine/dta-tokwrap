@@ -72,7 +72,7 @@
  General Options:
   -help                  # show this help message
   -man                   # show complete manpage
-  -verbose LEVEL         # set verbosity level (0&lt;=level&lt;=3; default=0)
+  -verbose LEVEL         # set verbosity level (0&lt;=level&lt;=7; default=0)
  
  Make Emulation Options:
   -targets TARGETS       # set build targets (default='all')
@@ -86,6 +86,9 @@
   -inplace , -noinplace  # do/don't use locally built programs if available (default=do)
   -sb-xpath XPATH        # add sentence-break hints on XPATH (element) open and close
   -wb-xpath XPATH        # add word-break hints on XPATH (element) open and close
+  -hints, -nohints       # do/don't generate &quot;hints&quot; for the tokenizer (default=do)
+  -weak-hints            # use whitespace-only hints rather than defaults ($WB$,$SB$)
+  -strong-hints          # opposite of -weak-hints
   -procopt OPT=VALUE     # set arbitrary subprocessor options
  
  I/O Options:
@@ -93,7 +96,7 @@
   -tmpdir TMPDIR         # set temporary directory (default=$ENV{DTATW_TMP} or OUTDIR)
   -keep , -nokeep        # do/don't keep temporary files (default=don't)
   -format , -noformat    # do/don't pretty-print XML output (default=do)
-  -dump-xsl PREFIX       # dump generated XSL stylesheets to PREFIX*.xsl and exit
+  -docopt OPT=VALUE      # set arbitrary document options (e.g. filenames)
  
  Logging Options:
   -log-config RCFILE     # use Log::Log4perl configuration file RCFILE (default=internal)
@@ -104,7 +107,9 @@
   -silent  , -quiet      # alias for -verbose=0 -log-level=FATAL -notrace
  
  Trace and Debugging Options:
+  -dump-xsl PREFIX       # dump generated XSL stylesheets to PREFIX*.xsl and exit
   -dummy , -nodummy      # don't/do actually run any subprocessors (default=do)
+  -dummy-tokenizer       # use local dummy tokenizer rather than tomata2
   -trace , -notrace      # do/don't log trace messages (default: depends on -verbose)
   -traceAll              # enable logging of all possible trace messages
   -notraceAll            # disable logging of all possible trace messages
@@ -132,7 +137,7 @@
 <dt><strong><a name="verbose_level" class="item">-verbose LEVEL</a></strong></dt>
 
 <dd>
-<p>Set verbosity level (0&lt;=level&lt;=3; default=0)</p>
+<p>Set verbosity level (0&lt;=level&lt;=7; default=0)</p>
 </dd>
 </dl>
 <p>
@@ -203,10 +208,32 @@ to add sentence-break hints on XPATH (which should resolve only to element nodes
 Same caveats as for <a href="#sb_xpath_xpath">-sb-xpath XPATH</a></p>
 <p>This option may be specified more than once.</p>
 </dd>
+<dt><strong><a name="hints_nohints" class="item">-hints , -nohints</a></strong></dt>
+
+<dd>
+<p>Do/don't generate explicit sentence- and/or token-break &quot;hints&quot; for the tokenizer
+in the temporary .txt file (default=do).  Explicit hint strings can be set
+with
+<code>-procopt wbStr=WORDBREAK_HINT_STRING</code> and/or <code>-procopt sbStr=SENTBREAK_HINT_STRING</code>;
+see <a href="#procopt_opt_value">-procopt</a> below for details.</p>
+</dd>
+<dt><strong><a name="weak_hints" class="item">-weak-hints</a></strong></dt>
+
+<dd>
+<p>If generating tokenizer &quot;hints&quot;, use whitespace-only hints rather than defaults
+&quot;\n$WB$\n&quot;, &quot;\n$SB$\n&quot;.
+This can be useful if your low-level tokenizer doesn't understand the explicit
+hints, but might be predisposed to break tokens and/or sentences on whitespace.</p>
+</dd>
+<dt><strong><a name="strong_hints" class="item">-strong-hints</a></strong></dt>
+
+<dd>
+<p>Opposite of -weak-hints.</p>
+</dd>
 <dt><strong><a name="procopt_opt_value" class="item">-procopt OPT=VALUE</a></strong></dt>
 
 <dd>
-<p>Set an arbitrary subprocessor option OPT to VALUE.
+<p>Set a literal arbitrary subprocessor option OPT to VALUE.
 See subprocessor module documentation for available options.</p>
 </dd>
 </dl>
@@ -237,18 +264,11 @@ when they are no longer needed (default=don't).</p>
 <dd>
 <p>Do/don't pretty-print XML output when possible (default=do).</p>
 </dd>
-<dt><strong><a name="dump_xsl_prefix" class="item">-dump-xsl PREFIX</a></strong></dt>
+<dt><strong><a name="docopt_opt_value" class="item">docopt OPT=VALUE</a></strong></dt>
 
 <dd>
-<p>Dumps generated XSL stylesheets to PREFIX*.xsl and exit.
-Useful for debugging.
-Causes the following files to be written:</p>
-<pre>
- ${PREFIX}mkbx0_hint.xsl    # hint insertion
- ${PREFIX}mkbx0_sort.xsl    # serialization sort-key generation
- ${PREFIX}standoff_t2s.xsl  # master XML to sentence standoff
- ${PREFIX}standoff_t2w.xsl  # master XML to token standoff
- ${PREFIX}standoff_t2a.xsl  # master XML to analysis standoff</pre>
+<p>Set arbitrary DTA::TokWrap::Document options (e.g. filenames).
+See <a href="./DTA/TokWrap/Document.html">DTA::TokWrap::Document(3pm)</a> for details.</p>
 </dd>
 </dl>
 <p>
@@ -296,10 +316,28 @@ Only effective if the default (internal) log configuration is being used.</p>
 </p>
 <h2><a name="trace_and_debugging_options">Trace and Debugging Options</a></h2>
 <dl>
+<dt><strong><a name="dump_xsl_prefix" class="item">-dump-xsl PREFIX</a></strong></dt>
+
+<dd>
+<p>Dumps generated XSL stylesheets to PREFIX*.xsl and exits.
+Useful for debugging.
+Causes the following files to be written:</p>
+<pre>
+ ${PREFIX}mkbx0_hint.xsl    # hint insertion
+ ${PREFIX}mkbx0_sort.xsl    # serialization sort-key generation
+ ${PREFIX}standoff_t2s.xsl  # master XML to sentence standoff
+ ${PREFIX}standoff_t2w.xsl  # master XML to token standoff
+ ${PREFIX}standoff_t2a.xsl  # master XML to analysis standoff</pre>
+</dd>
 <dt><strong><a name="dummy_nodummy" class="item">-dummy , -nodummy</a></strong></dt>
 
 <dd>
 <p>Don't/do actually run any subprocessors (default=do)</p>
+</dd>
+<dt><strong><a name="dummy_tokenizer_nodummy_tokenizer" class="item">-dummy-tokenizer , -nodummy-tokenizer</a></strong></dt>
+
+<dd>
+<p>Do/don't use locally built dummy tokenizer instead of tomata2.</p>
 </dd>
 <dt><strong><a name="trace_notrace" class="item">-trace , -notrace</a></strong></dt>
 
