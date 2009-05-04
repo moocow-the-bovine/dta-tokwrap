@@ -69,12 +69,12 @@ our @traceOptions = (
 		     {opt=>'traceOpen',ref=>\$docopts{traceOpen},vlevel=>1},
 		     {opt=>'traceClose',ref=>\$docopts{traceClose},vlevel=>3},
 		     {opt=>'traceProc',ref=>\$docopts{traceProc},vlevel=>2},
-		     {opt=>'traceLoad',ref=>\$docopts{traceLoad},vlevel=>2},
-		     {opt=>'traceSave',ref=>\$docopts{traceSave},vlevel=>2},
-		     {opt=>'traceMake',ref=>\$docopts{traceMake},vlevel=>2},
-		     {opt=>'traceGen',ref=>\$docopts{traceGen},vlevel=>3},
-		     {opt=>'traceSubproc',ref=>\$twopts{procOpts}{traceLevel},vlevel=>3},
-		     {opt=>'traceRun', ref=>\$DTA::TokWrap::Utils::TRACE_RUNCMD,vlevel=>3},
+		     {opt=>'traceLoad',ref=>\$docopts{traceLoad},vlevel=>3},
+		     {opt=>'traceSave',ref=>\$docopts{traceSave},vlevel=>3},
+		     {opt=>'traceMake',ref=>\$docopts{traceMake},vlevel=>4},
+		     {opt=>'traceGen',ref=>\$docopts{traceGen},vlevel=>5},
+		     {opt=>'traceSubproc',ref=>\$twopts{procOpts}{traceLevel},vlevel=>6},
+		     {opt=>'traceRun', ref=>\$DTA::TokWrap::Utils::TRACE_RUNCMD,vlevel=>7},
 		    );
 our $verbose_max = 255;
 
@@ -312,7 +312,7 @@ dta-tokwrap.perl - top-level tokenizer wrapper for DTA XML documents
  General Options:
   -help                  # show this help message
   -man                   # show complete manpage
-  -verbose LEVEL         # set verbosity level (0<=level<=3; default=0)
+  -verbose LEVEL         # set verbosity level (0<=level<=7; default=0)
  
  Make Emulation Options:
   -targets TARGETS       # set build targets (default='all')
@@ -383,7 +383,7 @@ Display the complete program manpage and exit.
 
 =item -verbose LEVEL
 
-Set verbosity level (0<=level<=3; default=0)
+Set verbosity level (0<=level<=7; default=0)
 
 =back
 
