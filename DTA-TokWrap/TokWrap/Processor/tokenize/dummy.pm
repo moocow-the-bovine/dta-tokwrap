@@ -64,8 +64,7 @@ sub init {
 ## $doc_or_undef = $CLASS_OR_OBJECT->tokenize($doc)
 ## + $doc is a DTA::TokWrap::Document object
 ## + %$doc keys:
-##    txtfile => $txtfile,  ##-- (input) serialized text file (uses $doc->{bxdata} if $doc->{txtfile} is not defined)
-##    bxdata  => \@bxdata,  ##-- (input) block data, used to generate $doc->{txtfile} if not present
+##    txtfile => $txtfile,  ##-- (input) serialized text file
 ##    tokdata => $tokdata,  ##-- (output) tokenizer output data (string)
 ##    ntoks => $nTokens,    ##-- (output) number of output tokens (regex hack)
 ##    tokenize_stamp0 => $f, ##-- (output) timestamp of operation begin
@@ -83,7 +82,6 @@ sub tokenize {
   $td = $td->new if (!ref($td));
   $td->logconfess("tokenize($doc->{xmlbase}): no dtatw-tokenize-dummy program")
     if (!$td->{tokenize});
-  #$doc->saveTxtFile() if (!$doc->{txtfile} || !-r $doc->{txtfile});
   $td->logconfess("tokenize($doc->{xmlbase}): no .txt file defined")
     if (!defined($doc->{txtfile}));
   $td->logconfess("tokenize($doc->{xmlbase}): .txt file '$doc->{txtfile}' not readable")

@@ -8,7 +8,7 @@ package DTA::TokWrap::Processor::tokenize;
 
 use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
-use DTA::TokWrap::Utils qw(:time);
+use DTA::TokWrap::Utils qw(:progs :slurp :time);
 use DTA::TokWrap::Processor;
 
 use Carp;
@@ -24,23 +24,36 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##==============================================================================
 
 ## $tz = CLASS_OR_OBJ->new(%args)
-##  + %args:
-##    (none yet)
-sub new {
-  my $that = shift;
-  $that->logconfess((ref($that)||$that), "::new(): not yet implemented: use DTA::TokWrap::tokenize::dummy!");
-}
-
 ## %defaults = CLASS->defaults()
+##  + static class-dependent defaults
+##  + %args, %defaults, %$tz:
+##    tomata2 => $path_to_dwds_tomasotath, ##-- tokenizer program; default: search
+##    tomata2opts => \@options,            ##-- additional options for tokenizer program
+##    inplace => $bool,                    ##-- prefer in-place programs for search?
 sub defaults {
   my $that = shift;
   return (
 	  $that->SUPER::defaults(),
-	  ##....
+	  tomata2=>undef,
+	  tomata2opts=>['--to', '--to-offset'], ##-- options
+	  inplace=>1,
 	 );
 }
 
 ## $tz = $tz->init()
+sub init {
+  my $tz = shift;
+
+  ##-- search for tokenizer program
+  if (!defined($tz->{tokenize})) {
+    $tz->{tokenize} = path_prog('dwds_tomasotath',
+				prepend=>($tz->{inplace} ? ['.','../src'] : undef),
+				warnsub=>sub {$tz->logconfess(@_)},
+			       );
+  }
+
+  return $tz;
+}
 
 ##==============================================================================
 ## Methods
@@ -49,8 +62,7 @@ sub defaults {
 ## $doc_or_undef = $CLASS_OR_OBJECT->tokenize($doc)
 ## + $doc is a DTA::TokWrap::Document object
 ## + %$doc keys:
-##    txtfile => $txtfile,  ##-- (input) serialized text file (uses $doc->{bxdata} if $doc->{txtfile} is not defined)
-##    bxdata  => \@bxdata,  ##-- (input) block data, used to generate $doc->{txtfile} if not present
+##    txtfile => $txtfile,  ##-- (input) serialized text file
 ##    tokdata => $tokdata,  ##-- (output) tokenizer output data (string)
 ##    tokenize_stamp0 => $f, ##-- (output) timestamp of operation begin
 ##    tokenize_stamp  => $f, ##-- (output) timestamp of operation end
@@ -59,12 +71,42 @@ sub defaults {
 sub tokenize {
   my ($tz,$doc) = @_;
 
-  $tz->logconfess((ref($tz)||$tz), "::tokenize(): not yet implemented: use DTA::TokWrap::tokenize::dummy!");
+  ##-- log, stamp
+  $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase})");
+  $doc->{tokenize_stamp0} = timestamp();
 
-  #return $doc;
-  return undef;
+  ##-- sanity check(s)
+  $tz = $tz->new if (!ref($tz));
+  $tz->logconfess("tokenize($doc->{xmlbase}): no dtatw-tokenize-dummy program")
+    if (!$tz->{tokenize});
+  $tz->logconfess("tokenize($doc->{xmlbase}): no .txt file defined")
+    if (!defined($doc->{txtfile}));
+  $tz->logconfess("tokenize($doc->{xmlbase}): .txt file '$doc->{txtfile}' not readable")
+    if (!-r $doc->{txtfile});
+
+  ##-- run program
+  $doc->{tokdata} = '';
+  my $cmd = join(' ',
+		 map {"'$_'"}
+		 ($tz->{tomata2},
+		  ($tz->{tomata2opts} ? @{$tz->{tomata2opts}} : qw()),
+		  $doc->{txtfile},
+		 ));
+  my $cmdfh = IO::File->new("$cmd |")
+    or $tz->logconfess("tokenize($doc->{xmlbase}): open failed for pipe ($cmd |): $!");
+  slurp_fh($cmdfh, \$doc->{tokdata});
+  $cmdfh->close();
+
+  ##-- finalize
+  $doc->{ntoks} = $tz->nTokens(\$doc->{tokdata});
+  $doc->{tokenize_stamp} = $doc->{tokdata_stamp} = timestamp(); ##-- stamp
+  return $doc;
 }
 
+
+##==============================================================================
+## Utilities
+##==============================================================================
 
 ## $ntoks = $tz->nTokens(\$tokdata)
 ##  + get number of tokens in \$tokdata (regex hack)

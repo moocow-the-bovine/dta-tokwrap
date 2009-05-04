@@ -29,8 +29,8 @@ our @ISA = ('DTA::TokWrap::Base','Exporter');
 
 ## $TOKENIZE_CLASS
 ##  + default tokenizer class
-#our $TOKENIZE_CLASS = 'DTA::TokWrap::Processor::tokenize';
-our $TOKENIZE_CLASS = 'DTA::TokWrap::Processor::tokenize::dummy';
+our $TOKENIZE_CLASS = 'DTA::TokWrap::Processor::tokenize';
+#our $TOKENIZE_CLASS = 'DTA::TokWrap::Processor::tokenize::dummy';
 
 ## $CX_ID   : {cxdata} index of id field
 ## $CX_XOFF : {cxdata} index of XML byte-offset field
