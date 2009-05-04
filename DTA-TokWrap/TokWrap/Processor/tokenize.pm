@@ -86,12 +86,13 @@ sub tokenize {
 
   ##-- run program
   $doc->{tokdata} = '';
-  my $cmd = join(' ',
-		 map {"'$_'"}
-		 ($tz->{tomata2},
-		  ($tz->{tomata2opts} ? @{$tz->{tomata2opts}} : qw()),
-		  $doc->{txtfile},
-		 ));
+  my $cmd = ("'$tz->{tomata2}'"
+	     .(ref($tz->{tomata2opts})
+	       ? join(' ',map {" '$_'"} @{$tz->{tomata2opts}})
+	       : ($tz->{tomata2opts} ? "'$tz->{tomata2opts}'" : '')
+	      )
+	     ." '$doc->{txtfile}'"
+	    );
   my $cmdfh = IO::File->new("$cmd |")
     or $tz->logconfess("tokenize($doc->{xmlbase}): open failed for pipe ($cmd |): $!");
   slurp_fh($cmdfh, \$doc->{tokdata});
