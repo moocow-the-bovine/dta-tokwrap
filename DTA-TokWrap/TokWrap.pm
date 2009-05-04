@@ -154,11 +154,13 @@ sub logProfile {
   #my @procs = (qw(mkindex mkbx0 mkbx tokenize tok2xml sowxml soaxml sosxml),'');
   my @procs = (
 	       sort {
-		 (
-		  (($profh->{$a}{laststamp}||0) <=> ($profh->{$b}{laststamp}||0))
-		  ||
-		  ($a cmp $b)
-		 )
+		 ($a eq $b ? 0
+		  : ($a eq '' ? 1
+		     : ($b eq '' ? -1
+			: ( (($profh->{$a}{laststamp}||0) <=> ($profh->{$b}{laststamp}||0))
+			    ||
+			     ($a cmp $b)
+			  ))))
 	       } keys(%{$tw->{profile}})
 	      );
   my $format = "\n%9s: %4d doc, %7stok, %7sbyte in %7ssec: %7stok/sec ~ %7sbyte/sec";
