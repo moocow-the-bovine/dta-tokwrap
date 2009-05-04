@@ -32,8 +32,8 @@ SCRIPTS_DIR ?= ../scripts
 #TOKWRAP_OPTS ?= -keep -log-level=TRACE -traceOpen
 #TOKWRAP_OPTS ?= -keep -trace -notraceProc
 #TOKWRAP_OPTS ?= -keep -trace
-#TOKWRAP_OPTS ?= -keep -q
-TOKWRAP_OPTS ?= -keep -v 1 -noprofile
+TOKWRAP_OPTS ?= -keep -q
+#TOKWRAP_OPTS ?= -keep -v 1 -noprofile
 #TOKWRAP_OPTS ?= -keep -v 1
 
 TOKENIZER ?= $(PROGDIR)dtatw-tokenize-dummy
