@@ -27,7 +27,7 @@ our @EXPORT = qw();
 our %EXPORT_TAGS = (
 		    files => [qw(file_mtime file_is_newer  file_try_open abs_path str2file ref2file)],
 		    slurp => [qw(slurp_file slurp_fh)],
-		    progs => ['path_prog','runcmd','$TRACE_RUNCMD'],
+		    progs => ['path_prog','runcmd','opencmd','$TRACE_RUNCMD'],
 		    libxml => [qw(libxml_parser)],
 		    libxslt => [qw(xsl_stylesheet)],
 		    time => [qw(timestamp)],
@@ -70,6 +70,14 @@ sub runcmd {
   __PACKAGE__->vlog($TRACE_RUNCMD,"runcmd(): ", join(' ', map {$_=~/\s/ ? "\"$_\"" : $_} @argv))
     if ($TRACE_RUNCMD);
   return system(@argv);
+}
+
+## $fh_or_undef = PACKAGE::opencmd($cmd)
+##  + does log trace at level $TRACE_RUNCMD
+sub opencmd {
+  my $cmd = shift;
+  __PACKAGE__->vlog($TRACE_RUNCMD,"opencmd(): ", $cmd) if ($TRACE_RUNCMD);
+  return IO::File->new($cmd);
 }
 
 ##==============================================================================

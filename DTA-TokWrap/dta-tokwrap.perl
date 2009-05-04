@@ -112,6 +112,7 @@ GetOptions(
 	   'sentence-break-xpath|sb-xpath|sbx|sb=s@' => $twopts{procOpts}{hint_sb_xpaths},
 	   'word-break-xpath|wb-xpath|wbx|wb=s@' => $twopts{procOpts}{hint_wb_xpaths},
 	   'weak-hints|weakhints|whitespace-hints|wh' => sub { $twopts{procOpts}{wbStr}=$twopts{procOpts}{sbStr}="\n\n"; },
+	   'strong-hints|sh' => sub { delete(@{$twopts{procopts}}{qw(wbStr sbStr)}); },
 	   'hints!' => sub { $twopts{procOpts}{nohints} = !$_[1]; },
 	   'processor-option|procopt|po=s%' => $twopts{procOpts},
 
@@ -147,7 +148,7 @@ GetOptions(
 	   "trace!" => sub { setVerboseTrace($_[1]); },
 	   "traceAll|trace-all!" => sub { setVerboseTrace($_[1],$verbose_max); },
 	   "dummy|no-act|n!" => \$docopts{dummy},
-	   "dummytok|dt!" => sub {
+	   "dummy-tokenizer|dummytok|dt!" => sub {
 	     $DTA::TokWrap::Document::TOKENIZE_CLASS = 'DTA::TokWrap::Processor::tokenize'.($_[1] ? '::dummy' : '');
 	   },
 
@@ -327,6 +328,7 @@ dta-tokwrap.perl - top-level tokenizer wrapper for DTA XML documents
   -wb-xpath XPATH        # add word-break hints on XPATH (element) open and close
   -hints, -nohints       # do/don't generate "hints" for the tokenizer (default=do)
   -weak-hints            # use whitespace-only hints rather than defaults ($WB$,$SB$)
+  -strong-hints          # opposite of -weak-hints
   -procopt OPT=VALUE     # set arbitrary subprocessor options
  
  I/O Options:
@@ -347,6 +349,7 @@ dta-tokwrap.perl - top-level tokenizer wrapper for DTA XML documents
  Trace and Debugging Options:
   -dump-xsl PREFIX       # dump generated XSL stylesheets to PREFIX*.xsl and exit
   -dummy , -nodummy      # don't/do actually run any subprocessors (default=do)
+  -dummy-tokenizer       # use local dummy tokenizer rather than tomata2
   -trace , -notrace      # do/don't log trace messages (default: depends on -verbose)
   -traceAll              # enable logging of all possible trace messages
   -notraceAll            # disable logging of all possible trace messages
@@ -471,6 +474,10 @@ If generating tokenizer "hints", use whitespace-only hints rather than defaults
 This can be useful if your low-level tokenizer doesn't understand the explicit
 hints, but might be predisposed to break tokens and/or sentences on whitespace.
 
+=item -strong-hints
+
+Opposite of -weak-hints.
+
 =item -procopt OPT=VALUE
 
 Set a literal arbitrary subprocessor option OPT to VALUE.
@@ -578,6 +585,10 @@ Causes the following files to be written:
 =item -dummy , -nodummy
 
 Don't/do actually run any subprocessors (default=do)
+
+=item -dummy-tokenizer , -nodummy-tokenizer
+
+Do/don't use locally built dummy tokenizer instead of tomata2.
 
 =item -trace , -notrace
 

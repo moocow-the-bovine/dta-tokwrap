@@ -35,7 +35,12 @@ sub defaults {
   return (
 	  $that->SUPER::defaults(),
 	  tomata2=>undef,
-	  tomata2opts=>['--to', '--to-offset'], ##-- options
+	  tomata2opts=>[
+			'--to',
+			'--to-offset',
+			'--to-abbrev-lex=/home/kmw/resources/TAGH_Abbrev.utf8.lex', ##-- lal (TODO: defaults!)
+	                '--to-mwe-lex=/home/kmw/resources/TAGH_MWE.utf8.lex',       ##-- lal (TODO: defaults!)
+		       ],
 	  inplace=>1,
 	 );
 }
@@ -93,7 +98,7 @@ sub tokenize {
 	      )
 	     ." '$doc->{txtfile}'"
 	    );
-  my $cmdfh = IO::File->new("$cmd |")
+  my $cmdfh = opencmd("$cmd |")
     or $tz->logconfess("tokenize($doc->{xmlbase}): open failed for pipe ($cmd |): $!");
   slurp_fh($cmdfh, \$doc->{tokdata});
   $cmdfh->close();

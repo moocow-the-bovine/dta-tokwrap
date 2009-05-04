@@ -138,7 +138,7 @@ sub soxml {
 
   ##-- run command
   $xmlbase = $doc->{xmlbase} if (!defined($xmlbase));
-  my $cmdfh = IO::File->new("|'$t2x' - '$sofile' '$xmlbase'")
+  my $cmdfh = opencmd("| '$t2x' - '$sofile' '$xmlbase'")
     or $so->logconfess("${method}($doc->{xmlbase}): open failed for pipe to '$t2x': $!");
   $cmdfh->print($doc->{xtokdata});
   $cmdfh->close();

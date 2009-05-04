@@ -94,7 +94,7 @@ sub tok2xml {
   file_try_open($doc->{tokfile}) || $t2x->logconfess("tok2xml($doc->{xmlbase}): could not open .t file '$doc->{tokfile}': $!");
 
   ##-- run client program
-  my $cmdfh = IO::File->new("'$t2x->{t2x}' '$doc->{tokfile}' '$doc->{cxfile}' '$doc->{bxfile}' - '$doc->{xmlbase}' |")
+  my $cmdfh = opencmd("'$t2x->{t2x}' '$doc->{tokfile}' '$doc->{cxfile}' '$doc->{bxfile}' - '$doc->{xmlbase}' |")
     or $t2x->logconfess("tok2xml($doc->{xmlbase}): open failed for pipe from '$t2x->{t2x}': $!");
   $doc->{xtokdata} = undef;
   slurp_fh($cmdfh,\$doc->{xtokdata});

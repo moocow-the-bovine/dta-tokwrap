@@ -89,7 +89,7 @@ sub tokenize {
 
   ##-- run program
   $doc->{tokdata} = '';
-  my $cmdfh = IO::File->new("'$td->{tokenize}' '$doc->{txtfile}'|")
+  my $cmdfh = opencmd("'$td->{tokenize}' '$doc->{txtfile}'|")
     or $td->logconfess("tokenize($doc->{xmlbase}): open failed for pipe ('$td->{tokenize}' '$doc->{txtfile}' |): $!");
   slurp_fh($cmdfh, \$doc->{tokdata});
   $cmdfh->close();
