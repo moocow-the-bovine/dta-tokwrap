@@ -271,8 +271,8 @@ t.stamp: txt.stamp $(TOKWRAP_DEPS)
 
 t-iter: $(XML:.xml=.t)
 %.t: %.txt $(TOKWRAP_DEPS) $(CSRC_DEPS)
-#	$(TOKWRAP) -t tokenize $*.xml
-	$(TOKENIZER) $< $@
+	$(TOKWRAP) -t tokenize $*.xml
+#	$(TOKENIZER) $< $@
 
 no-t: ; rm -f *.t t.stamp
 CLEAN_FILES += *.t t.stamp
