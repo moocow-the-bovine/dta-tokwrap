@@ -20,7 +20,7 @@ bin_PROGRAMS = \
 
 EXTRA_PROGRAMS = dtatw-cxlexer
 
-common_deps = dtatwCommon.c dtatwCommon.h
+common_deps = dtatwCommon.c dtatwCommon.h config.h dtatwConfig.h dtatwConfigAuto.h dtatwConfigNoAuto.h
 expat_deps = dtatwExpat.c dtatwExpat.h
 
 dtatw_mkindex_SOURCES = dtatw-mkindex.c $(common_deps) $(expat_deps)

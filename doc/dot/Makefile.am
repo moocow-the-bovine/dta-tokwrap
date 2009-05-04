@@ -10,7 +10,8 @@
 
 DOT_FILES = \
 	dataflow-scripts.dot \
-	dataflow-perl.dot
+	dataflow-perl-doc.dot \
+	dataflow-perl-files.dot
 
 #dataflow-perl-files.dot
 
