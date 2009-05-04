@@ -77,8 +77,8 @@ sub tokenize {
 
   ##-- sanity check(s)
   $tz = $tz->new if (!ref($tz));
-  $tz->logconfess("tokenize($doc->{xmlbase}): no dtatw-tokenize-dummy program")
-    if (!$tz->{tokenize});
+  $tz->logconfess("tokenize($doc->{xmlbase}): no dwds_tomasotath program found")
+    if (!$tz->{tomata2});
   $tz->logconfess("tokenize($doc->{xmlbase}): no .txt file defined")
     if (!defined($doc->{txtfile}));
   $tz->logconfess("tokenize($doc->{xmlbase}): .txt file '$doc->{txtfile}' not readable")
