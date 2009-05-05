@@ -18,12 +18,15 @@
 
 ## xmldir=XMLDIR
 ##  + source directory containing DTA "base-format" XML sources
-xmldir = ./xml
+#xmldir = ./xml
+xmldir = ../examples
 
 ## xml=XMLFILES
 ##  + list of all DTA "base-format" XML sources (default: all .chr.xml files in XMLDIR)
+#xml = $(wildcard $(xmldir)/*.xml)
 #xml = $(wildcard $(xmldir)/*.chr.xml) $(wildcard $(xmldir)/*.char.xml)
-xml = $(wildcard $(xmldir)/*.xml)
+xml = $(wildcard $(xmldir)/*.chr.xml)
+
 
 ##======================================================================
 ## Variables: dta-tokwrap.perl
