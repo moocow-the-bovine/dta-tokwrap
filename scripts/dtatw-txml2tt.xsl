@@ -5,7 +5,9 @@
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- parameters -->
-  <xsl:param name="locations" select="0"/> <!-- whether to output locations -->
+  <xsl:param name="sids" select="0"/>       <!-- whether to output sentence IDs as comments -->
+  <xsl:param name="wids" select="0"/>       <!-- whether to output token IDs as "tags" -->
+  <xsl:param name="wlocs" select="0"/>      <!-- whether to output token locations -->
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- options -->
@@ -25,7 +27,9 @@
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- main: template: s -->
   <xsl:template match="s">
-    <xsl:text>%% Sentence </xsl:text><xsl:value-of select="@xml:id"/><xsl:text>&#10;</xsl:text>
+    <xsl:if test="$sids">
+      <xsl:text>%% Sentence </xsl:text><xsl:value-of select="@xml:id"/><xsl:text>&#10;</xsl:text>
+    </xsl:if>
     <xsl:apply-templates select="./w"/>
     <xsl:text>&#10;</xsl:text>
   </xsl:template>
@@ -34,7 +38,10 @@
   <!-- main: template: w -->
   <xsl:template match="w">
     <xsl:value-of select="@t"/>
-    <xsl:if test="$locations">
+    <xsl:if test="$wids">
+      <xsl:text>&#09;</xsl:text><xsl:value-of select="@xml:id"/>
+    </xsl:if>
+    <xsl:if test="$wlocs">
       <xsl:text>&#09;</xsl:text><xsl:value-of select="@b"/>
     </xsl:if>
     <xsl:apply-templates select="./a"/>

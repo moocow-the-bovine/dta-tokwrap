@@ -18,14 +18,17 @@
 
 ## xmldir=XMLDIR
 ##  + source directory containing DTA "base-format" XML sources
-#xmldir = ./xml
-xmldir = ../examples
+xmldir = ./xmlsrc
+#xmldir = ../examples
 
 ## xml=XMLFILES
 ##  + list of all DTA "base-format" XML sources (default: all .chr.xml files in XMLDIR)
-#xml = $(wildcard $(xmldir)/*.xml)
+xml = $(wildcard $(xmldir)/*.xml)
 #xml = $(wildcard $(xmldir)/*.chr.xml) $(wildcard $(xmldir)/*.char.xml)
-xml = $(wildcard $(xmldir)/*.chr.xml)
+#xml = $(wildcard $(xmldir)/*.chr.xml)
+#xml = $(xmldir)/berg_ostasienbotanik_1866_pb.chr.xml $(xmldir)/boeheim_waffenkunde_1890.chr.xml
+#xml = $(xmldir)/berg_ostasienbotanik_1866_pb.chr.xml
+
 
 
 ##======================================================================
@@ -39,6 +42,20 @@ xml = $(wildcard $(xmldir)/*.chr.xml)
 ##  + default uses dta-tokwrap.perl default
 dummytok = yes
 
+## TOKENIZER=PROG AND INITIAL ARGUMENTS
+##  + if set, should be a command-line which takes an argument TXTFILE
+##    and writing output to stdout
+##  + if set, dta-tokwrap.perl will not be called for tokenization,
+##    so 'dummytok' variable will have no effect
+#TOKENIZER ?= $(PROG_DIR)dtatw-tokenize-dummy
+#TOKENIZER ?= dwds_tomasotath --to --to-offset --to-abbrev-lex=/home/kmw/resources/TAGH_Abbrev.utf8.lex --to-mwe-lex=/home/kmw/resources/TAGH_MWE.utf8.lex
+
+## TOKWRAP_ALL=YES_OR_NO (anything but "yes" works like "no")
+##  + if true, dta-tokwrap.perl will be called for all possible actions
+##  + otherwise, C utilities will be called directly whenever possible
+TOKWRAP_ALL = yes
+
+
 ##--------------------------------------------------------------
 ## Variables: dta-tokwrap.perl: verbosity & logging
 
@@ -49,15 +66,16 @@ verbose = 0
 ## loglevel=LOGLEVEL_OR_EMPTY
 ##  + log level for dta-tokwrap.perl
 ##  + empty string to take dta-tokwrap.perl defaults
-#loglevel = TRACE
-
-## logstderr=YES_OR_NO_OR_EMPTY
-##  + empty string uses dta-tokwrap.perl default
-#logstderr = yes
+loglevel = TRACE
 
 ## logfile=LOGFILE_OR_EMPTY_STRING
 ##  + log file for dta-tokwrap.perl
-logfile = dta-tokwrap.log
+#logfile = dta-tokwrap.log
+
+## stderr=YES_OR_NO_OR_EMPTY
+##  + empty string uses dta-tokwrap.perl default
+#stderr = yes
+#stderr = no
 
 ## trace=YES_OR_NO_OR_EMPTY
 ##  + whether to log trace messages for dta-tokwrap.perl
@@ -77,6 +95,17 @@ inplace = yes
 
 ##======================================================================
 ## Variables: archiving & distribution
+
+## arc_want_sources=YES_OR_NO (anything but "yes" is treated as "no")
+##  + whether to include sources $(xml) in archive
+##  + regardless of where the sources originated, they will be stuck
+##    in the top-level "sources" subdirectory of the archive
+arc_want_sources = yes
+
+## arc_gzip=GZIP_FLAGS_OR_EMPTY
+##  + value of environment variable GZIP for archive run, e.g. '--fast', '--best', ...
+##  + leave empty to use gzip defaults
+#arc_gzip = --best
 
 ## arcdir=DIR
 ##  + .tar.gz archive output directory
