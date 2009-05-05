@@ -15,10 +15,8 @@
 </td></tr>
 </table>
 
-
-<!-- INDEX BEGIN -->
-<div name="index">
 <p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
 
 <ul>
 
@@ -36,11 +34,9 @@
 	<li><a href="#author">AUTHOR</a></li>
 	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
 </ul>
-
-<hr name="index" />
-</div>
 <!-- INDEX END -->
 
+<hr />
 <p>
 </p>
 <h1><a name="name">NAME</a></h1>
@@ -70,7 +66,7 @@ tracking on document data keys.</p>
 </p>
 <h2><a name="globals">Globals</a></h2>
 <dl>
-<dt><strong><a name="_isa" class="item">@ISA</a></strong></dt>
+<dt><strong><a name="item__isa">@ISA</a></strong></dt>
 
 <dd>
 <p>DTA::TokWrap::Document::Maker
@@ -83,7 +79,7 @@ and should support all DTA::TokWrap::Document methods.</p>
 </p>
 <h2><a name="constructors_etc_">Constructors etc.</a></h2>
 <dl>
-<dt><strong><a name="new" class="item">new</a></strong></dt>
+<dt><strong><a name="item_new">new</a></strong></dt>
 
 <dd>
 <pre>
@@ -91,14 +87,14 @@ and should support all DTA::TokWrap::Document methods.</p>
 <p>Low-level constructor for make-mode document wrapper object.
 See <a href="DTA.TokWrap.Document.html#new">DTA::TokWrap::Document::new</a>.</p>
 </dd>
-<dt><strong><a name="defaults" class="item">defaults</a></strong></dt>
+<dt><strong><a name="item_defaults">defaults</a></strong></dt>
 
 <dd>
 <pre>
  %defaults = CLASS-&gt;defaults();</pre>
 <p>Static class-dependent defaults.</p>
 </dd>
-<dt><strong><a name="init" class="item">init</a></strong></dt>
+<dt><strong><a name="item_init">init</a></strong></dt>
 
 <dd>
 <pre>
@@ -110,71 +106,71 @@ See <a href="DTA.TokWrap.Document.html#new">DTA::TokWrap::Document::new</a>.</p>
 </p>
 <h2><a name="methods__make_mode__dependency_tracking">Methods: make Mode: Dependency Tracking</a></h2>
 <dl>
-<dt><strong><a name="variable_keygen" class="item">Variable: %KEYGEN</a></strong></dt>
+<dt><strong><a name="item_variable_3a__25keygen">Variable: %KEYGEN</a></strong></dt>
 
 <dd>
 <p>%KEYGEN = ($dataKey =&gt; $generatorSpec, ...)</p>
 <p>See <a href="DTA.TokWrap.Document.html#_keygen">%DTA::TokWrap::Document::KEYGEN</a>.</p>
 </dd>
-<dt><strong><a name="_keydeps" class="item">%KEYDEPS</a></strong></dt>
+<dt><strong><a name="item__keydeps">%KEYDEPS</a></strong></dt>
 
 <dd>
 <pre>
  %KEYDEPS = ($dataKey =&gt; \@depsForKey, ...)</pre>
 <p>Recursive key dependencies.</p>
 </dd>
-<dt><strong><a name="_keydeps_0" class="item">%KEYDEPS_0</a></strong></dt>
+<dt><strong><a name="item__keydeps_0">%KEYDEPS_0</a></strong></dt>
 
 <dd>
 <pre>
  %KEYDEPS_0 = ($dataKey =&gt; \@immediateDepsForKey, ...)</pre>
 <p>Immediate key dependencies.</p>
 </dd>
-<dt><strong><a name="_keydeps_h" class="item">%KEYDEPS_H</a></strong></dt>
+<dt><strong><a name="item__keydeps_h">%KEYDEPS_H</a></strong></dt>
 
 <dd>
 <pre>
  %KEYDEPS_0 = ($dataKey =&gt; {$dep1=&gt;undef,$dep2=&gt;undef,...}, ...)</pre>
 <p>Recursive dependencies as a hash-of-hashes.</p>
 </dd>
-<dt><strong><a name="keycmp" class="item">keycmp</a></strong></dt>
+<dt><strong><a name="item_keycmp">keycmp</a></strong></dt>
 
 <dd>
 <pre>
  $cmp = DTA::ToKWrap::Document::Maker::keycmp($a,$b);</pre>
 <p>Sort comparison function for data keys.</p>
 </dd>
-<dt><strong><a name="uniqkeys" class="item">uniqKeys</a></strong></dt>
+<dt><strong><a name="item_uniqkeys">uniqKeys</a></strong></dt>
 
 <dd>
 <pre>
  @uniqKeys = uniqKeys(@keys);</pre>
 <p>Returns unique keys from @keys.</p>
 </dd>
-<dt><strong><a name="keydeps0" class="item">keyDeps0</a></strong></dt>
+<dt><strong><a name="item_keydeps0">keyDeps0</a></strong></dt>
 
 <dd>
 <pre>
  @deps0 = PACKAGE::keyDeps0(@docKeys);</pre>
 <p>Returns unique immediate dependencies for @docKeys.</p>
 </dd>
-<dt><strong><a name="keydeps" class="item">keyDeps</a></strong></dt>
+<dt><strong><a name="item_keydeps">keyDeps</a></strong></dt>
 
 <dd>
 <pre>
  @deps = PACKAGE::keyDeps(@docKeys);</pre>
 <p>Returns unique recursive dependencies for @docKeys.</p>
 </dd>
-<dt><strong><a name="keystamp" class="item">keyStamp</a></strong></dt>
+<dt><strong><a name="item_keystamp">keyStamp</a></strong></dt>
 
 <dd>
 <pre>
  $floating_secs_or_undef = $doc-&gt;keyStamp($key);</pre>
-<p>Returns $doc-&gt;{&quot;${key}_stamp&quot;} if it exists.
+<p>Returns $doc-&gt;{``${key}_stamp''} if it exists.
 Otherwise returns file modification time for file keys.
 Returned value is (floating point) seconds since epoch.</p>
 </dd>
-<dt><strong><a name="keynewerdeps" class="item">keyNewerDeps</a></strong></dt>
+<dt><strong><a name="item_keynewerdeps">keyNewerDeps</a></strong></dt>
 
 <dd>
 <pre>
@@ -184,7 +180,7 @@ Returned value is (floating point) seconds since epoch.</p>
 newer than $key itself.  If $missingDepsAreNewer is given
 and true, missing dependencies are not allowed.</p>
 </dd>
-<dt><strong><a name="keyiscurrent" class="item">keyIsCurrent</a></strong></dt>
+<dt><strong><a name="item_keyiscurrent">keyIsCurrent</a></strong></dt>
 
 <dd>
 <pre>
@@ -195,7 +191,7 @@ dependencies.</p>
 <p>If $requireMissingDeps is true, missing dependencies
 are treated as infinitely new (function returns false).</p>
 </dd>
-<dt><strong><a name="genkey" class="item">genKey</a></strong></dt>
+<dt><strong><a name="item_genkey">genKey</a></strong></dt>
 
 <dd>
 <pre>
@@ -205,7 +201,7 @@ are treated as infinitely new (function returns false).</p>
 ignoring dependencies).</p>
 <p>Passes on local \%KEYGEN.</p>
 </dd>
-<dt><strong><a name="makekey" class="item">makeKey</a></strong></dt>
+<dt><strong><a name="item_makekey">makeKey</a></strong></dt>
 
 <dd>
 <pre>
@@ -213,24 +209,24 @@ ignoring dependencies).</p>
  $bool = $doc-&gt;makeKey($key,\%queued)</pre>
 <p>Conditionally (re-)generate a data key, checking dependencies.</p>
 </dd>
-<dt><strong><a name="makeall" class="item">makeAll</a></strong></dt>
+<dt><strong><a name="item_makeall">makeAll</a></strong></dt>
 
 <dd>
 <pre>
  $bool = $doc-&gt;makeAll();</pre>
 <p>Alias for $doc-&gt;makeKey('all').</p>
 </dd>
-<dt><strong><a name="forcestale" class="item">forceStale</a></strong></dt>
+<dt><strong><a name="item_forcestale">forceStale</a></strong></dt>
 
 <dd>
 <pre>
  undef = $doc-&gt;forceStale(@keys);</pre>
-<p>Forces all keys @keys to be considered stale by setting $doc-&gt;{&quot;${key}_stamp&quot;}=-$ix,
+<p>Forces all keys @keys to be considered stale by setting $doc-&gt;{``${key}_stamp''}=-$ix,
 where $ix is the index of $key in the dependency-sorted list.</p>
-<p>You can use the $doc-&gt;<a href="#keydeps"><code>keyDeps()</code></a> method to get a list of all dependencies.
-In particular, using $doc-&gt;keyDeps('all') should mark all keys as stale</p>
+<p>You can use the $doc-&gt;<a href="#item_keydeps"><code>keyDeps()</code></a> method to get a list of all dependencies.
+In particular, using $doc-&gt;<a href="#item_keydeps"><code>keyDeps('all')</code></a> should mark all keys as stale</p>
 </dd>
-<dt><strong><a name="remakekey" class="item">remakeKey</a></strong></dt>
+<dt><strong><a name="item_remakekey">remakeKey</a></strong></dt>
 
 <dd>
 <pre>

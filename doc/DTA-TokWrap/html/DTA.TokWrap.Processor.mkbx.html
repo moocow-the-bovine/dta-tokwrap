@@ -15,10 +15,8 @@
 </td></tr>
 </table>
 
-
-<!-- INDEX BEGIN -->
-<div name="index">
 <p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
 
 <ul>
 
@@ -36,11 +34,9 @@
 	<li><a href="#author">AUTHOR</a></li>
 	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
 </ul>
-
-<hr name="index" />
-</div>
 <!-- INDEX END -->
 
+<hr />
 <p>
 </p>
 <h1><a name="name">NAME</a></h1>
@@ -70,7 +66,7 @@ instead of using this module directly.</p>
 </p>
 <h2><a name="constants">Constants</a></h2>
 <dl>
-<dt><strong><a name="_isa" class="item">@ISA</a></strong></dt>
+<dt><strong><a name="item__isa">@ISA</a></strong></dt>
 
 <dd>
 <p>DTA::TokWrap::Processor::mkbx
@@ -82,7 +78,7 @@ inherits from
 </p>
 <h2><a name="constructors_etc_">Constructors etc.</a></h2>
 <dl>
-<dt><strong><a name="new" class="item">new</a></strong></dt>
+<dt><strong><a name="item_new">new</a></strong></dt>
 
 <dd>
 <pre>
@@ -98,21 +94,21 @@ inherits from
  ##-- Block-sorting: low-level data
  xp    =&gt; $xml_parser,              ##-- XML::Parser object for parsing $doc-&gt;{bx0doc}</pre>
 </dd>
-<dt><strong><a name="defaults" class="item">defaults</a></strong></dt>
+<dt><strong><a name="item_defaults">defaults</a></strong></dt>
 
 <dd>
 <pre>
  %defaults = CLASS-&gt;defaults();</pre>
 <p>Static class-dependent defaults.</p>
 </dd>
-<dt><strong><a name="init" class="item">init</a></strong></dt>
+<dt><strong><a name="item_init">init</a></strong></dt>
 
 <dd>
 <pre>
  $mbx = $mbx-&gt;init();</pre>
 <p>Dynamic object-dependent defaults.</p>
 </dd>
-<dt><strong><a name="initxmlparser" class="item">initXmlParser</a></strong></dt>
+<dt><strong><a name="item_initxmlparser">initXmlParser</a></strong></dt>
 
 <dd>
 <pre>
@@ -125,7 +121,7 @@ used to parse $doc-&gt;{bx0data}.</p>
 </p>
 <h2><a name="methods__mkbx__bx0doc__txfile_____bxdata">Methods: mkbx (bx0doc, txfile) =&gt; bxdata</a></h2>
 <dl>
-<dt><strong><a name="mkbx" class="item">mkbx</a></strong></dt>
+<dt><strong><a name="item_mkbx">mkbx</a></strong></dt>
 
 <dd>
 <pre>
@@ -154,7 +150,7 @@ for the
  otoff  =&gt; $otoff,   ##-- output text (.txt) byte offset where this block run begins
  otlen  =&gt; $otlen,   ##-- output text (.txt) length (bytes)</pre>
 </dd>
-<dt><strong><a name="prune_empty_blocks" class="item">prune_empty_blocks</a></strong></dt>
+<dt><strong><a name="item_prune_empty_blocks">prune_empty_blocks</a></strong></dt>
 
 <dd>
 <pre>
@@ -164,7 +160,7 @@ for the
 <p>Removes empty 'c'-type blocks from @blocks
 (default=$mbx-&gt;{blocks}).</p>
 </dd>
-<dt><strong><a name="sort_blocks" class="item">sort_blocks</a></strong></dt>
+<dt><strong><a name="item_sort_blocks">sort_blocks</a></strong></dt>
 
 <dd>
 <pre>
@@ -173,7 +169,7 @@ for the
 <p>Sorts \@blocks (default=$mbx-&gt;{blocks})
 using $mb-&gt;{key2i}.</p>
 </dd>
-<dt><strong><a name="compute_block_text" class="item">compute_block_text</a></strong></dt>
+<dt><strong><a name="item_compute_block_text">compute_block_text</a></strong></dt>
 
 <dd>
 <pre>

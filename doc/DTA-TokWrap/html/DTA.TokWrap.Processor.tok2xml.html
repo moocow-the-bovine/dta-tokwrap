@@ -15,10 +15,8 @@
 </td></tr>
 </table>
 
-
-<!-- INDEX BEGIN -->
-<div name="index">
 <p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
 
 <ul>
 
@@ -36,11 +34,9 @@
 	<li><a href="#author">AUTHOR</a></li>
 	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
 </ul>
-
-<hr name="index" />
-</div>
 <!-- INDEX END -->
 
+<hr />
 <p>
 </p>
 <h1><a name="name">NAME</a></h1>
@@ -62,8 +58,8 @@
 <h1><a name="description">DESCRIPTION</a></h1>
 <p>DTA::TokWrap::Processor::tok2xml provides an object-oriented
 <a href="DTA.TokWrap.Processor.html">DTA::TokWrap::Processor</a> wrapper
-for converting &quot;raw&quot; CSV-format (.t) low-level tokenizer output
-to a &quot;master&quot; tokenized XML (.t.xml) format,
+for converting ``raw'' CSV-format (.t) low-level tokenizer output
+to a ``master'' tokenized XML (.t.xml) format,
 for use with <a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> objects.</p>
 <p>Most users should use the high-level
 <a href="DTA.TokWrap.html">DTA::TokWrap</a> wrapper class
@@ -72,28 +68,28 @@ instead of using this module directly.</p>
 </p>
 <h2><a name="constants">Constants</a></h2>
 <dl>
-<dt><strong><a name="_isa" class="item">@ISA</a></strong></dt>
+<dt><strong><a name="item__isa">@ISA</a></strong></dt>
 
 <dd>
 <p>DTA::TokWrap::Processor::tok2xml
 inherits from
 <a href="DTA.TokWrap.Processor.html">DTA::TokWrap::Processor</a>.</p>
 </dd>
-<dt><strong><a name="_noc" class="item">$NOC</a></strong></dt>
+<dt><strong><a name="item__noc">$NOC</a></strong></dt>
 
 <dd>
 <p>Integer indicating a missing or implicit 'c' record;
 should be equivalent in value to the C code:</p>
 <pre>
  unsigned int NOC = ((unsigned int)-1)</pre>
-<p>for 32-bit &quot;unsigned int&quot;s.</p>
+<p>for 32-bit ``unsigned int''s.</p>
 </dd>
 </dl>
 <p>
 </p>
 <h2><a name="constructors_etc_">Constructors etc.</a></h2>
 <dl>
-<dt><strong><a name="new" class="item">new</a></strong></dt>
+<dt><strong><a name="item_new">new</a></strong></dt>
 
 <dd>
 <pre>
@@ -113,7 +109,7 @@ structure options (unless this is the final module in your
 processing pipeline), since their values have ramifications beyond
 this module.</p>
 </dd>
-<dt><strong><a name="defaults" class="item">defaults</a></strong></dt>
+<dt><strong><a name="item_defaults">defaults</a></strong></dt>
 
 <dd>
 <pre>
@@ -125,13 +121,13 @@ this module.</p>
 </p>
 <h2><a name="methods__tok2xml__bx0doc__txfile_____bxdata">Methods: tok2xml (bx0doc, txfile) =&gt; bxdata</a></h2>
 <dl>
-<dt><strong><a name="tok2xml" class="item">tok2xml</a></strong></dt>
+<dt><strong><a name="item_tok2xml">tok2xml</a></strong></dt>
 
 <dd>
 <pre>
  $doc_or_undef = $CLASS_OR_OBJECT-&gt;tok2xml($doc);</pre>
-<p>Converts &quot;raw&quot; CSV-format (.t) low-level tokenizer output
-to a &quot;master&quot; tokenized XML (.t.xml) format
+<p>Converts ``raw'' CSV-format (.t) low-level tokenizer output
+to a ``master'' tokenized XML (.t.xml) format
 in the
 <a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> object
 $doc.</p>
@@ -152,10 +148,10 @@ $doc.</p>
 <pre>
  tb2ci   =&gt; $tb2ci,     ##-- (temp) s.t. vec($tb2ci, $txbyte, 32) = $char_index_of_txbyte
  ntb     =&gt; $ntb,       ##-- (temp) number of text bytes</pre>
-<p>may implicitly call $doc-&gt;<code>mkbx()</code>, $doc-&gt;<code>loadCxFile()</code>, $doc-&gt;<code>tokenize()</code>
+<p>may implicitly call $doc-&gt;mkbx(), $doc-&gt;loadCxFile(), $doc-&gt;<code>tokenize()</code>
 (but shouldn't!)</p>
 </dd>
-<dt><strong><a name="txbyte_to_ci" class="item">txbyte_to_ci</a></strong></dt>
+<dt><strong><a name="item_txbyte_to_ci">txbyte_to_ci</a></strong></dt>
 
 <dd>
 <pre>
@@ -163,7 +159,7 @@ $doc.</p>
 <p>Low-level utility method.</p>
 <p>Sets %$t2x keys: tb2ci, ntb, nchr</p>
 </dd>
-<dt><strong><a name="txtbyte_to_ci" class="item">txtbyte_to_ci</a></strong></dt>
+<dt><strong><a name="item_txtbyte_to_ci">txtbyte_to_ci</a></strong></dt>
 
 <dd>
 <pre>
@@ -171,7 +167,7 @@ $doc.</p>
 <p>Low-level utility method</p>
 <p>Sets %$t2x keys: ob2ci</p>
 </dd>
-<dt><strong><a name="process_tt_data" class="item">process_tt_data</a></strong></dt>
+<dt><strong><a name="item_process_tt_data">process_tt_data</a></strong></dt>
 
 <dd>
 <pre>

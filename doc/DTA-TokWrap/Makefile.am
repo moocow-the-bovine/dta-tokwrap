@@ -67,6 +67,15 @@ $(POD_DIR)/index.pod: index.pod
 	$(mkdir_p) $(POD_DIR)
 	cp $< $@
 
+pod-readme: $(POD_DIR)/README.pod
+
+$(POD_DIR)/README.pod: README.pod
+	$(mkdir_p) $(POD_DIR)
+	cp -p $< $@
+
+README.pod: $(PMSRC)/README.rpod
+	cp -p $< $@
+
 EXTRA_DIST += make-pod-index.perl index.pod
 
 no-pod:
@@ -92,8 +101,9 @@ TXT_DIR ?= txt
 txt: txt.stamp
 
 if HAVE_POD2TEXT
-txt.stamp: $(PMDEPS) $(TXT_DIR)/index.txt
+txt.stamp: $(PMDEPS) $(TXT_DIR)/index.txt $(TXT_DIR)/README.txt
 	$(MAKE) -C $(PMSRC) INST_TEXTDIR=$(PWD)/$(TXT_DIR) textifypods
+	$(POD2TEXT) $(PMSRC)/README.rpod $(TXT_DIR)/README.txt
 	touch $@
 
 txt-dist: txt.stamp txt-index
@@ -105,6 +115,9 @@ txt-dist: txt.stamp txt-index
 index.txt: index.pod
 	$(POD2TEXT) $< $@
 
+README.txt: README.pod
+	$(POD2TEXT) $< $@
+
 CLEAN_LOCAL_DEPS += no-txt
 else
 txt.stamp: $(TXT_DIR)/index.txt
@@ -112,13 +125,18 @@ txt.stamp: $(TXT_DIR)/index.txt
 txt-dist: txt.stamp
 	@:
 index.txt: index.pod
-	cp $< $@
+	cp -p $< $@
 endif
 
 txt-index: $(TXT_DIR)/index.txt
 $(TXT_DIR)/index.txt: index.txt
 	$(mkdir_p) $(TXT_DIR)
-	cp $< $@
+	cp -p $< $@
+
+txt-readme: $(TXT_DIR)/README.txt
+$(TXT_DIR)/README.txt: README.txt
+	$(mkdir_p) $(TXT_DIR)
+	cp -p $< $@
 
 no-txt:
 	rm -f txt.stamp index.txt
@@ -130,7 +148,7 @@ if DOC_WANT_TXT
 ALL_LOCAL_DEPS += txt.stamp
 PKGDOC_DIRS += $(TXT_DIR)
 DIST_HOOK_DEPS += txt-dist
-EXTRA_DIST += index.txt
+EXTRA_DIST += index.txt README.txt
 endif
 
 ##-----------------------------------------------------------------------
@@ -142,7 +160,7 @@ CSS = $(notdir $(CSS_SRC))
 css: $(HTML_DIR)/$(CSS)
 $(HTML_DIR)/$(CSS): $(CSS_SRC)
 	rm -f $@
-	cp $< $@
+	cp -p $< $@
 no-html-css:
 	rm -f $(HTML_DIR)/$(CSS) || true
 	rmdir $(HTML_DIR) || true
@@ -151,7 +169,7 @@ CLEAN_LOCAL_DEPS += no-html-css
 html: html.stamp css
 
 if HAVE_POD2HTML
-html.stamp: $(PMDEPS) $(HTML_DIR)/index.html
+html.stamp: $(PMDEPS) $(HTML_DIR)/index.html $(HTML_DIR)/README.html
 	$(MAKE) -C $(PMSRC) INST_HTMLDIR=$(PWD)/$(HTML_DIR) INST_CSS=$(CSS) htmlifypods
 	touch $@
 
@@ -162,6 +180,13 @@ html-dist: html.stamp
 	done
 
 index.html: index.pod
+	$(POD2HTML) --css=$(CSS) --podroot=$(POD_DIR) --podpath=. --infile=$< \
+	| $(PERL) -p \
+	   -e'sub hackhref {($$href=shift)=~s|^[/\.]*||; $$href=~s|/|.|g; $$href;}' \
+	   -e's/<a href="([^"]*)/'\''<a href="'\''.hackhref($$1)/eg;' \
+	 > $@ || (rm -f $@; false)
+
+README.html: README.pod
 	$(POD2HTML) --css=$(CSS) --podroot=$(POD_DIR) --podpath=. --infile=$< \
 	| $(PERL) -p \
 	   -e'sub hackhref {($$href=shift)=~s|^[/\.]*||; $$href=~s|/|.|g; $$href;}' \
@@ -180,7 +205,12 @@ endif
 html-index: $(HTML_DIR)/index.html
 $(HTML_DIR)/index.html: index.html
 	$(mkdir_p) $(HTML_DIR)
-	cp $< $@
+	cp -p $< $@
+
+html-readme: $(HTML_DIR)/README.html
+$(HTML_DIR)/README.html: README.html
+	$(mkdir_p) $(HTML_DIR)
+	cp -p $< $@
 
 no-html:
 	rm -f html.stamp index.html
@@ -191,7 +221,7 @@ if DOC_WANT_HTML
 ALL_LOCAL_DEPS += html
 PKGDOC_DIRS += $(HTML_DIR)
 DIST_HOOK_DEPS += html-dist
-EXTRA_DIST += index.html
+EXTRA_DIST += index.html README.html
 endif
 
 ##-----------------------------------------------------------------------
