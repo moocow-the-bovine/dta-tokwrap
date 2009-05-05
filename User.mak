@@ -22,8 +22,8 @@ xmldir = ./xml
 
 ## xml=XMLFILES
 ##  + list of all DTA "base-format" XML sources (default: all .chr.xml files in XMLDIR)
-#xml = $(wildcard $(xmldir)/*.chr.xml)
-xml = $(wildcard $(xmldir)/*.xml)
+xml = $(wildcard $(xmldir)/*.chr.xml) $(wildcard $(xmldir)/*.char.xml)
+#xml = $(wildcard $(xmldir)/*.xml)
 
 ## outdir=OUTDIR
 ##  + output directory for standoff files
