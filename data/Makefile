@@ -168,13 +168,19 @@ config:
 ##======================================================================
 ## Rules: link in sources
 
-xml: $(XML)
+xml: xml.stamp
+xml.stamp: $(xml)
+	for f in $(filter-out $(xml),$(XML)); do \
+	  rm -f `basename $$f`; \
+	  ln -s $$f `basename $$f`; \
+	done
+	touch $@
 
-$(XML): $(xml)
+%.xml: $(xmldir)/%.xml
 	rm -f $@
 	ln -s $< $@
 
-no-xml: ; test -z "$(XML)" || rm -f $(XML)
+no-xml: ; test -z "$(filter-out $(xml),$(XML))" || rm -f $(filter-out $(xml),$(XML))
 
 ##======================================================================
 ## Rules: generic XML stuff

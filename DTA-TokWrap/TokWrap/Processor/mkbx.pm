@@ -32,7 +32,8 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##     ##-- Block-sorting: hints
 ##     wbStr => $wbStr,                       ##-- word-break hint text
 ##     sbStr => $sbStr,                       ##-- sentence-break hint text
-##     nohints => $bool,                      ##-- if true, set $wbStr=$sbStr="" (don't write hints)
+##     lbStr => $lbStr,                       ##-- line-break hint text
+##     nohints => $bool,                      ##-- if true, set $wbStr=$sbStr=$lbStr="" (i.e. no hints in .txt file)
 ##     sortkey_attr => $attr,                 ##-- sort-key attribute (default='dta.tw.key'; should jive with mkbx0)
 ##     ##
 ##     ##-- Block-sorting: low-level data
@@ -47,6 +48,7 @@ sub defaults {
 	  ##-- Block-sorting: hints
 	  wbStr => "\n\$WB\$\n",
 	  sbStr => "\n\$SB\$\n",
+	  lbStr => "\n",
 	  sortkey_attr => 'dta.tw.key',
 
 	  ##-- Block-sorting: parser
@@ -59,7 +61,7 @@ sub init {
   my $mbx = shift;
 
   ##-- ignore hints?
-  $mbx->{wbStr} = $mbx->{sbStr} = '' if ($mbx->{nohints});
+  $mbx->{wbStr}=$mbx->{sbStr}=$mbx->{lbStr}='' if ($mbx->{nohints});
 
   ##-- create & initialize XML parser
   $mbx->initXmlParser() if (!defined($mbx->{xp}));
@@ -81,8 +83,8 @@ sub initXmlParser {
   my $key2i = {};    ##-- \%key2i : maps keys to the block-index of their first occurrence, for block-sorting
   my ($keyAttr);     ##-- $keyAttr : attribute name for sort keys
 
-  ##-- @target_elts : block-like elements
-  my @target_elts = qw(c s w);
+  ##-- @target_elts : block- and/or hint-like elements
+  my @target_elts = qw(c s w lb);
   my %target_elts = map {$_=>undef} @target_elts;
 
   my ($xp,$eltname,%attrs);
@@ -276,12 +278,13 @@ sub compute_block_text {
   $blocks = $mbx->{blocks} if (!$blocks);
   $txbufr = $mbx->{txbufr} if (!$txbufr);
   my $otoff = 0;
-  my ($SB,$WB) = @$mbx{qw(sbStr wbStr)};
+  my ($SB,$WB,$LB) = @$mbx{qw(sbStr wbStr lbStr)};
   my ($blk);
   foreach $blk (@$blocks) {
     ##-- specials
-    if    ($blk->{elt} eq 'w') { $blk->{otext}=$WB; }
-    elsif ($blk->{elt} eq 's') { $blk->{otext}=$SB; }
+    if    ($blk->{elt} eq 'w')  { $blk->{otext}=$WB; }
+    elsif ($blk->{elt} eq 's')  { $blk->{otext}=$SB; }
+    elsif ($blk->{elt} eq 'lb') { $blk->{otext}=$LB; }
     else {
       $blk->{otext} = substr($$txbufr, $blk->{toff}, $blk->{tlen});
     }
