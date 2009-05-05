@@ -57,8 +57,10 @@ AC_SUBST(spkgincludedir)
 # share/package dir
 sharepkgdir="\${prefix}/share/AC_PACKAGE_NAME"
 pkgxsldir="\${sharepkgdir}/stylesheets"
+pkgmakdir="\${sharepkgdir}/make"
 AC_SUBST(sharepkgdir)
 AC_SUBST(pkgxsldir)
+AC_SUBST(pkgmakdir)
 # share/package dir
 #---------------------------------------------------------------
 

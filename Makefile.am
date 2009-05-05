@@ -37,11 +37,20 @@ PODS = README.pod
 all-local: $(PODS:.pod=.txt)
 
 ##-----------------------------------------------------------------------
+## Subdirs: example 'make'
+
+EXMAKE_DIR   = make
+EXMAKE_FILES = Makefile User.mak
+EXMAKE_PATHS = $(addprefix $(EXMAKE_DIR)/,$(EXMAKE_FILES))
+
+pkgmak_DATA = $(EXMAKE_PATHS)
+EXTRA_DIST += $(EXMAKE_PATHS)
+
+##-----------------------------------------------------------------------
 ## Subdirs: perl
 
 PMDEPS = DTA-TokWrap/Makefile
-ALL_LOCAL_DEPS += $(PMDEPS)
-
+ALL_LOCAL_DEPS += $(PMDEPS) $(EXMAKE_DEPS)
 
 PERL_MFLAGS = DESTDIR="$(DESTDIR)" DISTDIR_AM="../$(distdir)/DTA-TokWrap"
 if IS_DISTCHECK
@@ -56,6 +65,7 @@ DTA-TokWrap/Makefile:
 
 install-exec-local: $(PMDEPS)
 	$(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) install
+
 
 ##-- uninstall via MakeMaker is broken (Fri, 01 May 2009 22:30:24 +0200)
 #uninstall-local: $(PMDEPS)
