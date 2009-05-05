@@ -38,6 +38,7 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##     ##-- Styleheet: insert-hints (<seg> elements and their children are handled implicitly)
 ##     hint_sb_xpaths => \@xpaths,            ##-- add sentence-break hint (<s/>) for @xpath element open & close
 ##     hint_wb_xpaths => \@xpaths,            ##-- ad word-break hint (<w/>) for @xpath element open & close
+##     hint_lb_xpaths => \@xpaths,            ##-- ad line-break hint (<lb/>) for @xpath element *close*
 ##     ##
 ##     hint_stylestr  => $stylestr,           ##-- xsl stylesheet string
 ##     hint_styleheet => $stylesheet,         ##-- compiled xsl stylesheet
@@ -88,6 +89,13 @@ sub defaults {
 			     ##-- notes, tables, lists, etc.
 			     qw(row|cell),
 			     qw(list|item), ##-- maybe move one or both of these to 'sb_xpaths' ?
+			    ],
+	  hint_lb_xpaths => [
+			     ##-- segments
+			     'seg',
+
+			     ##-- other things
+			     map { "$_\[not(parent::seg)\]" } qw(table note argument figure),
 			    ],
 	  hint_stylestr => undef,
 	  hint_stylesheet => undef,
@@ -185,12 +193,24 @@ sub hint_stylestr {
 							 } @{$mbx0->{hint_wb_xpaths}}).'
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+  <!-- templates: implicit line breaks -->'.join('',
+						     map { "
+  <xsl:template match=\"$_\">
+    <xsl:copy>
+      <xsl:apply-templates select=\"@*|*\"/>
+      <lb/>
+    </xsl:copy>
+  </xsl:template>\n"
+							 } @{$mbx0->{hint_lb_xpaths}}).'
+
+  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- templates: OTHER: seg (priority=10) -->
   <xsl:template match="seg[@part=\'I\']" priority="10">
     <xsl:copy>
       <xsl:apply-templates select="@*"/>
       <s/>
       <xsl:apply-templates select="*"/>
+      <lb/>
     </xsl:copy>
   </xsl:template>
 
@@ -200,6 +220,7 @@ sub hint_stylestr {
     <xsl:copy>
       <xsl:apply-templates select="*|@*"/>
       <s/>
+      <lb/>
     </xsl:copy>
   </xsl:template>
 

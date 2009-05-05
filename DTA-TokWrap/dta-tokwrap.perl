@@ -83,19 +83,24 @@ our $verbose_max = 255;
 ##------------------------------------------------------------------------------
 
 ## undef = setVerboseTrace($bool)
-## undef = setVerboseTrace($bool,$verbose)
+## undef = setVerboseTrace($bool,$verbose,$clearToo)
 ##  + set trace options by verbosity level
 sub setVerboseTrace {
   my $_verbose = defined($_[1]) ? $_[1] : $verbose;
   ${$_->{ref}} = ($_[0] ? $traceLevel : undef) foreach (grep {$_verbose>=$_->{vlevel}} @traceOptions);
+  if ($_[2]) {
+    ##-- clear flags, too
+    ${$_->{ref}} = undef foreach (grep {$_verbose<$_->{vlevel}} @traceOptions);
+  }
+  if ($verbose <= 0) { $logProfile=0; }
 }
-setVerboseTrace(1); ##-- default
+setVerboseTrace(1,$verbose,1); ##-- default
 
 GetOptions(
 	   ##-- General
 	   'help|h' => \$help,
 	   'man' => \$man,
-	   'verbose|v=i' => sub { $verbose=$_[1]; setVerboseTrace(1); },
+	   'verbose|v=i' => sub { $verbose=$_[1]; setVerboseTrace(1,$verbose,1); },
 	   'verbion|V' => \$version,
 
 	   ##-- pseudo-make
@@ -132,7 +137,7 @@ GetOptions(
 	   'log-profile|profile|p!' => sub { $logProfile=$_[1] ? 'info' : undef; },
 	   'silent|quiet|q' => sub {
 	     $verbose=0;
-	     setVerboseTrace(0,$verbose_max);
+	     setVerboseTrace(0,$verbose_max,1);
 	     $DTA::TokWrap::Logger::DEFAULT_LOGLEVEL='FATAL';
 	   },
 
@@ -145,8 +150,8 @@ GetOptions(
 	     )
 	   } @traceOptions),
 	   "traceLevel|trace-level=s" => \$traceLevel,
-	   "trace!" => sub { setVerboseTrace($_[1]); },
-	   "traceAll|trace-all!" => sub { setVerboseTrace($_[1],$verbose_max); },
+	   "trace!" => sub { setVerboseTrace($_[1],$verbose,1); },
+	   "traceAll|trace-all!" => sub { setVerboseTrace($_[1],$verbose_max,1); },
 	   "dummy|no-act|n!" => \$docopts{dummy},
 	   "dummy-tokenizer|dummytok|dt!" => sub {
 	     $DTA::TokWrap::Document::TOKENIZE_CLASS = 'DTA::TokWrap::Processor::tokenize'.($_[1] ? '::dummy' : '');
