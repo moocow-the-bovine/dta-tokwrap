@@ -140,10 +140,12 @@ ARC_TARGETS ?= \
 ## Configuration: Defaults: cleanup
 
 CLEAN_DEPS ?=
-CLEAN_FILES ?= $(filter-out $(xml),$(XML))
+CLEAN_FILES ?=
 
 REALCLEAN_DEPS ?=
-REALCLEAN_FILES ?=
+REALCLEAN_FILES ?= \
+	$(filter-out $(xml),$(XML)) \
+	$(logfile)
 
 
 ##======================================================================
@@ -166,7 +168,7 @@ config:
 ##======================================================================
 ## Rules: link in sources
 
-xml: xml
+xml: $(XML)
 
 $(XML): $(xml)
 	rm -f $@
@@ -186,6 +188,8 @@ CLEAN_FILES += *.fmt
 %.nons: % $(RMNS)
 	$(RMNS) $< $@
 CLEAN_FILES += *.nons
+
+nolog: ; test -z "$(logfile)" || rm -f $(logfile)
 
 ##======================================================================
 ## Rules: mkindex: xml -> xx=(cx,sx,tx)
