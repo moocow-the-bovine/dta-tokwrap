@@ -51,9 +51,9 @@ endif
 
 ifneq "$(dummytok)" ""
 ifeq "$(dummytok)" "no"
-TOKWRAP_OPTS += -nodummytok -strong-hints
+TOKWRAP_OPTS += -nodummytok -weak-hints
 else
-TOKWRAP_OPTS += -dummytok -weak-hints
+TOKWRAP_OPTS += -dummytok -strong-hints
 endif
 endif
 
