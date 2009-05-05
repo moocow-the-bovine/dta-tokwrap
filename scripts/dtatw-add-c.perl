@@ -21,7 +21,7 @@ our $DEBUG = 0;
 our $outfile = "-"; ##-- default: stdout
 
 ##-- profiling
-our $profile = 1;
+our $profile = 0;
 our $nchrs = 0;   ##-- total number of <c> tags generated
 our $nxbytes = 0; ##-- total number of XML source bytes processed
 our ($tv_started,$elapsed) = (undef,undef);
@@ -30,7 +30,8 @@ our ($tv_started,$elapsed) = (undef,undef);
 our ($xp); ##-- underlying XML::Parser object
 
 our $cnum = 0;           ##-- $cnum: global index of <c> element (number of elts read so far)
-our $text_depth = 0;     ##-- number of open 'text' elements
+our $text_depth = 0;     ##-- number of open <text> elements
+our $c_depth = 0;        ##-- number of open <c> elements (should never be >1)
 
 ##------------------------------------------------------------------------------
 ## Command-line
@@ -59,12 +60,17 @@ pod2usage({
 sub cb_init {
   $cnum = 0;
   $text_depth = 0;
+  $c_depth = 0;
 }
 
 ## undef = cb_char($expat,$string)
 our ($c_block,$c_char);
 sub cb_char {
   return if ($text_depth<=0);
+  if ($c_depth > 0) {
+    $outfh->print($_[0]->original_string());
+    return;
+  }
   $c_block = decode('UTF-8',$_[0]->original_string());
   while ($c_block =~ m/((?:\&[^\;]*\;)|(?: +)|(?:.))/g) {
     $c_char = $1;
@@ -81,14 +87,33 @@ sub cb_char {
 }
 
 ## undef = cb_start($expat, $elt,%attrs)
+our ($cs);
 sub cb_start {
+  if ($_[1] eq 'c') {
+    ##-- pre-existing <c>: respect it
+    if ($c_depth > 0) {
+      $_[0]->xpcroak("$prog: cowardly refusing to process input document with nested <c> elements!\n"
+		     ."$prog: in file '$infile'");
+    }
+    ++$c_depth;
+    $cs = $_[0]->original_string();
+    if ($cs !~ m/\bxml:id=/) {
+      ##-- pre-existing <c> WITOUT xml:id attribute: assign one
+      ++$cnum;
+      $cs =~ s|(/?>)$| xml:id="c$cnum"$1|;
+    }
+    ##-- ... and print
+    $outfh->print($cs);
+    return;
+  }
   ++$text_depth if ($_[1] eq 'text');
   $outfh->print($_[0]->original_string);
 }
 
 ## undef = cb_end($expat, $elt)
 sub cb_end {
-  --$text_depth if ($_[1] eq 'text');
+  if ($_[1] eq 'c') { --$c_depth; }
+  elsif ($_[1] eq 'text') { --$text_depth; }
   $outfh->print($_[0]->original_string);
 }
 
@@ -142,11 +167,13 @@ $outfh->close();
 ##-- profiling / output
 sub sistr {
   my $x = shift;
-  return sprintf("%.2f K", $x/10**3)  if ($x >= 10**3);
-  return sprintf("%.2f M", $x/10**6)  if ($x >= 10**6);
-  return sprintf("%.2f G", $x/10**9)  if ($x >= 10**9);
-  return sprintf("%.2f T", $x/10**12) if ($x >= 10**12);
-  return sprintf("%.2f ", $x);
+  return sprintf("%.1f T", $x/10**12) if ($x >= 10**12);
+  return sprintf("%.1f G", $x/10**9)  if ($x >= 10**9);
+  return sprintf("%.1f M", $x/10**6)  if ($x >= 10**6);
+  return sprintf("%.1f K", $x/10**3)  if ($x >= 10**3);
+  return sprintf("%.1f  ", $x)        if ($x >= 1);
+  return sprintf("%.1f m", $x*10**3)  if ($x >= 10**-3);
+  return sprintf("%.1f u", $x*10**6)  if ($x >= 10**-6);
 }
 
 if ($profile) {
@@ -155,7 +182,7 @@ if ($profile) {
   $bytesPerSec = sistr($elapsed > 0 ? ($nxbytes/$elapsed) : -1);
 
   print STDERR
-    (sprintf("%s: %d chars ~ %d XML-bytes in %.2f sec: %schr/sec ~ %sbyte/sec\n",
+    (sprintf("%s: %.1f chars ~ %d XML-bytes in %.2f sec: %schr/sec ~ %sbyte/sec\n",
 	     $prog, $nchrs,$nxbytes, $elapsed, $chrsPerSec, $bytesPerSec));
 }
 
@@ -164,11 +191,11 @@ if ($profile) {
 
 =head1 NAME
 
-dta-tokwrap-addchr.perl - add <c> elements to DTA XML documents
+dtatw-add-c.perl - add <c> elements to DTA XML documents
 
 =head1 SYNOPSIS
 
- dta-tokwrap-addchr.perl [OPTIONS] [XMLFILE(s)...]
+ dtatw-add-c.perl [OPTIONS] [XMLFILE(s)...]
 
  General Options:
   -help                  # this help message
@@ -197,7 +224,7 @@ Not yet written.
 
 =head1 DESCRIPTION
 
-Not yet written.
+Now respects pre-existing "c" elements, assigning them C<xml:id>s to these if required.
 
 =cut
 
@@ -208,12 +235,8 @@ Not yet written.
 
 =head1 SEE ALSO
 
-dta-cook-text.perl,
-dta-cook-paths.perl,
-dta-cook-structure.perl,
-(dta-tokenize.perl),
-dta-eosdetect.perl,
-dta-assign-sids.xsl,
+L<dta-tokwrap.perl(1)|dta-tokwrap.perl>,
+L<dtatw-rm-c.perl(1)|dtatw-rm-c.perl>,
 ...
 
 =cut
@@ -225,7 +248,6 @@ dta-assign-sids.xsl,
 
 =head1 AUTHOR
 
-Bryan Jurish E<lt>moocow@bbaw.deE<gt>
+Bryan Jurish E<lt>jurish@bbaw.deE<gt>
 
 =cut
-
