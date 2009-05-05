@@ -41,9 +41,10 @@ all-local: $(PODS:.pod=.txt)
 
 EXMAKE_DIR   = make
 EXMAKE_FILES = Makefile User.mak
-EXMAKE_DEPS = $(addprefix $(EXMAKE_DIR)/,$(EXMAKE_FILES))
+EXMAKE_PATHS = $(addprefix $(EXMAKE_DIR)/,$(EXMAKE_FILES))
 
-pkgmak_DATA = $(EXMAKE_DEPS)
+pkgmak_DATA = $(EXMAKE_PATHS)
+EXTRA_DIST += $(EXMAKE_PATHS)
 
 ##-----------------------------------------------------------------------
 ## Subdirs: perl
