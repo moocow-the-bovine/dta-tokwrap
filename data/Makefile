@@ -24,13 +24,14 @@ include $(config)
 ## Configuration: Defaults
 
 ##--------------------------------------------------------------
-## Configuration: Defaults: sources
+## Configuration: Defaults: sources & targets
 
 xmldir ?= .
 xml    ?= $(wildcard $(xmldir),*.chr.xml) $(wildcard $(xmldir),*.char.xml)
 outdir = .
 tmpdir = $(outdir)
 
+XML = $(notdir $(xml))
 
 ##--------------------------------------------------------------
 ## Configuration: Defaults: tokwrap
@@ -48,10 +49,12 @@ endif
 ##--------------------------------------------------------------
 ## Configuration: Defaults: dta-tokwrap.perl: behavior
 
+ifneq "$(dummytok)" ""
 ifeq "$(dummytok)" "no"
-TOKWRAP_OPTS += -dummytok -strong-hints
+TOKWRAP_OPTS += -nodummytok -strong-hints
 else
-TOKWRAP_OPTS += -nodummytok -weak-hints
+TOKWRAP_OPTS += -dummytok -weak-hints
+endif
 endif
 
 ##--------------------------------------------------------------
@@ -69,22 +72,28 @@ ifneq "$(logfile)" ""
 TOKWRAP_OPTS += -log-file="$(logfile)"
 endif
 
+ifneq "$(stderr)" ""
 ifeq "$(stderr)" "no"
 TOKWRAP_OPTS += -nostderr
 else
-#TOKWRAP_OPTS += -stderr  ##-- default
+TOKWRAP_OPTS += -stderr  ##-- default
+endif
 endif
 
+ifneq "$(trace)" ""
 ifeq "$(trace)" "no"
 TOKWRAP_OPTS += -notrace
 else
-#TOKWRAP_OPTS += -trace   ##-- default
+TOKWRAP_OPTS += -trace
+endif
 endif
 
+ifneq "$(profile)" ""
 ifneq "$(profile)" "no"
 TOKWRAP_OPTS += -profile
 else
 TOKWRAP_OPTS += -noprofile
+endif
 endif
 
 ##--------------------------------------------------------------
@@ -105,7 +114,7 @@ TOKWRAP_DEPS = $(TOKWRAP_SRC)
 else
 
 PROG_DEPS =
-PROGDIR   =
+PROG_DIR  =
 
 TOKWRAP      =dta-tokwrap.perl $(TOKWRAP_OPTS)
 TOKWRAP_DEPS =
@@ -120,6 +129,7 @@ ARC_TARGETS ?= \
 	Defaults.mak \
 	User.mak \
 	$(config) \
+	$(logfile) \
 	$(XML) \
 	$(XML:.xml=.t.xml) \
 	$(XML:.xml=.s.xml) \
@@ -130,7 +140,7 @@ ARC_TARGETS ?= \
 ## Configuration: Defaults: cleanup
 
 CLEAN_DEPS ?=
-CLEAN_FILES ?=
+CLEAN_FILES ?= $(filter-out $(xml),$(XML))
 
 REALCLEAN_DEPS ?=
 REALCLEAN_FILES ?=
@@ -139,7 +149,7 @@ REALCLEAN_FILES ?=
 ##======================================================================
 ## Rules: top-level
 
-all: $(TARGETS)
+all: t-xml s-xml w-xml a-xml
 
 .SECONDARY: 
 
@@ -151,6 +161,18 @@ config:
 	@echo "TOKWRAP=$(TOKWRAP)"
 	@echo "xmldir=$(xmldir)"
 	@echo "xml=$(xml)"
+	@echo "XML=$(XML)"
+
+##======================================================================
+## Rules: link in sources
+
+xml: $(XML)
+
+$(XML): $(xml)
+	rm -f $@
+	ln -s $< $@
+
+no-xml: ; test -z "$(XML)" || rm -f $(XML)
 
 ##======================================================================
 ## Rules: generic XML stuff
@@ -170,17 +192,17 @@ CLEAN_FILES += *.nons
 
 xx: cx sx tx
 
-cx: $(xml:.xml=.cx)
-sx: $(xml:.xml=.sx)
-tx: $(xml:.xml=.tx)
-no-cx: ; rm -f $(xml:.xml=.cx)
-no-sx: ; rm -f $(xml:.xml=.sx)
-no-tx: ; rm -f $(xml:.xml=.tx)
+cx: $(XML:.xml=.cx)
+sx: $(XML:.xml=.sx)
+tx: $(XML:.xml=.tx)
+no-cx: ; rm -f $(XML:.xml=.cx)
+no-sx: ; rm -f $(XML:.xml=.sx)
+no-tx: ; rm -f $(XML:.xml=.tx)
 no-xx: no-cx no-sx no-tx ; rm -f *.xx xx.stamp
 
 ##-- xml -> (cx,sx,tx): batch rule
-xx.stamp: $(xml) tokwrap
-	$(TOKWRAP) -t mkindex $(xml)
+xx.stamp: $(XML) tokwrap
+	$(TOKWRAP) -t mkindex $(XML)
 	touch $@
 
 ##-- xml -> (cx,sx,tx): individual rule
@@ -191,16 +213,16 @@ xx.stamp: $(xml) tokwrap
 %.tx: %.cx %.sx %.tx
 %.cx %.sx %.tx: %.xml tokwrap
 #	$(TOKWRAP) -t mkindex $<
-	$(PROGDIR)dtatw-mkindex $< $*.cx $*.sx $*.tx
+	$(PROG_DIR)dtatw-mkindex $< $*.cx $*.sx $*.tx
 CLEAN_FILES += *.cx *.sx *.tx *.xx *.stamp
 
-sx-fmt: $(xml:.xml=.sx.fmt)
+sx-fmt: $(XML:.xml=.sx.fmt)
 no-sx-fmt: ; rm -f *.sx.fmt
 
-sx-nons: $(xml:.xml=.sx.nons)
+sx-nons: $(XML:.xml=.sx.nons)
 no-sx-nons: ; rm -f *.sx.nons *.sx.nons.fmt
 
-sx-nons-fmt: $(xml:.xml=.sx.nons.fmt)
+sx-nons-fmt: $(XML:.xml=.sx.nons.fmt)
 no-sx-nons-fmt: ; rm -f *.sx.nons.fmt
 CLEAN_FILES += *.sx.nons *.sx.fmt *.sx.nons.fmt *.sx.fmt.nons
 
@@ -211,10 +233,10 @@ bx0: bx0-iter
 #bx0: bx0.stamp
 
 bx0.stamp: xx.stamp tokwrap
-	$(TOKWRAP) -t bx0 $(xml)
+	$(TOKWRAP) -t bx0 $(XML)
 	touch $@
 
-bx0-iter: $(xml:.xml=.bx0)
+bx0-iter: $(XML:.xml=.bx0)
 %.bx0: %.sx tokwrap
 	$(TOKWRAP) -t mkbx0 $*.xml
 
@@ -232,14 +254,14 @@ txt: txt-iter
 #txt: txt.stamp
 
 bx.stamp: bx0.stamp tokwrap
-	$(TOKWRAP) -t bx $(xml)
+	$(TOKWRAP) -t bx $(XML)
 	touch $@
 
 txt.stamp: bx.stamp
 	touch $@
 
-bx-iter: $(xml:.xml=.bx)
-txt-iter: $(xml:.xml=.txt)
+bx-iter: $(XML:.xml=.bx)
+txt-iter: $(XML:.xml=.txt)
 
 %.bx:  %.bx %.txt
 %.txt: %.bx %.txt
@@ -262,10 +284,10 @@ t: t-iter
 #t: t.stamp
 
 t.stamp: txt.stamp tokwrap
-	$(TOKWRAP) -t tokenize $(xml)
+	$(TOKWRAP) -t tokenize $(XML)
 	touch $@
 
-t-iter: $(xml:.xml=.t)
+t-iter: $(XML:.xml=.t)
 %.t: %.txt tokwrap
 	$(TOKWRAP) -t tokenize $*.xml
 #	$(TOKENIZER) $< $@
@@ -283,13 +305,13 @@ t-xml: t-xml-iter
 #t-xml: t-xml.stamp
 
 t-xml.stamp: t.stamp tokwrap
-	$(TOKWRAP) -t tok2xml $(xml)
+	$(TOKWRAP) -t tok2xml $(XML)
 	touch $@
 
-t-xml-iter: $(xml:.xml=.t.xml)
+t-xml-iter: $(XML:.xml=.t.xml)
 %.t.xml: %.t %.cx %.bx tokwrap
 #	$(TOKWRAP) -t tok2xml $*.xml
-	$(PROGDIR)dtatw-tok2xml $< $*.cx $*.bx $@ $*.xml
+	$(PROG_DIR)dtatw-tok2xml $< $*.cx $*.bx $@ $*.xml
 
 no-t-xml: ; rm -f *.t.xml t-xml.stamp
 no-tokd-xml: no-t-xml
@@ -301,7 +323,7 @@ CLEAN_FILES += *.t.xml t-xml.stamp
 
 %.t.xml.t: $(XSL_DIR)/dtatw-txml2tt.xsl %.t.xml
 	xsltproc --param locations 0 -o "$@" $^
-xml-t: $(xml:.xml=.t.xml.t)
+xml-t: $(XML:.xml=.t.xml.t)
 no-xml-t: ; rm -f *.t.xml.t
 CLEAN_FILES += *.t.xml.t
 
@@ -315,7 +337,7 @@ standoff: standoff-iter
 standoff-iter: s-xml-iter w-xml-iter a-xml-iter
 
 standoff.stamp: t-xml.stamp tokwrap
-	$(TOKWRAP) -t standoff $(xml)
+	$(TOKWRAP) -t standoff $(XML)
 	touch $@
 
 no-standoff: no-s-xml no-w-xml no-a-xml ; rm -f standoff.stamp
@@ -338,10 +360,10 @@ s-xml: s-xml-iter
 #s-xml: s-xml.stamp
 
 s-xml.stamp: t-xml.stamp tokwrap
-	$(TOKWRAP) -t sosxml $(xml)
+	$(TOKWRAP) -t sosxml $(XML)
 	touch $@
 
-s-xml-iter: $(xml:.xml=.s.xml)
+s-xml-iter: $(XML:.xml=.s.xml)
 #%.s.xml: %.t.xml tokwrap
 #	##-- BROKEN with `make -j2`: race condition?
 #	$(TOKWRAP) -t sosxml $*.xml
@@ -350,7 +372,7 @@ s-xml-iter: $(xml:.xml=.s.xml)
 #	xsltproc -o $@ $^
 ##--
 %.s.xml: %.t.xml tokwrap
-	$(PROGDIR)dtatw-txml2sxml $< $@ $*.w.xml
+	$(PROG_DIR)dtatw-txml2sxml $< $@ $*.w.xml
 
 
 no-s-xml: ; rm -f *.s.xml s-xml.stamp
@@ -361,10 +383,10 @@ w-xml: w-xml-iter
 #w-xml: w-xml.stamp
 
 w-xml.stamp: t-xml.stamp tokwrap
-	$(TOKWRAP) -t sowxml $(xml)
+	$(TOKWRAP) -t sowxml $(XML)
 	touch $@
 
-w-xml-iter: $(xml:.xml=.w.xml)
+w-xml-iter: $(XML:.xml=.w.xml)
 #%.w.xml: %.t.xml tokwrap
 #	##-- BROKEN with `make -j2`: race condition?
 #	$(TOKWRAP) -t sowxml $*.xml
@@ -373,7 +395,7 @@ w-xml-iter: $(xml:.xml=.w.xml)
 #	xsltproc -o $@ $^
 ##--
 %.w.xml: %.t.xml programs
-	$(PROGDIR)dtatw-txml2wxml $< $@ $*.xml
+	$(PROG_DIR)dtatw-txml2wxml $< $@ $*.xml
 
 
 no-w-xml: ; rm -f *.w.xml w-xml.stamp
@@ -384,10 +406,10 @@ a-xml: a-xml-iter
 #a-xml: a-xml.stamp
 
 a-xml.stamp: t-xml.stamp tokwrap
-	$(TOKWRAP) -t soaxml $(xml)
+	$(TOKWRAP) -t soaxml $(XML)
 	touch $@
 
-a-xml-iter: $(xml:.xml=.a.xml)
+a-xml-iter: $(XML:.xml=.a.xml)
 #%.a.xml: %.t.xml tokwrap
 #	##-- BROKEN with `make -j2`: race condition?
 #	$(TOKWRAP) -t soaxml $*.xml
@@ -396,7 +418,7 @@ a-xml-iter: $(xml:.xml=.a.xml)
 #	xsltproc -o $@ $^
 ##--
 %.a.xml: %.t.xml tokwrap
-	$(PROGDIR)dtatw-txml2axml $< $@ $*.w.xml
+	$(PROG_DIR)dtatw-txml2axml $< $@ $*.w.xml
 
 no-a-xml: ; rm -f *.a.xml a-xml.stamp
 CLEAN_FILES += *.a.xml a-xml.stamp
@@ -442,8 +464,8 @@ tw-all: tw-all-iter
 
 tw-all-iter: t-xml-iter standoff-iter
 
-tw-all.stamp: $(xml) tokwrap
-	$(TOKWRAP) -t all $(xml)
+tw-all.stamp: $(XML) tokwrap
+	$(TOKWRAP) -t all $(XML)
 	touch $@
 CLEAN_FILES += tw-all.stamp
 
@@ -465,16 +487,17 @@ CLEAN_FILES += tw-all.stamp
 ##======================================================================
 ## Rules: archiving
 
-arc: $(ARC_FILE)
-no-arc: ; rm -f $(ARC_FILE)
-$(ARC_FILE): $(ARC_TARGETS)
-	rm -rf $(ARC_NAME) $(ARC_FILE)
-	mkdir $(ARC_NAME)
+arc: $(arcfile)
+no-arc: ; rm -rf $(arcfile) $(arcname)
+$(arcfile): $(ARC_TARGETS)
+	rm -rf $(arcname) $(arcfile)
+	mkdir $(arcname)
 	for f in $(ARC_TARGETS); do \
-	  ln $$f $(ARC_NAME)/$$f; \
+	  test -e $(arcname)/$$f || ln -s ../$$f $(arcname)/$$f; \
 	done
-	tar czf $@ $(ARC_NAME)
-	rm -rf $(ARC_NAME)
+	tar czhvf $@ $(arcname)
+	rm -rf $(arcname)
+	@echo "Created archive $@"
 
 
 ##======================================================================

@@ -22,16 +22,8 @@ xmldir = ./xml
 
 ## xml=XMLFILES
 ##  + list of all DTA "base-format" XML sources (default: all .chr.xml files in XMLDIR)
-xml = $(wildcard $(xmldir)/*.chr.xml) $(wildcard $(xmldir)/*.char.xml)
-#xml = $(wildcard $(xmldir)/*.xml)
-
-## outdir=OUTDIR
-##  + output directory for standoff files
-outdir = .
-
-## tmpdir=TMPDIR
-##  + output directory for temporary files
-tmpdir = .
+#xml = $(wildcard $(xmldir)/*.chr.xml) $(wildcard $(xmldir)/*.char.xml)
+xml = $(wildcard $(xmldir)/*.xml)
 
 ##======================================================================
 ## Variables: dta-tokwrap.perl
@@ -39,23 +31,24 @@ tmpdir = .
 ##--------------------------------------------------------------
 ## Variables: dta-tokwrap.perl: behavior
 
-## dummytok=YES_OR_NO
+## dummytok=YES_OR_NO_OR_EMPTY
 ##  + whether to use the dummy or the "real" tokenizer
-dummytok = no
+##  + default uses dta-tokwrap.perl default
+dummytok = yes
 
 ##--------------------------------------------------------------
 ## Variables: dta-tokwrap.perl: verbosity & logging
 
-## verbose=LEVEL
+## verbose=LEVEL_OR_EMPTY
 ##  + verbosity level for dta-tokwrap.perl
-verbose = 1
+verbose = 0
 
-## loglevel=LOGLEVEL
+## loglevel=LOGLEVEL_OR_EMPTY
 ##  + log level for dta-tokwrap.perl
 ##  + empty string to take dta-tokwrap.perl defaults
 #loglevel = TRACE
 
-## logstderr=YES_OR_NO
+## logstderr=YES_OR_NO_OR_EMPTY
 ##  + empty string uses dta-tokwrap.perl default
 #logstderr = yes
 
@@ -63,18 +56,18 @@ verbose = 1
 ##  + log file for dta-tokwrap.perl
 logfile = dta-tokwrap.log
 
-## trace=YES_OR_NO
+## trace=YES_OR_NO_OR_EMPTY
 ##  + whether to log trace messages for dta-tokwrap.perl
-trace = yes
+#trace = yes
 
-## profile=YES_OR_NO
+## profile=YES_OR_NO_OR_EMPTY
 ##  + whether to log profiling information for dta-tokwrap.perl
 profile = no
 
 ##======================================================================
 ## Variables: in-place execution (use local development code, or don't)
 
-## INPLACE=YES_OR_NO
+## INPLACE=YES_OR_NO_OR_EMPTY
 ##  + set to "yes" to use local development code
 #inplace = no
 inplace = yes
