@@ -1,5 +1,4 @@
 #include "dtatwCommon.h"
-#include "dtatwConfig.h"
 
 /*======================================================================
  * Globals
@@ -538,7 +537,9 @@ int main(int argc, char **argv)
 
   //-- command-line: usage
   if (argc <= 2) {
-    fprintf(stderr, "Usage: %s TFILE CXFILE BXFILE [OUTFILE [XMLBASE]]\n", prog);
+    fprintf(stderr, "(%s version %s)\n", PACKAGE, PACKAGE_VERSION);
+    fprintf(stderr, "Usage:\n");
+    fprintf(stderr, " %s TFILE CXFILE BXFILE [OUTFILE [XMLBASE]]\n", prog);
     fprintf(stderr, " + TFILE   : raw tokenizer output file\n");
     fprintf(stderr, " + CXFILE  : character index file as created by dtatw-mkindex\n");
     fprintf(stderr, " + BXFILE  : block index file as created by dta-tokwrap.perl\n");
@@ -608,7 +609,7 @@ int main(int argc, char **argv)
   //-- print basic XML header
   fprintf(f_out, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
   fprintf(f_out, "<!--\n");
-  fprintf(f_out, " ! File created by %s (%s v%s)\n", prog, PACKAGE, PACKAGE_VERSION);
+  fprintf(f_out, " ! File created by %s (%s version %s)\n", prog, PACKAGE, PACKAGE_VERSION);
   fprintf(f_out, " ! Command-line: %s", argv[0]);
   for (i=1; i < argc; i++) {
     fprintf(f_out, " '%s'", (argv[i][0] ? argv[i] : ""));

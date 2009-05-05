@@ -7,18 +7,14 @@
 #ifndef DTATW_COMMON_H
 #define DTATW_COMMON_H
 
+#include "dtatwConfig.h"
+
 #include <stdio.h>
-#include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 #include <time.h>
-
-#undef XML_DTD
-#undef XML_NS
-#undef XML_UNICODE
-#undef XML_UNICODE_WHAT_T
-#define XML_CONTEXT_BYTES 1024
-#include <expat.h>
 
 /*======================================================================
  * Globals
@@ -128,13 +124,6 @@ const char *si_suffix(double g)
   if (g >= 1e3) return "K";
   return "";
 }
-
-/*======================================================================
- * Utils: File Parsing
- */
-//-- n_xmlbytes_read = expat_parse_file(xp,f)
-//   + exit()s on error
-ByteOffset expat_parse_file(XML_Parser xp, FILE *f_in, const char *filename_in);
 
 
 #endif /* DTATW_COMMON_H */

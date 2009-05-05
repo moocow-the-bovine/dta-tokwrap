@@ -86,7 +86,9 @@ int main(int argc, char **argv)
 
   //-- command-line: usage
   if (argc <= 1) {
-    fprintf(stderr, "Usage: %s INFILE [OUTFILE]\n", prog);
+    fprintf(stderr, "(%s version %s)\n", PACKAGE, PACKAGE_VERSION);
+    fprintf(stderr, "Usage:\n");
+    fprintf(stderr, " %s INFILE [OUTFILE]\n", prog);
     fprintf(stderr, " + INFILE  : XML source file with namespaces\n");
     fprintf(stderr, " + OUTFILE : XML output file, will have pseudo-namespaces\n");
     exit(1);

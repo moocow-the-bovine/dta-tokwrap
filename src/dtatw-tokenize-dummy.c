@@ -525,12 +525,11 @@ char *yytext;
 /*======================================================================
  * User C Header
  */
+#include "dtatwCommon.h"
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-
-typedef unsigned long int ByteOffset;
 
 static ByteOffset thebyte=0;
 static int lastWasEOS=1;
@@ -551,7 +550,7 @@ static int yywrap(void);
 /*======================================================================
  * Rules
  */
-#line 555 "dtatw-tokenize-dummy.c"
+#line 554 "dtatw-tokenize-dummy.c"
 
 #define INITIAL 0
 #define ATEOF 1
@@ -705,10 +704,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 56 "dtatw-tokenize-dummy.l"
+#line 55 "dtatw-tokenize-dummy.l"
 
 
-#line 712 "dtatw-tokenize-dummy.c"
+#line 711 "dtatw-tokenize-dummy.c"
 
 	if ( !(yy_init) )
 		{
@@ -794,105 +793,105 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 58 "dtatw-tokenize-dummy.l"
+#line 57 "dtatw-tokenize-dummy.l"
 { thebyte += yyleng; /* (mostly) ignore */ }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 60 "dtatw-tokenize-dummy.l"
+#line 59 "dtatw-tokenize-dummy.l"
 { thebyte += yyleng; print_eos(); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 61 "dtatw-tokenize-dummy.l"
+#line 60 "dtatw-tokenize-dummy.l"
 { thebyte += yyleng; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 63 "dtatw-tokenize-dummy.l"
+#line 62 "dtatw-tokenize-dummy.l"
 { print_token("$ROMAN\t$ABBR"); thebyte += yyleng; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 65 "dtatw-tokenize-dummy.l"
+#line 64 "dtatw-tokenize-dummy.l"
 { print_token("$FRACTION"); thebyte += yyleng; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 66 "dtatw-tokenize-dummy.l"
+#line 65 "dtatw-tokenize-dummy.l"
 { print_token("$CARDPUNCT"); thebyte += yyleng; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 67 "dtatw-tokenize-dummy.l"
+#line 66 "dtatw-tokenize-dummy.l"
 { print_token("$CARDSUFFIX"); thebyte += yyleng; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 68 "dtatw-tokenize-dummy.l"
+#line 67 "dtatw-tokenize-dummy.l"
 { print_token("$CARDSEPS"); thebyte += yyleng; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 69 "dtatw-tokenize-dummy.l"
+#line 68 "dtatw-tokenize-dummy.l"
 { print_token("$CARD");   thebyte += yyleng; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 71 "dtatw-tokenize-dummy.l"
+#line 70 "dtatw-tokenize-dummy.l"
 { print_token("$QUOTE"); thebyte += yyleng; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 72 "dtatw-tokenize-dummy.l"
+#line 71 "dtatw-tokenize-dummy.l"
 { print_token("$PUNCT"); thebyte += yyleng; }
 	YY_BREAK
 case 12:
 /* rule 12 can match eol */
 YY_RULE_SETUP
-#line 74 "dtatw-tokenize-dummy.l"
+#line 73 "dtatw-tokenize-dummy.l"
 { print_token(NULL); thebyte += yyleng; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 76 "dtatw-tokenize-dummy.l"
+#line 75 "dtatw-tokenize-dummy.l"
 { print_token("$ABBR"); thebyte += yyleng; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 77 "dtatw-tokenize-dummy.l"
+#line 76 "dtatw-tokenize-dummy.l"
 { print_token(NULL); thebyte += yyleng; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 79 "dtatw-tokenize-dummy.l"
+#line 78 "dtatw-tokenize-dummy.l"
 { print_token("$."); thebyte += yyleng; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 80 "dtatw-tokenize-dummy.l"
+#line 79 "dtatw-tokenize-dummy.l"
 { print_token("$,"); thebyte += yyleng; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 81 "dtatw-tokenize-dummy.l"
+#line 80 "dtatw-tokenize-dummy.l"
 { print_token("$PUNCT"); thebyte += yyleng; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 83 "dtatw-tokenize-dummy.l"
+#line 82 "dtatw-tokenize-dummy.l"
 { print_token(NULL); thebyte += yyleng; }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 85 "dtatw-tokenize-dummy.l"
+#line 84 "dtatw-tokenize-dummy.l"
 { print_eos(); BEGIN(ATEOF); }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 87 "dtatw-tokenize-dummy.l"
+#line 86 "dtatw-tokenize-dummy.l"
 ECHO;
 	YY_BREAK
-#line 896 "dtatw-tokenize-dummy.c"
+#line 895 "dtatw-tokenize-dummy.c"
 case YY_STATE_EOF(ATEOF):
 	yyterminate();
 
@@ -1878,7 +1877,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 87 "dtatw-tokenize-dummy.l"
+#line 86 "dtatw-tokenize-dummy.l"
 
 
 /*<<EOF>> { print_eos(); }*/
@@ -1933,20 +1932,36 @@ static int yywrap(void)
 
 int main(int argc, char **argv)
 {
+  //-- usage
+  if (argc <= 1 || strcmp(argv[1],"-h")==0 || strcmp(argv[1],"--help")==0) {
+    fprintf(stderr, "(%s version %s)\n", PACKAGE, PACKAGE_VERSION);
+    fprintf(stderr, "Usage:\n");
+    fprintf(stderr, " + %s INFILE [OUTFILE]\n", *argv);
+    fprintf(stderr, " + INFILE  : serialized UTF-8 text file to tokenize\n");
+    fprintf(stderr, " + OUTFILE : tokenizer output (moot 'medium-rare' format)\n");
+    fprintf(stderr, " + \"-\" may be used in place of any filename to indicate standard (in|out)put\n");
+    exit(1);
+  }
+  //-- infile
   if (argc > 1) {
-    yyin = fopen(argv[1], "rb");
-    if (!yyin) {
+    if (strcmp(argv[1],"-")==0) { yyin = stdin; }
+    else if (!(yyin = fopen(argv[1], "rb"))) {
       fprintf(stderr, "%s: open failed for input file '%s': %s\n", argv[0], argv[1], strerror(errno));
       exit(1);
     }
   }
+  //-- outfile
   if (argc > 2) {
-    yyout = fopen(argv[2], "wb");
-    if (!yyout) {
+    if (strcmp(argv[2],"-")==0) { yyout = stdout; }
+    else if (!(yyout = fopen(argv[2], "wb"))) {
       fprintf(stderr, "%s: open failed for output file '%s': %s\n", argv[0], argv[2], strerror(errno));
       exit(1);
     }
-  }
+  } else { yyout = stdout; }
+  //-- write header comment to outfile
+  fprintf(yyout, "%%%% raw tokenizer output generated by %s (%s version %s)\n", *argv, PACKAGE, PACKAGE_VERSION);
+
+  //-- guts
   yylex();
   return 0;
 }

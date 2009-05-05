@@ -79,13 +79,16 @@ int main(int argc, char **argv)
   char *xmlbase = NULL;
   FILE *f_in  = stdin;   //-- input file
   FILE *f_out = stdout;  //-- output file
+  int i;
 
   //-- initialize: globals
   prog = argv[0];
 
   //-- command-line: usage
   if (argc <= 1) {
-    fprintf(stderr, "Usage: %s INFILE [OUTFILE [XMLBASE]]\n", prog);
+    fprintf(stderr, "(%s version %s)\n", PACKAGE, PACKAGE_VERSION);
+    fprintf(stderr, "Usage:\n");
+    fprintf(stderr, " %s INFILE [OUTFILE [XMLBASE]]\n", prog);
     fprintf(stderr, " + INFILE  : XML-ified tokenizer output file\n");
     fprintf(stderr, " + OUTFILE : token-analysis-level standoff XML file\n");
     exit(1);
@@ -133,11 +136,17 @@ int main(int argc, char **argv)
   data.f_out = f_out;
 
   //-- print header
-  fprintf(f_out,
-	  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-	  "<sentences xml:base=\"%s\">",
-	  (xmlbase ? xmlbase : "")
-	  );
+  fprintf(f_out, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+  //--
+  fprintf(f_out, "<!--\n");
+  fprintf(f_out, " ! File created by %s (%s version %s)\n", prog, PACKAGE, PACKAGE_VERSION);
+  fprintf(f_out, " ! Command-line: %s", argv[0]);
+  for (i=1; i < argc; i++) {
+    fprintf(f_out, " '%s'", (argv[i][0] ? argv[i] : ""));
+  }
+  fprintf(f_out, "\n !-->\n");
+  //--
+  fprintf(f_out, "<sentences xml:base=\"%s\">", (xmlbase ? xmlbase : ""));
 
   //-- parse input file
   expat_parse_file(xp, f_in, filename_in);
