@@ -140,7 +140,7 @@ can be found in the F<perlmodinstall(1)> manpage.
 
 =head1 USAGE
 
-The perl program F<dta-tokwrap.perl> installed from the F<DTA-TokWrap/>
+The perl program L<dta-tokwrap.perl|/dta-tokwrap.perl> installed from the F<DTA-TokWrap/>
 distribution subdirectory provides a flexible high-level command-line interface
 to the tokenization of DTA XML documents.
 
@@ -151,7 +151,7 @@ to the tokenization of DTA XML documents.
 
 =head2 Input Format
 
-The F<dta-tokwrap.perl> script takes as its input DTA "base-format" XML files,
+The L<dta-tokwrap.perl|dta-tokwrap.perl> script takes as its input DTA "base-format" XML files,
 which are simply (TEI-conformant) UTF-8 encoded XML files with one C<E<lt>cE<gt>>
 element per character:
 
@@ -238,7 +238,7 @@ This is as easy as:
 For each input document specified on the command line,
 master output files and stand-off annotation files will be created.
 
-See the F<dta-tokwrap.perl> documentation for more details.
+See L<"the dta-tokwrap.perl manpage"|dta-tokwrap.perl> for more details.
 
 =head2 Example: Tracing execution progess
 
@@ -283,13 +283,15 @@ scripts by default (e.g. in C<`perl -MConfig -e 'print $Config{installsitescript
 =item dta-tokwrap.perl
 
 Top-level wrapper script for document tokenization
-using the L</"DTA::TokWrap"> perl API.
+using the L<DTA::TokWrap|DTA::TokWrap> perl API.
 
 =item dtatw-add-c.perl
 
-Script to insert C<E<lt>cE<gt>> elements into an
+Script to insert C<E<lt>cE<gt>> elements and/or
+C<xml:id> attributes for such elements into an
 XML document which does not yet contain them.
-Not very robust, but useful for testing.
+
+See L<"the dtatw-add-c.perl manpage"|dtatw-add-c.perl> for more details.
 
 =item dtatw-rm-c.perl
 
@@ -325,7 +327,7 @@ F<make>'s intuitive, easy-to-read syntax provides a
 wonderful vehicle for user-defined configuration files,
 obviating the need to remember the names of all 64
 (at last count)
-F<dta-tokwrap.perl> options,
+C<dta-tokwrap.perl|/dta-tokwrap.perl> options,
 
 =item *
 
@@ -365,21 +367,21 @@ See the comments at the top of F<make/User.mak> for instructions.
 
 =over 4
 
-=item DTA::TokWrap
+=item L<DTA::TokWrap|DTA::TokWrap>
 
-Top-level tokenization-wrapper module, used by F<dta-tokwrap.perl>
+Top-level tokenization-wrapper module, used by L<dta-tokwrap.perl|dta-tokwrap.perl>.
 
-=item DTA::TokWrap::Document
+=item L<DTA::TokWrap::Document|DTA::TokWrap::Document>
 
 Object-oriented wrapper for documents to be processed.
 
-=item DTA::TokWrap::Processor
+=item L<DTA::TokWrap::Processor|DTA::TokWrap::Processor>
 
 Abstract base class for elementary document-processing operations.
 
 =back
 
-See the C<DTA::TokWrap> module documentation for more details
+See the L<DTA::TokWrap::Intro(3pm)|DTA::TokWrap::Intro> manpage for more details
 on included modules, APIs, calling conventions, etc.
 
 =cut
@@ -430,12 +432,12 @@ See the F<mootfiles(5)> manpage for details.
 =head2 C Programs
 
 Several C programs are included with the distribution.
-These are used by the F<dta-tokwrap.perl> script
+These are used by the L<dta-tokwrap.perl|dta-tokwrap.perl> script
 to perform various intermediate document processing operations,
 and should not need to be called by the user directly.
 
 B<Caveat Scriptor>: The following programs are meant for
-internal use by the F<DTA::TokWrap> modules only, and their
+internal use by the C<DTA::TokWrap> modules only, and their
 names, calling conventions, and very presence is subject to change
 without notice.
 
