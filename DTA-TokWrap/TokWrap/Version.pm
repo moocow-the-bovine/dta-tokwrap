@@ -13,7 +13,7 @@ use strict;
 ## Constants
 ##==============================================================================
 our $VERSION = "0.04";
-our $SVNID   = "svn+ssh://odo.dwds.de/home/svn/dev/dta-tokwrap/trunk @ 2435M";
+our $SVNID   = "svn+ssh://odo.dwds.de/home/svn/dev/dta-tokwrap/trunk @ 2445:2447";
 our $PACKAGE_VERSION = "0.04";  ##-- usually == $VERSION
 our @ISA = qw(Exporter);
 
