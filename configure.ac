@@ -53,49 +53,28 @@ dnl AC_PROG_RANLIB
 ##    $ svn propset svn:keywords "HeadURL Id" configure.ac
 ##  + or even:
 ##    $ svn propset svn:keywords "HeadURL Id Date Rev Author" configure.ac
-AC_PATH_PROG([SVNVERSION_PROG],[svnversion],[no])
-AC_PATH_PROG([SVN_PROG],[svn],[no])
+AC_PATH_PROG([SVNVERSION],[svnversion],[no])
 
-AC_MSG_CHECKING([for SVN version of working copy])
-if test -n "$SVNVERSION_PROG" -a "$SVNVERSION_PROG" != "no"; then
-  SVNVERSION="`$SVNVERSION_PROG -n`"
+AC_MSG_CHECKING([for SVN revision of working copy])
+if test -n "$SVNVERSION" -a "$SVNVERSION" != "no"; then
+  SVNREV=`$SVNVERSION -n`
 else
-  SVNVERSION="exported"
+  SVNREV='exported'
 fi
-AC_MSG_RESULT([$SVNVERSION])
+AC_MSG_RESULT([$SVNREV])
 
-AC_MSG_CHECKING([for previous svn_id])
-if test -e "svn_id"; then
-  SVNID_OLD="`cat svn_id`"
-else
-  SVNID_OLD=''
-fi
-AC_MSG_RESULT([$SVNID_OLD])
+AC_MSG_CHECKING([for SVN HeadURL])
+SVNURL=`echo '$HeadURL$' | sed -e's/\/configure.ac//1'`
+AC_MSG_RESULT([$SVNURL])
 
-AC_MSG_CHECKING([for current svn_id])
-if test "$SVNVERSION" != "exported"; then
-  SVNID='$HeadURL$'" @ $SVNVERSION"
-  AC_MSG_RESULT($SVNID)
-elif -n "$SVNID_OLD"; then
-  SVNID="$SVNID_OLD"
-  AC_MSG_RESULT([$SVNID])
-else
-  ##-- last ditch effort
-  SVNID='$HeadURL$ @ $Rev$'
-  AC_MSG_RESULT([$SVNID])
-fi
-
-AC_MSG_CHECKING([whether to update svn_id])
-if test "$SVNID" != "$SVNID_OLD"; then
-  AC_MSG_RESULT([yes])
-  echo -n "$SVNID" > svn_id
-else
-  AC_MSG_RESULT([no])
-fi
-
+SVNID="$SVNURL @ $SVNREV"
+AC_SUBST(SVNREV)
+AC_SUBST(SVNURL)
 AC_SUBST(SVNID)
-AC_DEFINE_UNQUOTED(PACKAGE_SVNID, "$SVNID", [Subversion id of package sources])
-
+AC_DEFINE_UNQUOTED(PACKAGE_SVNREV, "$SVNREV", [Current SVN revision of package sources])
+AC_DEFINE_UNQUOTED(PACKAGE_SVNURL, "$SVNURL", [Subversion HeadURL of package sources])
+AC_DEFINE_UNQUOTED(PACKAGE_SVNID,  "$SVNID",  [Subversion identifier for package sources])
+##
 ## svn info
 ##---------------------------------------------------------------
 
