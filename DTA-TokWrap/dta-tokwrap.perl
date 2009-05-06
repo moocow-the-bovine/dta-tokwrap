@@ -2,6 +2,7 @@
 
 use lib ('.');
 use DTA::TokWrap;
+use DTA::TokWrap::Version;
 use DTA::TokWrap::Utils qw(:si);
 use File::Basename qw(basename);
 use IO::File;
@@ -161,7 +162,11 @@ GetOptions(
 	  );
 
 if ($version) {
-  print "$prog (DTA::TokWrap version $DTA::TokWrap::Version::VERSION; $DTA::TokWrap::Version::SVNID)\n";
+  print
+    ("$prog version $VERSION\n",
+     "  + DTA::TokWrap version $DTA::TokWrap::Version::VERSION\n",
+     "  + SVN $DTA::TokWrap::Version::SVNID\n",
+    );
   exit(0);
 }
 
