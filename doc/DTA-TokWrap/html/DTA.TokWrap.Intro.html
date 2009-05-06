@@ -15,8 +15,10 @@
 </td></tr>
 </table>
 
-<p><a name="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
 
 <ul>
 
@@ -53,9 +55,11 @@
 	<li><a href="#see_also">SEE ALSO</a></li>
 	<li><a href="#author">AUTHOR</a></li>
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 <a href="#__index__"><small>(Back to Top)</small></a>
 </p>
@@ -68,16 +72,16 @@
 <hr />
 <h1><a name="description">DESCRIPTION</a></h1>
 <p>The DTA::TokWrap perl distribution contains various modules
-for operations associated with the tokenization of DTA ``base-format'' XML documents.
+for operations associated with the tokenization of DTA &quot;base-format&quot; XML documents.
 The distribution is divided into 1 program and 3 main modules:</p>
 <dl>
-<dt><strong><a name="item_dta_2dtokwrap_2eperl">dta-tokwrap.perl</a></strong></dt>
+<dt><strong><a name="dta_tokwrap_perl" class="item">dta-tokwrap.perl</a></strong></dt>
 
 <dd>
 <p>Top-level command-line interface.  Use this if you can.
 See <a href="dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a> for details.</p>
 </dd>
-<dt><strong><a name="item_module_dta_3a_3atokwrap">Module DTA::TokWrap</a></strong></dt>
+<dt><strong><a name="module_dta_tokwrap" class="item">Module DTA::TokWrap</a></strong></dt>
 
 <dd>
 <p>Top-level wrappers for persistent data associated with document tokenization.
@@ -85,14 +89,14 @@ Encapsulates all default <a href="#dta__tokwrap__processor">DTA::TokWrap::Proces
 sub-processor objects.
 See <a href="#dta__tokwrap">the DTA::TokWrap section</a> for more details.</p>
 </dd>
-<dt><strong><a name="item_module_dta_3a_3atokwrap_3a_3adocument">Module DTA::TokWrap::Document</a></strong></dt>
+<dt><strong><a name="module_dta_tokwrap_document" class="item">Module DTA::TokWrap::Document</a></strong></dt>
 
 <dd>
 <p>Top-level wrappers for per-document data, including temporary files, indices,
 and in-memory data structures.
 See <a href="#dta__tokwrap__document">the DTA::TokWrap::Document section</a> for more details.</p>
 </dd>
-<dt><strong><a name="item_module_dta_3a_3atokwrap_3a_3aprocessor">Module DTA::TokWrap::Processor</a></strong></dt>
+<dt><strong><a name="module_dta_tokwrap_processor" class="item">Module DTA::TokWrap::Processor</a></strong></dt>
 
 <dd>
 <p>Abstraction level for processing operations on document data.
@@ -112,7 +116,7 @@ included with this distribution.</p>
 </p>
 <h2><a name="dta__tokwrap">DTA::TokWrap</a></h2>
 <p>The DTA::TokWrap module provides top-level object-oriented wrappers
-for (batch) tokenization of DTA ``base-format'' XML documents.
+for (batch) tokenization of DTA &quot;base-format&quot; XML documents.
 DTA::TokWrap objects encapsulate all default
 <a href="#dta__tokwrap__processor">DTA::TokWrap::Processor</a> objects under a
 single object.  Most document processing should proceed via
@@ -148,7 +152,7 @@ for details on the API.</p>
 <h3><a name="dta__tokwrap__processor__mkindex">DTA::TokWrap::Processor::mkindex</a></h3>
 <p>DTA::TokWrap::Processor::mkindex provides an object-oriented
 <a href="#dta__tokwrap__processor">DTA::TokWrap::Processor</a> wrapper
-around the <em>dtatw-mkindex</em> C program
+around the <em class="file">dtatw-mkindex</em> C program
 for <a href="#dta__tokwrap__document">DTA::TokWrap::Document</a> objects.</p>
 <p>See <a href="DTA.TokWrap.Processor.mkindex.html">DTA::TokWrap::Processor::mkindex(3pm)</a>
 for details.</p>
@@ -159,7 +163,7 @@ for details.</p>
 <a href="#dta__tokwrap__processor">DTA::TokWrap::Processor</a> wrapper
 for
 hint insertion and serialization sort-key generation
-on a text-free ``structure index'' (.sx) XML file.</p>
+on a text-free &quot;structure index&quot; (.sx) XML file.</p>
 <p>See <a href="DTA.TokWrap.Processor.mkbx0.html">DTA::TokWrap::Processor::mkbx0(3pm)</a>
 for details.</p>
 <p>
@@ -174,7 +178,7 @@ for details.</p>
 </p>
 <h3><a name="dta__tokwrap__processor__tokenize">DTA::TokWrap::Processor::tokenize</a></h3>
 <p><strong>WARNING</strong>: this class is currently just a placeholder for the
-``official'' low-level tokenizer (ToMaSoTaTh).  Until such time
+&quot;official&quot; low-level tokenizer (ToMaSoTaTh).  Until such time
 as the official tokenizer is functional, please use the
 <a href="DTA.TokWrap.Processor.tokenize.dummy.html">DTA::TokWrap::Processor::tokenize::dummy</a>
 sub-class, which uses a simple locally-built low-level tokenizer.</p>
@@ -188,7 +192,7 @@ for details.</p>
 </p>
 <h3><a name="dta__tokwrap__processor__tokenize__dummy">DTA::TokWrap::Processor::tokenize::dummy</a></h3>
 <p>DTA::TokWrap::Processor::tokenize::dummy provides a package-local
-alternative to the ``official'' low-level tokenizer class
+alternative to the &quot;official&quot; low-level tokenizer class
 <a href="DTA.TokWrap.Processor.tokenize.html">DTA::TokWrap::Processor::tokenize</a>.</p>
 <p>See <a href="DTA.TokWrap.Processor.tokenize.dummy.html">DTA::TokWrap::Processor::tokenize::dummy(3pm)</a>
 for details.</p>
@@ -197,8 +201,8 @@ for details.</p>
 <h3><a name="dta__tokwrap__processor__tok2xml">DTA::TokWrap::Processor::tok2xml</a></h3>
 <p>DTA::TokWrap::Processor::tok2xml provides an object-oriented
 <a href="#dta__tokwrap__processor">DTA::TokWrap::Processor</a> wrapper
-for converting ``raw'' CSV-format (.t) low-level tokenizer output
-to a ``master'' tokenized XML (.t.xml) format,
+for converting &quot;raw&quot; CSV-format (.t) low-level tokenizer output
+to a &quot;master&quot; tokenized XML (.t.xml) format,
 for use with <a href="#dta__tokwrap__document">DTA::TokWrap::Document</a> objects.</p>
 <p>See <a href="DTA.TokWrap.Processor.tok2xml.html">DTA::TokWrap::Processor::tok2xml(3pm)</a>
 for details.</p>
