@@ -37,7 +37,7 @@ void cb_start(ParseData *data, const XML_Char *name, const XML_Char **attrs)
   }
   else if (data->w_depth > 0 && strcmp(name,"a")==0) {
     assert(data->a_depth==0 /* can't handle nested 'a' elements */);
-    fprintf(data->f_out, "%s<a xml:id=\"%s\"/>", indent_a, data->w_id);
+    fprintf(data->f_out, "%s<a ref=\"#%s\">", indent_a, data->w_id);
     data->a_depth++;
   }
 }
@@ -50,7 +50,21 @@ void cb_end(ParseData *data, const XML_Char *name)
     data->w_depth--;
   }
   else if (data->a_depth > 0 && strcmp(name,"a")==0) {
+    fputs("</a>", data->f_out);
     data->a_depth--;
+  }
+}
+
+//--------------------------------------------------------------
+void cb_char(ParseData *data, const XML_Char *s, int len)
+{
+  const XML_Char *ctx;
+  int ctx_len;
+  size_t nwritten;
+  if (data->a_depth > 0) {
+    ctx = get_event_context(data->xp, &ctx_len);
+    nwritten = fwrite(ctx, 1,ctx_len,data->f_out);
+    assert(nwritten == (size_t)ctx_len /* I/O error */);
   }
 }
 
@@ -63,7 +77,7 @@ int main(int argc, char **argv)
   XML_Parser xp;
   char *filename_in  = "-";
   char *filename_out = "-";
-  char *xmlbase = NULL;
+  char *xmlbase = "", *xmlsuff="";
   FILE *f_in  = stdin;   //-- input file
   FILE *f_out = stdout;  //-- output file
   int i;
@@ -104,8 +118,14 @@ int main(int argc, char **argv)
   }
   if (argc > 3) {
     xmlbase = argv[3];
+    xmlsuff = "";
+  } else if (filename_in && strcmp(filename_in,"-") != 0) {
+    xmlbase = file_basename(NULL, filename_in, ".t.xml", -1,0);
+    xmlsuff = ".w.xml";
   } else {
+    //-- last-ditch effort
     xmlbase = filename_in;
+    xmlsuff = "";
   }
 
   //-- setup expat parser
@@ -116,6 +136,7 @@ int main(int argc, char **argv)
   }
   XML_SetUserData(xp, &data);
   XML_SetElementHandler(xp, (XML_StartElementHandler)cb_start, (XML_EndElementHandler)cb_end);
+  XML_SetCharacterDataHandler(xp, (XML_CharacterDataHandler)cb_char);
 
   //-- setup callback data
   memset(&data,0,sizeof(data));
@@ -124,15 +145,16 @@ int main(int argc, char **argv)
 
   //-- print header
   fprintf(f_out, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-  fprintf(f_out, "<analyses xml:base=\"%s\">", (xmlbase ? xmlbase : ""));
   //--
-  fprintf(f_out, "%s<!--\n", indent_root);
+  fprintf(f_out, "<!--\n", indent_root);
   fprintf(f_out, " ! File created by %s (%s version %s)\n", prog, PACKAGE, PACKAGE_VERSION);
   fprintf(f_out, " ! Command-line: %s", argv[0]);
   for (i=1; i < argc; i++) {
     fprintf(f_out, " '%s'", (argv[i][0] ? argv[i] : ""));
   }
   fprintf(f_out, "\n !-->\n");
+  //--
+  fprintf(f_out, "<analyses xml:base=\"%s%s\">", xmlbase, xmlsuff);
 
   //-- parse input file
   expat_parse_file(xp, f_in, filename_in);

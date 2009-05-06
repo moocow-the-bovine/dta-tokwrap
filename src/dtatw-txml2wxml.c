@@ -83,7 +83,7 @@ int main(int argc, char **argv)
   XML_Parser xp;
   char *filename_in  = "-";
   char *filename_out = "-";
-  char *xmlbase = NULL;
+  char *xmlbase = "", *xmlsuff="";
   FILE *f_in  = stdin;   //-- input file
   FILE *f_out = stdout;  //-- output file
   int i;
@@ -124,8 +124,14 @@ int main(int argc, char **argv)
   }
   if (argc > 3) {
     xmlbase = argv[3];
+    xmlsuff = "";
+  } else if (filename_in && strcmp(filename_in,"-") != 0) {
+    xmlbase = file_basename(NULL, filename_in, ".t.xml", -1,0);
+    xmlsuff = ".xml";
   } else {
+    //-- last-ditch effort
     xmlbase = filename_in;
+    xmlsuff = "";
   }
 
   //-- setup expat parser
@@ -153,7 +159,7 @@ int main(int argc, char **argv)
   }
   fprintf(f_out, "\n !-->\n");
   //--
-  fprintf(f_out, "<tokens xml:base=\"%s\">", (xmlbase ? xmlbase : ""));
+  fprintf(f_out, "<tokens xml:base=\"%s%s\">", xmlbase, xmlsuff);
 
   //-- parse input file
   expat_parse_file(xp, f_in, filename_in);

@@ -53,7 +53,7 @@ dummytok = yes
 ## TOKWRAP_ALL=YES_OR_NO (anything but "yes" works like "no")
 ##  + if true, dta-tokwrap.perl will be called for all possible actions
 ##  + otherwise, C utilities will be called directly whenever possible
-TOKWRAP_ALL = yes
+#TOKWRAP_ALL = yes
 
 
 ##--------------------------------------------------------------
