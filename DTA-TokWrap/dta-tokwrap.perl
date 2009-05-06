@@ -161,7 +161,7 @@ GetOptions(
 	  );
 
 if ($version) {
-  print "$prog (DTA::TokWrap version $DTA::TokWrap::VERSION)\n";
+  print "$prog (DTA::TokWrap version $DTA::TokWrap::Version::VERSION; $DTA::TokWrap::Version::SVNID)\n";
   exit(0);
 }
 

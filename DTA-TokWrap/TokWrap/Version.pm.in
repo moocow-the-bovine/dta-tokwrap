@@ -13,10 +13,11 @@ use strict;
 ## Constants
 ##==============================================================================
 our $VERSION = "@VERSION@";
-our $PACKAGE_VERSION = "@PACKAGE_VERSION@";
+our $SVNID   = "@SVNID@";
+our $PACKAGE_VERSION = "@PACKAGE_VERSION@";  ##-- usually == $VERSION
 our @ISA = qw(Exporter);
 
-our @EXPORT = ('$VERSION','$PACKAGE_VERSION');
+our @EXPORT = ('$VERSION','$PACKAGE_VERSION','$SVNID');
 our @EXPORT_OK = @EXPORT;
 our %EXPORT_TAGS = (
 		    default => \@EXPORT,

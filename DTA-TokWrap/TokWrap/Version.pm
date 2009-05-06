@@ -13,10 +13,11 @@ use strict;
 ## Constants
 ##==============================================================================
 our $VERSION = "0.04";
-our $PACKAGE_VERSION = "0.04";
+our $SVNID   = "svn+ssh://odo.dwds.de/home/svn/dev/dta-tokwrap/trunk @ 2435M";
+our $PACKAGE_VERSION = "0.04";  ##-- usually == $VERSION
 our @ISA = qw(Exporter);
 
-our @EXPORT = ('$VERSION','$PACKAGE_VERSION');
+our @EXPORT = ('$VERSION','$PACKAGE_VERSION','$SVNID');
 our @EXPORT_OK = @EXPORT;
 our %EXPORT_TAGS = (
 		    default => \@EXPORT,
