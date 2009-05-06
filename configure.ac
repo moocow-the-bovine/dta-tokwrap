@@ -55,6 +55,11 @@ dnl AC_PROG_RANLIB
 ##    $ svn propset svn:keywords "HeadURL Id Date Rev Author" configure.ac
 AC_PATH_PROG([SVNVERSION],[svnversion],[no])
 
+AC_MSG_CHECKING([for SVN HeadURL])
+SVNURL=`echo '$HeadURL$' \
+  | sed -e's/^\$HeadURL:[ ]*//1' -e's/\/configure.ac[ ]*\$$//1'`
+AC_MSG_RESULT([$SVNURL])
+
 AC_MSG_CHECKING([for SVN revision of working copy])
 if test -n "$SVNVERSION" -a "$SVNVERSION" != "no"; then
   SVNREV=`$SVNVERSION -n`
@@ -63,16 +68,12 @@ else
 fi
 AC_MSG_RESULT([$SVNREV])
 
-AC_MSG_CHECKING([for SVN HeadURL])
-SVNURL=`echo '$HeadURL$' | sed -e's/\/configure.ac//1'`
-AC_MSG_RESULT([$SVNURL])
-
-SVNID="$SVNURL @ $SVNREV"
-AC_SUBST(SVNREV)
+SVNID="${SVNURL} @ ${SVNREV}"
 AC_SUBST(SVNURL)
+AC_SUBST(SVNREV)
 AC_SUBST(SVNID)
-AC_DEFINE_UNQUOTED(PACKAGE_SVNREV, "$SVNREV", [Current SVN revision of package sources])
 AC_DEFINE_UNQUOTED(PACKAGE_SVNURL, "$SVNURL", [Subversion HeadURL of package sources])
+AC_DEFINE_UNQUOTED(PACKAGE_SVNREV, "$SVNREV", [Current SVN revision of package sources])
 AC_DEFINE_UNQUOTED(PACKAGE_SVNID,  "$SVNID",  [Subversion identifier for package sources])
 ##
 ## svn info

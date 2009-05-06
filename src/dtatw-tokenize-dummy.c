@@ -1934,7 +1934,7 @@ int main(int argc, char **argv)
 {
   //-- usage
   if (argc <= 1 || strcmp(argv[1],"-h")==0 || strcmp(argv[1],"--help")==0) {
-    fprintf(stderr, "(%s version %s)\n", PACKAGE, PACKAGE_VERSION);
+    fprintf(stderr, "(%s version %s / %s)\n", PACKAGE, PACKAGE_VERSION, PACKAGE_SVNID);
     fprintf(stderr, "Usage:\n");
     fprintf(stderr, " + %s INFILE [OUTFILE]\n", *argv);
     fprintf(stderr, " + INFILE  : serialized UTF-8 text file to tokenize\n");

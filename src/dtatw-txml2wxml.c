@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 
   //-- command-line: usage
   if (argc <= 1) {
-    fprintf(stderr, "(%s version %s)\n", PACKAGE, PACKAGE_VERSION);
+    fprintf(stderr, "(%s version %s / %s)\n", PACKAGE, PACKAGE_VERSION, PACKAGE_SVNID);
     fprintf(stderr, "Usage:\n");
     fprintf(stderr, " %s INFILE [OUTFILE [XMLBASE]]\n", prog);
     fprintf(stderr, " + INFILE  : XML-ified tokenizer output file\n");

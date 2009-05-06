@@ -537,7 +537,7 @@ int main(int argc, char **argv)
 
   //-- command-line: usage
   if (argc <= 2) {
-    fprintf(stderr, "(%s version %s)\n", PACKAGE, PACKAGE_VERSION);
+    fprintf(stderr, "(%s version %s / %s)\n", PACKAGE, PACKAGE_VERSION, PACKAGE_SVNID);
     fprintf(stderr, "Usage:\n");
     fprintf(stderr, " %s TFILE CXFILE BXFILE [OUTFILE [XMLBASE]]\n", prog);
     fprintf(stderr, " + TFILE   : raw tokenizer output file\n");
