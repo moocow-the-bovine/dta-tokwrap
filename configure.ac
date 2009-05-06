@@ -64,31 +64,37 @@ else
 fi
 AC_MSG_RESULT([$SVNVERSION])
 
-AC_MSG_CHECKING([for last known svn_id])
+AC_MSG_CHECKING([for previous svn_id])
 if test -e "svn_id"; then
   SVNID_OLD="`cat svn_id`"
 else
-  SVNID_OLD=""  
+  SVNID_OLD=''
 fi
 AC_MSG_RESULT([$SVNID_OLD])
 
-AC_MSG_CHECKING([whether to update svn_id])
+AC_MSG_CHECKING([for current svn_id])
 if test "$SVNVERSION" != "exported"; then
-  SVNID=`echo "$HeadURL$ $SVNVERSION" | sed -e's/configure\.ac//1'`
-  if test "$SVNID" = "$SVNID_OLD"; then
-    AC_MSG_RESULT([no ($SVNID)])
-  else
-    AC_MSG_RESULT([yes ($SVNID)])
-    echo "$SVNID" > svn_id
-  fi
-elif test -e "svn_id"; then
-  SVNID="`cat svn_id`"
-  AC_MSG_RESULT([no ($SVNID)])
+  SVNID=`echo '$HeadURL$'" Revision $SVNVERSION" | sed -e's/configure\.ac//1'`
+  AC_MSG_RESULT($SVNID)
+elif -n "$SVNID_OLD"; then
+  SVNID="$SVNID_OLD"
+  AC_MSG_RESULT([$SVNID])
 else
   ##-- last ditch effort
-  AC_MSG_RESULT([yes ("$HeadURL$ $Id$")])
-  echo "$HeadURL$ $Id$" > svn_id;
+  SVNID='$HeadURL$ $Rev$'
+  AC_MSG_RESULT([$SVNID])
 fi
+
+AC_MSG_CHECKING([whether to update svn_id])
+if test "$SVNID" != "$SVNID_OLD"; then
+  AC_MSG_RESULT([yes])
+  echo "$SVNID" > svn_id
+else
+  AC_MSG_RESULT([no])
+fi
+
+AC_SUBST(SVNID)
+AC_DEFINE_UNQUOTED(PACKAGE_SVNID, "$SVNID", [Subversion id of package sources])
 
 ## svn info
 ##---------------------------------------------------------------
