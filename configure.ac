@@ -74,21 +74,21 @@ AC_MSG_RESULT([$SVNID_OLD])
 
 AC_MSG_CHECKING([for current svn_id])
 if test "$SVNVERSION" != "exported"; then
-  SVNID=`echo '$HeadURL$'" svnversion=$SVNVERSION" | sed -e's/configure\.ac//1'`
+  SVNID='$HeadURL$'" @ $SVNVERSION"
   AC_MSG_RESULT($SVNID)
 elif -n "$SVNID_OLD"; then
   SVNID="$SVNID_OLD"
   AC_MSG_RESULT([$SVNID])
 else
   ##-- last ditch effort
-  SVNID='$HeadURL$ $Rev$'
+  SVNID='$HeadURL$ @ $Rev$'
   AC_MSG_RESULT([$SVNID])
 fi
 
 AC_MSG_CHECKING([whether to update svn_id])
 if test "$SVNID" != "$SVNID_OLD"; then
   AC_MSG_RESULT([yes])
-  echo "$SVNID" > svn_id
+  echo -n "$SVNID" > svn_id
 else
   AC_MSG_RESULT([no])
 fi
