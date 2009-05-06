@@ -46,6 +46,53 @@ dnl AC_PROG_LIBTOOL
 dnl v--- for static-only libraries (non-libtool)
 dnl AC_PROG_RANLIB
 
+##---------------------------------------------------------------
+## svn info
+##  + keyword substitution requires property svn:keywords set on
+##    this file:
+##    $ svn propset svn:keywords "HeadURL Id" configure.ac
+##  + or even:
+##    $ svn propset svn:keywords "HeadURL Id Date Rev Author" configure.ac
+AC_PATH_PROG([SVNVERSION_PROG],[svnversion],[no])
+AC_PATH_PROG([SVN_PROG],[svn],[no])
+
+AC_MSG_CHECKING([for SVN version of working copy])
+if test -n "$SVNVERSION_PROG" -a "$SVNVERSION_PROG" != "no"; then
+  SVNVERSION="`$SVNVERSION_PROG -n`"
+else
+  SVNVERSION="exported"
+fi
+AC_MSG_RESULT([$SVNVERSION])
+
+AC_MSG_CHECKING([for last known svn_id])
+if test -e "svn_id"; then
+  SVNID_OLD="`cat svn_id`"
+else
+  SVNID_OLD=""  
+fi
+AC_MSG_RESULT([$SVNID_OLD])
+
+AC_MSG_CHECKING([whether to update svn_id])
+if test "$SVNVERSION" != "exported"; then
+  SVNID=`echo "$HeadURL$ $SVNVERSION" | sed -e's/configure\.ac//1'`
+  if test "$SVNID" = "$SVNID_OLD"; then
+    AC_MSG_RESULT([no ($SVNID)])
+  else
+    AC_MSG_RESULT([yes ($SVNID)])
+    echo "$SVNID" > svn_id
+  fi
+elif test -e "svn_id"; then
+  SVNID="`cat svn_id`"
+  AC_MSG_RESULT([no ($SVNID)])
+else
+  ##-- last ditch effort
+  AC_MSG_RESULT([yes ("$HeadURL$ $Id$")])
+  echo "$HeadURL$ $Id$" > svn_id;
+fi
+
+## svn info
+##---------------------------------------------------------------
+
 #---------------------------------------------------------------
 # short package include-dir
 spkgincludedir="\${includedir}/AC_PACKAGE_NAME"
