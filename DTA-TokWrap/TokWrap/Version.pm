@@ -12,8 +12,8 @@ use strict;
 ##==============================================================================
 ## Constants
 ##==============================================================================
-our $VERSION = "0.03";
-our $PACKAGE_VERSION = "0.03";
+our $VERSION = "0.04";
+our $PACKAGE_VERSION = "0.04";
 our @ISA = qw(Exporter);
 
 our @EXPORT = ('$VERSION','$PACKAGE_VERSION');

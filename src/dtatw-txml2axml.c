@@ -10,16 +10,14 @@
 typedef struct {
   XML_Parser xp;            //-- expat parser
   FILE *f_out;              //-- output file
+  char  w_id[XMLID_BUFLEN]; //-- buffer for xml:id of currently open 'w' element
   int w_depth;              //-- number of open 'w' elements
   int a_depth;              //-- number of open 'a' elements in open 'w' elements
-  int did_w_start;          //-- whether we finished the start-tag of the current 'w'
-  int found_a;              //-- whether we found an 'a' element in the current 'w'
 } ParseData;
 
 //-- indentation/formatting
 const char *indent_root = "\n";
-const char *indent_w    = "\n  ";
-const char *indent_a    = "\n    ";
+const char *indent_a    = "\n  ";
 
 
 /*======================================================================
@@ -29,25 +27,18 @@ const char *indent_a    = "\n    ";
 //--------------------------------------------------------------
 void cb_start(ParseData *data, const XML_Char *name, const XML_Char **attrs)
 {
-  const XML_Char *xml_id;
   if (strcmp(name,"w")==0) {
+    const XML_Char *xml_id;
     assert(data->w_depth==0 /* can't handle nested 'w' elements */);
     xml_id = get_attr("xml:id", attrs);
-    fprintf(data->f_out, "%s<w ref=\"#%s\"", indent_w, (xml_id ? xml_id : ""));
-    data->did_w_start = 0;
-    data->found_a = 0;
+    assert(strlen(xml_id) < XMLID_BUFLEN /* id buffer overflow */);
+    strcpy(data->w_id, xml_id);
     data->w_depth++;
   }
   else if (data->w_depth > 0 && strcmp(name,"a")==0) {
     assert(data->a_depth==0 /* can't handle nested 'a' elements */);
-    xml_id = get_attr("xml:id", attrs);
-    if (!data->did_w_start) {
-      fputc('>', data->f_out);
-      data->did_w_start = 1;
-    }
-    fprintf(data->f_out, "%s<a xml:id=\"%s\"/>", indent_a, (xml_id ? xml_id : ""));
+    fprintf(data->f_out, "%s<a xml:id=\"%s\"/>", indent_a, data->w_id);
     data->a_depth++;
-    data->found_a = 1;
   }
 }
 
@@ -55,11 +46,7 @@ void cb_start(ParseData *data, const XML_Char *name, const XML_Char **attrs)
 void cb_end(ParseData *data, const XML_Char *name)
 {
   if (data->w_depth > 0 && strcmp(name,"w")==0) {
-    if (!data->did_w_start) {
-      fputs("/>", data->f_out);
-    } else {
-      fprintf(data->f_out, "%s</w>", indent_w);
-    }
+    data->w_id[0] = '\0';
     data->w_depth--;
   }
   else if (data->a_depth > 0 && strcmp(name,"a")==0) {
@@ -86,7 +73,7 @@ int main(int argc, char **argv)
 
   //-- command-line: usage
   if (argc <= 1) {
-    fprintf(stderr, "(%s version %s)\n", PACKAGE, PACKAGE_VERSION);
+    fprintf(stderr, "(%s version %s / %s)\n", PACKAGE, PACKAGE_VERSION, PACKAGE_SVNID);
     fprintf(stderr, "Usage:\n");
     fprintf(stderr, " %s INFILE [OUTFILE [XMLBASE]]\n", prog);
     fprintf(stderr, " + INFILE  : XML-ified tokenizer output file\n");
@@ -137,22 +124,21 @@ int main(int argc, char **argv)
 
   //-- print header
   fprintf(f_out, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+  fprintf(f_out, "<analyses xml:base=\"%s\">", (xmlbase ? xmlbase : ""));
   //--
-  fprintf(f_out, "<!--\n");
+  fprintf(f_out, "%s<!--\n", indent_root);
   fprintf(f_out, " ! File created by %s (%s version %s)\n", prog, PACKAGE, PACKAGE_VERSION);
   fprintf(f_out, " ! Command-line: %s", argv[0]);
   for (i=1; i < argc; i++) {
     fprintf(f_out, " '%s'", (argv[i][0] ? argv[i] : ""));
   }
   fprintf(f_out, "\n !-->\n");
-  //--
-  fprintf(f_out, "<sentences xml:base=\"%s\">", (xmlbase ? xmlbase : ""));
 
   //-- parse input file
   expat_parse_file(xp, f_in, filename_in);
 
   //-- print footer
-  fprintf(f_out, "%s</sentences>\n", indent_root);
+  fprintf(f_out, "%s</analyses>\n", indent_root);
 
   //-- cleanup
   if (f_in)  fclose(f_in);
