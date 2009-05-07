@@ -49,12 +49,26 @@ endif
 ##--------------------------------------------------------------
 ## Configuration: Defaults: dta-tokwrap.perl: behavior
 
-ifneq "$(dummytok)" ""
+ifeq "$(dummytok)" ""
+ifeq "$(shell which dwds_tomasotath)" ""
+override dummytok := yes
+else
+override dummytok := no
+endif
+endif
+
 ifeq "$(dummytok)" "no"
 TOKWRAP_OPTS += -nodummytok -weak-hints
 else
 TOKWRAP_OPTS += -dummytok -strong-hints
 endif
+
+ifneq "$(abbrevlex)" ""
+TOKWRAP_OPTS += -abbrev-lex="$(abbrevlex)"
+endif
+
+ifneq "$(mwelex)" ""
+TOKWRAP_OPTS += -mwe-lex="$(mwelex)"
 endif
 
 ##--------------------------------------------------------------
@@ -95,6 +109,9 @@ else
 TOKWRAP_OPTS += -noprofile
 endif
 endif
+
+##-- user options
+TOKWRAP_OPTS += $(twopts)
 
 ##--------------------------------------------------------------
 ## Configuration: Defaults: programs & in-place execution
@@ -163,6 +180,7 @@ all: t-xml s-xml w-xml a-xml
 
 config:
 	@echo "inplace=$(inplace)"
+	@echo "dummytok=$(dummytok)"
 	@echo "TOKWRAP=$(TOKWRAP)"
 	@echo "xmldir=$(xmldir)"
 	@echo "xml=$(xml)"

@@ -12,12 +12,18 @@ use strict;
 ##==============================================================================
 ## Constants
 ##==============================================================================
-our $VERSION = "0.04";
-our $SVNID   = "svn+ssh://odo.dwds.de/home/svn/dev/dta-tokwrap/trunk @ 2445:2447";
-our $PACKAGE_VERSION = "0.04";  ##-- usually == $VERSION
+our $VERSION = "0.05";
+our $SVNID   = "svn+ssh://odo.dwds.de/home/svn/dev/dta-tokwrap/trunk @ 2453M";
+our $PACKAGE_VERSION = "0.05";  ##-- usually == $VERSION
+
+our $prefix = "/usr/local";
+our $datadir ="${prefix}/share";
+our $rcdir = "${datadir}/dta-resources";
+our $RCDIR = $rcdir;
+
 our @ISA = qw(Exporter);
 
-our @EXPORT = ('$VERSION','$PACKAGE_VERSION','$SVNID');
+our @EXPORT = ('$VERSION','$PACKAGE_VERSION','$SVNID','$RCDIR');
 our @EXPORT_OK = @EXPORT;
 our %EXPORT_TAGS = (
 		    default => \@EXPORT,

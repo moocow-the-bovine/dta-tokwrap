@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "DTA-TOKWRAP.PERL 1"
-.TH DTA-TOKWRAP.PERL 1 "2009-05-06" "dta-tokwrap v0.04" "DTA Tokenization Utilities"
+.TH DTA-TOKWRAP.PERL 1 "2009-05-07" "dta-tokwrap v0.05" "DTA Tokenization Utilities"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -156,6 +156,8 @@ dta\-tokwrap.perl \- top\-level tokenizer wrapper for DTA XML documents
 \&  \-hints, \-nohints       # do/don\*(Aqt generate "hints" for the tokenizer (default=do)
 \&  \-weak\-hints            # use whitespace\-only hints rather than defaults ($WB$,$SB$)
 \&  \-strong\-hints          # opposite of \-weak\-hints
+\&  \-abbrev\-lex=FILE       # abbreviation lexicon for dwds_tomasotath tokenizer
+\&  \-mwe\-lex=FILE          # multiword\-expression lexicon for dwds_tomasotath tokenizer
 \&  \-procopt OPT=VALUE     # set arbitrary subprocessor options
 \& 
 \& I/O Options:
@@ -260,6 +262,25 @@ hints, but might be predisposed to break tokens and/or sentences on whitespace.
 .IP "\-strong\-hints" 4
 .IX Item "-strong-hints"
 Opposite of \-weak\-hints.
+.IP "\-abbrev\-lex=FILE" 4
+.IX Item "-abbrev-lex=FILE"
+Abbreviation lexicon for \fIdwds_tomasotath\fR tokenizer.
+Default is (usually)
+\&\fI/usr/local/share/dta\-resources/dta_abbrevs.lex\fR.
+.Sp
+\&\s-1FILE\s0 may be specified as the empty string to avoid
+use of an abbreviation lexicon altogether, although
+this is likely to weak havoc with \fIdwds_tomasotath\fR's
+sentence-boundary recognition.
+.IP "\-mwe\-lex=FILE" 4
+.IX Item "-mwe-lex=FILE"
+Multiword-expression lexicon for \fIdwds_tomasotath\fR tokenizer.
+Default is (usually)
+\&\fI/usr/local/share/dta\-resources/dta_mwe.lex\fR.
+.Sp
+\&\s-1FILE\s0 may be specified as the empty string to avoid
+use of a multiword-expression lexicon altogether, although
+this might cause problems with \fIdwds_tomasotath\fR.
 .IP "\-procopt OPT=VALUE" 4
 .IX Item "-procopt OPT=VALUE"
 Set a literal arbitrary subprocessor option \s-1OPT\s0 to \s-1VALUE\s0.

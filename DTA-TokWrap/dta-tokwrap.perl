@@ -28,7 +28,9 @@ our %twopts = (
 			    #traceLevel => 'trace',
 			    hint_sb_xpaths => $bx0opts{hint_sb_xpaths},
 			    hint_wb_xpaths => $bx0opts{hint_wb_xpaths},
-			    nohints => 0, ##-- don't generate any hints in output .txt file
+			    nohints => 0,        ##-- don't generate any hints in output .txt file
+			    abbrevLex => undef,  ##-- abbrev "lexicon"; see SVN 'dev/dta-resources' project
+			    mweLex   => undef,   ##-- mwe "lexicon"; see SVN 'dev/dta-resources' project
 			   },
 	      );
 our %docopts = (
@@ -120,6 +122,8 @@ GetOptions(
 	   'weak-hints|weakhints|whitespace-hints|wh' => sub { $twopts{procOpts}{wbStr}=$twopts{procOpts}{sbStr}="\n\n"; },
 	   'strong-hints|sh' => sub { delete(@{$twopts{procopts}}{qw(wbStr sbStr)}); },
 	   'hints!' => sub { $twopts{procOpts}{nohints} = !$_[1]; },
+	   'abbrev-lex|to-abbrev-lex|al=s' => \$twopts{procOpts}{abbrevLex},
+	   'mwe-lex|to-mwe-lex|ml=s' => \$twopts{procOpts}{mweLex},
 	   'processor-option|procopt|po=s%' => $twopts{procOpts},
 
 	   ##-- DTA::TokWrap options: I/O
@@ -343,6 +347,8 @@ dta-tokwrap.perl - top-level tokenizer wrapper for DTA XML documents
   -hints, -nohints       # do/don't generate "hints" for the tokenizer (default=do)
   -weak-hints            # use whitespace-only hints rather than defaults ($WB$,$SB$)
   -strong-hints          # opposite of -weak-hints
+  -abbrev-lex=FILE       # abbreviation lexicon for dwds_tomasotath tokenizer
+  -mwe-lex=FILE          # multiword-expression lexicon for dwds_tomasotath tokenizer
   -procopt OPT=VALUE     # set arbitrary subprocessor options
  
  I/O Options:
@@ -491,6 +497,27 @@ hints, but might be predisposed to break tokens and/or sentences on whitespace.
 =item -strong-hints
 
 Opposite of -weak-hints.
+
+=item -abbrev-lex=FILE
+
+Abbreviation lexicon for F<dwds_tomasotath> tokenizer.
+Default is (usually)
+F</usr/local/share/dta-resources/dta_abbrevs.lex>.
+
+FILE may be specified as the empty string to avoid
+use of an abbreviation lexicon altogether, although
+this is likely to weak havoc with F<dwds_tomasotath>'s
+sentence-boundary recognition.
+
+=item -mwe-lex=FILE
+
+Multiword-expression lexicon for F<dwds_tomasotath> tokenizer.
+Default is (usually)
+F</usr/local/share/dta-resources/dta_mwe.lex>.
+
+FILE may be specified as the empty string to avoid
+use of a multiword-expression lexicon altogether, although
+this might cause problems with F<dwds_tomasotath>.
 
 =item -procopt OPT=VALUE
 
