@@ -39,8 +39,18 @@ xml = $(wildcard $(xmldir)/*.xml)
 
 ## dummytok=YES_OR_NO_OR_EMPTY
 ##  + whether to use the dummy or the "real" tokenizer
-##  + default uses dta-tokwrap.perl default
-dummytok = yes
+##  + default uses "real" tokenizer if available, otherwise dummy
+#dummytok = yes
+
+## abbrevlex=FILENAME_OR_EMPTY
+##  + abbreviation lexicon to use for "real" tokenizer
+##  + empty string uses dta-tokwrap.perl default
+#abbrevlex=/usr/local/share/dta-resources/dta_abbrevs.lex
+
+## mwelex=FILENAME_OR_EMPTY
+##  + multiword-expression lexicon to use for "real" tokenizer
+##  + empty string uses dta-tokwrap.perl default
+#mwelex=/usr/local/share/dta-resources/dta_mwe.lex
 
 ## TOKENIZER=PROG AND INITIAL ARGUMENTS
 ##  + if set, should be a command-line which takes an argument TXTFILE
@@ -48,7 +58,7 @@ dummytok = yes
 ##  + if set, dta-tokwrap.perl will not be called for tokenization,
 ##    so 'dummytok' variable will have no effect
 #TOKENIZER ?= $(PROG_DIR)dtatw-tokenize-dummy
-#TOKENIZER ?= dwds_tomasotath --to --to-offset --to-abbrev-lex=/home/kmw/resources/TAGH_Abbrev.utf8.lex --to-mwe-lex=/home/kmw/resources/TAGH_MWE.utf8.lex
+#TOKENIZER ?= dwds_tomasotath --to --to-offset --to-abbrev-lex=/usr/local/share/dta-resources/dta_abbrevs.lex --to-mwe-lex=/usr/local/share/dta-resources/dta_mwe.lex
 
 ## TOKWRAP_ALL=YES_OR_NO (anything but "yes" works like "no")
 ##  + if true, dta-tokwrap.perl will be called for all possible actions
@@ -66,7 +76,7 @@ verbose = 0
 ## loglevel=LOGLEVEL_OR_EMPTY
 ##  + log level for dta-tokwrap.perl
 ##  + empty string to take dta-tokwrap.perl defaults
-loglevel = TRACE
+#loglevel = TRACE
 
 ## logfile=LOGFILE_OR_EMPTY_STRING
 ##  + log file for dta-tokwrap.perl
@@ -85,13 +95,16 @@ loglevel = TRACE
 ##  + whether to log profiling information for dta-tokwrap.perl
 profile = no
 
+## twopts=USER_TOKWRAP_OPTIONS
+##  + additional options and/or overrides for dta-tokwrap.perl
+#twopts=
+
 ##======================================================================
 ## Variables: in-place execution (use local development code, or don't)
 
 ## INPLACE=YES_OR_NO_OR_EMPTY
 ##  + set to "yes" to use local development code
-#inplace = no
-inplace = yes
+#inplace = yes
 
 ##======================================================================
 ## Variables: archiving & distribution
