@@ -42,7 +42,7 @@ xml = $(wildcard $(xmldir)/*.chr.xml) $(wildcard $(xmldir)/*.char.xml)
 ##  + whether to use the dummy or the "real" tokenizer
 ##  + default uses dta-tokwrap.perl default
 #dummytok = yes
-dummytok = no
+#dummytok = no
 
 ## TOKENIZER=PROG AND INITIAL ARGUMENTS
 ##  + if set, should be a command-line which takes an argument TXTFILE
@@ -63,7 +63,8 @@ dummytok = no
 
 ## verbose=LEVEL_OR_EMPTY
 ##  + verbosity level for dta-tokwrap.perl
-verbose = 0
+#verbose = 0
+verbose = 255
 
 ## loglevel=LOGLEVEL_OR_EMPTY
 ##  + log level for dta-tokwrap.perl
@@ -72,12 +73,12 @@ loglevel = TRACE
 
 ## logfile=LOGFILE_OR_EMPTY_STRING
 ##  + log file for dta-tokwrap.perl
-#logfile = dta-tokwrap.log
+logfile = dta-tokwrap.log
 
 ## stderr=YES_OR_NO_OR_EMPTY
 ##  + empty string uses dta-tokwrap.perl default
 #stderr = yes
-#stderr = no
+stderr = no
 
 ## trace=YES_OR_NO_OR_EMPTY
 ##  + whether to log trace messages for dta-tokwrap.perl
