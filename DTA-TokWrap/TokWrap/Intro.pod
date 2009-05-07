@@ -247,20 +247,3 @@ L<DTA::TokWrap::Processor(3pm)|DTA::TokWrap::Processor>,
 Bryan Jurish E<lt>jurish@bbaw.deE<gt>
 
 =cut
-
-
-
-##========================================================================
-## SYNOPSIS
-=pod
-
- use DTA::TokWrap;
- 
- DTA::TokWrap->logInit();       ##-- initialize logging facility
- my $tw = DTA::TokWrap->new();  ##-- create a new tokenizer wrapper
- 
- my $doc = $tw->open($xmlfile); ##-- "open" an XML source document
- $doc->makeKey('all');          ##-- create stand-off files
- $doc->close();                 ##-- ... and clean up temporary files
-
-=cut

@@ -3,7 +3,7 @@ AC_PREREQ(2.5)
 
 dnl Some handy macros
 define([THE_PACKAGE_NAME],    [dta-tokwrap])
-define([THE_PACKAGE_VERSION], [0.04])
+define([THE_PACKAGE_VERSION], [0.05])
 define([THE_PACKAGE_MAINTAINER],  [jurish@bbaw.de])
 
 AC_INIT(THE_PACKAGE_NAME, THE_PACKAGE_VERSION, THE_PACKAGE_MAINTAINER)
@@ -96,6 +96,20 @@ AC_SUBST(pkgxsldir)
 AC_SUBST(pkgmakdir)
 # share/package dir
 #---------------------------------------------------------------
+
+#---------------------------------------------------------------
+# resource dir (for e.g. dta_abbrevs.lex, dta_mwe.lex)
+AC_ARG_WITH([rcdir],
+	AC_HELP_STRING([--with-rcdir=DIR],
+		[default directory in which to look for shared resources (default=DATADIR/dta-resources]),
+	[rcdir="$withval"],
+	[rcdir="\${datadir}/dta-resources"])
+AC_SUBST(prefix)
+AC_SUBST(datadir)
+AC_SUBST(rcdir)
+# /resource dir
+#---------------------------------------------------------------
+
 
 ##-- pkg-config
 dnl AX_CHECK_PKGCONFIG

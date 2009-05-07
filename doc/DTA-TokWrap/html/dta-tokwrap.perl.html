@@ -95,6 +95,8 @@
   -hints, -nohints       # do/don't generate &quot;hints&quot; for the tokenizer (default=do)
   -weak-hints            # use whitespace-only hints rather than defaults ($WB$,$SB$)
   -strong-hints          # opposite of -weak-hints
+  -abbrev-lex=FILE       # abbreviation lexicon for dwds_tomasotath tokenizer
+  -mwe-lex=FILE          # multiword-expression lexicon for dwds_tomasotath tokenizer
   -procopt OPT=VALUE     # set arbitrary subprocessor options
  
  I/O Options:
@@ -236,6 +238,27 @@ hints, but might be predisposed to break tokens and/or sentences on whitespace.<
 
 <dd>
 <p>Opposite of -weak-hints.</p>
+</dd>
+<dt><strong><a name="abbrev_lex_file" class="item">-abbrev-lex=FILE</a></strong></dt>
+
+<dd>
+<p>Abbreviation lexicon for <em class="file">dwds_tomasotath</em> tokenizer.
+Default is (usually)
+<em class="file">/usr/local/share/dta-resources/dta_abbrevs.lex</em>.</p>
+<p>FILE may be specified as the empty string to avoid
+use of an abbreviation lexicon altogether, although
+this is likely to weak havoc with <em class="file">dwds_tomasotath</em>'s
+sentence-boundary recognition.</p>
+</dd>
+<dt><strong><a name="mwe_lex_file" class="item">-mwe-lex=FILE</a></strong></dt>
+
+<dd>
+<p>Multiword-expression lexicon for <em class="file">dwds_tomasotath</em> tokenizer.
+Default is (usually)
+<em class="file">/usr/local/share/dta-resources/dta_mwe.lex</em>.</p>
+<p>FILE may be specified as the empty string to avoid
+use of a multiword-expression lexicon altogether, although
+this might cause problems with <em class="file">dwds_tomasotath</em>.</p>
 </dd>
 <dt><strong><a name="procopt_opt_value" class="item">-procopt OPT=VALUE</a></strong></dt>
 

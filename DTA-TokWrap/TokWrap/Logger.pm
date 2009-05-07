@@ -404,8 +404,3 @@ it under the same terms as Perl itself, either Perl version 5.8.7 or,
 at your option, any later version of Perl 5 you may have available.
 
 =cut
-
-=cut
-
-
-=cut

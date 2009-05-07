@@ -6,7 +6,7 @@
 
 package DTA::TokWrap::Processor::tokenize;
 
-use DTA::TokWrap::Version;
+use DTA::TokWrap::Version;  ##-- imports $VERSION, $RCDIR
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Utils qw(:progs :slurp :time);
 use DTA::TokWrap::Processor;
@@ -28,19 +28,20 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##  + static class-dependent defaults
 ##  + %args, %defaults, %$tz:
 ##    tomata2 => $path_to_dwds_tomasotath, ##-- tokenizer program; default: search
+##    abbrevLex => $filename,              ##-- for --to-abbrev-lex=FILE (default: "${RCDIR}/dta_abbrevs.lex"; '' for none)
+##    mweLex => $filename,                 ##-- for --to-mwe-lex=FILE    (default: "${RCDIR}/dta_mwe.lex"; '' for none)
+##    tomata2stderr => $bool,              ##-- if false, subprocess stderr will be ignored (default=defined($TRACE_RUNCMD))
 ##    tomata2opts => \@options,            ##-- additional options for tokenizer program
 ##    inplace => $bool,                    ##-- prefer in-place programs for search?
 sub defaults {
   my $that = shift;
   return (
 	  $that->SUPER::defaults(),
-	  tomata2=>undef,
-	  tomata2opts=>[
-			'--to',
-			'--to-offset',
-			'--to-abbrev-lex=/home/kmw/resources/TAGH_Abbrev.utf8.lex', ##-- lal (TODO: defaults!)
-	                '--to-mwe-lex=/home/kmw/resources/TAGH_MWE.utf8.lex',       ##-- lal (TODO: defaults!)
-		       ],
+	  tomata2   =>undef,
+	  #abbrevLex => "${RCDIR}/dta_abbrevs.lex",  ##-- gets set in init()
+	  #mweLex    => "${RCDIR}/dta_mwe.lex",      ##-- gets set in init()
+	  tomata2opts=>[ '--to', '--to-offset', ],
+	  tomata2stderr=>defined($DTA::TokWrap::Utils::TRACE_RUNCMD),
 	  inplace=>1,
 	 );
 }
@@ -55,6 +56,26 @@ sub init {
 			       prepend=>($tz->{inplace} ? ['.','../src'] : undef),
 			       warnsub=>sub {$tz->logconfess(@_)},
 			      );
+  }
+
+  ##-- ensure 'tomata2opts' is an ARRAY
+  $tz->{tomata2opts} = [] if (!defined($tz->{tomata2opts}));
+  $tz->{tomata2opts} = [ $tz->{tomata2opts} ] if (!ref($tz->{tomata2opts}));
+
+  ##-- abbr lex
+  $tz->{abbrevLex} = "${RCDIR}/dta_abbrevs.lex" if (!defined($tz->{abbrevLex}));
+  if ($tz->{abbrevLex} && ! -r $tz->{abbrevLex}) {
+    $tz->logconfess("bad abbreviation lexicon '$tz->{abbrevLex}'");
+  } elsif ($tz->{abbrevLex}) {
+    push(@{$tz->{tomata2opts}}, "--to-abbrev-lex=$tz->{abbrevLex}");
+  }
+
+  ##-- mwe lex
+  $tz->{mweLex} = "${RCDIR}/dta_mwe.lex" if (!defined($tz->{mweLex}));
+  if ($tz->{mweLex} && ! -r $tz->{mweLex}) {
+    $tz->logconfess("bad multiword-expression lexicon '$tz->{mweLex}'; ignoring");
+  } elsif ($tz->{mweLex}) {
+    push(@{$tz->{tomata2opts}}, "--to-mwe-lex=$tz->{mweLex}");
   }
 
   return $tz;
@@ -92,11 +113,9 @@ sub tokenize {
   ##-- run program
   $doc->{tokdata} = '';
   my $cmd = ("'$tz->{tomata2}'"
-	     .(ref($tz->{tomata2opts})
-	       ? join(' ',map {" '$_'"} @{$tz->{tomata2opts}})
-	       : ($tz->{tomata2opts} ? " $tz->{tomata2opts}" : '') ##-- scalar: assume it's already quoted
-	      )
+	     .' '.join(' ',map {"'$_'"} @{$tz->{tomata2opts}})
 	     ." '$doc->{txtfile}'"
+	     .($tz->{tomata2stderr} ? '' : ' 2>/dev/null')
 	    );
   my $cmdfh = opencmd("$cmd |")
     or $tz->logconfess("tokenize($doc->{xmlbase}): open failed for pipe ($cmd |): $!");
