@@ -40,6 +40,14 @@ XML = $(notdir $(xml))
 ##  + all options for dta-tokwrap.perl
 TOKWRAP_OPTS = -keep
 
+ifeq "$(inplace)" ""
+ifeq "$(shell /bin/ls -1 ../src/dtatw-mkindex.c)" ""
+inplace=no
+else
+inplace=yes
+endif
+endif
+
 ifeq "$(inplace)" "yes"
 TOKWRAP_OPTS += -inplace
 else
@@ -278,10 +286,10 @@ bx-txt: $(XML:.xml=.bx)
 %.txt: %.bx %.txt
 
 %.bx: %.bx0 %.tx tokwrap
-	$(TOKWRAP) -t bx $(xmldir)/$*.xml
+	$(TOKWRAP) -t mktxt $(xmldir)/$*.xml
 
 %.txt: %.bx0 %.tx tokwrap
-	$(TOKWRAP) -t bx $(xmldir)/$*.xml
+	$(TOKWRAP) -t mktxt $(xmldir)/$*.xml
 
 no-bx-txt: ; rm -f *.bx *.txt
 no-bx: no-bx-txt

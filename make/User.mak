@@ -104,6 +104,7 @@ profile = no
 
 ## INPLACE=YES_OR_NO_OR_EMPTY
 ##  + set to "yes" to use local development code
+##  + default depends on whether ../src/dtatw-mkindex.c exists
 #inplace = yes
 
 ##======================================================================
