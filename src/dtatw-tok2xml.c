@@ -43,360 +43,14 @@ const char *cAttr    = "c";        //-- output token-chars attribute (space-sepa
 
 
 /*======================================================================
- * Utils: .cx file
+ * Utils: .cx, .bx file, indexing
+ *  + now in dtatwCommon.[ch]
  */
+cxData cxdata = {NULL,0,0};
+bxData bxdata = {NULL,0,0};
 
-// cxRecord : struct for character-index records as loaded from .cx file
-typedef struct {
-  char        *id;      //-- xml:id of source <c>
-  ByteOffset xoff;      //-- original xml byte offset
-  ByteLen    xlen;      //-- original xml byte length
-  ByteOffset toff;      //-- .tx byte offset
-  ByteLen    tlen;      //-- .tx byte length
-#ifdef CX_WANT_TEXT
-  char      *text;      //-- output text
-#endif
-  int        used;      //-- boolean: true iff this record has been used in an output token
-} cxRecord;
-
-// CXDATA_INITIAL_ALLOC : original buffer size for cxdata[], in number of records
-#define CXDATA_INITIAL_ALLOC 8192
-
-// cxdata : cxRecord[ncxdata_alloc]
-cxRecord *cxdata = NULL;
-ByteOffset ncxdata_alloc = 0;  //-- number of records allocated in cxdata
-ByteOffset ncxdata = 0;        //-- number of records used in cxdata (index of 1st unused record)
-
-//--------------------------------------------------------------
-static void initCxData(void)
-{
-  cxdata = (cxRecord*)malloc(CXDATA_INITIAL_ALLOC*sizeof(cxRecord));
-  assert(cxdata != NULL /* memory full on malloc */);
-  ncxdata_alloc = CXDATA_INITIAL_ALLOC;
-  ncxdata = 0;
-}
-
-//--------------------------------------------------------------
-static void pushCxRecord(cxRecord *cx)
-{
-  if (ncxdata+1 >= ncxdata_alloc) {
-    //-- whoops: must reallocate
-    cxdata = (cxRecord*)realloc(cxdata, ncxdata_alloc*2*sizeof(cxRecord));
-    assert(cxdata != NULL /* memory full on realloc */);
-    ncxdata_alloc *= 2;
-  }
-  //-- just push copy raw data, pointers & all
-  memcpy(&cxdata[ncxdata], cx, sizeof(cxRecord));
-  ncxdata++;
-}
-
-//--------------------------------------------------------------
-// un-escapes cx file text string to a new string; returns newly allocated string
-static char *cx_text_string(char *src, int src_len)
-{
-  int i,j;
-  char *dst = (char*)malloc(src_len);
-  for (i=0,j=0; src[i] && i < src_len; i++,j++) {
-    switch (src[i]) {
-    case '\\':
-      i++;
-      switch (src[i]) {
-      case '0': dst[j] = '\0'; break;
-      case 'n': dst[j] = '\n'; break;
-      case 't': dst[j] = '\t'; break;
-      case '\\': dst[j] = '\\'; break;
-      default: dst[j] = src[i]; break;
-      }
-    default:
-      dst[j] = src[i];
-      break;
-    }
-  }
-  dst[j] = '\0';
-}
-
-//--------------------------------------------------------------
-// next_tab()
-//  + returns char* to next '\t', '\n', or '\0' in s
-inline static char *next_tab(char *s)
-{
-  for (; *s && *s!='\t' && *s!='\n'; s++) ;
-  return s;
-}
-
-//--------------------------------------------------------------
-// next_tab_z()
-//  + returns char* to position of next '\t', '\n', or '\0' in s
-//  + sets the character to '\0', so returned string always looks like ""
-inline static char *next_tab_z(char *s)
-{
-  for (; *s && *s!='\t' && *s!='\n'; s++) ;
-  *s = '\0';
-  return s;
-}
-
-
-//--------------------------------------------------------------
-#define INITIAL_LINEBUF_SIZE 1024
-static void loadCxFile(FILE *f)
-{
-  cxRecord cx;
-  char *linebuf=NULL;
-  size_t linebuf_alloc=0;
-  ssize_t linelen;
-  char *s0, *s1;
-
-  if (cxdata==NULL) initCxData();
-  assert(f!=NULL /* require .cx file */);
-
-  //-- init cx record
-  cx.used = 0;
-
-  //-- init line buffer
-  linebuf = (char*)malloc(INITIAL_LINEBUF_SIZE);
-  assert(linebuf != NULL /* malloc failed */);
-  linebuf_alloc = INITIAL_LINEBUF_SIZE;
-
-  while ( (linelen=getline(&linebuf,&linebuf_alloc,f)) >= 0 ) {
-    char *tail;
-    if (linebuf[0]=='%' && linebuf[1]=='%') continue;  //-- skip comments
-
-    //-- ID
-    s0  = linebuf;
-    s1  = next_tab_z(s0);
-    cx.id = strdup(s0);
-
-    //-- xoff
-    s0 = s1+1;
-    s1 = next_tab(s0);
-    cx.xoff = strtoul(s0,&tail,0);
-
-    //-- xlen
-    s0 = s1+1;
-    s1 = next_tab(s0);
-    cx.xlen = strtol(s0,&tail,0);
-
-    //-- toff
-    s0 = s1+1;
-    s1 = next_tab(s0);
-    cx.toff = strtoul(s0,&tail,0);
-
-    //-- tlen
-    s0 = s1+1;
-    s1 = next_tab(s0);
-    cx.tlen = strtol(s0,&tail,0);
-
-#ifdef CX_WANT_TEXT
-    //-- text
-    s0 = s1+1;
-    s1 = next_tab_z(s0);
-    cx.text = cx_text_string(text_s, s1-s0);
-#endif
-
-    pushCxRecord(&cx);
-  }
-
-  //-- cleanup
-  if (linebuf) free(linebuf);
-}
-
-/*======================================================================
- * Utils: .bx file
- */
-
-// bxRecord : struct for block-index records as loaded from .bx file
-typedef struct {
-  char *key;        //-- sort key
-  char *elt;        //-- element name
-  ByteOffset xoff;  //-- xml byte offset
-  ByteOffset xlen;  //-- xml byte length
-  ByteOffset toff;  //-- tx byte offset
-  ByteOffset tlen;  //-- tx byte length
-  ByteOffset otoff; //-- txt byte offset
-  ByteOffset otlen; //-- txt byte length
-} bxRecord;
-
-// BXDATA_INITIAL_ALLOC : original buffer size for cxdata[], in number of records
-#define BXDATA_INITIAL_ALLOC 1024
-
-// bxdata : bxRecord[nbxdata_alloc]
-bxRecord *bxdata = NULL;
-ByteOffset nbxdata_alloc = 0;  //-- number of records allocated in bxdata
-ByteOffset nbxdata = 0;        //-- number of records used in bxdata (index of 1st unused record)
-
-//--------------------------------------------------------------
-static void initBxData(void)
-{
-  bxdata = (bxRecord*)malloc(BXDATA_INITIAL_ALLOC*sizeof(bxRecord));
-  assert(bxdata != NULL /* malloc failed */);
-  nbxdata_alloc = BXDATA_INITIAL_ALLOC;
-  nbxdata = 0;
-}
-
-//--------------------------------------------------------------
-static void pushBxRecord(bxRecord *bx)
-{
-  if (nbxdata+1 >= nbxdata_alloc) {
-    //-- whoops: must reallocate
-    bxdata = (bxRecord*)realloc(bxdata, nbxdata_alloc*2*sizeof(bxRecord));
-    assert(bxdata != NULL /* memory full on realloc */);
-    nbxdata_alloc *= 2;
-  }
-  //-- just push copy raw data, pointers & all
-  memcpy(&bxdata[nbxdata], bx, sizeof(bxRecord));
-  nbxdata++;
-}
-
-//--------------------------------------------------------------
-static void loadBxFile(FILE *f)
-{
-  bxRecord bx;
-  char *linebuf=NULL, *s0, *s1;
-  size_t linebuf_alloc=0;
-  ssize_t linelen;
-
-  if (bxdata==NULL) initBxData();
-  assert(f!=NULL /* require .bx file */);
-
-  //-- init line buffer
-  linebuf = (char*)malloc(INITIAL_LINEBUF_SIZE);
-  assert(linebuf != NULL /* malloc failed */);
-  linebuf_alloc = INITIAL_LINEBUF_SIZE;
-
-  while ( (linelen=getline(&linebuf,&linebuf_alloc,f)) >= 0 ) {
-    char *tail;
-    if (linebuf[0]=='%' && linebuf[1]=='%') continue;  //-- skip comments
-
-    //-- key
-    s0  = linebuf;
-    s1  = next_tab_z(s0);
-    bx.key = strdup(s0);
-
-    //-- elt
-    s0 = s1+1;
-    s1 = next_tab_z(s0);
-    bx.elt = strdup(s0);
-
-    //-- xoff
-    s0 = s1+1;
-    s1 = next_tab(s0);
-    bx.xoff = strtoul(s0,&tail,0);
-
-    //-- xlen
-    s0 = s1+1;
-    s1 = next_tab(s0);
-    bx.xlen = strtoul(s0,&tail,0);
-
-    //-- toff
-    s0 = s1+1;
-    s1 = next_tab(s0);
-    bx.toff = strtoul(s0,&tail,0);
-
-    //-- tlen
-    s0 = s1+1;
-    s1 = next_tab(s0);
-    bx.tlen = strtol(s0,&tail,0);
-
-    //-- otoff
-    s0 = s1+1;
-    s1 = next_tab(s0);
-    bx.otoff = strtoul(s0,&tail,0);
-
-    //-- otlen
-    s0 = s1+1;
-    s1 = next_tab(s0);
-    bx.otlen = strtol(s0,&tail,0);
-
-    pushBxRecord(&bx);
-  }
-
-  //-- cleanup
-  if (linebuf) free(linebuf);
-}
-
-/*======================================================================
- * Utils: indexing
- */
-
-//--------------------------------------------------------------
-//-- txb2cx[ntxb] tx byte-index to cx record lookup vector
-cxRecord   **txb2cx = NULL; //-- cxRecord = txb2cx[tx_byte_index]
-ByteOffset   ntxb   = 0;    //-- number of raw tx bytes
-
-//--------------------------------------------------------------
-/* init_txb2ci()
- *  + allocates & populates tb2ci lookup vector:
- *  + requires loaded, non-empty cxdata
- */
-void init_txb2ci(void)
-{
-  cxRecord *cx;
-  ByteOffset cxi, txi, t_end;
-  assert(cxdata != NULL /* require loaded cx data */);
-  assert(ncxdata > 0    /* require non-empty cx index */);
-
-  cx     = &cxdata[ncxdata-1];
-  ntxb   = cx->toff + cx->tlen;
-  txb2cx = (cxRecord**)malloc(ntxb*sizeof(cxRecord*));
-  assert(txb2cx != NULL /* malloc failed for tx-byte to cx-record lookup vector */);
-  memset(txb2cx,0,ntxb*sizeof(cxRecord*)); //-- zero the block
-
-  for (cxi=0; cxi < ncxdata; cxi++) {
-    cx    = &cxdata[cxi];
-#if 1
-    //-- map ALL tx-bytes generated by this 'c' to a pointer (may cause token overlap!)
-    t_end = cx->toff+cx->tlen;
-    for (txi=cx->toff; txi < t_end; txi++) {
-      txb2cx[txi] = cx;
-    }
-#else
-    //-- map only the FIRST tx-byte generated by this 'c' to a pointer
-    txb2cx[cx->toff] = cx;
-#endif
-  }
-
-  return;
-}
-
-//--------------------------------------------------------------
-/* init_txtb2ci()
- *  + allocates & populates txtb2ci lookup vector
- *  + requires:
- *    - populated bxdata[] vector (see loadBxFile())
- *    - populated txb2ci[] vector (see init_txb2ci())
- */
-cxRecord   **txtb2cx = NULL; //-- cxRecord_or_NULL = txtb2cx[txt_byte_index]
-ByteOffset   ntxtb   = 0;    //-- number of .txt bytes
-
-void init_txtb2ci(void)
-{
-  bxRecord *bx;
-  ByteOffset bxi, txti, ot_end;
-  assert(bxdata != NULL /* require loaded bx data */);
-  assert(nbxdata > 0    /* require non-empty bx index */);
-
-  bx      = &bxdata[nbxdata-1];
-  ntxtb   = bx->otoff + bx->otlen;
-  txtb2cx = (cxRecord**)malloc(ntxtb*sizeof(cxRecord*));
-  assert(txtb2cx != NULL /* malloc failed for txt-byte to cx-record lookup vector */);
-  memset(txtb2cx,0,ntxtb*sizeof(cxRecord*)); //-- zero the block
-
-  for (bxi=0; bxi < nbxdata; bxi++) {
-    bx = &bxdata[bxi];
-    if (bx->tlen > 0) {
-      //-- "normal" text which SHOULD have corresponding cx records
-      for (txti=0; txti < bx->otlen; txti++) {
-	cxRecord *cx = txb2cx[bx->toff+txti];
-	txtb2cx[bx->otoff+txti] = cx;
-	//-- (?) map special characters (e.g. <lb/>) to NULL here?
-	//if (cx->id[0]=='$') { ... }
-      }
-    }
-    //-- hints and other pseudo-text with NO cx records are mapped to NULL (via memset(), above)
-  }
-
-  return;
-}
+Offset2CxIndex txb2cx  = {NULL,0};  //-- cxRecord *cx =  txb2cx->data[ tx_byte_index]
+Offset2CxIndex txtb2cx = {NULL,0};  //-- cxRecord *cx = txtb2cx->data[txt_byte_index]
 
 /*======================================================================
  * Utils: .tt
@@ -541,7 +195,7 @@ static void tt_next_word(FILE *f_out, ttWordBuffer *w0, ttWordBuffer *w1, int *s
       cxRecord *cx_prev = NULL; //-- previous cx record whose ID we've output, or NULL on first <c>
       fprintf(f_out, " %s=\"", cAttr);
       for (i=0; i < w0->w_len; i++) {
-	cxRecord *cx = txtb2cx[w0->w_off+i];
+	cxRecord *cx = txtb2cx.data[w0->w_off+i];
 	if (!cx_id_ok(cx) || cx==cx_prev) continue;  //-- ignore pseudo-ids and duplicates
 	if (cx_prev) fputc(' ',f_out);
 	if (cx->id)  put_escaped_str(f_out, cx->id, -1);
@@ -606,6 +260,7 @@ static void tt_next_word(FILE *f_out, ttWordBuffer *w0, ttWordBuffer *w1, int *s
  *    - populated cxdata[] vector (see loadCxFile())
  *    - populated txtb2ci[] vector (see init_txtb2ci())
  */
+#define INITIAL_TT_LINEBUF_SIZE 8192
 static void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *filename_out)
 {
   char *linebuf=NULL; //, *s0, *s1;
@@ -618,13 +273,13 @@ static void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *fi
   //-- sanity checks
   assert(f_in != NULL /* no .tt input file? */);
   assert(f_out != NULL /* no .xml output file? */);
-  assert(cxdata != NULL /* require .cx data */);
-  assert(txtb2cx != NULL /* require txt-byte -> cx-pointer lookup vector */);
+  assert(cxdata.data != NULL /* require .cx data */);
+  assert(txtb2cx.data != NULL /* require txt-byte -> cx-pointer lookup vector */);
 
   //-- init line buffer
-  linebuf = (char*)malloc(INITIAL_LINEBUF_SIZE);
+  linebuf = (char*)malloc(INITIAL_TT_LINEBUF_SIZE);
   assert(linebuf != NULL /* malloc failed */);
-  linebuf_alloc = INITIAL_LINEBUF_SIZE;
+  linebuf_alloc = INITIAL_TT_LINEBUF_SIZE;
 
   //-- init error reporting globals
   tt_linenum = 0;
@@ -664,7 +319,7 @@ static void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *fi
 
     //-- word: populate w1.w_cx[] buffer
     assert(w1.w_len < WORDBUF_CX_LEN /* buffer overflow */);
-    memcpy(w1.w_cx, txtb2cx+w1.w_off, w1.w_len*sizeof(cxRecord*));
+    memcpy(w1.w_cx, txtb2cx.data+w1.w_off, w1.w_len*sizeof(cxRecord*));
     w1.w_cx[w1.w_len] = NULL;
 
     //-- word: delegate output to boundary-condition checker
@@ -782,36 +437,36 @@ int main(int argc, char **argv)
   }
   fprintf(f_out, "\n !-->\n");
 
-  //-- load cx file
-  loadCxFile(f_cx);
+  //-- load .cx data
+  cxDataLoad(&cxdata, f_cx);
   fclose(f_cx);
   f_cx = NULL;
 #ifdef VERBOSE_IO
-  fprintf(stderr, "%s: parsed %lu records from .cx file '%s'\n", prog, ncxdata, filename_cx);
+  fprintf(stderr, "%s: parsed %lu records from .cx file '%s'\n", prog, cxdata->len, filename_cx);
 #endif
   
 
   //-- load bx file
-  loadBxFile(f_bx);
+  bxDataLoad(&bxdata, f_bx);
   fclose(f_bx);
   f_bx = NULL;
 #ifdef VERBOSE_IO
-  fprintf(stderr, "%s: parsed %lu records from .bx file '%s'\n", prog, nbxdata, filename_bx);
-  assert(cxdata != NULL /* require cxdata */);
-  assert(ncxdata > 0 /* require non-empty cxdata */);
-  fprintf(stderr, "%s: number of source XML-bytes ~= %lu\n", prog, cxdata[ncxdata-1].xoff);
+  fprintf(stderr, "%s: parsed %lu records from .bx file '%s'\n", prog, bxdata->len, filename_bx);
+  assert(cxdata != NULL && cxdata->data != NULL /* require cxdata */);
+  assert(cxdata->len > 0 /* require non-empty cxdata */);
+  fprintf(stderr, "%s: number of source XML-bytes ~= %lu\n", prog, cxdata->data[cxdata->len-1].xoff);
 #endif
 
   //-- create (tx_byte_index => cx_record) lookup vector
-  init_txb2ci();
+  tx2cxIndex(&txb2cx, &cxdata);
 #ifdef VERBOSE_IO
-  fprintf(stderr, "%s: initialized %lu-element .tx-byte => .cx-record index\n", prog, ntxb);
+  fprintf(stderr, "%s: initialized %lu-element .tx-byte => .cx-record index\n", prog, txb2cx->len);
 #endif
 
   //-- create (txt_byte_index => cx_record_or_NULL) lookup vector
-  init_txtb2ci();
+ txt2cxIndex(&txtb2cx, &bxdata, &txb2cx);
 #ifdef VERBOSE_IO
-  fprintf(stderr, "%s: initialized %lu-element .txt-byte => .cx-record index\n", prog, ntxtb);
+  fprintf(stderr, "%s: initialized %lu-element .txt-byte => .cx-record index\n", prog, txtb2cx->len);
 #endif
 
   //-- print XML root element
@@ -832,10 +487,11 @@ int main(int argc, char **argv)
     double elapsed = ((double)clock()) / ((double)CLOCKS_PER_SEC);
     if (elapsed <= 0) elapsed = 1e-5;
 
-    assert(cxdata != NULL /* profile: require cxdata */);
-    assert(ncxdata > 0 /* profile: require non-empty cxdata */);
-    nxbytes = cxdata[ncxdata-1].xoff + cxdata[ncxdata-1].xlen; //-- approximate number of original source XML bytes
-
+    assert(cxdata.data != NULL/* profile: require cxdata */);
+    assert(cxdata.len > 0 /* profile: require non-empty cxdata */);
+    
+    //-- approximate number of original source XML bytes
+    nxbytes = cxdata.data[cxdata.len-1].xoff + cxdata.data[cxdata.len-1].xlen;
 
     fprintf(stderr, "%s: processed %.1f%s tok ~ %.1f%s XML bytes in %.3f sec: %.1f %stok/sec ~ %.1f %sbyte/sec\n",
 	    prog,

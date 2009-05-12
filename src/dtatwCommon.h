@@ -125,6 +125,110 @@ const char *si_suffix(double g)
   return "";
 }
 
+/*======================================================================
+ * Utils: TAB-separated string parsing
+ */
+
+//--------------------------------------------------------------
+// next_tab()
+//  + returns char* to next '\t', '\n', or '\0' in s
+inline static char *next_tab(char *s)
+{
+  for (; *s && *s!='\t' && *s!='\n'; s++) ;
+  return s;
+}
+
+//--------------------------------------------------------------
+// next_tab_z()
+//  + returns char* to position of next '\t', '\n', or '\0' in s
+//  + sets the character to '\0', so returned string always looks like ""
+inline static char *next_tab_z(char *s)
+{
+  for (; *s && *s!='\t' && *s!='\n'; s++) ;
+  *s = '\0';
+  return s;
+}
+
+
+/*======================================================================
+ * Utils: .cx file(s)
+ */
+
+// cxRecord : struct for character-index records as loaded from .cx file
+typedef struct {
+  char        *id;      //-- xml:id of source <c>
+  ByteOffset xoff;      //-- original xml byte offset
+  ByteLen    xlen;      //-- original xml byte length
+  ByteOffset toff;      //-- .tx byte offset
+  ByteLen    tlen;      //-- .tx byte length
+#ifdef CX_WANT_TEXT
+  char      *text;      //-- output text (un-escaped)
+#endif
+} cxRecord;
+
+// cxData : array of .cx records
+typedef struct {
+  cxRecord   *data;              //-- vector of cx records
+  ByteOffset  len;               //-- number of used cx records (index of 1st unused record)
+  ByteOffset  alloc;             //-- number of allocated cx records
+} cxData;
+
+// CXDATA_DEFAULT_ALLOC : default original buffer size for cxData.data, in number of records
+#ifndef CXDATA_DEFAULT_ALLOC
+# define CXDATA_DEFAULT_ALLOC 8192
+#endif
+
+cxData   *cxDataInit(cxData *cxd, ByteOffset size); //-- initializes/allocates *cxd
+cxRecord *cxDataPush(cxData *cxd, cxRecord *cx);    //-- append *cx to *cxd->data, re-allocating if required
+cxData   *cxDataLoad(cxData *cx, FILE *f);          //-- loads *cxd from file f
+char *cx_text_string(char *src, int src_len);       //-- un-escapes cx-file "text" string to a new string (returned)
+
+/*======================================================================
+ * Utils: .bx file(s)
+ */
+
+// bxRecord : struct for block-index records as loaded from .bx file
+typedef struct {
+  char *key;        //-- sort key
+  char *elt;        //-- element name
+  ByteOffset xoff;  //-- xml byte offset
+  ByteOffset xlen;  //-- xml byte length
+  ByteOffset toff;  //-- tx byte offset
+  ByteOffset tlen;  //-- tx byte length
+  ByteOffset otoff; //-- txt byte offset
+  ByteOffset otlen; //-- txt byte length
+} bxRecord;
+
+// bxData : array of .bx records
+typedef struct {
+  bxRecord   *data;              //-- vector of bx records
+  ByteOffset  alloc;             //-- number of allocated bx records
+  ByteOffset  len;               //-- number of used bx records (index of 1st unused record)
+} bxData;
+
+// BXDATA_DEFAULT_ALLOC : default buffer size for bxdata[], in number of records
+#ifndef BXDATA_DEFAULT_ALLOC
+# define BXDATA_DEFAULT_ALLOC 1024
+#endif
+
+bxData   *bxDataInit(bxData *bxd, ByteOffset size);   //-- initialize/allocate bxdata
+bxRecord *bxDataPush(bxData *bxd, bxRecord *bx);      //-- append *bx to *bxd, re-allocating if required
+bxData   *bxDataLoad(bxData *bxd, FILE *f);           //-- loads *bxd from file f
+
+
+/*======================================================================
+ * Utils: .cx + .bx indexing
+ */
+
+typedef struct {
+  cxRecord **data;     //-- cxRecord_ptr = data[byte_index]
+  ByteOffset  len;     //-- number of allocated&used positions in data
+} Offset2CxIndex;
+
+// tx2cxIndex(): init/alloc: cxRecord *cx =  txo2cx->data[ tx_byte_index]
+Offset2CxIndex  *tx2cxIndex(Offset2CxIndex *txo2cx,  cxData *cxd);
+
+// txt2cxIndex(): init/alloc: cxRecord *cx = txto2cx->data[txt_byte_index]
+Offset2CxIndex *txt2cxIndex(Offset2CxIndex *txto2cx, bxData *bxd, Offset2CxIndex *txb2cx);
 
 #endif /* DTATW_COMMON_H */
-
