@@ -178,7 +178,7 @@ typedef struct {
 # define CXDATA_DEFAULT_ALLOC 8192
 #endif
 
-cxData   *cxDataInit(cxData *cxd, ByteOffset size); //-- initializes/allocates *cxd
+cxData   *cxDataInit(cxData *cxd, size_t size); //-- initializes/allocates *cxd
 cxRecord *cxDataPush(cxData *cxd, cxRecord *cx);    //-- append *cx to *cxd->data, re-allocating if required
 cxData   *cxDataLoad(cxData *cx, FILE *f);          //-- loads *cxd from file f
 char *cx_text_string(char *src, int src_len);       //-- un-escapes cx-file "text" string to a new string (returned)
@@ -211,7 +211,7 @@ typedef struct {
 # define BXDATA_DEFAULT_ALLOC 1024
 #endif
 
-bxData   *bxDataInit(bxData *bxd, ByteOffset size);   //-- initialize/allocate bxdata
+bxData   *bxDataInit(bxData *bxd, size_t size);   //-- initialize/allocate bxdata
 bxRecord *bxDataPush(bxData *bxd, bxRecord *bx);      //-- append *bx to *bxd, re-allocating if required
 bxData   *bxDataLoad(bxData *bxd, FILE *f);           //-- loads *bxd from file f
 
@@ -230,5 +230,6 @@ Offset2CxIndex  *tx2cxIndex(Offset2CxIndex *txo2cx,  cxData *cxd);
 
 // txt2cxIndex(): init/alloc: cxRecord *cx = txto2cx->data[txt_byte_index]
 Offset2CxIndex *txt2cxIndex(Offset2CxIndex *txto2cx, bxData *bxd, Offset2CxIndex *txb2cx);
+
 
 #endif /* DTATW_COMMON_H */

@@ -18,7 +18,7 @@ bin_PROGRAMS = \
 	dtatw-txml2sxml \
 	dtatw-txml2axml
 
-EXTRA_PROGRAMS = dtatw-cxlexer
+EXTRA_PROGRAMS = dtatw-cxlexer dtatw-txml2master
 
 common_deps = dtatwCommon.c dtatwCommon.h config.h dtatwConfig.h dtatwConfigAuto.h dtatwConfigNoAuto.h
 expat_deps = dtatwExpat.c dtatwExpat.h
@@ -57,6 +57,9 @@ dtatw_txml2sxml_LDADD   = $(EXPAT_LIBS)
 
 dtatw_txml2axml_SOURCES = dtatw-txml2axml.c $(common_deps) $(expat_deps)
 dtatw_txml2axml_LDADD   = $(EXPAT_LIBS)
+
+dtatw_txml2master_SOURCES = dtatw-txml2master.c $(common_deps) $(expat_deps)
+dtatw_txml2master_LDADD   = $(EXPAT_LIBS)
 
 ##-----------------------------------------------------------------------
 ## Dist

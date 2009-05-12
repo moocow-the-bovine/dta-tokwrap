@@ -63,7 +63,7 @@ void print_indexfile_header(FILE *f, int argc, char **argv)
     fprintf(f, "%%%%======================================================================\n");
   }
   if (want_outfile_colnames) {
-    fprintf(f, "%s$ID$\t$XML_OFFSET$\t$XML_LENGTH$\t$TXT_OFFSET$\t$TXT_LEN$\t$TEXT$\n", (want_outfile_comments ? "%% " : ""));
+    fprintf(f, "%s$ID$\t$XML_OFFSET$\t$XML_LENGTH$\t$TX_OFFSET$\t$TX_LEN$\t$TEXT$\n", (want_outfile_comments ? "%% " : ""));
   }
 }
 

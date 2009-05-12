@@ -8,10 +8,6 @@
 //#define VERBOSE_IO 1
 #undef VERBOSE_IO
 
-// CX_WANT_TEXT : whether to parse & store text data from .cx file
-//#define CX_WANT_TEXT 1
-#undef CX_WANT_TEXT
-
 // WARN_ON_OVERLAP : whether to output warnings when token overlap is detected
 //  + whether or not this is defined, an "overlap" attribute will be written
 //    for overlapping tokens if 'olAttr' is non-NULL (see xml structure constants, below)
@@ -357,7 +353,7 @@ int main(int argc, char **argv)
   prog = argv[0];
 
   //-- command-line: usage
-  if (argc <= 2) {
+  if (argc <= 3) {
     fprintf(stderr, "(%s version %s / %s)\n", PACKAGE, PACKAGE_VERSION, PACKAGE_SVNID);
     fprintf(stderr, "Usage:\n");
     fprintf(stderr, " %s TFILE CXFILE BXFILE [OUTFILE [XMLBASE]]\n", prog);
@@ -372,7 +368,8 @@ int main(int argc, char **argv)
   //-- command-line: input file
   if (argc > 1) {
     filename_in = argv[1];
-    if ( strcmp(filename_in,"-")!=0 && !(f_in=fopen(filename_in,"rb")) ) {
+    if (strcmp(filename_in,"-")==0) f_in = stdin;
+    else if ( !(f_in=fopen(filename_in,"rb")) ) {
       fprintf(stderr, "%s: open failed for input .t file `%s': %s\n", prog, filename_in, strerror(errno));
       exit(1);
     }
@@ -380,15 +377,17 @@ int main(int argc, char **argv)
   //-- command-line: .cx file
   if (argc > 2) {
     filename_cx = argv[2];
-    if ( !(f_cx=fopen(filename_cx,"rb")) ) {
+    if (strcmp(filename_cx,"-")==0) f_cx = stdin;
+    else if ( !(f_cx=fopen(filename_cx,"rb")) ) {
       fprintf(stderr, "%s: open failed for input .cx file `%s': %s\n", prog, filename_cx, strerror(errno));
       exit(1);
     }
   }
-  //-- command-line: .tx file
+  //-- command-line: .bx file
   if (argc > 3) {
     filename_bx = argv[3];
-    if ( !(f_bx=fopen(filename_bx,"rb")) ) {
+    if (strcmp(filename_bx,"-")==0) f_bx = stdin;
+    else if ( !(f_bx=fopen(filename_bx,"rb")) ) {
       fprintf(stderr, "%s: open failed for input .bx file `%s': %s\n", prog, filename_bx, strerror(errno));
       exit(1);
     }
@@ -439,7 +438,7 @@ int main(int argc, char **argv)
 
   //-- load .cx data
   cxDataLoad(&cxdata, f_cx);
-  fclose(f_cx);
+  if (f_cx != stdin) fclose(f_cx);
   f_cx = NULL;
 #ifdef VERBOSE_IO
   fprintf(stderr, "%s: parsed %lu records from .cx file '%s'\n", prog, cxdata->len, filename_cx);
@@ -448,7 +447,7 @@ int main(int argc, char **argv)
 
   //-- load bx file
   bxDataLoad(&bxdata, f_bx);
-  fclose(f_bx);
+  if (f_bx != stdin) fclose(f_bx);
   f_bx = NULL;
 #ifdef VERBOSE_IO
   fprintf(stderr, "%s: parsed %lu records from .bx file '%s'\n", prog, bxdata->len, filename_bx);

@@ -45,7 +45,7 @@ char *file_basename(char *dst, const char *src, const char *suff, int srclen, in
  */
 
 //--------------------------------------------------------------
-cxData *cxDataInit(cxData *cxd, ByteOffset size)
+cxData *cxDataInit(cxData *cxd, size_t size)
 {
   if (size==0) {
     size = CXDATA_DEFAULT_ALLOC;
@@ -170,11 +170,9 @@ char *cx_text_string(char *src, int src_len)
  */
 
 //--------------------------------------------------------------
-bxData *bxDataInit(bxData *bxd, ByteOffset size)
+bxData *bxDataInit(bxData *bxd, size_t size)
 {
-  if (size==0) {
-    size = BXDATA_DEFAULT_ALLOC;
-  }
+  if (size==0) size = BXDATA_DEFAULT_ALLOC;
   if (!bxd) {
     bxd = (bxData*)malloc(sizeof(bxData));
     assert(bxd != NULL /* malloc failed */);
@@ -183,7 +181,6 @@ bxData *bxDataInit(bxData *bxd, ByteOffset size)
   assert(bxd->data != NULL /* malloc failed */);
   bxd->len   = 0;
   bxd->alloc = size;
-
   return bxd;
 }
 
