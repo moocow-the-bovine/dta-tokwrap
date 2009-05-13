@@ -72,7 +72,7 @@ sub cb_char {
     return;
   }
   $c_block = decode('UTF-8',$_[0]->original_string());
-  while ($c_block =~ m/((?:\&[^\;]*\;)|(?: +)|(?:.))/g) {
+  while ($c_block =~ m/((?:\&[^\;]*\;)|(?: +)|(?:.))/sg) {
     $c_char = $1;
     if ($c_char =~ /^\s+$/) {
       if ($c_char =~ m/^ /) {

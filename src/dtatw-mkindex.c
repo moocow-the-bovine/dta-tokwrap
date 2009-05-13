@@ -130,10 +130,11 @@ void put_record_char(TokWrapData *data)
 //--------------------------------------------------------------
 void put_record_lb(TokWrapData *data)
 {
-  ByteOffset c_xlen = XML_GetCurrentByteIndex(data->xp) + XML_GetCurrentByteCount(data->xp) - data->c_xoffset;
+  ByteOffset lb_xoff = XML_GetCurrentByteIndex(data->xp);
+  ByteOffset lb_xlen = XML_GetCurrentByteCount(data->xp);
   put_record_raw(data->f_cx,
 		 CX_LB_ID,
-		 data->c_xoffset, c_xlen,
+		 lb_xoff, lb_xlen,
 		 data->c_toffset, 1,
 		 "\n"
 		 );

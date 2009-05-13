@@ -70,7 +70,8 @@ ABBR     (Prof|Dr|[[:alpha:]]|([[:alpha:]][[:alpha:]]))\.
 (,,)|(``)|(\'\')|`|\'|\"  { print_token("$QUOTE"); thebyte += yyleng; }
 (\-+)|(\_+)|(\.\.+)       { print_token("$PUNCT"); thebyte += yyleng; }
 
-{WORDC}+\-{NEWLINE}+{WORDC}+ { print_token(NULL); thebyte += yyleng; }
+{ALPHA}+\-{NEWLINE}+{ALPHA}+ { print_token(NULL); thebyte += yyleng; }
+{ALPHA}+\-{SPACE}+{ALPHA}+   { print_token(NULL); thebyte += yyleng; }
 
 {ABBR}             { print_token("$ABBR"); thebyte += yyleng; }
 {ALPHA}+           { print_token(NULL); thebyte += yyleng; }

@@ -1,6 +1,68 @@
 //--------------------------------------------------------------
 ByteOffset mark_discontinuous_segments(cxData *cxd, cxAuxRecord *cxaux)
 {
+  ByteOffset   cxi;
+  cxRecord    *cx,  *cx_prev=NULL;
+  cxAuxRecord *cxa, *cxa_prev=NULL;
+  txmlToken    *w,  *w_prev=NULL;
+  txmlSentence *s,  *s_prev=NULL;
+  ByteOffset ndiscont=0;
+
+  //-- scan for first claimed character
+  for (cxi=0; cxi < cxd->len && !(cxaux[cxi].flags&cxafWAny); cxi++) ;
+  cx_prev  = &cxd->data[cxi];
+  cxa_prev = &cxaux[cxi];
+  w_prev   = ((cxa_prev->flags&cxafWAny)           ? &txmld->wdata[cxa_prev->w_i] : NULL);
+  s_prev   = ((cxa_prev->flags&cxafSAny) && w_prev ? &txmld->sdata[w_prev->s_i] : NULL);
+
+  for (cxi++; cxi < cxd->len; cxi++) {
+    cx  = &cxd->data[cxi];
+    cxa = &cxaux[cxi];
+    w   = ((cxa->flags&cxafWAny)      ? &txmld->wdata[cxa->w_i] : NULL);
+    s   = ((cxa->flags&cxafSAny) && w ? &txmld->sdata[w->s_i] : NULL);
+
+    //-- ignore unclaimed characters
+    if ( !(cxa->flags&cxafWAny) ) continue;
+
+    //-- check for token discontinuity
+    if ( w_prev && w != w_prev && !(cxa->flags&cxafWBegin) ) {
+      cxa_prev->flags |= cxafWxEnd;
+      cxa->flags      |= cxafWxBegin;
+      ++ndiscont;
+#if 1
+      fprintf(stderr, "w discontinuity[%s/%s]: c=%s | c=%s \n",
+	      (w_prev ? w_prev->w_id : "(null)"),
+	      (w      ? w->w_id      : "(null)"),
+	      cx_prev->id, cx->id);
+#endif
+    }
+
+    //-- check for sentence discontinuity
+    if ( s_prev && s != s_prev && !(cxa->flags&cxafSBegin) ) {
+      cxa_prev->flags |= cxafSxEnd;
+      cxa->flags      |= cxafSxBegin;
+      ++ndiscont;
+#if 1
+     fprintf(stderr, "s discontinuity[%s/%s]~(%s/%s): c=%s | c=%s \n",
+	      (s_prev ? s_prev->s_id : "(null)"), (s ? s->s_id : "(null)"),
+	      (w_prev ? w_prev->w_id : "(null)"), (w ? w->w_id : "(null)"),
+	      cx_prev->id, cx->id);
+#endif
+      }
+
+    //-- update
+    cx_prev = cx;
+    cxa_prev = cxa;
+    w_prev = w;
+    s_prev = s;
+  }
+
+  return ndiscont;
+}
+
+//--------------------------------------------------------------
+ByteOffset mark_discontinuous_segments(cxData *cxd, cxAuxRecord *cxaux)
+{
   ByteOffset cxi;
   cxRecord *cx, *cx_prev=NULL, *cx_end=cxd->data+cxd->len;
   cxAuxRecord *cxa, *cxa_prev=NULL;

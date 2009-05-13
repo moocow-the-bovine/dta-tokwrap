@@ -16,11 +16,15 @@
 # undef VERBOSE_INIT
 #endif
 
-// WARN_ON_OVERLAP : whether to output warnings when token overlap is detected
-//  + whether or not this is defined, an "overlap" attribute will be written
-//    for overlapping tokens if 'olAttr' is non-NULL (see xml structure constants, below)
-//#define WARN_ON_OVERLAP 1
-#undef WARN_ON_OVERLAP
+// CXML_ADJACENCY_TOLERANCE
+//  + number of bytes which may appear between end of one <c> and beginning of the next <c>
+//    while still allowing them to be considered "adjacent"
+//  + no guarantee is made for the content of such bytes, if they exist!
+//  + a value of 0 (zero) gives a safe, strict adjanency criterion
+//  + a value of 1 (one) allows e.g. UNIX-style newlines ("\n") between <c>s
+//  + a value of 2 (two) allows e.g. DOS-style newlines ("\r\n") between <c>s
+//  + a value of 7 (secen) allows e.g. redundantly coded ("<lb/>\r\n") between <c>s
+#define CXML_ADJACENCY_TOLERANCE 0
 
 //-- xml structure constants (should jive with 'tok2xml')
 const char *sElt   = "s";          //-- .t.xml sentence element
@@ -102,7 +106,7 @@ typedef struct {
   cxAuxFlags flags;      //-- mask of 'cxaf*' flags
 } cxAuxRecord;
 
-cxAuxRecord *cxaux = NULL; //-- cxAuxRecord *cxa = &cxaux[c_index]
+cxAuxRecord  *cxaux = NULL; //-- cxAuxRecord *cxa = &cxaux[c_index]
 
 //--------------------------------------------------------------
 txmlData *txmlDataInit(txmlData *txd, size_t sent_size, size_t tok_size)
@@ -297,62 +301,92 @@ txmlData *txmlDataLoad(txmlData *txd, FILE *f, const char *filename)
  */
 
 //--------------------------------------------------------------
-ByteOffset mark_discontinuous_segments(cxData *cxd, cxAuxRecord *cxaux)
+ByteOffset mark_discontinuous_segments(txmlData *txmld, bxData *bxd, cxData *cxd, cxAuxRecord *cxaux)
 {
-  ByteOffset cxi;
+  ByteOffset txtbi, ndiscont=0;
+  bxRecord    *bx;
   cxRecord    *cx,  *cx_prev=NULL;
   cxAuxRecord *cxa, *cxa_prev=NULL;
-  txmlToken   *w,   *w_prev=NULL;
+  txmlToken    *w,  *w_prev=NULL;
   txmlSentence *s,  *s_prev=NULL;
-  ByteOffset ndiscont=0;
 
-  //-- scan for first claimed character
-  for (cxi=0; cxi < cxd->len && !(cxaux[cxi].flags&cxafWAny); cxi++) ;
-  cx_prev  = &cxd->data[cxi];
-  cxa_prev = &cxaux[cxi];
-  w_prev   = ((cxa_prev->flags&cxafWAny)           ? &txmldata.wdata[cxa_prev->w_i] : NULL);
-  s_prev   = ((cxa_prev->flags&cxafSAny) && w_prev ? &txmldata.sdata[w_prev->s_i] : NULL);
+  //-- sanity checks
+  assert(txmld != NULL);
+  assert(bxd   != NULL);
+  assert(cxd   != NULL);
+  assert(cxaux != NULL);
+  //
+  assert(txmld->wdata != NULL);
+  assert(txmld->sdata != NULL);
+  assert(bxd->data    != NULL);
+  assert(cxd->data    != NULL);
 
-  for (cxi++; cxi < cxd->len; cxi++) {
-    cx  = &cxd->data[cxi];
-    cxa = &cxaux[cxi];
-    w   = ((cxa->flags&cxafWAny)      ? &txmldata.wdata[cxa->w_i] : NULL);
-    s   = ((cxa->flags&cxafSAny) && w ? &txmldata.sdata[w->s_i] : NULL);
+  //-- we iterate over (serialized) .txt-byte indices: this gets us the token- and sentence-order
 
-    //-- ignore unclaimed characters
-    if ( !(cxa->flags&cxafWAny) ) continue;
+  //-- scan for first <c>
+  for (cx_prev=NULL,txtbi=0; cx_prev==NULL && txtbi < txtb2cx.len; txtbi++) {
+    cx_prev = txtb2cx.data[txtbi];
+  }
+  cxa_prev = &cxaux[ cx_prev - &cxd->data[0] ];
+  w_prev   = NULL;
+  s_prev   = NULL;
 
-    //-- check for token discontinuity
-    if ( w_prev && w != w_prev && !(cxa->flags&cxafWBegin) ) {
-      cxa_prev->flags |= cxafWxEnd;
-      cxa->flags      |= cxafWxBegin;
-      ++ndiscont;
-#if 1
-      fprintf(stderr, "w discontinuity[%s/%s]: c=%s | c=%s \n",
-	      (w_prev ? w_prev->w_id : "(null)"),
-	      (w      ? w->w_id      : "(null)"),
-	      cx_prev->id, cx->id);
-#endif
+  //-- ye olde loope
+  //  + visit <c> elements in same order as tokenizer did
+  //  + i.e. (".bx" | ".txt" | ".t" | ".t.xml")-file document order
+  //  + specifically NOT ".char.xml"-file document order
+  for ( ; txtbi < txtb2cx.len; txtbi++) {
+    cx  = txtb2cx.data[txtbi];
+    if (cx==NULL)    continue;  //-- ignore "hints" & any other non-<c> stuff in .txt file
+    if (cx==cx_prev) continue;  //-- skip multibyte-<c>s we've already considered
+    cxa = &cxaux[ cx - &cxd->data[0] ];
+
+    //-- get current token- and sentence-pointers
+    if ( cxa->flags & cxafWAny ) {
+      w = &txmld->wdata[cxa->w_i];
+      s = &txmld->sdata[w->s_i];
+    } else {
+      w = NULL;
+      s = NULL;
     }
 
-    //-- check for sentence discontinuity
-    if ( s_prev && s != s_prev && !(cxa->flags&cxafSBegin) ) {
-      cxa_prev->flags |= cxafSxEnd;
-      cxa->flags      |= cxafSxBegin;
-      ++ndiscont;
+    //-- check for discontinuity
+    if ( cx->xoff > cx_prev->xoff + cx_prev->xlen + CXML_ADJACENCY_TOLERANCE ) {
+
+      //-- discontinuity detected: token discontinuity?
+      if ( w && w==w_prev ) {
+	ndiscont++;
+	cxa->flags      |= cxafWxBegin;
+	cxa_prev->flags |= cxafWxEnd;
 #if 1
-      fprintf(stderr, "s discontinuity[%s/%s]~(%s/%s): c=%s | c=%s \n",
-	      (s_prev ? s_prev->s_id : "(null)"), (s ? s->s_id : "(null)"),
-	      (w_prev ? w_prev->w_id : "(null)"), (w ? w->w_id : "(null)"),
-	      cx_prev->id, cx->id);
+	fprintf(stderr, "w discontinuity[%s/%s] (tol=%d): c=%s[%lu..%lu] ...[+%lu]... c=%s[%lu..%lu] \n",
+		(s ? s->s_id: "(null)"), (w ? w->w_id : "(null)"), CXML_ADJACENCY_TOLERANCE,
+		cx_prev->id, cx_prev->xoff, (cx_prev->xoff+cx_prev->xlen),
+		(cx->xoff - cx_prev->xoff+cx_prev->xlen),
+		cx->id, cx->xoff, (cx->xoff+cx->xlen));
 #endif
       }
 
+      //-- discontinuity detected: sentence discontinuity?
+      if ( s && s==s_prev ) {
+	ndiscont++;
+	cxa->flags      |= cxafSxBegin;
+	cxa_prev->flags |= cxafSxEnd;
+#if 1
+	fprintf(stderr, "s discontinuity[%s/%s] (tol=%d): c=%s[%lu..%lu] ...[+%lu]... c=%s[%lu..%lu] \n",
+		(s ? s->s_id: "(null)"), (w ? w->w_id : "(null)"), CXML_ADJACENCY_TOLERANCE,
+		cx_prev->id, cx_prev->xoff, (cx_prev->xoff+cx_prev->xlen),
+		(cx->xoff - cx_prev->xoff+cx_prev->xlen),
+		cx->id, cx->xoff, (cx->xoff+cx->xlen));
+#endif
+      }
+    }
+
     //-- update
-    cx_prev = cx;
+    cx_prev  = cx;
     cxa_prev = cxa;
-    w_prev = w;
-    s_prev = s;
+    w_prev   = w;
+    s_prev   = s;
   }
 
   return ndiscont;
@@ -490,7 +524,7 @@ int main(int argc, char **argv)
 #endif
 
   //-- mark discontinuous segments
-  ndiscont = mark_discontinuous_segments(&cxdata, cxaux);
+  ndiscont = mark_discontinuous_segments(&txmldata, &bxdata, &cxdata, cxaux);
 #ifdef VERBOSE_INIT
   fprintf(stderr, "%s: found %lu discontinuities\n", prog, ndiscont);
 #endif

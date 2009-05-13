@@ -1,5 +1,5 @@
 
-#line 3 "dtatw-tokenize-dummy.c"
+#line 3 "<stdout>"
 
 #define  YY_INT_ALIGNED short int
 
@@ -363,8 +363,8 @@ static void yy_fatal_error (yyconst char msg[]  );
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
 
-#define YY_NUM_RULES 19
-#define YY_END_OF_BUFFER 20
+#define YY_NUM_RULES 20
+#define YY_END_OF_BUFFER 21
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -372,15 +372,15 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static yyconst flex_int16_t yy_accept[63] =
+static yyconst flex_int16_t yy_accept[66] =
     {   0,
-        0,    0,    0,    0,   20,   18,    1,   15,   10,    1,
-       17,   17,   10,   16,   11,   15,    9,   16,   14,    4,
-        4,   14,   11,   10,   18,    0,    0,    4,    4,   14,
-        0,    0,   10,    8,   11,   11,    6,    6,    6,    6,
-        9,    7,   13,   14,    4,    4,   14,   14,   11,    0,
-        0,    0,    0,    8,    5,   14,    4,   14,   12,    2,
-        3,    0
+        0,    0,    0,    0,   21,   19,    1,   16,   10,    1,
+       18,   18,   10,   17,   11,   16,    9,   17,   15,    4,
+        4,   15,   11,   10,   19,    4,    0,    4,   15,    0,
+        0,   10,    8,   11,   11,    6,    6,    6,    6,    9,
+        7,   14,   15,    4,    4,   15,   15,   11,    0,    0,
+        0,    0,    0,    8,    5,   15,    4,   15,   13,   13,
+       12,   12,    2,    3,    0
     } ;
 
 static yyconst flex_int32_t yy_ec[256] =
@@ -417,89 +417,91 @@ static yyconst flex_int32_t yy_ec[256] =
 
 static yyconst flex_int32_t yy_meta[30] =
     {   0,
-        1,    2,    1,    1,    1,    3,    1,    1,    1,    1,
-        1,    1,    1,    2,    1,    1,    1,    3,    3,    3,
-        3,    3,    3,    3,    1,    1,    3,    3,    3
+        1,    2,    2,    3,    3,    4,    3,    3,    3,    3,
+        5,    5,    3,    3,    3,    3,    3,    6,    6,    6,
+        6,    6,    6,    6,    3,    3,    6,    6,    6
     } ;
 
-static yyconst flex_int16_t yy_base[65] =
+static yyconst flex_int16_t yy_base[73] =
     {   0,
-        0,    0,    0,    0,  169,   29,  201,   58,    0,   82,
-        8,    0,  157,   50,  137,   49,  108,    0,  132,   63,
-      156,  118,  121,  119,    0,    0,  139,    0,    0,   87,
-      122,  121,    0,   56,   62,  127,  201,    0,   84,   83,
-        0,    0,    0,  168,    0,  137,    0,   68,   70,   89,
-       84,   83,   58,  153,   57,   55,  158,   62,   59,    0,
-        0,  201,   40,  197
+        0,    0,    0,    0,  141,    0,  200,  200,  200,   24,
+        8,  200,  131,   23,  128,   26,   42,  200,   71,   83,
+      109,   99,  112,  110,    0,  123,   72,  200,   30,  114,
+      113,  200,   76,  115,  106,  200,    0,  102,  100,    0,
+        0,  200,   86,  200,  144,   90,   71,   68,  104,  106,
+       74,   69,   59,  103,   29,   27,   22,   73,  119,   77,
+      121,  128,  200,  200,  200,  165,  168,  174,  177,  183,
+      188,  193
     } ;
 
-static yyconst flex_int16_t yy_def[65] =
+static yyconst flex_int16_t yy_def[73] =
     {   0,
-       62,    1,    1,    1,   62,   62,   62,    6,    8,    8,
-        8,    8,    8,    8,    8,    8,   62,    8,    6,   19,
-       19,   19,    8,    8,    6,    8,    8,   10,    8,   10,
-        8,    8,    8,   62,    8,    8,   62,   63,   62,   62,
-       17,   63,    8,   19,    8,   44,   44,   44,    8,   64,
-        8,    8,   62,   62,   62,   44,   44,   44,   64,    8,
-        8,    0,   62,   62
+       65,    1,    1,    1,   65,   66,   65,   65,   65,   67,
+       65,   65,   65,   65,   65,   65,   65,   65,   68,   68,
+       20,   20,   65,   65,   66,   67,   65,   65,   67,   65,
+       65,   65,   65,   65,   65,   65,   69,   65,   65,   17,
+       69,   65,   70,   65,   70,   70,   46,   65,   71,   72,
+       65,   65,   65,   65,   65,   46,   45,   46,   71,   71,
+       72,   72,   65,   65,    0,   65,   65,   65,   65,   65,
+       65,   65
     } ;
 
-static yyconst flex_int16_t yy_nxt[231] =
+static yyconst flex_int16_t yy_nxt[230] =
     {   0,
         6,    7,    7,    8,    9,   10,   11,   12,   13,   14,
        15,   16,   12,   17,   18,   18,    8,   19,   19,   20,
-       21,   22,   19,   19,   23,   24,   19,   19,   19,   25,
-       31,   32,   26,   26,   26,   26,   26,   26,   26,   27,
-       26,   26,   42,   26,   26,   26,   25,   25,   25,   25,
-       25,   25,   25,   26,   26,   25,   25,   25,   26,   33,
-       36,   62,   34,   34,   50,   53,   26,   53,   28,   54,
-       55,   34,   35,   26,   45,   26,   26,   26,   26,   26,
-       26,   26,   46,   46,   26,   26,   26,   28,   44,   61,
-       60,   50,   30,   29,   49,   58,   55,   34,   26,   30,
+       21,   22,   19,   19,   23,   24,   19,   19,   19,   26,
+       30,   31,   32,   28,   27,   28,   33,   35,   65,   33,
+       27,   65,   55,   26,   26,   36,   36,   37,   36,   36,
+       36,   38,   36,   38,   39,   40,   36,   36,   36,   41,
+       41,   41,   41,   41,   41,   41,   36,   36,   41,   41,
+       41,   25,   33,   49,   50,   64,   29,   49,   65,   65,
+       63,   27,   42,   25,   65,   53,   25,   53,   26,   54,
+       25,   29,   48,   27,   44,   29,   27,   42,   58,   43,
 
-       30,   28,   28,   30,   30,   30,   30,   30,   30,   30,
-       30,   37,   37,   38,   37,   37,   37,   39,   37,   39,
-       40,   41,   37,   37,   37,   42,   42,   42,   42,   42,
-       42,   42,   37,   37,   42,   42,   42,   30,   36,   52,
-       51,   50,   28,   43,   33,   49,   48,   35,   45,   44,
-       44,   44,   44,   44,   44,   44,   57,   57,   44,   44,
-       44,   28,   53,   28,   53,   33,   54,   45,   62,   29,
-       62,   62,   62,   62,   62,   46,   46,   57,   57,   62,
-       62,   62,   62,   62,   47,   56,   56,   56,   56,   56,
-       56,   56,   62,   62,   56,   56,   56,   59,   62,   59,
+       27,   42,   45,   45,   29,   49,   49,   49,   50,   59,
+       42,   61,   53,   55,   53,   33,   54,   35,   43,   43,
+       49,   49,   49,   49,   59,   34,   61,   47,   26,   65,
+       65,   52,   51,   27,   28,   32,   48,   46,   34,   32,
+       65,   65,   26,   26,   25,   65,   65,   65,   65,   26,
+       65,   65,   65,   65,   27,   44,   65,   65,   65,   65,
+       65,   65,   65,   57,   57,   25,   65,   65,   65,   65,
+       25,   29,   29,   29,   43,   65,   65,   43,   43,   43,
+       41,   65,   41,   56,   65,   65,   56,   56,   56,   60,
+       65,   60,   65,   60,   62,   65,   62,   65,   62,    5,
 
-        5,   62,   62,   62,   62,   62,   62,   62,   62,   62,
-       62,   62,   62,   62,   62,   62,   62,   62,   62,   62,
-       62,   62,   62,   62,   62,   62,   62,   62,   62,   62
+       65,   65,   65,   65,   65,   65,   65,   65,   65,   65,
+       65,   65,   65,   65,   65,   65,   65,   65,   65,   65,
+       65,   65,   65,   65,   65,   65,   65,   65,   65
     } ;
 
-static yyconst flex_int16_t yy_chk[231] =
+static yyconst flex_int16_t yy_chk[230] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    1,    1,    1,    1,    1,    1,    6,
-       11,   11,    6,    6,    6,    6,    6,    6,    6,    6,
-        6,    6,   63,    6,    6,    6,    6,    6,    6,    6,
-        6,    6,    6,    6,    6,    6,    6,    6,    8,   14,
-       16,   59,   16,   14,   35,   34,   56,   34,   20,   34,
-       55,   53,   35,   58,   20,    8,    8,    8,    8,    8,
-        8,    8,   20,   20,    8,    8,    8,   10,   58,   52,
-       51,   50,   30,   10,   49,   48,   40,   39,   30,   10,
-
-       10,   10,   10,   10,   10,   10,   30,   30,   10,   10,
-       10,   17,   17,   17,   17,   17,   17,   17,   17,   17,
+        1,    1,    1,    1,    1,    1,    1,    1,    1,   10,
+       11,   11,   14,   57,   10,   10,   14,   16,   56,   16,
+       29,   29,   55,   10,   10,   17,   17,   17,   17,   17,
        17,   17,   17,   17,   17,   17,   17,   17,   17,   17,
-       17,   17,   17,   17,   17,   17,   17,   19,   36,   32,
-       31,   27,   46,   19,   24,   23,   22,   15,   46,   19,
-       19,   19,   19,   19,   19,   19,   46,   46,   19,   19,
-       19,   21,   54,   57,   54,   13,   54,   21,    5,   57,
-        0,    0,    0,    0,    0,   21,   21,   57,   57,    0,
-        0,    0,    0,    0,   21,   44,   44,   44,   44,   44,
-       44,   44,    0,    0,   44,   44,   44,   64,    0,   64,
+       17,   17,   17,   17,   17,   17,   17,   17,   17,   17,
+       17,   19,   53,   27,   27,   52,   19,   27,   60,   60,
+       51,   19,   19,   20,   58,   33,   43,   33,   20,   33,
+       46,   43,   48,   20,   20,   46,   43,   43,   47,   58,
 
-       62,   62,   62,   62,   62,   62,   62,   62,   62,   62,
-       62,   62,   62,   62,   62,   62,   62,   62,   62,   62,
-       62,   62,   62,   62,   62,   62,   62,   62,   62,   62
+       46,   46,   20,   20,   22,   49,   49,   50,   50,   49,
+       22,   50,   54,   39,   54,   38,   54,   35,   22,   22,
+       59,   59,   61,   61,   59,   34,   61,   22,   26,   62,
+       62,   31,   30,   26,   26,   24,   23,   21,   15,   13,
+        5,    0,   26,   26,   45,    0,    0,    0,    0,   45,
+        0,    0,    0,    0,   45,   45,    0,    0,    0,    0,
+        0,    0,    0,   45,   45,   66,    0,    0,    0,    0,
+       66,   67,   67,   67,   68,    0,    0,   68,   68,   68,
+       69,    0,   69,   70,    0,    0,   70,   70,   70,   71,
+        0,   71,    0,   71,   72,    0,   72,    0,   72,   65,
+
+       65,   65,   65,   65,   65,   65,   65,   65,   65,   65,
+       65,   65,   65,   65,   65,   65,   65,   65,   65,   65,
+       65,   65,   65,   65,   65,   65,   65,   65,   65
     } ;
 
 static yy_state_type yy_last_accepting_state;
@@ -516,12 +518,12 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "dtatw-tokenize-dummy.l"
+#line 1 "../src/dtatw-tokenize-dummy.l"
 /*======================================================================
  * Flex Options
  */
 /*%option outfile="dta-tokenize-dummy.c"*/
-#line 8 "dtatw-tokenize-dummy.l"
+#line 8 "../src/dtatw-tokenize-dummy.l"
 /*======================================================================
  * User C Header
  */
@@ -550,7 +552,7 @@ static int yywrap(void);
 /*======================================================================
  * Rules
  */
-#line 554 "dtatw-tokenize-dummy.c"
+#line 556 "<stdout>"
 
 #define INITIAL 0
 #define ATEOF 1
@@ -704,10 +706,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 55 "dtatw-tokenize-dummy.l"
+#line 55 "../src/dtatw-tokenize-dummy.l"
 
 
-#line 711 "dtatw-tokenize-dummy.c"
+#line 713 "<stdout>"
 
 	if ( !(yy_init) )
 		{
@@ -760,13 +762,13 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 63 )
+				if ( yy_current_state >= 66 )
 					yy_c = yy_meta[(unsigned int) yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 			++yy_cp;
 			}
-		while ( yy_base[yy_current_state] != 201 );
+		while ( yy_base[yy_current_state] != 200 );
 
 yy_find_action:
 		yy_act = yy_accept[yy_current_state];
@@ -793,105 +795,111 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 57 "dtatw-tokenize-dummy.l"
+#line 57 "../src/dtatw-tokenize-dummy.l"
 { thebyte += yyleng; /* (mostly) ignore */ }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 59 "dtatw-tokenize-dummy.l"
+#line 59 "../src/dtatw-tokenize-dummy.l"
 { thebyte += yyleng; print_eos(); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 60 "dtatw-tokenize-dummy.l"
+#line 60 "../src/dtatw-tokenize-dummy.l"
 { thebyte += yyleng; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 62 "dtatw-tokenize-dummy.l"
+#line 62 "../src/dtatw-tokenize-dummy.l"
 { print_token("$ROMAN\t$ABBR"); thebyte += yyleng; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 64 "dtatw-tokenize-dummy.l"
+#line 64 "../src/dtatw-tokenize-dummy.l"
 { print_token("$FRACTION"); thebyte += yyleng; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 65 "dtatw-tokenize-dummy.l"
+#line 65 "../src/dtatw-tokenize-dummy.l"
 { print_token("$CARDPUNCT"); thebyte += yyleng; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 66 "dtatw-tokenize-dummy.l"
+#line 66 "../src/dtatw-tokenize-dummy.l"
 { print_token("$CARDSUFFIX"); thebyte += yyleng; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 67 "dtatw-tokenize-dummy.l"
+#line 67 "../src/dtatw-tokenize-dummy.l"
 { print_token("$CARDSEPS"); thebyte += yyleng; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 68 "dtatw-tokenize-dummy.l"
+#line 68 "../src/dtatw-tokenize-dummy.l"
 { print_token("$CARD");   thebyte += yyleng; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 70 "dtatw-tokenize-dummy.l"
+#line 70 "../src/dtatw-tokenize-dummy.l"
 { print_token("$QUOTE"); thebyte += yyleng; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 71 "dtatw-tokenize-dummy.l"
+#line 71 "../src/dtatw-tokenize-dummy.l"
 { print_token("$PUNCT"); thebyte += yyleng; }
 	YY_BREAK
 case 12:
 /* rule 12 can match eol */
 YY_RULE_SETUP
-#line 73 "dtatw-tokenize-dummy.l"
+#line 73 "../src/dtatw-tokenize-dummy.l"
 { print_token(NULL); thebyte += yyleng; }
 	YY_BREAK
 case 13:
+/* rule 13 can match eol */
 YY_RULE_SETUP
-#line 75 "dtatw-tokenize-dummy.l"
-{ print_token("$ABBR"); thebyte += yyleng; }
+#line 74 "../src/dtatw-tokenize-dummy.l"
+{ print_token(NULL); thebyte += yyleng; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 76 "dtatw-tokenize-dummy.l"
-{ print_token(NULL); thebyte += yyleng; }
+#line 76 "../src/dtatw-tokenize-dummy.l"
+{ print_token("$ABBR"); thebyte += yyleng; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 78 "dtatw-tokenize-dummy.l"
-{ print_token("$."); thebyte += yyleng; }
+#line 77 "../src/dtatw-tokenize-dummy.l"
+{ print_token(NULL); thebyte += yyleng; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 79 "dtatw-tokenize-dummy.l"
-{ print_token("$,"); thebyte += yyleng; }
+#line 79 "../src/dtatw-tokenize-dummy.l"
+{ print_token("$."); thebyte += yyleng; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 80 "dtatw-tokenize-dummy.l"
-{ print_token("$PUNCT"); thebyte += yyleng; }
+#line 80 "../src/dtatw-tokenize-dummy.l"
+{ print_token("$,"); thebyte += yyleng; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 82 "dtatw-tokenize-dummy.l"
-{ print_token(NULL); thebyte += yyleng; }
-	YY_BREAK
-case YY_STATE_EOF(INITIAL):
-#line 84 "dtatw-tokenize-dummy.l"
-{ print_eos(); BEGIN(ATEOF); }
+#line 81 "../src/dtatw-tokenize-dummy.l"
+{ print_token("$PUNCT"); thebyte += yyleng; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 86 "dtatw-tokenize-dummy.l"
+#line 83 "../src/dtatw-tokenize-dummy.l"
+{ print_token(NULL); thebyte += yyleng; }
+	YY_BREAK
+case YY_STATE_EOF(INITIAL):
+#line 85 "../src/dtatw-tokenize-dummy.l"
+{ print_eos(); BEGIN(ATEOF); }
+	YY_BREAK
+case 20:
+YY_RULE_SETUP
+#line 87 "../src/dtatw-tokenize-dummy.l"
 ECHO;
 	YY_BREAK
-#line 895 "dtatw-tokenize-dummy.c"
+#line 903 "<stdout>"
 case YY_STATE_EOF(ATEOF):
 	yyterminate();
 
@@ -1175,7 +1183,7 @@ static int yy_get_next_buffer (void)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 63 )
+			if ( yy_current_state >= 66 )
 				yy_c = yy_meta[(unsigned int) yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
@@ -1203,11 +1211,11 @@ static int yy_get_next_buffer (void)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 63 )
+		if ( yy_current_state >= 66 )
 			yy_c = yy_meta[(unsigned int) yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
-	yy_is_jam = (yy_current_state == 62);
+	yy_is_jam = (yy_current_state == 65);
 
 	return yy_is_jam ? 0 : yy_current_state;
 }
@@ -1877,7 +1885,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 86 "dtatw-tokenize-dummy.l"
+#line 87 "../src/dtatw-tokenize-dummy.l"
 
 
 /*<<EOF>> { print_eos(); }*/
