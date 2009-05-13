@@ -1,4 +1,53 @@
 //--------------------------------------------------------------
+ByteOffset mark_discontinuous_segments(cxData *cxd, cxAuxRecord *cxaux)
+{
+  ByteOffset cxi;
+  cxRecord *cx, *cx_prev=NULL, *cx_end=cxd->data+cxd->len;
+  cxAuxRecord *cxa, *cxa_prev=NULL;
+  txmlToken *w, *w_prev=NULL;
+  ByteOffset ndiscont = 0;
+
+  for (cx=cxd->data,cxa=cxaux; cx < cx_end; cx++, cxa++) {
+    if (cx==NULL || cxa==NULL) continue;
+    w = &txmldata.wdata[cxa->w_i];
+
+    if ( cxa_prev && !(cxa->flags&cxafWBegin) && cxa->w_i != cxa_prev->w_i) {
+      //-- token or token-segment boundary
+      cxa_prev->flags |= cxafWxEnd;
+      cxa->flags      |= cxafWxBegin;
+      ++ndiscont;
+#if 1
+      fprintf(stderr, "w discontinuity[%s/%s]: c=%s/w~%lu | c=%s/w~%lu \n",
+	      (w_prev ? w_prev->w_id : "(null)"),
+	      (w ? w->w_id : "(null)"),
+	      cx_prev->id, cxa_prev->w_i,
+	      cx->id,  cxa->w_i);
+#endif
+    }
+    if ( w && w_prev && !(cxa->flags&cxafSBegin) && w->s_i != w_prev->s_i) {
+      //-- sentence or sentence-segment boundary
+      cxa_prev->flags |= cxafSxEnd;
+      cxa->flags      |= cxafSxBegin;
+      ++ndiscont;
+#if 1
+      fprintf(stderr, "s discontinuity[%s~%lu/%s~%lu]: c=%s/w~%lu | c=%s/w~%lu \n",
+	      (w_prev ? w_prev->w_id : "(null)"), (w_prev ? w_prev->s_i : -1),
+	      (w ? w->w_id : "(null)"), (w ? w->s_i : -1),
+	      cx_prev->id, cxa_prev->w_i,
+	      cx->id,  cxa->w_i);
+#endif
+    }
+
+    //-- update
+    cx_prev = cx;
+    cxa_prev = cxa;
+    if (w) w_prev = w;
+  }
+  return ndiscont;
+}
+
+
+//--------------------------------------------------------------
 // loadTxtFile(f)
 //  + allocates & populates txdata from FILE *f
 //  + requires loaded cxdata

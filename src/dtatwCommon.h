@@ -42,9 +42,19 @@ extern char *CX_LB_ID; //-- default: "$LB$"
 
 #if !defined(assert)
 # if defined(ENABLE_ASSERT)
-#  define assert(test) if (!(test)) { fprintf(stderr, "%s: %s:%d: assertion failed: (%s)\n", prog, __FILE__, __LINE__, #test); exit(255); }
+#  define assert2(test,label) \
+     if (!(test)) { \
+       fprintf(stderr, "%s: %s:%d: assertion failed: (%s): %s\n", prog, __FILE__, __LINE__, #test, (label)); \
+       exit(255); \
+     }
+#  define assert(test) \
+     if (!(test)) { \
+       fprintf(stderr, "%s: %s:%d: assertion failed: (%s)\n", prog, __FILE__, __LINE__, #test); \
+       exit(255); \
+     }
 # else  /* defined(ENABLE_ASSERT) -> false */
 #  define assert(test) 
+#  define assert2(test,label)
 # endif /* defined(ENABLE_ASSERT) */
 #endif /* !defined(assert) */
 

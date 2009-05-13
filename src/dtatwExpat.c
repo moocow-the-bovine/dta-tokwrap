@@ -48,3 +48,30 @@ ByteOffset expat_parse_file(XML_Parser xp, FILE *f_in, const char *filename_in)
   } while (!is_final);
   return n_xbytes;
 }
+
+//----------------------------------------------------------------------
+ByteOffset expat_parse_buffer(XML_Parser xp, const char *buf, int buflen, const char *srcname)
+{
+  int status;
+  status = XML_Parse(xp, buf, buflen, 1);  
+
+  //-- check for expat errors
+  if (status != XML_STATUS_OK) {
+    int ctx_offset = 0, ctx_len = 0;
+    const char *ctx_buf;
+    fprintf(stderr, "%s: `%s' (line %d, col %d, byte %ld): XML error: %s\n",
+	    prog, (srcname ? srcname : "?"),
+	    XML_GetCurrentLineNumber(xp), XML_GetCurrentColumnNumber(xp), XML_GetCurrentByteIndex(xp),
+	    XML_ErrorString(XML_GetErrorCode(xp)));
+    
+    ctx_buf = get_error_context(xp, 64, &ctx_offset, &ctx_len);
+    fprintf(stderr, "%s: Error Context:\n%.*s%s%.*s\n",
+	    prog,
+	    ctx_offset, ctx_buf,
+	    "\n---HERE---\n",
+	    (ctx_len-ctx_offset), ctx_buf+ctx_offset);
+    exit(3);
+  }
+
+  return (ByteOffset)buflen;
+}

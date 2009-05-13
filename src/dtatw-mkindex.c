@@ -13,8 +13,8 @@ typedef struct {
   FILE *f_cx;           //-- output character-index file
   FILE *f_sx;           //-- output structure-index file
   FILE *f_tx;           //-- output text file
-  int text_depth;       //-- boolean: number of open 'text' elements
-  int total_depth;      //-- boolean: total depth
+  int text_depth;       //-- number of open 'text' elements
+  int total_depth;      //-- total number of open elements (global depth)
   ByteOffset n_chrs;    //-- number of <c> elements read
   int is_c;             //-- boolean: true if currently parsing a 'c' elt
   int is_chardata;      //-- true if current event is character data
@@ -208,7 +208,7 @@ void cb_end(TokWrapData *data, const XML_Char *name)
 void cb_char(TokWrapData *data, const XML_Char *s, int len)
 {
   if (data->is_c) {
-    assert(data->c_tlen + len < CTBUFSIZE);
+    assert2((data->c_tlen + len < CTBUFSIZE), "<c> text buffer overflow");
     memcpy(data->c_tbuf+data->c_tlen, s, len); //-- copy required, else clobbered by nested elts (e.g. <c><g>...</g></c>)
     data->c_tlen += len;
     return;
@@ -242,16 +242,16 @@ void cb_default(TokWrapData *data, const XML_Char *s, int len)
     //-- pre-event location element
     ByteOffset xlen = xoff - data->loc_xoff;
     ByteOffset tlen = data->c_toffset + data->c_tlen - data->loc_toff;
-    fprintf(data->f_sx, LOC_FMT, data->loc_xoff, xlen, data->loc_toff, tlen);
+    if (data->f_sx) fprintf(data->f_sx, LOC_FMT, data->loc_xoff, xlen, data->loc_toff, tlen);
     data->loc_xoff = xoff;
     data->loc_toff = data->c_toffset + data->c_tlen;
   }
-  fwrite(ctx, 1,ctx_len, data->f_sx);
+  if (data->f_sx) fwrite(ctx, 1,ctx_len, data->f_sx);
   if (data->total_depth > 1 && !data->is_chardata && xoff+ctx_len != data->loc_xoff) {
     //-- post-event location element
     ByteOffset xlen = xoff + ctx_len - data->loc_xoff;
     ByteOffset tlen = data->c_toffset + data->c_tlen - data->loc_toff;
-    fprintf(data->f_sx, LOC_FMT, data->loc_xoff, xlen, data->loc_toff, tlen);
+    if (data->f_sx) fprintf(data->f_sx, LOC_FMT, data->loc_xoff, xlen, data->loc_toff, tlen);
     data->loc_xoff = xoff + ctx_len;
     data->loc_toff = data->c_toffset + data->c_tlen;
   }

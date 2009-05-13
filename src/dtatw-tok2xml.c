@@ -42,8 +42,8 @@ const char *cAttr    = "c";        //-- output token-chars attribute (space-sepa
  * Utils: .cx, .bx file, indexing
  *  + now in dtatwCommon.[ch]
  */
-cxData cxdata = {NULL,0,0};
-bxData bxdata = {NULL,0,0};
+cxData cxdata = {NULL,0,0};       //-- cxRecord *cx = &cxdata->data[c_index]
+bxData bxdata = {NULL,0,0};       //-- bxRecord *bx = &bxdata->data[block_index]
 
 Offset2CxIndex txb2cx  = {NULL,0};  //-- cxRecord *cx =  txb2cx->data[ tx_byte_index]
 Offset2CxIndex txtb2cx = {NULL,0};  //-- cxRecord *cx = txtb2cx->data[txt_byte_index]
@@ -253,8 +253,8 @@ static void tt_next_word(FILE *f_out, ttWordBuffer *w0, ttWordBuffer *w1, int *s
 //--------------------------------------------------------------
 /* process_tt_file()
  *  + requires:
- *    - populated cxdata[] vector (see loadCxFile())
- *    - populated txtb2ci[] vector (see init_txtb2ci())
+ *    - populated cxdata struct (see cxDataLoad() in dtatwCommon.c)
+ *    - populated txtb2cx struct (see txt2cxIndex() in dtatwCommon.c)
  */
 #define INITIAL_TT_LINEBUF_SIZE 8192
 static void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *filename_out)
@@ -441,31 +441,31 @@ int main(int argc, char **argv)
   if (f_cx != stdin) fclose(f_cx);
   f_cx = NULL;
 #ifdef VERBOSE_IO
-  fprintf(stderr, "%s: parsed %lu records from .cx file '%s'\n", prog, cxdata->len, filename_cx);
+  fprintf(stderr, "%s: parsed %lu records from .cx file '%s'\n", prog, cxdata.len, filename_cx);
 #endif
   
 
-  //-- load bx file
+  //-- load .bx data
   bxDataLoad(&bxdata, f_bx);
   if (f_bx != stdin) fclose(f_bx);
   f_bx = NULL;
 #ifdef VERBOSE_IO
-  fprintf(stderr, "%s: parsed %lu records from .bx file '%s'\n", prog, bxdata->len, filename_bx);
+  fprintf(stderr, "%s: parsed %lu records from .bx file '%s'\n", prog, bxdata.len, filename_bx);
   assert(cxdata != NULL && cxdata->data != NULL /* require cxdata */);
-  assert(cxdata->len > 0 /* require non-empty cxdata */);
-  fprintf(stderr, "%s: number of source XML-bytes ~= %lu\n", prog, cxdata->data[cxdata->len-1].xoff);
+  assert(cxdata.len > 0 /* require non-empty cxdata */);
+  fprintf(stderr, "%s: number of source XML-bytes ~= %lu\n", prog, cxdata->data[cxdata.len-1].xoff);
 #endif
 
   //-- create (tx_byte_index => cx_record) lookup vector
   tx2cxIndex(&txb2cx, &cxdata);
 #ifdef VERBOSE_IO
-  fprintf(stderr, "%s: initialized %lu-element .tx-byte => .cx-record index\n", prog, txb2cx->len);
+  fprintf(stderr, "%s: initialized %lu-element .tx-byte => .cx-record index\n", prog, txb2cx.len);
 #endif
 
   //-- create (txt_byte_index => cx_record_or_NULL) lookup vector
  txt2cxIndex(&txtb2cx, &bxdata, &txb2cx);
 #ifdef VERBOSE_IO
-  fprintf(stderr, "%s: initialized %lu-element .txt-byte => .cx-record index\n", prog, txtb2cx->len);
+  fprintf(stderr, "%s: initialized %lu-element .txt-byte => .cx-record index\n", prog, txtb2cx.len);
 #endif
 
   //-- print XML root element

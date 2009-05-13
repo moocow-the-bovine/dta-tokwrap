@@ -73,9 +73,14 @@ const char *get_event_context(XML_Parser xp, int *len)
 /*======================================================================
  * Utils: expat: File Parsing
  */
-//-- n_xmlbytes_read = expat_parse_file(xp,f)
+
+// n_xmlbytes_read = expat_parse_file(xp,f,filename)
 //   + exit()s on error
 ByteOffset expat_parse_file(XML_Parser xp, FILE *f_in, const char *filename_in);
+
+// n_xmlbytes_read = expat_parse_buffer(xp,buf,buflen,srcname)
+//   + exit()s on error
+ByteOffset expat_parse_string(XML_Parser xp, const char *buf, int buflen, const char *srcname);
 
 
 #endif /* DTATW_EXPAT_H */

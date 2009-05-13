@@ -41,31 +41,10 @@ pod2usage({
 	   -message=>"Not enough arguments given!",
 	   -exitval=>0,
 	   -verbose=>0,
-	  }) if (@ARGV < 3);
+	  }) if (@ARGV < 2);
 
 ##-- command-line: arguments
-our ($txmlfile, $cxmlfile, $cxfile) = @ARGV;
-
-##======================================================================
-## Subs: .cx data
-
-## \%id2pos = loadCxData($cxfilename)
-##   + s.t. ($xoff,$xlen) = split(/ /,$id2pos{$c_id})
-sub loadCxData {
-  my $cxfile = shift;
-  open(CXDATA,"<$cxfile") or die("$prog: open failed for .cx file '$cxfile': $!");
-  my $id2pos = {};
-  my ($id,$xoff,$xlen,$rest, $cx);
-  while (<CXDATA>) {
-    chomp;
-    next if (m/^%%/ || m/^\s*$/);
-    ($id,$xoff,$xlen,$rest) = split(/\t/,$_,4);
-    next if ($id eq '-' || $id =~ m/^\$/); ##-- ignore pseudo-records
-    $id2pos->{$id} = "$xoff $xlen";
-  }
-  close(CXDATA);
-  return $id2pos;
-}
+our ($txmlfile, $cxmlfile) = @ARGV;
 
 ##======================================================================
 ## Subs: .char.xml
@@ -89,44 +68,109 @@ sub loadCharXmlFile {
 
 
 ##======================================================================
-## Subs: XML::Parser
+## Subs: .t.xml stuff
 
 ##--------------------------------------------------------------
 ## XML::Parser handlers (for .t.xml file)
 
-## undef = cb_start($expat, $elt,%attrs)
 our ($_xp, $_elt, %_attrs);
-our ($s_id, $w_id);
-our $wdata = {}; ##-- ($s_id,@c_ids) = split(/ /,$wdata->{$wid})
-sub cb_start {
+our ($sid,$wid) = ('','');
+
+our @wids    = qw();  ##-- ($w_id, ...), in .t.xml document order
+our %wid2sid = qw();  ##-- ($w_id => $s_id, ...)
+our %cid2wid = qw();  ##-- ($c_id => $w_id, ...)
+
+## undef = cb_start($expat, $elt,%attrs)
+sub txml_cb_start {
   ($_xp,$_elt,%_attrs) = @_;
   if ($_elt eq 's') {
-    $s_id = $_attrs{'xml:id'};
+    $sid = $_attrs{'xml:id'};
   }
   elsif ($_elt eq 'w') {
-    return if (!defined($w_id = $_attrs{'xml:id'}));
-    $wdata->{$w_id} = ($s_id||'').' '.$_attrs{'c'};
+    return if (!defined($wid = $_attrs{'xml:id'}));  ##-- ignore tokens without an @xml:id
+    push(@wids,$wid);
+    $wid2sid->{$wid} = $sid;
+    foreach (grep {defined($_) && $_ ne ''} split(/ /,$_attrs{'c'})) {
+      $cid2wid->{$_} = $wid;
+    }
   }
 }
+
+##======================================================================
+## Subs: .char.xml stuff
+
+##--------------------------------------------------------------
+## XML::Parser handlers (for .t.xml file)
+
+our ($total_depth,$text_depth);
+our ($cid);
+
+## undef = cb_init($expat)
+sub cxml_cb_init {
+  #($_xp) = @_;
+  $wid = $sid = '';
+  $total_depth = $text_depth = 0;
+}
+
+## undef = cb_xmldecl($xp, $version, $encoding, $standalone)
+sub cxml_cb_xmldecl {
+  cxml_cb_catchall(@_);
+  $outfh->print("\n<!-- File created by $prog -->\n");
+}
+
+## undef = cb_start($expat, $elt,%attrs)
+sub cxml_cb_start {
+  #($_xp,$_elt,%_attrs) = @_;
+  ++$total_depth;
+  if ($_[1] eq 'c') {
+    %_attrs = @_[2..$#_];
+    $cid = $_attrs{'xml:id'};
+    ## ??
+  }
+  elsif ($_[1] eq 'text') {
+    ++$text_depth;
+  }
+}
+
+## undef = cb_end($expat, $elt)
+sub cxml_cb_end {
+  #($_xp,$_elt) = @_;
+  --$total_depth;
+}
+
+## undef = cb_char($expat,$string)
+#*cxml_cb_char = \&cxml_cb_catchall;
+
+## undef = cb_catchall($expat, ...)
+##  + catch-all; just prints original document input string
+sub cxml_cb_catchall {
+  $outfh->print($_[0]->original_string);
+}
+
+## undef = cb_default($expat, $str)
+*cxml_cb_default = \&cxml_cb_catchall;
+
+
+
 
 ##======================================================================
 ## MAIN
 
 ##-- initialize XML::Parser (for .t.xml file)
-$xp = XML::Parser->new(
-		       ErrorContext => 1,
-		       ProtocolEncoding => 'UTF-8',
-		       #ParseParamEnt => '???',
-		       Handlers => {
-				    #Init  => \&cb_init,
-				    #Char  => \&cb_char,
-				    Start => \&cb_start,
-				    #End   => \&cb_end,
-				    #Default => \&cb_default,
-				    #Final => \&cb_final,
-				   },
-		      )
-  or die("$prog: couldn't create XML::Parser");
+$xp_txml = XML::Parser->new(
+			    ErrorContext => 1,
+			    ProtocolEncoding => 'UTF-8',
+			    #ParseParamEnt => '???',
+			    Handlers => {
+					 #Init  => \&cb_init,
+					 #Char  => \&cb_char,
+					 Start => \&txml_cb_start,
+					 #End   => \&cb_end,
+					 #Default => \&cb_default,
+					 #Final => \&cb_final,
+					},
+			   )
+  or die("$prog: couldn't create XML::Parser for .t.xml file");
 
 ##-- initialize: @ARGV
 push(@ARGV,'-') if (!@ARGV);
@@ -136,22 +180,35 @@ $outfile = '-' if (!defined($outfile));
 our $outfh = IO::File->new(">$outfile")
   or die("$prog: open failed for output file '$outfile': $!");
 
-##-- load .t.xml records
-$xp->parsefile($txmlfile);
-print STDERR "$prog: loaded ", scalar(keys(%$wdata)), " token records from '$txmlfile'\n";
+##-- load .t.xml records: @wids, %cid2wid, %wid2sid
+$xp_txml->parsefile($txmlfile);
+print STDERR "$prog: loaded ", scalar(@wids), " token records from '$txmlfile'\n";
 
 ##-- load .char.xml buffer
 our $cxmlbuf = '';
 loadCharXmlFile($cxmlfile,\$cxmlbuf);
 print STDERR "$prog: buffered ", length($cxmlbuf), " XML bytes from '$cxmlfile'\n";
 
-##-- load .cx records
-our $cid2pos = loadCxData($cxfile)
-  or die("$prog: loadCxData($cxfile) failed: $!");
-print STDERR "$prog: loaded ", scalar(keys(%$cid2pos)), " .cx records from '$cxfile'\n";
+##-- splice in sentences & tokens: directly during parse of .chr.xml file
+$xp_cxml = XML::Parser->new(
+			    ErrorContext => 1,
+			    ProtocolEncoding => 'UTF-8',
+			    #ParseParamEnt => '???',
+			    Handlers => {
+					 Init   => \&cxml_cb_init,
+					 XmlDecl => \&cxml_cb_xmldecl,
+					 #Char  => \&cxml_cb_char,
+					 Start  => \&cxml_cb_start,
+					 End    => \&cxml_cb_end,
+					 Default => \&cxml_cb_default,
+					 #Final   => \&cxml_cb_final,
+					},
+			   )
+  or die("$prog: couldn't create XML::Parser for .char.xml file");
 
-##-- splice in tokens
-foreach 
+
+
+__END__
 
 =pod
 
@@ -161,7 +218,7 @@ dtatw-txml2master.perl - splice tokenizer output into original .char.xml files
 
 =head1 SYNOPSIS
 
- dtatw-txml2master.perl [OPTIONS] T_XML_FILE CHAR_XML_FILE CXFILE
+ dtatw-txml2master.perl [OPTIONS] T_XML_FILE CHAR_XML_FILE
 
  General Options:
   -help                  # this help message

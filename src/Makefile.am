@@ -16,7 +16,8 @@ bin_PROGRAMS = \
 	dtatw-tok2xml \
 	dtatw-txml2wxml \
 	dtatw-txml2sxml \
-	dtatw-txml2axml
+	dtatw-txml2axml \
+	dtatw-txml2master
 
 EXTRA_PROGRAMS = dtatw-cxlexer dtatw-txml2master
 
@@ -60,6 +61,8 @@ dtatw_txml2axml_LDADD   = $(EXPAT_LIBS)
 
 dtatw_txml2master_SOURCES = dtatw-txml2master.c $(common_deps) $(expat_deps)
 dtatw_txml2master_LDADD   = $(EXPAT_LIBS)
+
+extra: dtatw-txml2master
 
 ##-----------------------------------------------------------------------
 ## Dist
