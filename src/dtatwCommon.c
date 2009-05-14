@@ -1,4 +1,5 @@
 #include "dtatwCommon.h"
+#include <sys/stat.h>
 
 /*======================================================================
  * Globals
@@ -38,6 +39,36 @@ char *file_basename(char *dst, const char *src, const char *suff, int srclen, in
   dst[base1-base0] = '\0';
 
   return dst;
+}
+
+/*======================================================================
+ * Utils: slurp
+ */
+
+//--------------------------------------------------------------
+off_t file_size(FILE *f)
+{
+  struct stat st;
+  if (fstat(fileno(f), &st) != 0) {
+    fprintf(stderr, "file_size(): ERROR: %s\n", strerror(errno));
+    exit(255);
+  }
+  return st.st_size;
+}
+
+//--------------------------------------------------------------
+size_t file_slurp(FILE *f, char **bufp, size_t buflen)
+{
+  size_t nread=0;
+  if (buflen==0) {
+    size_t nwanted = file_size(f) - ftello(f);
+    *bufp = (char*)malloc(nwanted);
+    assert2(*bufp != NULL, "malloc failed");
+    buflen = nwanted;
+  }
+  assert2(bufp != NULL && *bufp != NULL, "bad buffer for file_slurp()");
+  nread = fread(*bufp, sizeof(char), buflen, f);
+  return nread;
 }
 
 /*======================================================================
@@ -126,7 +157,7 @@ cxData *cxDataLoad(cxData *cxd, FILE *f)
     //-- text
     s0 = s1+1;
     s1 = next_tab_z(s0);
-    cx.text = cx_text_string(text_s, s1-s0);
+    cx.text = cx_text_string(s0, s1-s0);
 #endif
 
     cxDataPush(cxd, &cx);
@@ -146,7 +177,7 @@ char *cx_text_string(char *src, int src_len)
   char *dst = (char*)malloc(src_len);
   for (i=0,j=0; src[i] && i < src_len; i++,j++) {
     switch (src[i]) {
-    case '\\':
+    case '\\': {
       i++;
       switch (src[i]) {
       case '0': dst[j] = '\0'; break;
@@ -155,12 +186,14 @@ char *cx_text_string(char *src, int src_len)
       case '\\': dst[j] = '\\'; break;
       default: dst[j] = src[i]; break;
       }
+    }
     default:
       dst[j] = src[i];
       break;
     }
   }
   dst[j] = '\0';
+  return dst;
 }
 
 
@@ -364,4 +397,40 @@ Offset2CxIndex *txt2cxIndex(Offset2CxIndex *txto2cx, bxData *bxd, Offset2CxIndex
   }
 
   return txto2cx;
+}
+
+//--------------------------------------------------------------
+/* bx2cxIndex()
+ *  + allocates & populates cx2bx: bxRecord *bx = cx2bx[cx_index]
+ *  + requires populated cxd, bxd
+ */
+bxRecord **cx2bxIndex(cxData *cxd, bxData *bxd, Offset2CxIndex *tx2cx)
+{
+  bxRecord **cx2bx;
+  ByteOffset bxi, txi, cxi;
+
+  //-- sanity checks
+  assert(cxd != NULL);
+  assert(bxd != NULL);
+  assert(tx2cx != NULL);
+  assert(cxd->data != NULL);
+  assert(bxd->data != NULL);
+  assert(tx2cx->data != NULL);
+
+  //-- allocate index vector
+  cx2bx = (bxRecord**)malloc(cxd->len*sizeof(bxRecord*));
+  assert2(cx2bx != NULL, "malloc failed");
+
+  //-- populate index vector
+  for (bxi=0; bxi < bxd->len; bxi++) {
+    bxRecord *bx = &bxd->data[bxi];
+    for (txi=0; txi < bx->tlen; txi++) {
+      cxRecord *cx = tx2cx->data[txi];
+      if (cx==NULL) continue; //-- skip pseudo-records
+      cxi = cx-&cxd->data[0];
+      cx2bx[cxi] = bx;
+    }
+  }
+
+  return cx2bx;
 }

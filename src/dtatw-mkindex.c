@@ -202,7 +202,6 @@ void cb_end(TokWrapData *data, const XML_Char *name)
   data->is_chardata = 0;
   XML_DefaultCurrent(data->xp);
   data->total_depth--;
-
 }
 
 //--------------------------------------------------------------
