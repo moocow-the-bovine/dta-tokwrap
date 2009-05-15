@@ -49,9 +49,10 @@ our ($txmlfile, $cxmlfile) = @ARGV;
 ##======================================================================
 ## Subs: .char.xml
 
-## \$str = loadCharXmlFile($filename)
-## \$str = loadCharXmlFile($filename,\$str)
-sub loadCharXmlFile {
+## \$str = bufferCharXmlFile($filename)
+## \$str = bufferCharXmlFile($filename,\$str)
+##   + buffers $filename contents to $str
+sub bufferCharXmlFile {
   my ($file,$bufr) = @_;
   if (!$bufr) {
     my $buf = '';
@@ -76,18 +77,20 @@ sub loadCharXmlFile {
 our ($_xp, $_elt, %_attrs);
 our ($sid,$wid) = ('','');
 
-our @wids    = qw();  ##-- ($w_id, ...), in .t.xml document order
-our %wid2sid = qw();  ##-- ($w_id => $s_id, ...)
-our %cid2wid = qw();  ##-- ($c_id => $w_id, ...)
+our @wids    = qw();  ##-- $wid = $wids[$wix];           # <w> id-strings in .t.xml doc-order (serialized order)
+our %wid2sid = qw();  ##-- $sid = $wid2sid{$wid};        # <s> id-strings from <w> id-strings
+our %cid2wid = qw();  ##-- $wid = $cid2wid{$cid}         # <w> id-strings from <c> id-strings
 
 ## undef = cb_start($expat, $elt,%attrs)
 sub txml_cb_start {
-  ($_xp,$_elt,%_attrs) = @_;
-  if ($_elt eq 's') {
+  #($_xp,$_elt,%_attrs) = @_;
+  if ($_[1] eq 's') {
+    %_attrs = @_[2..$#_];
     $sid = $_attrs{'xml:id'};
   }
-  elsif ($_elt eq 'w') {
-    return if (!defined($wid = $_attrs{'xml:id'}));  ##-- ignore tokens without an @xml:id
+  elsif ($_[1] eq 'w') {
+    %_attrs = @_[2..$#_];
+    $wid = $_attrs{'xml:id'};
     push(@wids,$wid);
     $wid2sid->{$wid} = $sid;
     foreach (grep {defined($_) && $_ ne ''} split(/ /,$_attrs{'c'})) {
@@ -100,26 +103,29 @@ sub txml_cb_start {
 ## Subs: .char.xml stuff
 
 ##--------------------------------------------------------------
-## XML::Parser handlers (for .t.xml file)
+## XML::Parser handlers: cxml2w (.char.xml -> .cw.xml)
 
+our ($cwxmlbuf);
 our ($total_depth,$text_depth);
 our ($cid);
+our %wid2nsegs = qw();
 
 ## undef = cb_init($expat)
-sub cxml_cb_init {
+sub cxml2w_cb_init {
   #($_xp) = @_;
-  $wid = $sid = '';
+  $cwxmlbuf = '';
+  $wid = '';
   $total_depth = $text_depth = 0;
 }
 
 ## undef = cb_xmldecl($xp, $version, $encoding, $standalone)
-sub cxml_cb_xmldecl {
+sub cxml2w_cb_xmldecl {
   cxml_cb_catchall(@_);
-  $outfh->print("\n<!-- File created by $prog -->\n");
+  $cwxmlbuf .= "\n<!-- File created by $prog -->\n";
 }
 
 ## undef = cb_start($expat, $elt,%attrs)
-sub cxml_cb_start {
+sub cxml2w_cb_start {
   #($_xp,$_elt,%_attrs) = @_;
   ++$total_depth;
   if ($_[1] eq 'c') {
@@ -133,22 +139,22 @@ sub cxml_cb_start {
 }
 
 ## undef = cb_end($expat, $elt)
-sub cxml_cb_end {
+sub cxml2w_cb_end {
   #($_xp,$_elt) = @_;
   --$total_depth;
 }
 
 ## undef = cb_char($expat,$string)
-#*cxml_cb_char = \&cxml_cb_catchall;
+#*cxml2w_cb_char = \&cxml_cb_catchall;
 
 ## undef = cb_catchall($expat, ...)
-##  + catch-all; just prints original document input string
-sub cxml_cb_catchall {
-  $outfh->print($_[0]->original_string);
+##  + prints original document input string
+sub cxml2w_cb_catchall {
+  $cwxmlbuf .= $_[0]->original_string;
 }
 
 ## undef = cb_default($expat, $str)
-*cxml_cb_default = \&cxml_cb_catchall;
+*cxml2w_cb_default = \&cxml2w_cb_catchall;
 
 
 
@@ -186,25 +192,29 @@ print STDERR "$prog: loaded ", scalar(@wids), " token records from '$txmlfile'\n
 
 ##-- load .char.xml buffer
 our $cxmlbuf = '';
-loadCharXmlFile($cxmlfile,\$cxmlbuf);
+bufferCharXmlFile($cxmlfile,\$cxmlbuf);
 print STDERR "$prog: buffered ", length($cxmlbuf), " XML bytes from '$cxmlfile'\n";
 
-##-- splice in sentences & tokens: directly during parse of .chr.xml file
-$xp_cxml = XML::Parser->new(
-			    ErrorContext => 1,
-			    ProtocolEncoding => 'UTF-8',
-			    #ParseParamEnt => '???',
-			    Handlers => {
-					 Init   => \&cxml_cb_init,
-					 XmlDecl => \&cxml_cb_xmldecl,
-					 #Char  => \&cxml_cb_char,
-					 Start  => \&cxml_cb_start,
-					 End    => \&cxml_cb_end,
-					 Default => \&cxml_cb_default,
-					 #Final   => \&cxml_cb_final,
-					},
-			   )
-  or die("$prog: couldn't create XML::Parser for .char.xml file");
+##-- splice in <w> elements for tokens
+$xp_cxml2w = XML::Parser->new(
+			      ErrorContext => 1,
+			      ProtocolEncoding => 'UTF-8',
+			      #ParseParamEnt => '???',
+			      Handlers => {
+
+					   Init   => \&cxml2w_cb_init,
+					   XmlDecl => \&cxml2w_cb_xmldecl,
+					   #Char  => \&cxml2w_cb_char,
+					   Start  => \&cxml2w_cb_start,
+					   End    => \&cxml2w_cb_end,
+					   Default => \&cxml2w_cb_default,
+					   #Final   => \&cxml2w_cb_final,
+					  },
+			     )
+  or die("$prog: couldn't create XML::Parser for .char.xml->.cw.xml conversion");
+
+$xp_xml2w->parse($cxmlbuf);
+print STDERR "$prog: ???\n";
 
 
 
