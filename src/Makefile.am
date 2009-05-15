@@ -16,8 +16,9 @@ bin_PROGRAMS = \
 	dtatw-tok2xml \
 	dtatw-txml2wxml \
 	dtatw-txml2sxml \
-	dtatw-txml2axml \
-	dtatw-txml2master
+	dtatw-txml2axml
+
+#	dtatw-txml2master
 
 EXTRA_PROGRAMS = dtatw-cxlexer dtatw-txml2master
 

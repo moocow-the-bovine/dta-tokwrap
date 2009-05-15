@@ -33,11 +33,6 @@ const char *posAttr = "b";         //-- .t.xml byte-position attribute
 const char *cAttr    = "c";        //-- .t.xml token-chars attribute (space-separated xml:ids from .cx file)
 const char *idAttr   = "xml:id";   //-- .t.xml id attribute
 
-
-//-- output xml structure constants (should jive with TEI, DTA "master" format)
-#define REF_ATTR "n"
-#define REF_HASH "#"
-
 /*======================================================================
  * Utils: .cx, .tx, .bx files (see also dtatwCommon.[ch])
  */
@@ -57,21 +52,17 @@ Offset2CxIndex txtb2cx = {NULL,0};  //-- cxRecord *cx = txtb2cx->data[txt_byte_i
 #define TXML_ID_BUFLEN 16
 
 typedef struct {
-  ByteOffset  s_i;                    //-- index of sentence claiming this token
-  char        w_id[TXML_ID_BUFLEN];   //-- xml:id of this token
-  ByteOffset  w_txtoff;               //-- .txt-byte offset of this <w>
-  ByteOffset  w_txtlen;               //-- .txt-byte length of this <w>
-  short       w_nsegs;                //-- number of (discontinuous) segments this token requires
-  short       w_seg;                  //-- index of next segment awaited (w_seg < w_nsegs)
-} txmlToken;
-
-typedef struct {
   char        s_id[TXML_ID_BUFLEN];   //-- xml:id of this sentence
-  txmlToken  *w_first;                //-- pointer to first <w> of this <s>
-  txmlToken  *w_last;                 //-- pointer to last  <w> of this <s>
   short       s_nsegs;                //-- number of (discontinuous) segments this sentence requires
   short       s_seg;                  //-- index of next segment awaited (s_seg < s_nsegs)
 } txmlSentence;
+
+typedef struct {
+  ByteOffset  s_i;                    //-- index of sentence claiming this token
+  char        w_id[TXML_ID_BUFLEN];   //-- xml:id of this token
+  short       w_nsegs;                //-- number of (discontinuous) segments this token requires
+  short       w_seg;                  //-- index of next segment awaited (w_seg < w_nsegs)
+} txmlToken;
 
 
 typedef struct {
@@ -96,13 +87,25 @@ typedef struct {
 txmlData txmldata = { NULL,0,0, NULL,0,0 };
 
 //--------------------------------------------------------------
+typedef enum {
+  cxafNone    = 0x0000,  //-- nothing special
+  //
+  cxafWOK       = 0x0001,  //-- set iff this <c> is claimed by some <w>
+  cxafWBeginSeg = 0x0002,  //-- set iff this is FIRST <c> of some segment of the claiming <w>
+  cxafWEndSeg   = 0x0004,  //-- set iff this is LAST  <c> of some segment of the claiming <w>
+  //
+  cxafSOK       = 0x0008,  //-- set iff this <c> is claimed by some <s>
+  cxafSBeginSeg = 0x0010,  //-- set iff this is FIRST <c> of some segment of the claiming <w>
+  cxafSEndSeg   = 0x0020,  //-- set iff this is LAST  <c> of some segment of the claiming <w>
+  //
+  cxafAll     = 0xffff   //-- mask of all known flags (and then some)
+} cxAuxFlagsE;
+typedef unsigned int cxAuxFlags;
+
+
 typedef struct {
-  ByteOffset w_i;       //-- index of token claiming this <c>    [NOT a pointer, since realloc() invalidates those!]
-  ByteOffset s_i;       //-- index of sentence claiming this <c> [ditto]
-  unsigned w_ok    : 1; //-- set iff this <c> is claimed by some <w>
-  unsigned s_ok    : 1; //-- set iff this <c> is claimed by some <s>
-  unsigned w_begin : 1; //-- set iff this <c> begins its <w>
-  unsigned w_end   : 1; //-- set iff this <c> ends its <w>
+  ByteOffset  w_i;       //-- index of token claiming this <c> [NOT a pointer, since realloc() invalidates those!]
+  cxAuxFlags flags;      //-- mask of 'cxaf*' flags
 } cxAuxRecord;
 
 cxAuxRecord  *cxaux = NULL; //-- cxAuxRecord *cxa = &cxaux[c_index]
@@ -185,13 +188,14 @@ void txml_cb_start(txmlParseData *data, const XML_Char *name, const XML_Char **a
     } else {
       data->s_cur.s_id[0] = '\0';
     }
-    data->w_cur.s_i = data->txd->s_len;
+    data->w_cur.s_i   = data->txd->s_len;
     txmlDataPushSentence(data->txd, &data->s_cur);
   }
   else if (strcmp(name,wElt)==0) {
     //-- w: parse relevant attribute(s)
     const XML_Char *w_id=NULL, *w_loc=NULL; //, *w_c=NULL
     char *w_loc_tail;
+    ByteOffset w_txtoff, w_txtlen;
     ByteOffset w_i;
     int i;
     for (i=0; attrs[i] && (!w_id || !w_loc); i += 2) {
@@ -207,26 +211,25 @@ void txml_cb_start(txmlParseData *data, const XML_Char *name, const XML_Char **a
       data->w_cur.w_id[0] = '\0';
     }
 
-    //-- w: parse .txt location
-    data->w_cur.w_txtoff = strtoul(w_loc,      &w_loc_tail, 0);
-    data->w_cur.w_txtlen = strtoul(w_loc_tail, NULL,        0);
-
     //-- w: push token record
     w_i = data->txd->w_len;
     txmlDataPushToken(data->txd, &data->w_cur);
+
+    //-- w: parse .txt location
+    w_txtoff = strtoul(w_loc,      &w_loc_tail, 0);
+    w_txtlen = strtoul(w_loc_tail, NULL,        0);
 
     //-- w: populate cxaux
     // + note that we don't actually parse the c-ids from the 'c' attribute
     // + rather, we iterate lookup in a handy index vector (txtb2cx->data[])
     // + advantage: O(1) lookup for each <c>, so O(length(w.text)) for each token <w>
     // + disadvantage: requires that our indices (.t.xml, .cx, .bx) are consistent with the input file (.char.xml)
-    for (i=0; i < data->w_cur.w_txtlen; i++) {
-      cxRecord *cx = txtb2cx.data[data->w_cur.w_txtoff+i];
+    for (i=0; i < w_txtlen; i++) {
+      cxRecord *cx = txtb2cx.data[w_txtoff+i];
       if (cx != NULL) {
 	cxAuxRecord *cxa = &cxaux[ cx - cxdata.data ];
-	cxa->w_i  = w_i;
-	cxa->s_i  = data->w_cur.s_i;
-	cxa->w_ok = 1;
+	cxa->w_i    = w_i;
+	cxa->flags |= (cxafWOK|cxafSOK); //-- hack: we're just blithely assuming all <w>s are claimed by valid <s>s
       }
     }
   }
@@ -241,52 +244,6 @@ void txml_cb_end(txmlParseData *data, const XML_Char *name)
 }
 */
 
-
-//--------------------------------------------------------------
-txmlData *txmlDataExpand(txmlData *txd)
-{
-  ByteOffset wi, si, i;
-  txmlToken    *w;
-  txmlSentence *s;
-  cxRecord  *cx, *cx0, *cx1;
-  cxAuxRecord *cxa, *cxa0, *cxa1;
-
-  //-- mark token boundaries
-  for (wi=0; wi < txd->w_len; wi++) {
-    w = &txd->w_data[wi];
-
-    //-- token-initial <c>
-    for (i=0; i < w->w_txtlen && (cx0=txtb2cx.data[w->w_txtoff+i])==NULL; i++) ;
-    if (cx0 != NULL) cxaux[cx0-cxdata.data].w_begin = 1;
-
-    //-- token-final <c>
-    for (i=w->w_txtlen; i>0 && (cx1=txtb2cx.data[w->w_txtoff+i-1])==NULL; i--) ;
-    if (cx1 != NULL) cxaux[cx1-cxdata.data].w_end = 1;
-
-    //-- sentence-initial, -final <w>
-    if (wi==0 || w->s_i != (w-1)->s_i) {
-      txd->s_data[w->s_i].w_first = w;
-      if (wi > 0)
-	txd->s_data[(w-1)->s_i].w_last = (w-1);
-    }
-  }
-
-  //-- assign <s>-indices to cxaux records
-  for (si=0; si < txd->s_len; si++) {
-    s = &txd->s_data[si];
-    assert(s->w_first != NULL);
-    assert(s->w_last != NULL);
-    for (i=s->w_first->w_txtoff; i < s->w_last->w_txtoff+s->w_last->w_txtlen; i++) {
-      cx = txtb2cx.data[i];
-      if (cx==NULL) continue;
-      cxa = &cxaux[cx-cxdata.data];
-      cxa->s_i  = si;
-      cxa->s_ok = 1;
-    }
-  }
-
-  return txd;
-}
 
 //--------------------------------------------------------------
 txmlData *txmlDataLoad(txmlData *txd, FILE *f, const char *filename)
@@ -315,210 +272,169 @@ txmlData *txmlDataLoad(txmlData *txd, FILE *f, const char *filename)
 
   //-- parse XML
   expat_parse_file(xp, f, filename);
-  XML_ParserFree(xp);
 
-  return txmlDataExpand(txd);
+  return txd;
 }
 
 /*======================================================================
  * Misc
  */
-//-- (nothing here)
 
-/*======================================================================
- * Utils: .char.xml file(s): buffering
- */
+#define DEBUG_DISCONT 1
 
 //--------------------------------------------------------------
-char   *cxmlbuf = NULL;
-size_t  cxmllen = 0;
-
-//--------------------------------------------------------------
-void cxmlBufferLoad(FILE *f)
+ByteOffset mark_discontinuous_segments(txmlData *txd, bxData *bxd, cxData *cxd, cxAuxRecord *cxaux)
 {
-  size_t nwanted = file_size(f);
-  size_t nread   = file_slurp(f, &cxmlbuf, 0);
-  assert2(nread==nwanted, "short slurp in cxmlBufferLoad()");
-  cxmllen = nread;
-}
-
-//--------------------------------------------------------------
-typedef struct {
-  XML_Parser   xp;             //-- underlying expat parser
-  const char  *srcname;        //-- source filename (for error messages)
-  FILE        *f_out;          //-- output file
-  int          text_depth;     //-- total text depth
-  ByteOffset   cxi;            //-- index of next expected <c>
-} cxmlParseData;
-
-// CXML_CHECK_IDS : whether to perform consistency checks on .char.xml //c/@xml:id
-#define CXML_CHECK_IDS 1
-
-// CXML_CHECK_LOC : whether to perform consistency checks on .char.xml byte-offsets
-#define CXML_CHECK_LOC 1
-
-#if CXML_CHECK_IDS || CXML_CHECK_LOC
-# define CXML_CHECK_START 1
+  ByteOffset txtbi, ndiscont=0;
+  cxRecord     *cx=NULL, *cx_prev=NULL;
+  cxAuxRecord  *cxa=NULL, *cxa_prev=NULL;
+  txmlToken    *w=NULL, *w_prev=NULL;
+  txmlSentence *s=NULL, *s_prev=NULL;
+#if DEBUG_DISCONT
+  //-- debug
+  ByteOffset ns=0, nw=0, nsseg=0, nwseg=0;
 #endif
-
-//-- debug
-#define CXML_S_INDENT  "\n"
-#define CXML_S_OUTDENT "\n"
-#define CXML_S_EXTRA_FMT  " seg=\"%d/%d\""
-#define CXML_S_EXTRA_ARGS , s->s_seg, s->s_nsegs
-
-#define CXML_INDENT_W  "\n"
-#define CXML_OUTDENT_W "\n"
-
-//--------------------------------------------------------------
-void cxml_check_start(cxmlParseData *data, cxRecord *cx, const XML_Char **attrs)
-{
-#if CXML_CHECK_IDS
-  const char *c_id, *cx_id;
-#endif
-
-#if CXML_CHECK_IDS
-  //-- check for <c>-id mismatches
-  c_id  = get_attr("xml:id",attrs);
-  cx_id = cx->id && cx->id[0]=='$' ? NULL : cx->id;
-  if ( (cx_id || c_id) && !(cx_id && c_id && strcmp(cx_id,c_id)==0) ) {
-    fprintf(stderr, "%s: <c>-id mismatch in '%s' at line %d, column %d; byte %ld: expected '%s', got '%s'\n",
-	    prog,
-	    data->srcname,
-	    XML_GetCurrentLineNumber(data->xp),
-	    XML_GetCurrentColumnNumber(data->xp),
-	    XML_GetCurrentByteIndex(data->xp),
-	    (cx_id  ? cx_id : "(null)"),
-	    (c_id   ? c_id  : "(null)"));
-    exit(255);
-  }
-#endif
-
-#if CXML_CHECK_LOC
-  //-- check for <c> byte-offset mismatches
-  if ( cx->xoff != XML_GetCurrentByteIndex(data->xp) ) {
-    fprintf(stderr, "%s: <c>-offset mismatch in '%s' at line %d, column %d; id='%s'; expected offset %lu, got offset %ld\n",
-	    prog,
-	    data->srcname,
-	    XML_GetCurrentLineNumber(data->xp),
-	    XML_GetCurrentColumnNumber(data->xp),
-	    (cx->id ? cx->id : "(null)"),
-	    cx->xoff,
-	    XML_GetCurrentByteIndex(data->xp));
-
-  }
-#endif
-
-  return;
-}
-
-//--------------------------------------------------------------
-void cxml_cb_start(cxmlParseData *data, const XML_Char *name, const XML_Char **attrs)
-{
-  cxRecord    *cx;
-  cxAuxRecord *cxa;
-  txmlToken    *w=NULL;
-  txmlSentence *s=NULL;
-
-  if (data->text_depth && (strcmp(name,"c")==0 || strcmp(name,"lb")==0)) {
-    cx  = &cxdata.data[data->cxi];
-    cxa = &cxaux[data->cxi];
-
-#if CXML_CHECK_START
-    //-- consistency check(s)
-    cxml_check_start(data, cx, attrs);
-#endif
-
-#if 0 /* CONTINUE HERE */
-    //-- get token- & sentence-pointers
-    if ( cxa->w_ok ) {
-      w = &txmldata.w_data[cxa->w_i];
-      s = &txmldata.s_data[w->s_i];
-    } else {
-      w = NULL;
-      //s = s;
-    }
-
-    //-- check for sentence(-segment) BEGIN
-    if (cxa->s_segBegin && s) {
-      const char *fmt = CXML_S_INDENT "<s xml:id=\"%s\">" CXML_S_OUTDENT;
-      s->s_seg++;
-      if (s->s_nsegs > 1) {
-	if      (s->s_seg==1)          { fmt=CXML_S_INDENT "<s part=\"I\" xml:id=\"%s\"" CXML_S_EXTRA_FMT ">" CXML_S_OUTDENT; }
-	else if (s->s_seg==s->s_nsegs) { fmt=CXML_S_INDENT "<s part=\"M\" " REF_ATTR "=\"" REF_HASH "%s\"" CXML_S_EXTRA_FMT ">" CXML_S_OUTDENT; }
-	else                           { fmt=CXML_S_INDENT "<s part=\"F\" " REF_ATTR "=\"" REF_HASH "%s\"" CXML_S_EXTRA_FMT ">" CXML_S_OUTDENT; }
-      }
-      fprintf(data->f_out, fmt, s->s_id CXML_S_EXTRA_ARGS);
-    }
-
-    //-- CONTINUE HERE
-    XML_DefaultCurrent(data->xp);
-
-    //-- check for sentence(-segment) END
-    if (cxa->s_segEnd && s) {
-      fprintf(data->f_out, CXML_S_INDENT "</s><!-- END %s" CXML_S_EXTRA_FMT " -->" CXML_S_OUTDENT, s->s_id CXML_S_EXTRA_ARGS);
-    }
-#endif
-
-    return;
-  }
-  else if (strcmp(name,"text")==0) {
-    data->text_depth++;
-  }
-
-  XML_DefaultCurrent(data->xp);
-}
-
-//--------------------------------------------------------------
-void cxml_cb_end(cxmlParseData *data, const XML_Char *name)
-{
-  if (data->text_depth && (strcmp(name,"c")==0 || strcmp(name,"lb")==0)) {
-    data->cxi++;
-  }
-  else if (strcmp(name,"text")==0) {
-    data->text_depth--;
-  }
-  XML_DefaultCurrent(data->xp);
-}
-
-//--------------------------------------------------------------
-void cxml_cb_default(cxmlParseData *data, const XML_Char *s, int len)
-{
-  int ctx_len;
-  const XML_Char *ctx = get_event_context(data->xp, &ctx_len);
-  fwrite(ctx, sizeof(XML_Char),ctx_len, data->f_out);
-}
-
-//--------------------------------------------------------------
-void cxmlBufferParse(const char *filename, FILE *f_out)
-{
-  cxmlParseData data;
-  XML_Parser xp;
 
   //-- sanity checks
-  assert(cxmlbuf != NULL);
-  assert(cxmllen > 0);
+  assert(txd != NULL);
+  assert(bxd != NULL);
+  assert(cxd != NULL);
+  assert(cxaux != NULL);
+  assert(txtb2cx.len > 0);
+  //
+  assert(txd->w_data != NULL);
+  assert(txd->s_data != NULL);
+  assert(bxd->data != NULL);
+  assert(cxd->data != NULL);
+  assert(txtb2cx.data != NULL);
 
-  //-- setup expat parser
-  xp = XML_ParserCreate("UTF-8");
-  assert2((xp != NULL), "XML_ParserCreate() failed");
-  XML_SetUserData(xp, &data);
-  XML_SetElementHandler(xp, (XML_StartElementHandler)cxml_cb_start, (XML_EndElementHandler)cxml_cb_end);
-  //XML_SetCharacterDataHandler(xp, (XML_CharacterDataHandler)cxml_cb_char);
-  XML_SetDefaultHandler(xp, (XML_DefaultHandler)cxml_cb_default);
+  //-- we iterate over (serialized) .txt-byte indices: this gets us the token- and sentence-order
 
-  //-- setup callback data
-  memset(&data,0,sizeof(data));
-  data.xp = xp;
-  data.srcname = filename;
-  data.f_out = f_out;
+  //-- scan for first .txt-byte assigned to a <c> claimed by some <w>
+  for (cx=NULL,cxa=NULL,txtbi=0; txtbi < txtb2cx.len; txtbi++) {
+    cx = txtb2cx.data[txtbi];
+    if (cx==NULL) continue;             //-- ignore "hints" & any other non-<c> stuff in .txt file
+    cxa = &cxaux[ cx - &cxd->data[0] ];
+    if ( cxa->flags & cxafWOK ) break;
+  }
+  assert2((txtbi < txtb2cx.len), "no tokens?!");
+  cx_prev  = cx;       
+  cxa_prev = cxa;
+  w_prev   = &txd->w_data[cxa_prev->w_i];
+  s_prev   = &txd->s_data[w_prev->s_i];
+  cxa_prev->flags |= (cxafWBeginSeg|cxafSBeginSeg);
+  w_prev->w_nsegs++;
+  s_prev->s_nsegs++;
+#if DEBUG_DISCONT
+  nw++;
+  ns++;
+  nwseg++;
+  nsseg++;
+#endif
 
-  //-- parse
-  expat_parse_string(xp, cxmlbuf, (int)cxmllen, filename);
+  //-- ye olde loope
+  //  + visit <c> elements in same order as tokenizer did
+  //  + i.e. (".bx" | ".txt" | ".t" | ".t.xml")-file document order
+  //  + specifically NOT ".char.xml"-file document order
+  for ( ; txtbi < txtb2cx.len; txtbi++) {
+    cx  = txtb2cx.data[txtbi];
+    if (cx==NULL)    continue;          //-- ignore "hints" & any other non-<c> stuff in .txt file
+    if (cx==cx_prev) continue;          //-- skip multibyte-<c>s we've already considered
+    cxa = &cxaux[ cx - &cxd->data[0] ];
 
-  //-- cleanup
-  XML_ParserFree(xp);
+    //-- get current token- and sentence-pointers
+    if ( cxa->flags & cxafWOK ) {
+      w = &txd->w_data[cxa->w_i];
+      s = &txd->s_data[w->s_i];
+    } else {
+      w = NULL;
+      s = NULL;
+    }
+
+    //-- check for discontinuity
+    if ( cx->xoff > cx_prev->xoff + cx_prev->xlen + CXML_ADJACENCY_TOLERANCE ) {
+
+      //-- discontinuity detected: token discontinuity?
+      if ( w && w==w_prev ) {
+	ndiscont++;
+	cxa->flags      |= cxafWBeginSeg;
+	cxa_prev->flags |= cxafWEndSeg;
+	w->w_nsegs++;
+#if DEBUG_DISCONT
+	nwseg++;
+#endif
+#if DEBUG_DISCONT && 0
+	printf("w discontinuity[%s/%s] (tol=%d,seg_n=%d): c=%s[%lu..%lu] ...[+%lu]... c=%s[%lu..%lu] \n",
+		(s ? s->s_id: "(null)"), (w ? w->w_id : "(null)"), CXML_ADJACENCY_TOLERANCE, w->w_nsegs,
+		cx_prev->id, cx_prev->xoff, (cx_prev->xoff+cx_prev->xlen),
+		(cx->xoff - cx_prev->xoff+cx_prev->xlen),
+		cx->id, cx->xoff, (cx->xoff+cx->xlen));
+#endif
+      }
+
+      //-- discontinuity detected: sentence discontinuity?
+      if ( s && s==s_prev ) {
+	ndiscont++;
+	cxa->flags      |= cxafSBeginSeg;
+	cxa_prev->flags |= cxafSEndSeg;
+	s->s_nsegs++;
+#if DEBUG_DISCONT
+	nsseg++;
+#endif
+#if DEBUG_DISCONT && 0
+	printf("s discontinuity[%s/%s] (tol=%d,seg_n=%d): c=%s[%lu..%lu] ...[+%lu]... c=%s[%lu..%lu] \n",
+		(s ? s->s_id: "(null)"), (w ? w->w_id : "(null)"), CXML_ADJACENCY_TOLERANCE, s->s_nsegs,
+		cx_prev->id, cx_prev->xoff, (cx_prev->xoff+cx_prev->xlen),
+		(cx->xoff - cx_prev->xoff+cx_prev->xlen),
+		cx->id, cx->xoff, (cx->xoff+cx->xlen));
+#endif
+      }
+    }
+
+    //-- check for token boundary
+    if (w != w_prev) {
+      if (w) {
+	w->w_nsegs++;
+	cxa->flags |= cxafWBeginSeg;
+#if DEBUG_DISCONT
+	nwseg++;
+	nw++;
+#endif
+      }
+      if (w_prev) {
+	cxa_prev->flags |= cxafWEndSeg;
+      }
+    }
+
+    //-- check for sentence boundary
+    if (s != s_prev) {
+      if (s && s->s_nsegs==0) {
+	s->s_nsegs++;
+	cxa->flags |= cxafSBeginSeg;
+#if DEBUG_DISCONT
+	nsseg++;
+	ns++;
+#endif
+      }
+      if (s_prev) {
+	cxa_prev->flags |= cxafSEndSeg;
+      }
+    }
+
+    //-- update
+    cx_prev  = cx;
+    cxa_prev = cxa;
+    w_prev   = w;
+    s_prev   = s;
+  }
+
+#if DEBUG_DISCONT
+  printf("%s: found %lu tokens in %lu segments; %lu sentences in %lu segments\n", prog, nw, nwseg, ns, nsseg);
+#endif
+
+  return ndiscont;
 }
+
 
 /*======================================================================
  * MAIN
@@ -537,6 +453,7 @@ int main(int argc, char **argv)
   FILE *f_bx   = NULL;    //-- input .bx file
   FILE *f_out  = stdout;  //-- output .char.sw.xml file
   int i;
+  ByteOffset ndiscont;
 
   //-- initialize: globals
   prog = argv[0];
@@ -605,14 +522,13 @@ int main(int argc, char **argv)
       exit(1);
     }
   }
-  assert2(f_out!=NULL, "output file required");
 
   //-- load .cx data
   cxDataLoad(&cxdata, f_cx);
   fclose(f_cx);
   f_cx = NULL;
 #ifdef VERBOSE_IO
-  fprintf(stderr, "%s: loaded %6lu records from .cx file '%s'\n", prog, cxdata.len, filename_cx);
+  fprintf(stderr, "%s: loaded %lu records from .cx file '%s'\n", prog, cxdata.len, filename_cx);
 #endif
 
   //-- load .bx data
@@ -621,19 +537,19 @@ int main(int argc, char **argv)
   f_bx = NULL;
 
 #ifdef VERBOSE_IO
-  fprintf(stderr, "%s: loaded %6lu records from .bx file '%s'\n", prog, bxdata.len, filename_bx);
+  fprintf(stderr, "%s: loaded %lu records from .bx file '%s'\n", prog, bxdata.len, filename_bx);
 #endif
   
   //-- create (tx_byte_index => cx_record) lookup vector
   tx2cxIndex(&txb2cx, &cxdata);
 #ifdef VERBOSE_INIT
-  fprintf(stderr, "%s: initialized %6lu-element .tx-byte => .cx-record index\n", prog, txb2cx.len);
+  fprintf(stderr, "%s: initialized %lu-element .tx-byte => .cx-record index\n", prog, txb2cx.len);
 #endif
 
   //-- create (txt_byte_index => cx_record_or_NULL) lookup vector
  txt2cxIndex(&txtb2cx, &bxdata, &txb2cx);
 #ifdef VERBOSE_INIT
-  fprintf(stderr, "%s: initialized %6lu-element .txt-byte => .cx-record index\n", prog, txtb2cx.len);
+  fprintf(stderr, "%s: initialized %lu-element .txt-byte => .cx-record index\n", prog, txtb2cx.len);
 #endif
 
   //-- allocate (c_index => cxAuxRecord) lookup vector
@@ -641,7 +557,7 @@ int main(int argc, char **argv)
   assert2( (cxaux!=NULL), "malloc failed");
   memset(cxaux, 0, cxdata.len*sizeof(cxAuxRecord)); //-- ... and zero the block
 #ifdef VERBOSE_INIT
-  fprintf(stderr, "%s: allocated %6lu-element auxilliary .cx-record index\n", prog, cxdata.len);
+  fprintf(stderr, "%s: allocated %lu-element auxilliary .cx-record index\n", prog, cxdata.len);
 #endif
 
   //-- load .t.xml data (expat)
@@ -650,11 +566,10 @@ int main(int argc, char **argv)
   fprintf(stderr, "%s: parsed %lu tokens in %lu sentences from .t.xml file '%s'\n", prog, txmldata.w_len, txmldata.s_len, filename_txml);
 #endif
 
-  //-- load .char.xml file into buffer (and parse it)
-  cxmlBufferLoad(f_cxml);
-  cxmlBufferParse(filename_cxml, f_out);
-#if VERBOSE_IO
-  fprintf(stderr, "%s: buffered & parsed %lu XML bytes from .char.xml file '%s'\n", prog, cxmllen, filename_cxml);
+  //-- mark discontinuous segments
+  ndiscont = mark_discontinuous_segments(&txmldata, &bxdata, &cxdata, cxaux);
+#ifdef VERBOSE_INIT
+  fprintf(stderr, "%s: found %lu discontinuities\n", prog, ndiscont);
 #endif
 
   //-- CONTINUE HERE: NOW WHAT ?!

@@ -323,6 +323,7 @@ static void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *fi
   }
   //-- output final word (in 'w0' buffer)
   memset(&w1, 0, sizeof(ttWordBuffer));
+  w1.w_len = 1; //-- hack
   tt_next_word(f_out, &w0, &w1, &s_open);
 
   //-- close open sentence if any

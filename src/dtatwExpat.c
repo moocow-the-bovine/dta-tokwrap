@@ -50,7 +50,7 @@ ByteOffset expat_parse_file(XML_Parser xp, FILE *f_in, const char *filename_in)
 }
 
 //----------------------------------------------------------------------
-ByteOffset expat_parse_buffer(XML_Parser xp, const char *buf, int buflen, const char *srcname)
+ByteOffset expat_parse_string(XML_Parser xp, const char *buf, int buflen, const char *srcname)
 {
   int status;
   status = XML_Parse(xp, buf, buflen, 1);  

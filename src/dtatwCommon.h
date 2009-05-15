@@ -53,7 +53,7 @@ extern char *CX_LB_ID; //-- default: "$LB$"
        exit(255); \
      }
 # else  /* defined(ENABLE_ASSERT) -> false */
-#  define assert(test) 
+#  define assert(test)
 #  define assert2(test,label)
 # endif /* defined(ENABLE_ASSERT) */
 #endif /* !defined(assert) */
@@ -159,10 +159,29 @@ inline static char *next_tab_z(char *s)
   return s;
 }
 
+/*======================================================================
+ * Utils: slurp
+ */
+
+// size = file_size(f)
+//  + get file size; uses fstat()
+off_t file_size(FILE *f);
+
+// slurp_file()
+//  + slurp file contents into buf
+//  + if buflen is zero, *bufp will be a newly allocated buffer
+//    which on return contains all the (remaining) bytes of the file
+//  + if buflen is nonzero, *bufp should have that many bytes allocated,
+//    and only that many bytes will be slurped
+//  + return value is number of bytes actually slurped
+size_t file_slurp(FILE *f, char **bufp, size_t buflen);
 
 /*======================================================================
  * Utils: .cx file(s)
  */
+
+// CX_WANT_TEXT : whether to include (and parse) 'text' field in cxRecord
+#define CX_WANT_TEXT 1
 
 // cxRecord : struct for character-index records as loaded from .cx file
 typedef struct {
@@ -240,6 +259,9 @@ Offset2CxIndex  *tx2cxIndex(Offset2CxIndex *txo2cx,  cxData *cxd);
 
 // txt2cxIndex(): init/alloc: cxRecord *cx = txto2cx->data[txt_byte_index]
 Offset2CxIndex *txt2cxIndex(Offset2CxIndex *txto2cx, bxData *bxd, Offset2CxIndex *txb2cx);
+
+// cx2bxIndex(): init/alloc: bxRecord *bx = cx2bx[cx_index]
+bxRecord **cx2bxIndex(cxData *cxd, bxData *bxd, Offset2CxIndex *tx2cx);
 
 
 #endif /* DTATW_COMMON_H */
