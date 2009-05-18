@@ -133,6 +133,9 @@ XSL_DIR = ../scripts
 PROG_DIR  = ../src/
 PROG_DEPS = $(wildcard $(PROG_DIR)*.c) $(wildcard $(PROG_DIR)*.h) $(wildcard $(PROG_DIR)*.l)
 
+SCRIPT_DIR  = ../scripts/
+SCRIPT_DEPS = $(wildcard $(SCRIPT_DIR)dtatw-*.perl)
+
 TOKWRAP_DIR  = ../DTA-TokWrap
 TOKWRAP_SRC  = $(TOKWRAP_DIR)/dta-tokwrap.perl
 #TOKWRAP      = $(PERL) -Mlib=$(TOKWRAP_DIR)/blib/lib $(TOKWRAP_DIR)/blib/script/dta-tokwrap.perl $(TOKWRAP_OPTS)
@@ -143,8 +146,11 @@ else
 
 XSL_DIR = /usr/local/share/dta-tokwrap/stylesheets
 
-PROG_DEPS =
 PROG_DIR  =
+PROG_DEPS =
+
+SCRIPT_DIR  =
+SCRIPT_DEPS =
 
 TOKWRAP      =dta-tokwrap.perl $(TOKWRAP_OPTS)
 TOKWRAP_DEPS =
@@ -211,15 +217,26 @@ REALCLEAN_DEPS += no-xml
 ##======================================================================
 ## Rules: generic XML stuff
 
-##-- pretty-printing (.fmt)
-%.fmt: %
+##-- pretty-printing: *.fmt[.xml]
+%.fmt: %w
 	xmllint --format -o $@ $<
-CLEAN_FILES += *.fmt
+%.fmt.xml: %.xml
+	xmllint --format -o $@ $<
+CLEAN_FILES += *.fmt *.fmt.xml
 
-##-- namespace removal (.nons)
-%.nons: % $(RMNS)
-	$(RMNS) $< $@
-CLEAN_FILES += *.nons
+##-- namespace removal: *.nons[.xml]
+%.nons: % programs
+	$(PROG_DIR)dtatw-rm-namespaces $< $@
+%.nons.xml: %.xml $(RMNS)
+	$(PROG_DIR)dtatw-rm-namespaces $< $@
+CLEAN_FILES += *.nons *.nons.xml
+
+##-- character removal *.noc[.xml]
+%.noc: % scripts
+	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@ || (rm -f $@; false)
+%.noc.xml: %.xml scripts
+	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@ || (rm -f $@; false)
+CLEAN_FILES += *.noc *.noc.xml
 
 ##======================================================================
 ## Rules: mkindex: xml -> xx=(cx,sx,tx)
@@ -393,6 +410,29 @@ CLEAN_FILES += *.a.xml
 
 
 ##======================================================================
+## Rules: source+standoff integration ("splicing")
+
+splice: cw-xml cws-xml
+splice-noc: $(XML:.xml=.cws.noc.fmt.xml)
+
+##-- splice: (.char.xml + .w.xml) --> .cw.xml
+cw-xml: $(XML:.xml=.cw.xml)
+%.cw.xml: $(xmldir)/%.xml %.w.xml scripts
+	$(SCRIPT_DIR)dtatw-add-w.perl -q -o $@ $< $*.w.xml || (rm -f $@; false)
+
+no-cw-xml: ; rm -r *.cw.xml
+CLEAN_FILES += *.cw.xml
+
+##-- splice: (.cw.xml + .s.xml) --> .cws.xml
+cws-xml: $(XML:.xml=.cws.xml)
+%.cws.xml: %.cw.xml %.s.xml scripts
+	$(SCRIPT_DIR)dtatw-add-s.perl -q -o $@ $< $*.s.xml  || (rm -f $@; false)
+
+no-cws-xml: ; rm -r *.cws.xml
+CLEAN_FILES += *.cws.xml
+
+
+##======================================================================
 ## Rules: archiving
 
 arc: $(arcfile)
@@ -440,6 +480,7 @@ ifeq "$(inplace)" "yes"
 
 #tokwrap: programs pm
 tokwrap: programs
+scripts: $(SCRIPT_DEPS)
 
 pm: $(TOKWRAP_DIR)/Makefile
 	$(MAKE) -C $(TOKWRAP_DIR)
@@ -451,6 +492,9 @@ else
 ##-- ifeq "$(inplace)" "yes": else
 
 tokwrap:
+	true
+
+scripts:
 	true
 
 pm:
