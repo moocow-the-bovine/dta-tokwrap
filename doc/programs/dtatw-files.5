@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "DTATW-FILES 5"
-.TH DTATW-FILES 5 "2009-05-06" "dta-tokwrap v0.07" "DTA Tokenization Utilities"
+.TH DTATW-FILES 5 "2009-05-18" "dta-tokwrap v0.07" "DTA Tokenization Utilities"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -152,6 +152,9 @@ dtatw\-files.perl \- file formats used by dta\-tokwrap utilities
 \& *.s.xml     (output)   sentence\-level standoff (XML)
 \& *.w.xml     (output)   token\-level standoff (XML)
 \& *.a.xml     (output)   token\-analysis\-level standoff (XML)
+\& 
+\& *.cw.xml    (output)   base\-format + tokens (XML)
+\& *.cws.xml   (output)   base\-format + tokens + sentences (XML)
 .Ve
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
@@ -185,20 +188,24 @@ Example:
 .PP
 .Vb 10
 \& <?xml version="1.0" encoding="UTF\-8"?>
-\& <text>
-\&  <!\-\- ... \-\->
-\&  <c xml:id="c1"> </c>
-\&  <c xml:id="c2">U</c>
-\&  <c xml:id="c3">e</c>
-\&  <c xml:id="c4">b</c>
-\&  <c xml:id="c5">e</c>
-\&  <c xml:id="c6">r</c>
-\&  <c xml:id="c7"> </c>
-\&  <c xml:id="c8">d</c>
-\&  <c xml:id="c9">i</c>
-\&  <c xml:id="c10">e</c>
-\&  <c xml:id="c11"> </c>
-\&  <!\-\- ... \-\->
+\& <TEI xmlns="http://www.tei\-c.org/ns/1.0" xmlns:dta="http://www.deutsches\-textarchiv.de/ns/1.0">
+\&   <!\-\- ... \-\->
+\&   <text>
+\&     <!\-\- ... \-\->
+\&     <c xml:id="c1"> </c>
+\&     <c xml:id="c2">U</c>
+\&     <c xml:id="c3">e</c>
+\&     <c xml:id="c4">b</c>
+\&     <c xml:id="c5">e</c>
+\&     <c xml:id="c6">r</c>
+\&     <c xml:id="c7"> </c>
+\&     <c xml:id="c8">d</c>
+\&     <c xml:id="c9">i</c>
+\&     <c xml:id="c10">e</c>
+\&     <c xml:id="c11"> </c>
+\&     <!\-\- ... \-\->
+\&   </text>
+\&   <!\-\- ... \-\->
 \& </text>
 .Ve
 .SS "Temporary File Formats"
@@ -251,8 +258,9 @@ and \s-1TOFF\s0,TLEN are byte-offset and \-length in the raw text index file (*.
 .PP
 .Vb 10
 \& <?xml version="1.0" encoding="UTF\-8"?>
-\& <text>
+\& <TEI xmlns="http://www.tei\-c.org/ns/1.0" xmlns:dta="http://www.deutsches\-textarchiv.de/ns/1.0">
 \&   <!\-\- ... \-\->
+\&   <text>
 \&      <titlePage>
 \&        <c n="338 11 1 0"/>
 \&        <docTitle>
@@ -265,6 +273,7 @@ and \s-1TOFF\s0,TLEN are byte-offset and \-length in the raw text index file (*.
 \&          <c n="2060 5 83 1"/>
 \&        <!\-\- ... \-\->
 \&      </titlePage>
+\&   </text>
 \&   <!\-\- ... \-\->
 \& </text>
 .Ve
@@ -314,12 +323,16 @@ that element should be sorted during serialization (this is how we
 get \f(CW\*(C`seg\*(C'\fR elements to clump together).
 \&\f(CW\*(C`dta.tw.key\*(C'\fR attributes are inherited by default.
 .PP
+Also note that namespaces have been forcibly removed from the
+\&\s-1XML\s0 structure.
+.PP
 Example:
 .PP
 .Vb 10
 \& <?xml version="1.0" encoding="UTF\-8"?>
-\& <text>
+\& <TEI dta.tw.key="TEI.id2369102" _xmlns="http://www.tei\-c.org/ns/1.0" xmlns_dta="http://www.deutsches\-textarchiv.de/ns/1.0">
 \&   <!\-\- ... \-\->
+\&   <text>
 \&      <titlePage>
 \&        <s/>
 \&        <c n="338 11 1 0"/>
@@ -335,8 +348,9 @@ Example:
 \&          <c n="2060 5 83 1"/>
 \&        </s>
 \&      </titlePage>
+\&   </text>
 \&   <!\-\- ... \-\->
-\& </text>
+\& </TEI>
 .Ve
 .PP
 \fI*.bx\fR
@@ -373,6 +387,13 @@ Serialized text (\s-1UTF\-8\s0 text)
 as created by \*(L"dta\-tokwrap.perl \-t mkbx\*(R",
 possibly containing tokenizer \*(L"hints\*(R",
 to be passed to the underlying tokenizer.
+.PP
+The precise form taken by the hints in this file depends on many things,
+notably the options \f(CW\*(C`\-\-strong\-hints\*(C'\fR, \f(CW\*(C`\-\-weak\-hints\*(C'\fR, and \f(CW\*(C`\-\-no\-hints\*(C'\fR
+to dta\-tokwrap.perl.  You should ensure that
+your tokenizer is prepared to deal with whatever flavor of hints you are passing it
+(in particular, don't use the \f(CW\*(C`dwds_tomasotath\*(C'\fR tokenizer together with the
+\&\f(CW\*(C`\-\-strong\-hints\*(C'\fR option, unless you want it to return a lot of (\f(CW\*(C`$\*(C'\fR, \f(CW\*(C`WB\*(C'\fR, \f(CW\*(C`$\*(C'\fR) \*(L"tokens\*(R".
 .PP
 Example:
 .PP
@@ -538,9 +559,93 @@ Example:
 \&  <!\-\- ... \-\->
 \& </analyses>
 .Ve
+.PP
+\fI*.cw.xml\fR
+.IX Subsection "*.cw.xml"
+.PP
+Base-format \s-1XML\s0 file with tokens encoded as \f(CW\*(C`w\*(C'\fR elements,
+as output by dtatw\-add\-w.perl.
+.PP
+Example:
+.PP
+.Vb 10
+\& <?xml version="1.0"?>
+\& <TEI xmlns="http://www.tei\-c.org/ns/1.0" xmlns:dta="http://www.deutsches\-textarchiv.de/ns/1.0">
+\&  <!\-\- ... \-\->
+\&  <text>
+\&    <!\-\- ... \-\->
+\&          <titlePart type="main">
+\&              <w xml:id="w1">
+\&                <c xml:id="c2">U</c>
+\&                <c xml:id="c3">e</c>
+\&                <c xml:id="c4">b</c>
+\&                <c xml:id="c5">e</c>
+\&                <c xml:id="c6">r</c>
+\&              </w>
+\&              <c xml:id="c7"> </c>
+\&              <w xml:id="w2">
+\&                <c xml:id="c8">d</c>
+\&                <c xml:id="c9">i</c>
+\&                <c xml:id="c10">e</c>
+\&              </w>
+\&              <c xml:id="c11"> </c>
+\&              <!\-\- ... \-\->
+\&              <w xml:id="w10">
+\&                <c xml:id="c80">.</c>
+\&              </w>
+\&          </titlePart>
+\&    <!\-\- ... \-\->
+\&  </text>
+\&  <!\-\- ... \-\->
+\& </TEI>
+.Ve
+.PP
+\fI*.cws.xml\fR
+.IX Subsection "*.cws.xml"
+.PP
+Base-format \s-1XML\s0 file with tokens and sentences encoded as \f(CW\*(C`w\*(C'\fR and \f(CW\*(C`s\*(C'\fR elements respectively,
+as output by dtatw\-add\-s.perl.
+.PP
+Example:
+.PP
+.Vb 10
+\& <?xml version="1.0"?>
+\& <TEI xmlns="http://www.tei\-c.org/ns/1.0" xmlns:dta="http://www.deutsches\-textarchiv.de/ns/1.0">
+\&  <!\-\- ... \-\->
+\&  <text>
+\&    <!\-\- ... \-\->
+\&          <titlePart type="main">
+\&            <s xml:id="s1">
+\&              <w xml:id="w1">
+\&                <c xml:id="c2">U</c>
+\&                <c xml:id="c3">e</c>
+\&                <c xml:id="c4">b</c>
+\&                <c xml:id="c5">e</c>
+\&                <c xml:id="c6">r</c>
+\&              </w>
+\&              <c xml:id="c7"> </c>
+\&              <w xml:id="w2">
+\&                <c xml:id="c8">d</c>
+\&                <c xml:id="c9">i</c>
+\&                <c xml:id="c10">e</c>
+\&              </w>
+\&              <c xml:id="c11"> </c>
+\&              <!\-\- ... \-\->
+\&              <w xml:id="w10">
+\&                <c xml:id="c80">.</c>
+\&              </w>
+\&            </s>
+\&          </titlePart>
+\&    <!\-\- ... \-\->
+\&  </text>
+\&  <!\-\- ... \-\->
+\& </TEI>
+.Ve
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIdtatw\-add\-c.perl\fR\|(1),
+\&\fIdtatw\-add\-w.perl\fR\|(1),
+\&\fIdtatw\-add\-s.perl\fR\|(1),
 \&\fIdta\-tokwrap.perl\fR\|(1),
 \&\fIDTA::TokWrap::Intro\fR\|(3pm),
 \&...

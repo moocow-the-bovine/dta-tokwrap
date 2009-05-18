@@ -165,9 +165,33 @@ TOOLS
 
         See "the dtatw-add-c.perl manpage" for more details.
 
+    dtatw-add-w.perl
+        Script to splice "<w>" elements encoded from a stand-off (.w.xml)
+        XML file into a compatible (but not necessarily the *original*)
+        "base-format" (.char.xml) file. Quite slow, and a tad too generous
+        with partial word segments, due to strict adjacency and boundary
+        criteria.
+
+        See "the dtatw-add-w.perl manpage" for more details.
+
+    dtatw-add-s.perl
+        Script to splice "<s>" elements encoded from a stand-off (.s.xml)
+        XML file into a compatible word-spliced (.cw.xml) file as output by
+        the "dtatw-add-w.perl" script. Quite slow, and a tad too generous
+        with partial sentence segments, due to strict adjacency and boundary
+        criteria.
+
+        See "the dtatw-add-s.perl manpage" for more details.
+
     dtatw-rm-c.perl
         Script to remove "<c>" elements from an XML document. Regex hack,
-        fast but not robust, use with caution. See also "dtatw-rm-c.xsl"
+        fast but not exceedingly robust, use with caution. See also
+        "dtatw-rm-c.xsl"
+
+    dtatw-rm-lb.perl
+        Script to remove "<lb>" (line-break) elements from an XML document,
+        replacing them with newlines. Regex hack, fast but not robust, use
+        with caution. See also "dtatw-rm-lb.xsl"
 
     file-substr.perl
         Script to extract a portion of a file, specified by byte offset and

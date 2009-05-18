@@ -13,6 +13,7 @@ use Pod::Usage;
 ## Constants & Globals
 ##------------------------------------------------------------------------------
 our $prog = basename($0);
+our $verbose = 1;     ##-- print progress messages by default
 
 ##-- debugging
 our $DEBUG = 0;
@@ -28,11 +29,16 @@ our $s_idAttr  = 'xml:id'; ##-- attribute in which to place literal id for initi
 our $srcInfix = '.cw';
 our $soInfix  = '.s';
 
+##-- constants: verbosity levels
+our $vl_progress = 1;
+
 ##------------------------------------------------------------------------------
 ## Command-line
 ##------------------------------------------------------------------------------
 GetOptions(##-- General
 	   'help|h' => \$help,
+	   'verbose|v=i' => \$verbose,
+	   'quiet|q' => sub { $verbose=!$_[1]; },
 
 	   ##-- I/O
 	   'output|out|o=s' => \$outfile,
@@ -240,17 +246,21 @@ our $outfh = IO::File->new(">$outfile")
   or die("$prog: open failed for output file '$outfile': $!");
 
 ##-- load standoff (.s.xml) records: @s_ids, %wid2sid
-print STDERR "$prog: parsing standoff ${soInfix}.xml file '$sofile'...\n";
+print STDERR "$prog: parsing standoff ${soInfix}.xml file '$sofile'...\n"
+  if ($verbose>=$vl_progress);
 $xp_so->parsefile($sofile);
-print STDERR "$prog: parsed ", scalar(keys(%wid2sid)), " <w>-references in ", scalar(@s_ids), " <s>-records from '$sofile'\n";
+print STDERR "$prog: parsed ", scalar(keys(%wid2sid)), " <w>-references in ", scalar(@s_ids), " <s>-records from '$sofile'\n"
+  if ($verbose>=$vl_progress);
 
 ##-- load source xml (.char.xml) buffer
 our $srcbuf = '';
 bufferSrcFile($srcfile,\$srcbuf);
-print STDERR "$prog: buffered ", length($srcbuf), " XML bytes from '$srcfile'\n";
+print STDERR "$prog: buffered ", length($srcbuf), " XML bytes from '$srcfile'\n"
+  if ($verbose>=$vl_progress);
 
 ##-- find all standoff item-segments (@s_segs0)
-print STDERR "$prog: scanning for potential <s>-segment boundaries in '$srcfile'...\n";
+print STDERR "$prog: scanning for potential <s>-segment boundaries in '$srcfile'...\n"
+  if ($verbose>=$vl_progress);
 $xp_src2segs = XML::Parser->new(
 			      ErrorContext => 1,
 			      ProtocolEncoding => 'UTF-8',
@@ -268,10 +278,12 @@ $xp_src2segs = XML::Parser->new(
 			     )
   or die("$prog: couldn't create XML::Parser for ${srcInfix}.xml <s>-segmentation");
 $xp_src2segs->parse($srcbuf);
-print STDERR ("$prog: found ", scalar(@s_segs0), " preliminary segments for ", scalar(@s_ids), " sentences\n");
+print STDERR ("$prog: found ", scalar(@s_segs0), " preliminary segments for ", scalar(@s_ids), " sentences\n")
+  if ($verbose>=$vl_progress);
 
 ##-- check for bogus discontinutities
-print STDERR "$prog: merging \"adjacent\" segments...\n";
+print STDERR "$prog: merging \"adjacent\" segments...\n"
+  if ($verbose>=$vl_progress);
 @s_segs  = qw();
 $pseg    = undef;
 $off     = 0;
@@ -296,10 +308,12 @@ foreach (@s_segs0) {
     }
   $off  = $xoff+$xlen;
 }
-print STDERR ("$prog: found ", scalar(@s_segs), " final segments for ", scalar(@s_ids), " sentences\n");
+print STDERR ("$prog: found ", scalar(@s_segs), " final segments for ", scalar(@s_ids), " sentences\n")
+  if ($verbose>=$vl_progress);
 
 ##-- count segments
-print STDERR "$prog: assigning segments to sentences...\n";
+print STDERR "$prog: assigning segments to sentences...\n"
+  if ($verbose>=$vl_progress);
 our %sid2nsegs = qw();  ##-- ($sid => $n_segments_for_sid, ...)
 foreach (@s_segs) {
   push(@$_, ++$sid2nsegs{$_->[0]});
@@ -307,7 +321,8 @@ foreach (@s_segs) {
 print STDERR
   ("$prog: assigned ", scalar(@s_segs), " segments to ", scalar(keys(%sid2nsegs)), " sentences",
    ": ", (@s_segs-keys(%sid2nsegs)), " discontinuities\n",
-  );
+  )
+  if ($verbose>=$vl_progress);
 
 ##-- output: splice in <s>-segments
 our $off = 0; ##-- global offset
@@ -358,6 +373,8 @@ dtatw-add-s.perl - splice standoff <s>-records into .cw.xml files
 
  General Options:
   -help                  # this help message
+  -verbose LEVEL         # set verbosity level (0<=LEVEL<=1)
+  -quiet                 # be silent
 
  I/O Options:
   -output FILE           # specify output file (default='-' (STDOUT))

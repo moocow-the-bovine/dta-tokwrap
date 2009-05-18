@@ -24,7 +24,9 @@ dtatw-files.perl - file formats used by dta-tokwrap utilities
  *.s.xml     (output)	sentence-level standoff (XML)
  *.w.xml     (output)	token-level standoff (XML)
  *.a.xml     (output)	token-analysis-level standoff (XML)
-
+ 
+ *.cw.xml    (output)   base-format + tokens (XML)
+ *.cws.xml   (output)   base-format + tokens + sentences (XML)
 
 =cut
 
@@ -82,20 +84,24 @@ each C<c> element should have a valid C<xml:id> attribute.
 Example:
 
  <?xml version="1.0" encoding="UTF-8"?>
- <text>
-  <!-- ... -->
-  <c xml:id="c1"> </c>
-  <c xml:id="c2">U</c>
-  <c xml:id="c3">e</c>
-  <c xml:id="c4">b</c>
-  <c xml:id="c5">e</c>
-  <c xml:id="c6">r</c>
-  <c xml:id="c7"> </c>
-  <c xml:id="c8">d</c>
-  <c xml:id="c9">i</c>
-  <c xml:id="c10">e</c>
-  <c xml:id="c11"> </c>
-  <!-- ... -->
+ <TEI xmlns="http://www.tei-c.org/ns/1.0" xmlns:dta="http://www.deutsches-textarchiv.de/ns/1.0">
+   <!-- ... -->
+   <text>
+     <!-- ... -->
+     <c xml:id="c1"> </c>
+     <c xml:id="c2">U</c>
+     <c xml:id="c3">e</c>
+     <c xml:id="c4">b</c>
+     <c xml:id="c5">e</c>
+     <c xml:id="c6">r</c>
+     <c xml:id="c7"> </c>
+     <c xml:id="c8">d</c>
+     <c xml:id="c9">i</c>
+     <c xml:id="c10">e</c>
+     <c xml:id="c11"> </c>
+     <!-- ... -->
+   </text>
+   <!-- ... -->
  </text>
 
 =cut
@@ -148,8 +154,9 @@ where XOFF,XLEN are byte-offset and -length in the source XML file (*.xml)
 and TOFF,TLEN are byte-offset and -length in the raw text index file (*.tx).
 
  <?xml version="1.0" encoding="UTF-8"?>
- <text>
+ <TEI xmlns="http://www.tei-c.org/ns/1.0" xmlns:dta="http://www.deutsches-textarchiv.de/ns/1.0">
    <!-- ... -->
+   <text>
       <titlePage>
         <c n="338 11 1 0"/>
         <docTitle>
@@ -162,6 +169,7 @@ and TOFF,TLEN are byte-offset and -length in the raw text index file (*.tx).
           <c n="2060 5 83 1"/>
         <!-- ... -->
       </titlePage>
+   </text>
    <!-- ... -->
  </text>
 
@@ -205,11 +213,15 @@ that element should be sorted during serialization (this is how we
 get C<seg> elements to clump together).
 C<dta.tw.key> attributes are inherited by default.
 
+Also note that namespaces have been forcibly removed from the
+XML structure.
+
 Example:
 
  <?xml version="1.0" encoding="UTF-8"?>
- <text>
+ <TEI dta.tw.key="TEI.id2369102" _xmlns="http://www.tei-c.org/ns/1.0" xmlns_dta="http://www.deutsches-textarchiv.de/ns/1.0">
    <!-- ... -->
+   <text>
       <titlePage>
         <s/>
         <c n="338 11 1 0"/>
@@ -225,8 +237,9 @@ Example:
           <c n="2060 5 83 1"/>
         </s>
       </titlePage>
+   </text>
    <!-- ... -->
- </text>
+ </TEI>
 
 
 =head3 *.bx
@@ -259,6 +272,13 @@ Serialized text (UTF-8 text)
 as created by L<"dta-tokwrap.perl -t mkbx"|dta-tokwrap.perl>,
 possibly containing tokenizer "hints",
 to be passed to the underlying tokenizer.
+
+The precise form taken by the hints in this file depends on many things,
+notably the options C<--strong-hints>, C<--weak-hints>, and C<--no-hints>
+to L<dta-tokwrap.perl|dta-tokwrap.perl/--strong-hints>.  You should ensure that
+your tokenizer is prepared to deal with whatever flavor of hints you are passing it
+(in particular, don't use the C<dwds_tomasotath> tokenizer together with the
+C<--strong-hints> option, unless you want it to return a lot of (C<$>, C<WB>, C<$>) "tokens".
 
 Example:
 
@@ -414,6 +434,84 @@ Example:
   <!-- ... -->
  </analyses>
 
+
+
+=head3 *.cw.xml
+
+Base-format XML file with tokens encoded as C<w> elements,
+as output by L<dtatw-add-w.perl|dtatw-add-w.perl>.
+
+Example:
+
+ <?xml version="1.0"?>
+ <TEI xmlns="http://www.tei-c.org/ns/1.0" xmlns:dta="http://www.deutsches-textarchiv.de/ns/1.0">
+  <!-- ... -->
+  <text>
+    <!-- ... -->
+          <titlePart type="main">
+              <w xml:id="w1">
+                <c xml:id="c2">U</c>
+                <c xml:id="c3">e</c>
+                <c xml:id="c4">b</c>
+                <c xml:id="c5">e</c>
+                <c xml:id="c6">r</c>
+              </w>
+              <c xml:id="c7"> </c>
+              <w xml:id="w2">
+                <c xml:id="c8">d</c>
+                <c xml:id="c9">i</c>
+                <c xml:id="c10">e</c>
+              </w>
+              <c xml:id="c11"> </c>
+              <!-- ... -->
+              <w xml:id="w10">
+                <c xml:id="c80">.</c>
+              </w>
+          </titlePart>
+    <!-- ... -->
+  </text>
+  <!-- ... -->
+ </TEI>
+
+=head3 *.cws.xml
+
+Base-format XML file with tokens and sentences encoded as C<w> and C<s> elements respectively,
+as output by L<dtatw-add-s.perl|dtatw-add-s.perl>.
+
+Example:
+
+ <?xml version="1.0"?>
+ <TEI xmlns="http://www.tei-c.org/ns/1.0" xmlns:dta="http://www.deutsches-textarchiv.de/ns/1.0">
+  <!-- ... -->
+  <text>
+    <!-- ... -->
+          <titlePart type="main">
+            <s xml:id="s1">
+              <w xml:id="w1">
+                <c xml:id="c2">U</c>
+                <c xml:id="c3">e</c>
+                <c xml:id="c4">b</c>
+                <c xml:id="c5">e</c>
+                <c xml:id="c6">r</c>
+              </w>
+              <c xml:id="c7"> </c>
+              <w xml:id="w2">
+                <c xml:id="c8">d</c>
+                <c xml:id="c9">i</c>
+                <c xml:id="c10">e</c>
+              </w>
+              <c xml:id="c11"> </c>
+              <!-- ... -->
+              <w xml:id="w10">
+                <c xml:id="c80">.</c>
+              </w>
+            </s>
+          </titlePart>
+    <!-- ... -->
+  </text>
+  <!-- ... -->
+ </TEI>
+
 =cut
 
 ##======================================================================
@@ -422,6 +520,8 @@ Example:
 =head1 SEE ALSO
 
 L<dtatw-add-c.perl(1)|dtatw-add-c.perl>,
+L<dtatw-add-w.perl(1)|dtatw-add-w.perl>,
+L<dtatw-add-s.perl(1)|dtatw-add-s.perl>,
 L<dta-tokwrap.perl(1)|dta-tokwrap.perl>,
 L<DTA::TokWrap::Intro(3pm)|DTA::TokWrap::Intro>,
 ...

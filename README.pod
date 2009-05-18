@@ -293,11 +293,36 @@ XML document which does not yet contain them.
 
 See L<"the dtatw-add-c.perl manpage"|dtatw-add-c.perl> for more details.
 
+=item dtatw-add-w.perl
+
+Script to splice C<E<lt>wE<gt>> elements encoded from a stand-off (.w.xml) XML file
+into a compatible (but not necessarily the I<original>) "base-format" (.char.xml) file.
+Quite slow, and a tad too generous with partial word segments, due to
+strict adjacency and boundary criteria.
+
+See L<"the dtatw-add-w.perl manpage"|dtatw-add-w.perl> for more details.
+
+=item dtatw-add-s.perl
+
+Script to splice C<E<lt>sE<gt>> elements encoded from a stand-off (.s.xml) XML file
+into a compatible word-spliced (.cw.xml) file as output by the L</dtatw-add-w.perl> script.
+Quite slow, and a tad too generous with partial sentence segments, due to
+strict adjacency and boundary criteria.
+
+See L<"the dtatw-add-s.perl manpage"|dtatw-add-s.perl> for more details.
+
 =item dtatw-rm-c.perl
 
 Script to remove C<E<lt>cE<gt>> elements from an XML document.
-Regex hack, fast but not robust, use with caution.
+Regex hack, fast but not exceedingly robust, use with caution.
 See also L</"dtatw-rm-c.xsl">
+
+=item dtatw-rm-lb.perl
+
+Script to remove C<E<lt>lbE<gt>> (line-break) elements from an XML document,
+replacing them with newlines.
+Regex hack, fast but not robust, use with caution.
+See also L</"dtatw-rm-lb.xsl">
 
 =item file-substr.perl
 

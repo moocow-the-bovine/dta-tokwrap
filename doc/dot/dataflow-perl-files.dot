@@ -3,10 +3,10 @@ digraph dataflow_perl_files {
   node [shape=rectangle,style=filled,fillcolor=pink,height=0.25,fontname="Courier"];
   edge [decorate=0,fontname="Courier"];
 
-  xml [label="xmlfile: *.xml",fillcolor=PowderBlue];
+  xmlfile [label="xmlfile: *.xml",fillcolor=PowderBlue];
 
   mkindex [label="mkindex",shape=diamond,fillcolor=PaleGreen,fontname="Courier-Bold"];
-  xml -> mkindex;
+  xmlfile -> mkindex;
 
   sxfile [label="sxfile: *.sx"];
   txfile [label="txfile: *.tx"];
@@ -63,10 +63,24 @@ digraph dataflow_perl_files {
   standoff -> sosfile;
   standoff -> sowfile;
   standoff -> soafile;
+  { rank=same; sosfile sowfile soafile; }
 
   //-- standoff: xsl stylesheets (now obsolete)
   /*
   standoff_xsl [label="t2s.xsl\nt2w.xsl\nt2a.xsl",fillcolor=orange];
   standoff -> standoff_xsl;
   */
+
+  //-- splicint: external scripts
+  add_w  [label="dtatw-add-w.perl",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
+  sowfile -> add_w;
+  xmlfile -> add_w;
+  add_w  -> cwfile;
+  cwfile [label="-cwfile: *.cw.xml",fillcolor=yellow];
+
+  add_s  [label="dtatw-add-s.perl",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
+  sosfile-> add_s;
+  cwfile -> add_s;
+  add_s  -> cwsfile;
+  cwsfile [label="-cwsfile: *.cws.xml",fillcolor=yellow];
 }

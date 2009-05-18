@@ -13,6 +13,7 @@ use Pod::Usage;
 ## Constants & Globals
 ##------------------------------------------------------------------------------
 our $prog = basename($0);
+our $verbose = 1;     ##-- print progress messages by default
 
 ##-- debugging
 our $DEBUG = 0;
@@ -28,11 +29,16 @@ our $w_idAttr  = 'xml:id'; ##-- attribute in which to place literal id for initi
 our $srcInfix = '.char';
 our $soInfix  = '.w';
 
+##-- constants: verbosity levels
+our $vl_progress = 1;
+
 ##------------------------------------------------------------------------------
 ## Command-line
 ##------------------------------------------------------------------------------
 GetOptions(##-- General
 	   'help|h' => \$help,
+	   'verbose|v=i' => \$verbose,
+	   'quiet|q' => sub { $verbose=!$_[1]; },
 
 	   ##-- I/O
 	   'output|out|o=s' => \$outfile,
@@ -169,7 +175,7 @@ sub src2segs_cb_start {
   if ($_[1] eq 'c') {
     %_attrs = @_[2..$#_];
     $cid = $_attrs{'xml:id'};
-    $wid = $cid2wid{$cid} || '';
+    $wid = $cid2wid{$cid||''} || '';
     if ($w_xref ne $wid) {
       ##-- flush current segment & start a new one
       src2segs_flush_segment();
@@ -238,17 +244,21 @@ our $outfh = IO::File->new(">$outfile")
   or die("$prog: open failed for output file '$outfile': $!");
 
 ##-- load standoff (.w.xml) records: @w_ids, %cid2wid
-print STDERR "$prog: parsing standoff ${soInfix}.xml file '$sofile'...\n";
+print STDERR "$prog: parsing standoff ${soInfix}.xml file '$sofile'...\n"
+  if ($verbose>=$vl_progress);
 $xp_so->parsefile($sofile);
-print STDERR "$prog: parsed ", scalar(keys(%cid2wid)), " <c>-references in ", scalar(@w_ids), " <w>-records from '$sofile'\n";
+print STDERR "$prog: parsed ", scalar(keys(%cid2wid)), " <c>-references in ", scalar(@w_ids), " <w>-records from '$sofile'\n"
+  if ($verbose>=$vl_progress);
 
 ##-- load source xml (.char.xml) buffer
 our $srcbuf = '';
 bufferSrcFile($srcfile,\$srcbuf);
-print STDERR "$prog: buffered ", length($srcbuf), " XML bytes from '$srcfile'\n";
+print STDERR "$prog: buffered ", length($srcbuf), " XML bytes from '$srcfile'\n"
+  if ($verbose>=$vl_progress);
 
 ##-- find all potential standoff item-segments (@w_segs0)
-print STDERR "$prog: scanning for potential <w>-segment boundaries in '$srcfile'...\n";
+print STDERR "$prog: scanning for potential <w>-segment boundaries in '$srcfile'...\n"
+  if ($verbose>=$vl_progress);
 $xp_src2segs = XML::Parser->new(
 			      ErrorContext => 1,
 			      ProtocolEncoding => 'UTF-8',
@@ -266,10 +276,12 @@ $xp_src2segs = XML::Parser->new(
 			     )
   or die("$prog: couldn't create XML::Parser for ${srcInfix}.xml <w>-segmentation");
 $xp_src2segs->parse($srcbuf);
-print STDERR ("$prog: found ", scalar(@w_segs0), " preliminary segments for ", scalar(@w_ids), " tokens\n");
+print STDERR ("$prog: found ", scalar(@w_segs0), " preliminary segments for ", scalar(@w_ids), " tokens\n")
+  if ($verbose>=$vl_progress);
 
 ##-- check for bogus discontinutities
-print STDERR "$prog: merging \"adjacent\" segments...\n";
+print STDERR "$prog: merging \"adjacent\" segments...\n"
+  if ($verbose>=$vl_progress);
 @w_segs  = qw();
 $pseg    = undef;
 $off     = 0;
@@ -294,10 +306,12 @@ foreach (@w_segs0) {
   $pseg = $_;
   $off  = $xoff+$xlen;
 }
-print STDERR ("$prog: found ", scalar(@w_segs), " final segments for ", scalar(@w_ids), " tokens\n");
+print STDERR ("$prog: found ", scalar(@w_segs), " final segments for ", scalar(@w_ids), " tokens\n")
+  if ($verbose>=$vl_progress);
 
 ##-- count segments
-print STDERR "$prog: assigning segments to tokens...\n";
+print STDERR ("$prog: assigning segments to tokens...\n")
+  if ($verbose>=$vl_progress);
 our %wid2nsegs = qw();  ##-- ($wid => $n_segments_for_wid, ...)
 foreach (@w_segs) {
   push(@$_, ++$wid2nsegs{$_->[0]});
@@ -305,7 +319,8 @@ foreach (@w_segs) {
 print STDERR
   ("$prog: assigned ", scalar(@w_segs), " segments to ", scalar(keys(%wid2nsegs)), " tokens",
    ": ", (@w_segs-keys(%wid2nsegs)), " discontinuities\n",
-  );
+  )
+  if ($verbose>=$vl_progress);
 
 ##-- output: splice in <w>-segments
 our $off = 0; ##-- global offset
@@ -356,6 +371,8 @@ dtatw-add-w.perl - splice standoff <w>-records into original .char.xml files
 
  General Options:
   -help                  # this help message
+  -verbose LEVEL         # set verbosity level (0<=LEVEL<=1)
+  -quiet                 # be silent
 
  I/O Options:
   -output FILE           # specify output file (default='-' (STDOUT))
