@@ -187,6 +187,8 @@ REALCLEAN_FILES += \
 
 all: t-xml s-xml w-xml a-xml
 
+extra: cws-xml cws-noc-fmt-xml
+
 .SECONDARY: 
 
 ##======================================================================
@@ -413,7 +415,8 @@ CLEAN_FILES += *.a.xml
 ## Rules: source+standoff integration ("splicing")
 
 splice: cw-xml cws-xml
-splice-noc: $(XML:.xml=.cws.noc.fmt.xml)
+splice-noc: cws-noc-fmt-xml
+cws-noc-fmt-xml: $(XML:.xml=.cws.noc.fmt.xml)
 
 ##-- splice: (.char.xml + .w.xml) --> .cw.xml
 cw-xml: $(XML:.xml=.cw.xml)
