@@ -921,7 +921,11 @@ from the input document, run in the proper order.
 
 =head1 SEE ALSO
 
-perl(1),
+L<DTA::TokWrap::Intro(3pm)|DTA::TokWrap::Intro>,
+L<dtatw-add-c.perl(1)|dtatw-add-c.perl>,
+L<dtatw-add-w.perl(1)|dtatw-add-w.perl>,
+L<dtatw-add-s.perl(1)|dtatw-add-s.perl>,
+L<dtatw-rm-c.perl(1)|dtatw-rm-c.perl>,
 ...
 
 =cut

@@ -301,12 +301,12 @@ Still with me?  Good.</p>
 </p>
 <h3><a name="__txt">*.txt</a></h3>
 <p>Serialized text (UTF-8 text)
-as created by <a href="././dta-tokwrap.perl.html">&quot;dta-tokwrap.perl -t mkbx&quot;</a>,
+as created by <a href="././dta-tokwrap.perl.html">&quot;dta-tokwrap.perl -t mktxt&quot;</a>,
 possibly containing tokenizer &quot;hints&quot;,
 to be passed to the underlying tokenizer.</p>
 <p>The precise form taken by the hints in this file depends on many things,
 notably the options <code>--strong-hints</code>, <code>--weak-hints</code>, and <code>--no-hints</code>
-to <a href="././dta-tokwrap.perl.html#__strong_hints">dta-tokwrap.perl</a>.  You should ensure that
+to <a href="././dta-tokwrap.perl.html">dta-tokwrap.perl</a>.  You should ensure that
 your tokenizer is prepared to deal with whatever flavor of hints you are passing it
 (in particular, don't use the <code>dwds_tomasotath</code> tokenizer together with the
 <code>--strong-hints</code> option, unless you want it to return a lot of (<code>$</code>, <code>WB</code>, <code>$</code>) &quot;tokens&quot;.</p>
@@ -456,7 +456,7 @@ Currently contains only analyses supplied by the tokenizer.</p>
 </p>
 <h3><a name="__cw_xml">*.cw.xml</a></h3>
 <p>Base-format XML file with tokens encoded as <code>w</code> elements,
-as output by <em>dtatw-add-w.perl</em>.</p>
+as output by <a href="././dtatw-add-w.perl.html">dtatw-add-w.perl</a>.</p>
 <p>Example:</p>
 <pre>
  &lt;?xml version=&quot;1.0&quot;?&gt;
@@ -492,7 +492,7 @@ as output by <em>dtatw-add-w.perl</em>.</p>
 </p>
 <h3><a name="__cws_xml">*.cws.xml</a></h3>
 <p>Base-format XML file with tokens and sentences encoded as <code>w</code> and <code>s</code> elements respectively,
-as output by <em>dtatw-add-s.perl</em>.</p>
+as output by <a href="././dtatw-add-s.perl.html">dtatw-add-s.perl</a>.</p>
 <p>Example:</p>
 <pre>
  &lt;?xml version=&quot;1.0&quot;?&gt;
@@ -531,8 +531,8 @@ as output by <em>dtatw-add-s.perl</em>.</p>
 <hr />
 <h1><a name="see_also">SEE ALSO</a></h1>
 <p><a href="././dtatw-add-c.perl.html">dtatw-add-c.perl(1)</a>,
-<em>dtatw-add-w.perl(1)</em>,
-<em>dtatw-add-s.perl(1)</em>,
+<a href="././dtatw-add-w.perl.html">dtatw-add-w.perl(1)</a>,
+<a href="././dtatw-add-s.perl.html">dtatw-add-s.perl(1)</a>,
 <a href="././dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a>,
 <a href="./DTA/TokWrap/Intro.html">DTA::TokWrap::Intro(3pm)</a>,
 ...</p>

@@ -410,7 +410,9 @@ Now respects pre-existing "c" elements, assigning them C<xml:id>s to these if re
 
 =head1 SEE ALSO
 
+L<dtatw-add-c.perl(1)|dtatw-add-c.perl>,
 L<dta-tokwrap.perl(1)|dta-tokwrap.perl>,
+L<dtatw-add-w.perl(1)|dtatw-add-w.perl>,
 L<dtatw-rm-c.perl(1)|dtatw-rm-c.perl>,
 ...
 
