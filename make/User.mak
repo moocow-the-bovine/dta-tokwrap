@@ -18,8 +18,9 @@
 
 ## xmldir=XMLDIR
 ##  + source directory containing DTA "base-format" XML sources
-xmldir = ./xmlsrc
+#xmldir = ./xmlsrc
 #xmldir = ../examples
+xmldir = ./don
 
 ## xml=XMLFILES
 ##  + list of all DTA "base-format" XML sources (default: all .chr.xml files in XMLDIR)

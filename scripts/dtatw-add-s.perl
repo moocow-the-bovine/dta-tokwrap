@@ -174,8 +174,12 @@ sub src2segs_cb_start {
   ##--------------------------
   if ($_[1] eq 'w') {
     %_attrs = @_[2..$#_];
-    if (!($wid = $_attrs{'xml:id'})) {
+    if (!($wid = $_attrs{'xml:id'}) && $_attrs{'n'}) {
       ($wid = $_attrs{'n'}) =~ s/^\#//;
+    } else {
+      ##-- bogus '//w[not(@n)]', maybe from OCR software: flush segment but otherwise ignore it
+      src2segs_flush_segment();
+      return;
     }
     $sid = $wid2sid{$wid} || '';
     #if ($s_xref ne $sid) {

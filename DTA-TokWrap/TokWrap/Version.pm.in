@@ -13,7 +13,7 @@ use strict;
 ## Constants
 ##==============================================================================
 our $VERSION = "@VERSION@";
-our $SVNID   = "@SVNID@";
+our $SVNID   = '@SVNID@';
 our $PACKAGE_VERSION = "@PACKAGE_VERSION@";  ##-- usually == $VERSION
 
 our $prefix = "@prefix@";
