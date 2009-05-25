@@ -188,6 +188,12 @@ TOOLS
         fast but not exceedingly robust, use with caution. See also
         "dtatw-rm-c.xsl"
 
+    dtatw-rm-w.perl
+        Fast regex hack to remove "<w>" elements from an XML document
+
+    dtatw-rm-s.perl
+        Fast regex hack to remove "<s>" elements from an XML document.
+
     dtatw-rm-lb.perl
         Script to remove "<lb>" (line-break) elements from an XML document,
         replacing them with newlines. Regex hack, fast but not robust, use

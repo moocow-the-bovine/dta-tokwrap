@@ -39,10 +39,12 @@ pkgxsl_DATA = \
 
 bin_SCRIPTS = \
 	dtatw-add-c.perl \
-	dtatw-rm-c.perl \
-	dtatw-rm-lb.perl \
 	dtatw-add-w.perl \
 	dtatw-add-s.perl \
+	dtatw-rm-lb.perl \
+	dtatw-rm-c.perl \
+	dtatw-rm-w.perl \
+	dtatw-rm-s.perl \
 	file-substr.perl
 
 #-----------------------------------------------------------------------
