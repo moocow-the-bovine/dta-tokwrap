@@ -143,6 +143,7 @@ sub so_cb_end {
 our (@s_segs0);
 our ($total_depth,$text_depth);
 our ($s_xref,$s_xoff,$s_xend);
+our @is_w_stack = qw(); ##-- ugly hack for pre-existing <w> elements
 
 ## undef = cb_init($expat)
 sub src2segs_cb_init {
@@ -174,14 +175,16 @@ sub src2segs_cb_start {
   ##--------------------------
   if ($_[1] eq 'w') {
     %_attrs = @_[2..$#_];
-    if (!($wid = $_attrs{'xml:id'}) && $_attrs{'n'}) {
+    if (!($wid = $_attrs{'xml:id'})) {
+      if (!$_attrs{n}) {
+	##-- bogus '//w[not(@xml:id) and not(@n)]', maybe from OCR software: flush segment but otherwise ignore it
+	src2segs_flush_segment();
+	push(@is_w_stack,0);
+	return;
+      }
       ($wid = $_attrs{'n'}) =~ s/^\#//;
-    } else {
-      ##-- bogus '//w[not(@n)]', maybe from OCR software: flush segment but otherwise ignore it
-      src2segs_flush_segment();
-      return;
     }
-    $sid = $wid2sid{$wid} || '';
+    $sid = $wid2sid{$wid||''} || '';
     #if ($s_xref ne $sid) {
       ##-- flush current segment & start a new one
       src2segs_flush_segment();
@@ -190,6 +193,7 @@ sub src2segs_cb_start {
     #} else {
     #  $s_xend = $_[0]->current_byte();
     #}
+    push(@is_w_stack,1);
     return;
   }
   ##--------------------------
@@ -202,7 +206,7 @@ sub src2segs_cb_start {
 ## undef = cb_end($expat, $elt)
 sub src2segs_cb_end {
   #($_xp,$_elt) = @_;
-  if ($_[1] eq 'w') {
+  if ($_[1] eq 'w' && pop(@is_w_stack)) {
     $s_xend = $_[0]->current_byte() + length($_[0]->original_string());
   } else {
     src2segs_flush_segment();
@@ -300,6 +304,7 @@ foreach (@s_segs0) {
                                                   |(?:<[^>]*/>)           ##-- empty element
                                                   |(?:<!--[^>]*-->)       ##-- comment
                                                   |(?:<c\b[^>]*>\s*</c>)  ##-- c (whitespace-only)
+                                                  |(?:<w\b[^>]*>\s*</w>)  ##-- w-tag (e.g. from OCR)
                                                 )*$}sx
      )
     {
