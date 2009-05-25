@@ -41,7 +41,7 @@ XML = $(notdir $(xml))
 TOKWRAP_OPTS = -keep
 
 ifeq "$(inplace)" ""
-ifeq "$(shell /bin/ls -1 ../src/dtatw-mkindex.c)" ""
+ifneq "$(shell test -f ../src/dtatw-mkindex.c && echo yup)" "yup"
 inplace=no
 else
 inplace=yes
