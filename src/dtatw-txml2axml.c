@@ -92,6 +92,7 @@ int main(int argc, char **argv)
     fprintf(stderr, " %s INFILE [OUTFILE [XMLBASE]]\n", prog);
     fprintf(stderr, " + INFILE  : XML-ified tokenizer output file\n");
     fprintf(stderr, " + OUTFILE : token-analysis-level standoff XML file\n");
+    fprintf(stderr, " + XMLBASE : xml:base attribute for output file\n");
     exit(1);
   }
   //-- command-line: input file
