@@ -224,7 +224,7 @@ Not yet written.
 
 =head1 DESCRIPTION
 
-Now respects pre-existing "c" elements, assigning them C<xml:id>s to these if required.
+Adds E<lt>cE<gt> elements to DTA XML files and/or assigns C<xml:id>s to existing elements.
 
 =cut
 

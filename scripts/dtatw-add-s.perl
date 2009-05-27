@@ -408,7 +408,8 @@ Not yet written.
 
 =head1 DESCRIPTION
 
-Now respects pre-existing "c" elements, assigning them C<xml:id>s to these if required.
+Splice standoff <s>-records into .cw.xml files as output by L<dtatw-add-w.perl|dtatw-add-w.perl>,
+producing .cws.xml files.
 
 =cut
 

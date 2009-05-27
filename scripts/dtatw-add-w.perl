@@ -397,7 +397,7 @@ Not yet written.
 
 =head1 DESCRIPTION
 
-Now respects pre-existing "c" elements, assigning them C<xml:id>s to these if required.
+Splice standoff <w>-records into original .char.xml files, producing .cw.xml files.
 
 =cut
 
