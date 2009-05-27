@@ -15,10 +15,8 @@
 </td></tr>
 </table>
 
-
-<!-- INDEX BEGIN -->
-<div name="index">
 <p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
 
 <ul>
 
@@ -29,7 +27,7 @@
 
 		<li><a href="#constants">Constants</a></li>
 		<li><a href="#constructors_etc_">Constructors etc.</a></li>
-		<li><a href="#methods__backwards_compatibility">Methods: Backwards-compatibility</a></li>
+		<li><a href="#methods__backwardscompatibility">Methods: Backwards-compatibility</a></li>
 		<li><a href="#methods__document_processing">Methods: document processing</a></li>
 	</ul>
 
@@ -37,11 +35,9 @@
 	<li><a href="#author">AUTHOR</a></li>
 	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
 </ul>
-
-<hr name="index" />
-</div>
 <!-- INDEX END -->
 
+<hr />
 <p>
 </p>
 <h1><a name="name">NAME</a></h1>
@@ -73,7 +69,7 @@
 </p>
 <h2><a name="constants">Constants</a></h2>
 <dl>
-<dt><strong><a name="variable_isa" class="item">Variable: @ISA</a></strong></dt>
+<dt><strong><a name="item_variable_3a__40isa">Variable: @ISA</a></strong></dt>
 
 <dd>
 <p>DTA::TokWrap::Processor::standoff
@@ -85,7 +81,7 @@ inherits from
 </p>
 <h2><a name="constructors_etc_">Constructors etc.</a></h2>
 <dl>
-<dt><strong><a name="new" class="item">new</a></strong></dt>
+<dt><strong><a name="item_new">new</a></strong></dt>
 
 <dd>
 <pre>
@@ -98,14 +94,14 @@ inherits from
  t2a =&gt; $path_to_dtatw_txml2axml, ##-- default: search
  inplace =&gt; $bool,                ##-- prefer in-place programs for search?</pre>
 </dd>
-<dt><strong><a name="defaults" class="item">defaults</a></strong></dt>
+<dt><strong><a name="item_defaults">defaults</a></strong></dt>
 
 <dd>
 <pre>
  %defaults = CLASS-&gt;defaults();</pre>
 <p>Static class-dependent defaults.</p>
 </dd>
-<dt><strong><a name="init" class="item">init</a></strong></dt>
+<dt><strong><a name="item_init">init</a></strong></dt>
 
 <dd>
 <pre>
@@ -115,9 +111,9 @@ inherits from
 </dl>
 <p>
 </p>
-<h2><a name="methods__backwards_compatibility">Methods: Backwards-compatibility</a></h2>
+<h2><a name="methods__backwardscompatibility">Methods: Backwards-compatibility</a></h2>
 <dl>
-<dt><strong><a name="_xsl" class="item">_xsl</a></strong></dt>
+<dt><strong><a name="item__xsl">_xsl</a></strong></dt>
 
 <dd>
 <pre>
@@ -125,21 +121,21 @@ inherits from
 <p>Return a <a href="DTA.TokWrap.Processor.standoff.xsl.html">DTA::TokWrap::Processor::standoff::xsl</a>
 object which may or may not be logically equivalent to <code>$so</code>.</p>
 </dd>
-<dt><strong><a name="dump_t2s_stylesheet" class="item">dump_t2s_stylesheet</a></strong></dt>
+<dt><strong><a name="item_dump_t2s_stylesheet">dump_t2s_stylesheet</a></strong></dt>
 
 <dd>
 <pre>
  undef = $so-&gt;dump_t2s_stylesheet($filename_or_fh);</pre>
 <p>See <a href="DTA.TokWrap.Processor.standoff.xsl.html#item_dump_t2s_stylesheet">DTA::TokWrap::Processor::standoff::xsl::dump_t2s_stylesheet()</a>.</p>
 </dd>
-<dt><strong><a name="dump_t2w_stylesheet" class="item">dump_t2w_stylesheet</a></strong></dt>
+<dt><strong><a name="item_dump_t2w_stylesheet">dump_t2w_stylesheet</a></strong></dt>
 
 <dd>
 <pre>
  undef = $so-&gt;dump_t2w_stylesheet($filename_or_fh);</pre>
 <p>See <a href="DTA.TokWrap.Processor.standoff.xsl.html#item_dump_t2w_stylesheet">DTA::TokWrap::Processor::standoff::xsl::dump_t2w_stylesheet()</a>.</p>
 </dd>
-<dt><strong><a name="dump_t2a_stylesheet" class="item">dump_t2a_stylesheet</a></strong></dt>
+<dt><strong><a name="item_dump_t2a_stylesheet">dump_t2a_stylesheet</a></strong></dt>
 
 <dd>
 <pre>
@@ -151,7 +147,7 @@ object which may or may not be logically equivalent to <code>$so</code>.</p>
 </p>
 <h2><a name="methods__document_processing">Methods: document processing</a></h2>
 <dl>
-<dt><strong><a name="soxml" class="item">soxml</a></strong></dt>
+<dt><strong><a name="item_soxml">soxml</a></strong></dt>
 
 <dd>
 <pre>
@@ -168,7 +164,7 @@ Generate <code>$X</code>-level standoff for the
  so${X}xml_stamp  =&gt; $f,   ##-- (output) timestamp of operation end
  so${X}file_stamp =&gt; $f,   ##-- (output) timestamp of operation end</pre>
 </dd>
-<dt><strong><a name="sosxml" class="item">sosxml</a></strong></dt>
+<dt><strong><a name="item_sosxml">sosxml</a></strong></dt>
 
 <dd>
 <pre>
@@ -177,7 +173,7 @@ Generate <code>$X</code>-level standoff for the
 <pre>
  $so-&gt;soxml($doc,'s',basename($doc-&gt;{sowfile}));</pre>
 </dd>
-<dt><strong><a name="sowxml" class="item">sowxml</a></strong></dt>
+<dt><strong><a name="item_sowxml">sowxml</a></strong></dt>
 
 <dd>
 <pre>
@@ -186,7 +182,7 @@ Generate <code>$X</code>-level standoff for the
 <pre>
  $so-&gt;soxml($doc,'w',$doc-&gt;{xmlbase});</pre>
 </dd>
-<dt><strong><a name="soaxml" class="item">soaxml</a></strong></dt>
+<dt><strong><a name="item_soaxml">soaxml</a></strong></dt>
 
 <dd>
 <pre>

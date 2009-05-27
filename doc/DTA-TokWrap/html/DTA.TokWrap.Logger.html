@@ -15,10 +15,8 @@
 </td></tr>
 </table>
 
-
-<!-- INDEX BEGIN -->
-<div name="index">
 <p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
 
 <ul>
 
@@ -37,11 +35,9 @@
 	<li><a href="#author">AUTHOR</a></li>
 	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
 </ul>
-
-<hr name="index" />
-</div>
 <!-- INDEX END -->
 
+<hr />
 <p>
 </p>
 <h1><a name="name">NAME</a></h1>
@@ -100,7 +96,7 @@ object-oriented access to the Log::Log4perl logging facility.</p>
 </p>
 <h2><a name="functions__initialization">Functions: Initialization</a></h2>
 <dl>
-<dt><strong><a name="loginit" class="item">logInit</a></strong></dt>
+<dt><strong><a name="item_loginit">logInit</a></strong></dt>
 
 <dd>
 <pre>
@@ -113,26 +109,26 @@ object-oriented access to the Log::Log4perl logging facility.</p>
 This function only needs to be called once; see
 <a href="Log.Log4perl.html">Log::Log4perl-&gt;initialized()</a> for details.</p>
 </dd>
-<dt><strong><a name="ensurelog" class="item">ensureLog</a></strong></dt>
+<dt><strong><a name="item_ensurelog">ensureLog</a></strong></dt>
 
 <dd>
 <pre>
  PACKAGE-&gt;ensureLog()</pre>
 <p>Ensures that <a href="Log.Log4perl.html">Log::Log4perl</a> has been initialized.</p>
 </dd>
-<dt><strong><a name="loginitialized" class="item">logInitialized</a></strong></dt>
+<dt><strong><a name="item_loginitialized">logInitialized</a></strong></dt>
 
 <dd>
 <pre>
  $bool = CLASS_OR_OBJECT-&gt;logInitialized();</pre>
-<p>Wrapper for <a href="Log.Log4perl.html">Log::Log4perl</a>-&gt;<code>initialized()</code>.</p>
+<p>Wrapper for <a href="Log.Log4perl.html">Log::Log4perl</a>-&gt;initialized().</p>
 </dd>
 </dl>
 <p>
 </p>
 <h2><a name="methods__get_logger">Methods: get logger</a></h2>
 <dl>
-<dt><strong><a name="logger" class="item">logger</a></strong></dt>
+<dt><strong><a name="item_logger">logger</a></strong></dt>
 
 <dd>
 <pre>
@@ -146,17 +142,17 @@ This function only needs to be called once; see
 </p>
 <h2><a name="methods__messages">Methods: messages</a></h2>
 <dl>
-<dt><strong><a name="trace" class="item">trace</a></strong></dt>
+<dt><strong><a name="item_trace">trace</a></strong></dt>
 
-<dt><strong><a name="debug" class="item">debug</a></strong></dt>
+<dt><strong><a name="item_debug">debug</a></strong></dt>
 
-<dt><strong><a name="info" class="item">info</a></strong></dt>
+<dt><strong><a name="item_info">info</a></strong></dt>
 
-<dt><strong><a name="warn" class="item">warn</a></strong></dt>
+<dt><strong><a name="item_warn">warn</a></strong></dt>
 
-<dt><strong><a name="error" class="item">error</a></strong></dt>
+<dt><strong><a name="item_error">error</a></strong></dt>
 
-<dt><strong><a name="fatal" class="item">fatal</a></strong></dt>
+<dt><strong><a name="item_fatal">fatal</a></strong></dt>
 
 <dd>
 <pre>
@@ -168,9 +164,9 @@ This function only needs to be called once; see
  $class_or_obj-&gt;fatal (@msg);  ##-- 'FATAL'-level message</pre>
 <p>Log messages at an explicit log-level.</p>
 <p>Be sure you have called <a href="Log.Log4perl.html">Log::Log4perl</a>::init() or similar first,
-e.g. <a href="#loginit">DTA::TokWrap::Logger::logInit()</a>.</p>
+e.g. <a href="#item_loginit">DTA::TokWrap::Logger::logInit()</a>.</p>
 </dd>
-<dt><strong><a name="llog" class="item">llog</a></strong></dt>
+<dt><strong><a name="item_llog">llog</a></strong></dt>
 
 <dd>
 <pre>
@@ -178,7 +174,7 @@ e.g. <a href="#loginit">DTA::TokWrap::Logger::logInit()</a>.</p>
 <p>Log message @msg at log-level $level, which should be a (numeric)
 constant exported by Log::Log4perl::Level.</p>
 </dd>
-<dt><strong><a name="vlog" class="item">vlog</a></strong></dt>
+<dt><strong><a name="item_vlog">vlog</a></strong></dt>
 
 <dd>
 <pre>
@@ -205,11 +201,11 @@ will be ignored.</p>
 </p>
 <h2><a name="methods__carp__croak___friends">Methods: carp, croak &amp; friends</a></h2>
 <dl>
-<dt><strong><a name="logwarn" class="item">logwarn</a></strong></dt>
+<dt><strong><a name="item_logwarn">logwarn</a></strong></dt>
 
-<dt><strong><a name="logcarp" class="item">logcarp</a></strong></dt>
+<dt><strong><a name="item_logcarp">logcarp</a></strong></dt>
 
-<dt><strong><a name="logcluck" class="item">logcluck</a></strong></dt>
+<dt><strong><a name="item_logcluck">logcluck</a></strong></dt>
 
 <dd>
 <pre>
@@ -217,11 +213,11 @@ will be ignored.</p>
  $class_or_obj-&gt;logcarp  (@msg);   ##-- warn w/ 1-level stack trace
  $class_or_obj-&gt;logcluck (@msg);   ##-- warn w/ full stack trace</pre>
 </dd>
-<dt><strong><a name="logdie" class="item">logdie</a></strong></dt>
+<dt><strong><a name="item_logdie">logdie</a></strong></dt>
 
-<dt><strong><a name="logcroak" class="item">logcroak</a></strong></dt>
+<dt><strong><a name="item_logcroak">logcroak</a></strong></dt>
 
-<dt><strong><a name="logconfess" class="item">logconfess</a></strong></dt>
+<dt><strong><a name="item_logconfess">logconfess</a></strong></dt>
 
 <dd>
 <pre>

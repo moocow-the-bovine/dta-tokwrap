@@ -15,10 +15,8 @@
 </td></tr>
 </table>
 
-
-<!-- INDEX BEGIN -->
-<div name="index">
 <p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
 
 <ul>
 
@@ -35,11 +33,9 @@
 	<li><a href="#author">AUTHOR</a></li>
 	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
 </ul>
-
-<hr name="index" />
-</div>
 <!-- INDEX END -->
 
+<hr />
 <p>
 <a href="#__index__"><small>(Back to Top)</small></a>
 </p>
@@ -72,7 +68,7 @@ DTA::TokWrap distribution</p>
 </p>
 <h2><a name="constants">Constants</a></h2>
 <dl>
-<dt><strong><a name="variable_isa" class="item">Variable: @ISA</a></strong></dt>
+<dt><strong><a name="item_variable_3a__40isa">Variable: @ISA</a></strong></dt>
 
 <dd>
 <p>DTA::TokWrap::Base inherits from <a href="DTA.TokWrap.Logger.html">DTA::TokWrap::Logger</a>.</p>
@@ -82,7 +78,7 @@ DTA::TokWrap distribution</p>
 </p>
 <h2><a name="constructors_etc_">Constructors etc.</a></h2>
 <dl>
-<dt><strong><a name="new" class="item">new</a></strong></dt>
+<dt><strong><a name="item_new">new</a></strong></dt>
 
 <dd>
 <pre>
@@ -90,27 +86,27 @@ DTA::TokWrap distribution</p>
 <p>Generic constructor.  %args is a hash of
 subclass-dependent constructor options.</p>
 <p>The default implementation calls
-$CLASS_OR_OBJ-&gt;<a href="#defaults"><code>defaults()</code></a> before
+$CLASS_OR_OBJ-&gt;<a href="#item_defaults"><code>defaults()</code></a> before
 the new object is instiated, and and
-$obj-&gt;<a href="#init"><code>init()</code></a> afterwords.</p>
+$obj-&gt;<a href="#item_init"><code>init()</code></a> afterwords.</p>
 </dd>
-<dt><strong><a name="defaults" class="item">defaults</a></strong></dt>
+<dt><strong><a name="item_defaults">defaults</a></strong></dt>
 
 <dd>
 <pre>
  %defaults = CLASS_OR_OBJ-&gt;defaults();</pre>
-<p>Subclasses may define a <a href="#defaults"><code>defaults()</code></a> method to
+<p>Subclasses may define a <a href="#item_defaults"><code>defaults()</code></a> method to
 set static (class-dependent) object defaults.
 The return value %defaults should be an object option
 hash.</p>
 <p>The default implementation just returns an empty hash.</p>
 </dd>
-<dt><strong><a name="init" class="item">init</a></strong></dt>
+<dt><strong><a name="item_init">init</a></strong></dt>
 
 <dd>
 <pre>
  $obj = $obj-&gt;init();</pre>
-<p>Subclasses may define an <a href="#init"><code>init()</code></a> method to
+<p>Subclasses may define an <a href="#item_init"><code>init()</code></a> method to
 compute dynamic (object-dependent) object defaults.</p>
 <p>The default implementation does nothing.</p>
 </dd>

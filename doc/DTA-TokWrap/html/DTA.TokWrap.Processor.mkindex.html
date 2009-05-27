@@ -15,10 +15,8 @@
 </td></tr>
 </table>
 
-
-<!-- INDEX BEGIN -->
-<div name="index">
 <p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
 
 <ul>
 
@@ -36,11 +34,9 @@
 	<li><a href="#author">AUTHOR</a></li>
 	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
 </ul>
-
-<hr name="index" />
-</div>
 <!-- INDEX END -->
 
+<hr />
 <p>
 </p>
 <h1><a name="name">NAME</a></h1>
@@ -62,7 +58,7 @@
 <h1><a name="description">DESCRIPTION</a></h1>
 <p>DTA::TokWrap::Processor::mkindex provides an object-oriented
 <a href="DTA.TokWrap.Processor.html">DTA::TokWrap::Processor</a> wrapper
-around the <em class="file">dtatw-mkindex</em> C program
+around the <em>dtatw-mkindex</em> C program
 for <a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> objects.</p>
 <p>Most users should use the high-level
 <a href="DTA.TokWrap.html">DTA::TokWrap</a> wrapper class
@@ -71,7 +67,7 @@ instead of using this module directly.</p>
 </p>
 <h2><a name="constants">Constants</a></h2>
 <dl>
-<dt><strong><a name="_isa" class="item">@ISA</a></strong></dt>
+<dt><strong><a name="item__isa">@ISA</a></strong></dt>
 
 <dd>
 <p>DTA::TokWrap::Processor::mkindex
@@ -83,7 +79,7 @@ inherits from
 </p>
 <h2><a name="constructors_etc_">Constructors etc.</a></h2>
 <dl>
-<dt><strong><a name="new" class="item">new</a></strong></dt>
+<dt><strong><a name="item_new">new</a></strong></dt>
 
 <dd>
 <pre>
@@ -94,14 +90,14 @@ inherits from
  mkindex =&gt; $path_to_dtatw_mkindex, ##-- default: search
  inplace =&gt; $bool,                  ##-- prefer in-place programs for search?</pre>
 </dd>
-<dt><strong><a name="defaults" class="item">defaults</a></strong></dt>
+<dt><strong><a name="item_defaults">defaults</a></strong></dt>
 
 <dd>
 <pre>
  %defaults = $CLASS-&gt;defaults();</pre>
 <p>Static class-dependent defaults.</p>
 </dd>
-<dt><strong><a name="init" class="item">init</a></strong></dt>
+<dt><strong><a name="item_init">init</a></strong></dt>
 
 <dd>
 <pre>
@@ -113,12 +109,12 @@ inherits from
 </p>
 <h2><a name="methods">Methods</a></h2>
 <dl>
-<dt><strong><a name="mkindex" class="item">mkindex</a></strong></dt>
+<dt><strong><a name="item_mkindex">mkindex</a></strong></dt>
 
 <dd>
 <pre>
  $doc_or_undef = $CLASS_OR_OBJECT-&gt;mkindex($doc);</pre>
-<p>Runs the <em class="file">dtatw-mkindex</em> program on the 
+<p>Runs the <em>dtatw-mkindex</em> program on the 
 <a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> object
 $doc.</p>
 <p>Relevant %$doc keys:</p>
