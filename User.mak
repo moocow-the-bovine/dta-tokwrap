@@ -133,3 +133,18 @@ arcname = dta-tokwrap-$(notdir $(PWD)).$(shell date +"%Y-%m-%d").$(shell hostnam
 ## arcfile=FILE
 ##  + complete filename of .tar.gz archive
 arcfile = $(arcdir)/$(arcname).tar.gz
+
+##======================================================================
+## Variables: DTA::CAB stuff
+
+## cab_server=URL
+##  + URL of DTA::CAB server to query for creating .dta-cab.xml files
+cab_server   = http://lal.dwds.de:8088
+
+## cab_analyzer=NAME
+##  + analyzer name for creation of .dta-cab.xml files
+cab_analyzer = dta.cab.default
+
+## cab_options=OPTIONS
+##  + additional options for dta-cab-xmlrpc-client.perl
+cab_options = -noprofile -verbose=info

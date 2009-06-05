@@ -187,7 +187,7 @@ REALCLEAN_FILES += \
 
 all: t-xml s-xml w-xml a-xml
 
-extra: cws-xml cws-noc-fmt-xml
+extra: cab-xml cws-xml cws-noc-fmt-xml
 
 .SECONDARY: 
 
@@ -434,6 +434,20 @@ cws-xml: $(XML:.xml=.cws.xml)
 no-cws-xml: ; rm -r *.cws.xml
 CLEAN_FILES += *.cws.xml
 
+##======================================================================
+## Rules: DTA::CAB analysis
+
+cab-xml: dta-cab-xml
+dta-cab-xml: $(XML:.xml=.dta-cab.xml)
+
+%.dta-cab.xml: %.t.xml
+	dta-cab-xmlrpc-client.perl $(cab_options) -s $(cab_server) -a $(cab_analyzer) \
+	  -raw -ic=XmlNative -oc=XmlNative -ol=1 -o "$@" "$<" \
+	  || (rm -f "$@"; false)
+
+no-dta-cab-xml: ; rm -f *.dta-cab.xml
+no-cab-xml: no-dta-cab-xml
+CLEAN_FILES += *.dta-cab.xml
 
 ##======================================================================
 ## Rules: archiving
