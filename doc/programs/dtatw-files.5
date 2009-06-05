@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "DTATW-FILES 5"
-.TH DTATW-FILES 5 "2009-05-18" "dta-tokwrap v0.07" "DTA Tokenization Utilities"
+.TH DTATW-FILES 5 "2009-06-05" "dta-tokwrap v0.08" "DTA Tokenization Utilities"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -441,11 +441,16 @@ Example:
 Master XML-ified tokenizer output (\s-1XML\s0).
 X\-Paths:
 .PP
-.Vb 3
+.Vb 4
 \& /*/s      : sentence: <s xml:id=ID>...</s>
-\& /*/s/w    : token: <w @xml:id @b="TXTOFF TXTLEN" t="TEXT" c="C_IDS">...</w>
+\& /*/s/w    : token: <w @xml:id b="TXTOFF TXTLEN" t="TEXT" c="C_IDS">...</w>
 \& /*/s/w/a  : token analysis: <a>ANALYSIS_TEXT</a>
+\& /*/s/w//* : (additional analysis data, inserted e.g. by DTA::CAB utilities)
 .Ve
+.PP
+This format can also be passed directly to and from the \s-1\fIDTA::CAB\s0\fR\|(3pm)
+analysis suite using the \fIDTA::CAB::Format::XmlNative\fR\|(3pm)
+formatter class.
 .PP
 Example:
 .PP

@@ -15,8 +15,10 @@
 </td></tr>
 </table>
 
-<p><a name="__index__"></a></p>
+
 <!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
 
 <ul>
 
@@ -28,16 +30,18 @@
 		<li><a href="#constants">Constants</a></li>
 		<li><a href="#constructors_etc_">Constructors etc.</a></li>
 		<li><a href="#methods__xsl_stylesheets">Methods: XSL stylesheets</a></li>
-		<li><a href="#methods__toplevel">Methods: top-level</a></li>
+		<li><a href="#methods__top_level">Methods: top-level</a></li>
 	</ul>
 
 	<li><a href="#see_also">SEE ALSO</a></li>
 	<li><a href="#author">AUTHOR</a></li>
 	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
 </ul>
+
+<hr name="index" />
+</div>
 <!-- INDEX END -->
 
-<hr />
 <p>
 </p>
 <h1><a name="name">NAME</a></h1>
@@ -66,7 +70,7 @@
 <a href="DTA.TokWrap.Processor.html">DTA::TokWrap::Processor</a> wrapper
 for
 hint insertion and serialization sort-key generation
-on a text-free ``structure index'' (.sx) XML file.</p>
+on a text-free &quot;structure index&quot; (.sx) XML file.</p>
 <p>Most users should use the high-level
 <a href="DTA.TokWrap.html">DTA::TokWrap</a> wrapper class
 instead of using this module directly.</p>
@@ -74,7 +78,7 @@ instead of using this module directly.</p>
 </p>
 <h2><a name="constants">Constants</a></h2>
 <dl>
-<dt><strong><a name="item__isa">@ISA</a></strong></dt>
+<dt><strong><a name="_isa" class="item">@ISA</a></strong></dt>
 
 <dd>
 <p>DTA::TokWrap::Processor::mkbx0
@@ -86,7 +90,7 @@ inherits from
 </p>
 <h2><a name="constructors_etc_">Constructors etc.</a></h2>
 <dl>
-<dt><strong><a name="item_new">new</a></strong></dt>
+<dt><strong><a name="new" class="item">new</a></strong></dt>
 
 <dd>
 <pre>
@@ -113,14 +117,14 @@ inherits from
  sort_stylestr  =&gt; $stylestr,           ##-- xsl stylesheet string
  sort_styleheet =&gt; $stylesheet,         ##-- compiled xsl stylesheet</pre>
 </dd>
-<dt><strong><a name="item_defaults">defaults</a></strong></dt>
+<dt><strong><a name="defaults" class="item">defaults</a></strong></dt>
 
 <dd>
 <pre>
  %defaults = CLASS-&gt;defaults();</pre>
 <p>Static class-dependent defaults.</p>
 </dd>
-<dt><strong><a name="item_init">init</a></strong></dt>
+<dt><strong><a name="init" class="item">init</a></strong></dt>
 
 <dd>
 <pre>
@@ -132,14 +136,14 @@ inherits from
 </p>
 <h2><a name="methods__xsl_stylesheets">Methods: XSL stylesheets</a></h2>
 <dl>
-<dt><strong><a name="item_ensure_stylesheets">ensure_stylesheets</a></strong></dt>
+<dt><strong><a name="ensure_stylesheets" class="item">ensure_stylesheets</a></strong></dt>
 
 <dd>
 <pre>
  $mbx0_or_undef = $mbx0-&gt;ensure_stylesheets();</pre>
 <p>Ensures that required XSL stylesheets have been compiled.</p>
 </dd>
-<dt><strong><a name="item_hint_stylestr">hint_stylestr</a></strong></dt>
+<dt><strong><a name="hint_stylestr" class="item">hint_stylestr</a></strong></dt>
 
 <dd>
 <pre>
@@ -148,7 +152,7 @@ inherits from
 which is responsible for inserting sentence- and token-break hints
 into the input *.sx document.</p>
 </dd>
-<dt><strong><a name="item_sort_stylestr">sort_stylestr</a></strong></dt>
+<dt><strong><a name="sort_stylestr" class="item">sort_stylestr</a></strong></dt>
 
 <dd>
 <pre>
@@ -157,14 +161,14 @@ into the input *.sx document.</p>
 which is responsible for inserting top-level serialization-segment keys
 into the input *.sx document.</p>
 </dd>
-<dt><strong><a name="item_dump_hint_stylesheet">dump_hint_stylesheet</a></strong></dt>
+<dt><strong><a name="dump_hint_stylesheet" class="item">dump_hint_stylesheet</a></strong></dt>
 
 <dd>
 <pre>
  $mbx0-&gt;dump_hint_stylesheet($filename_or_fh);</pre>
 <p>Dumps the generated 'insert-hints' stylesheet to $filename_or_fh.</p>
 </dd>
-<dt><strong><a name="item_dump_sort_stylesheet">dump_sort_stylesheet</a></strong></dt>
+<dt><strong><a name="dump_sort_stylesheet" class="item">dump_sort_stylesheet</a></strong></dt>
 
 <dd>
 <pre>
@@ -174,15 +178,15 @@ into the input *.sx document.</p>
 </dl>
 <p>
 </p>
-<h2><a name="methods__toplevel">Methods: top-level</a></h2>
+<h2><a name="methods__top_level">Methods: top-level</a></h2>
 <dl>
-<dt><strong><a name="item_mkbx0">mkbx0</a></strong></dt>
+<dt><strong><a name="mkbx0" class="item">mkbx0</a></strong></dt>
 
 <dd>
 <pre>
  $doc_or_undef = $CLASS_OR_OBJECT-&gt;mkbx0($doc);</pre>
 <p>Applies the XSL pipeline for hint insertion and
-sort-key generation to the ``structure index'' (*.sx)
+sort-key generation to the &quot;structure index&quot; (*.sx)
 document of the
 <a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> object
 $doc.</p>

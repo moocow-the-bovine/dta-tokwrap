@@ -328,8 +328,13 @@ Master XML-ified tokenizer output (XML).
 X-Paths:
 
  /*/s      : sentence: <s xml:id=ID>...</s>
- /*/s/w    : token: <w @xml:id @b="TXTOFF TXTLEN" t="TEXT" c="C_IDS">...</w>
+ /*/s/w    : token: <w @xml:id b="TXTOFF TXTLEN" t="TEXT" c="C_IDS">...</w>
  /*/s/w/a  : token analysis: <a>ANALYSIS_TEXT</a>
+ /*/s/w//* : (additional analysis data, inserted e.g. by DTA::CAB utilities)
+
+This format can also be passed directly to and from the L<DTA::CAB(3pm)|DTA::CAB>
+analysis suite using the L<DTA::CAB::Format::XmlNative(3pm)|DTA::CAB::Format::XmlNative>
+formatter class.
 
 Example:
 

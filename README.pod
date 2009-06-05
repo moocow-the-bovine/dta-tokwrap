@@ -204,6 +204,9 @@ Issue the following command to the shell:
 
 "Master" tokenizer output file encoding sentence boundaries, token boundaries,
 and tokenizer-provided token analyses.  Source for various stand-off annotation formats.
+This format can also be passed directly to and from the L<DTA::CAB(3pm)|DTA::CAB>
+analysis suite using the L<DTA::CAB::Format::XmlNative(3pm)|DTA::CAB::Format::XmlNative>
+formatter class.
 
 =item F<doc1.w.xml>
 

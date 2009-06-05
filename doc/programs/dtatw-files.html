@@ -352,8 +352,12 @@ See <em class="file">mootfiles(5)</em> for details on the file format.</p>
 X-Paths:</p>
 <pre>
  /*/s      : sentence: &lt;s xml:id=ID&gt;...&lt;/s&gt;
- /*/s/w    : token: &lt;w @xml:id @b=&quot;TXTOFF TXTLEN&quot; t=&quot;TEXT&quot; c=&quot;C_IDS&quot;&gt;...&lt;/w&gt;
- /*/s/w/a  : token analysis: &lt;a&gt;ANALYSIS_TEXT&lt;/a&gt;</pre>
+ /*/s/w    : token: &lt;w @xml:id b=&quot;TXTOFF TXTLEN&quot; t=&quot;TEXT&quot; c=&quot;C_IDS&quot;&gt;...&lt;/w&gt;
+ /*/s/w/a  : token analysis: &lt;a&gt;ANALYSIS_TEXT&lt;/a&gt;
+ /*/s/w//* : (additional analysis data, inserted e.g. by DTA::CAB utilities)</pre>
+<p>This format can also be passed directly to and from the <a href="./DTA/CAB.html">DTA::CAB(3pm)</a>
+analysis suite using the <a href="./DTA/CAB/Format/XmlNative.html">DTA::CAB::Format::XmlNative(3pm)</a>
+formatter class.</p>
 <p>Example:</p>
 <pre>
  &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;

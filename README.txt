@@ -105,7 +105,9 @@ USAGE
     doc1.t.xml
         "Master" tokenizer output file encoding sentence boundaries, token
         boundaries, and tokenizer-provided token analyses. Source for
-        various stand-off annotation formats.
+        various stand-off annotation formats. This format can also be passed
+        directly to and from the DTA::CAB(3pm) analysis suite using the
+        DTA::CAB::Format::XmlNative(3pm) formatter class.
 
     doc1.w.xml
         Stand-off XML file encoding token boundaries. Contains references to
