@@ -24,7 +24,8 @@ xmldir = ./xmlsrc
 
 ## xml=XMLFILES
 ##  + list of all DTA "base-format" XML sources (default: all .chr.xml files in XMLDIR)
-xml = $(wildcard $(xmldir)/*.xml)
+xml  = $(xmldir)/ex2a.xml
+#xml = $(wildcard $(xmldir)/*.xml)
 #xml = $(wildcard $(xmldir)/*.chr.xml) $(wildcard $(xmldir)/*.char.xml)
 #xml = $(wildcard $(xmldir)/*.chr.xml)
 #xml = $(xmldir)/berg_ostasienbotanik_1866_pb.chr.xml $(xmldir)/boeheim_waffenkunde_1890.chr.xml
@@ -139,7 +140,8 @@ arcfile = $(arcdir)/$(arcname).tar.gz
 
 ## cab_server=URL
 ##  + URL of DTA::CAB server to query for creating .dta-cab.xml files
-cab_server   = http://lal.dwds.de:8088
+#cab_server   = http://lal.dwds.de:8088
+cab_server   = http://localhost:8088
 
 ## cab_analyzer=NAME
 ##  + analyzer name for creation of .dta-cab.xml files

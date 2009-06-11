@@ -332,8 +332,6 @@ CLEAN_FILES += *.t
 ##======================================================================
 ## Rules: tokenized: master xml output
 
-##-- CONTINUE HERE (problem: implicit pattern rule .xml -> link-to-srcdir) !
-
 t-xml: $(XML:.xml=.t.xml)
 
 %.t.xml: %.t %.cx %.bx tokwrap
@@ -350,14 +348,18 @@ CLEAN_FILES += *.t.xml
 ## Rules: tokenized: xml-t: master xml output -> .tt
 
 %.t.xml.t: $(XSL_DIR)/dtatw-txml2tt.xsl %.t.xml
-#	xsltproc --param sids 1 --param wids 1 --param wlocs 1 -o "$@" $^
 	xsltproc --param sids 1 --param wids 0 --param wlocs 0 -o "$@" $^
 
+%.t.xml.tt: $(XSL_DIR)/dtatw-txml2tt.xsl %.t.xml
+	xsltproc --param sids 1 --param wlocs 1 --param wids 1 --param wchars 1 -o "$@" $^
+
 xml-t: $(XML:.xml=.t.xml.t)
+xml-tt: $(XML:.xml=.t.xml.tt)
 
 no-xml-t: ; rm -f *.t.xml.t
+no-xml-tt: ; rm -f *.t.xml.tt
 
-CLEAN_FILES += *.t.xml.t
+CLEAN_FILES += *.t.xml.t *.t.xml.tt
 
 ##======================================================================
 ## Rules: standoff (via C utilities)
@@ -435,19 +437,74 @@ no-cws-xml: ; rm -r *.cws.xml
 CLEAN_FILES += *.cws.xml
 
 ##======================================================================
-## Rules: DTA::CAB analysis
+## Rules: DTA::CAB analysis (v1): .t.xml -> .dta-cab.xml
+## + slow: 561 tok/sec
 
 cab-xml: dta-cab-xml
 dta-cab-xml: $(XML:.xml=.dta-cab.xml)
 
 %.dta-cab.xml: %.t.xml
-	dta-cab-xmlrpc-client.perl $(cab_options) -s $(cab_server) -a $(cab_analyzer) \
-	  -raw -ic=XmlNative -oc=XmlNative -ol=1 -o "$@" "$<" \
+	dta-cab-xmlrpc-client.perl $(cab_options) -s=$(cab_server) -a=$(cab_analyzer) -raw -ic=Xml -oc=Xml -ol=1 -o="$@" "$<" \
 	  || (rm -f "$@"; false)
 
 no-dta-cab-xml: ; rm -f *.dta-cab.xml
 no-cab-xml: no-dta-cab-xml
 CLEAN_FILES += *.dta-cab.xml
+
+##======================================================================
+## Rules: DTA::CAB analysis (v2): .t -> .dta-cab.t -> .dta.cab.t.xml
+## + faster (874 tok/sec), but incorrect (not DTA::CAB::Format::Xml format!)
+
+cab-t: dta-cab-t
+dta-cab-t: $(XML:.xml=.dta-cab.t)
+
+%.dta-cab.t: %.t
+	dta-cab-xmlrpc-client.perl $(cab_options) -s $(cab_server) -a $(cab_analyzer) -raw -ic=TT -oc=TT -o "$@" "$<" \
+	  || (rm -f "$@"; false)
+
+no-dta-cab-t: ; rm -f *.dta-cab.t
+no-cab-t: no-dta-cab-t
+CLEAN_FILES += *.dta-cab.t
+
+cab-t-xml: dta-cab-t-xml
+dta-cab-t-xml: $(XML:.xml=.dta-cab.t.xml)
+
+%.dta-cab.t.xml: %.dta-cab.t %.cx %.bx tokwrap
+#	dta-cab-convert.perl $(cab_options) -ic=TT -oc=Xml -ol=1 -o "$@" "$<" || (rm -f "$@"; false)
+ifeq "$(TOKWRAP_ALL)" "yes"
+	$(TOKWRAP) -t tok2xml -dO tokfile=$< -dO xtokfile=$@ $(xmldir)/$*.xml
+else
+	$(PROG_DIR)dtatw-tok2xml $< $*.cx $*.bx $@ $*.xml
+endif
+
+no-dta-cab-t-xml: ; rm -f *.dta-cab.t.xml
+no-cab-t-xml: no-dta-cab-t-xml
+CLEAN_FILES += *.dta-cab.t.xml
+
+##======================================================================
+## Rules: DTA::CAB analysis (v3): .t.xml -> .dta-cab.tt.xml
+## + better, but loses /*/@xml:base and //s/@xml:id
+
+cab-pre-tt: dta-cab-pre-tt
+dta-cab-pre-tt: $(XML:.xml=.t.xml.tt)
+
+cab-tt-xml: dta-cab-tt-xml
+dta-cab-tt-xml: $(XML:.xml=.dta-cab.tt.xml)
+
+%.dta-cab.tt.xml: %.t.xml.tt
+	dta-cab-xmlrpc-client.perl $(cab_options) -s $(cab_server) -a $(cab_analyzer) -raw -ic=TT -oc=Xml -ol=1 -o "$@" "$<" \
+	  || (rm -f "$@"; false)
+
+cab-tt: dta-cab-tt
+dta-cab-tt: $(XML:.xml=.dta-cab.tt)
+
+%.dta-cab.tt: %.t.xml.tt
+	dta-cab-xmlrpc-client.perl $(cab_options) -s $(cab_server) -a $(cab_analyzer) -raw -ic=TT -oc=TT -ol=1 -o "$@" "$<" \
+	  || (rm -f "$@"; false)
+
+no-dta-cab-tt-xml: ; rm -f *.dta-cab.tt.xml *.dta-cab.tt
+no-cab-tt-xml: no-dta-cab-tt-xml
+CLEAN_FILES += *.dta-cab.tt.xml *.dta-cab.tt
 
 ##======================================================================
 ## Rules: archiving
