@@ -6,8 +6,12 @@
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- parameters -->
   <xsl:param name="sids" select="0"/>       <!-- whether to output sentence IDs as comments -->
-  <xsl:param name="wids" select="0"/>       <!-- whether to output token IDs as "tags" -->
   <xsl:param name="wlocs" select="0"/>      <!-- whether to output token locations -->
+  <xsl:param name="wids" select="0"/>       <!-- whether to output token IDs as analyses -->
+  <xsl:param name="wchars" select="0"/>     <!-- whether to output token character-id-lists as analyses -->
+  <xsl:param name="idprefix" select="'[xmlid] '"/>   <!-- xml:id analysis prefix string -->
+  <xsl:param name="cprefix"  select="'[chars] '"/>   <!-- character-id-list analysis prefix string -->
+  <xsl:param name="aprefix"  select="''"/>           <!-- default analysis prefix string -->
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- options -->
@@ -38,11 +42,19 @@
   <!-- main: template: w -->
   <xsl:template match="w">
     <xsl:value-of select="@t"/>
-    <xsl:if test="$wids">
-      <xsl:text>&#09;</xsl:text><xsl:value-of select="@xml:id"/>
-    </xsl:if>
     <xsl:if test="$wlocs">
-      <xsl:text>&#09;</xsl:text><xsl:value-of select="@b"/>
+      <xsl:text>&#09;</xsl:text>
+      <xsl:value-of select="@b"/>
+    </xsl:if>
+    <xsl:if test="$wids">
+      <xsl:text>&#09;</xsl:text>
+      <xsl:value-of select="$idprefix"/>
+      <xsl:value-of select="@xml:id"/>
+    </xsl:if>
+    <xsl:if test="$wchars">
+      <xsl:text>&#09;</xsl:text>
+      <xsl:value-of select="$cprefix"/>
+      <xsl:value-of select="@c"/>
     </xsl:if>
     <xsl:apply-templates select="./a"/>
     <xsl:text>&#10;</xsl:text>
@@ -52,6 +64,7 @@
   <!-- main: template: a -->
   <xsl:template match="a">
     <xsl:text>&#09;</xsl:text>
+    <xsl:value-of select="$aprefix"/>
     <xsl:value-of select="text()"/>
   </xsl:template>
 

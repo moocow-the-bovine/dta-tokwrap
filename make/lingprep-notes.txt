@@ -1,0 +1,43 @@
+##======================
+## uhura, Thu, 11 Jun 2009 17:10:32 +0200 (DTA::CAB v0.05)
+
+$ make clean; make ex2a.t
+$ time make ex2a.dta-cab.xml  ##-- slow: 561 tok/sec
+ dtatw-tok2xml ex2a.t ex2a.cx ex2a.bx ex2a.t.xml ex2a.xml
+ dta-cab-xmlrpc-client.perl -noprofile -verbose=info -s http://localhost:8088 -a dta.cab.default \
+	  -raw -ic=Xml -oc=Xml -ol=1 -o "ex2a.dta-cab.xml" "ex2a.t.xml" \
+	  || (rm -f "ex2a.dta-cab.xml"; false)
+real	0m2.082s
+user	0m0.424s
+sys	0m0.052s
+##-- 1169 toks in 2.082 sec: 561.48 tok/sec
+
+$ make clean; make ex2a.t
+$ time make ex2a.dta-cab.t.xml ##-- faster (874 tok/sec), but incorrect (not DTA::CAB::Format::Xml format!)
+ dta-cab-xmlrpc-client.perl -noprofile -verbose=info -s http://localhost:8088 -a dta.cab.default \
+	-raw -ic=TT -oc=TT -o "ex2a.dta-cab.t" "ex2a.t" \
+	|| (rm -f "ex2a.dta-cab.t"; false)
+ ../src/dtatw-tok2xml ex2a.dta-cab.t ex2a.cx ex2a.bx ex2a.dta-cab.t.xml ex2a.xml
+real	0m1.337s
+user	0m0.384s
+sys	0m0.060s
+##-- 1169 toks in 1.337s: 874.35 tok/sec
+
+$ make clean; make t-xml
+$ time make dta-cab-tt-xml
+ xsltproc --param sids 1 --param wlocs 1 --param wids 1 --param wchars 1 -o "ex2a.t.xml.tt" \
+	../scripts/dtatw-txml2tt.xsl ex2a.t.xml
+ dta-cab-xmlrpc-client.perl -noprofile -verbose=info -s http://localhost:8088 -a dta.cab.default \
+	-raw -ic=TT -oc=Xml -ol=1 -o "ex2a.dta-cab.tt.xml" "ex2a.t.xml.tt" \
+	|| (rm -f "ex2a.dta-cab.tt.xml"; false)
+##-- 1169 toks in 1.856s: 629.85 tok/sec
+
+
+$ make clean; make t-xml
+$ time make dta-cab-tt
+ xsltproc --param sids 1 --param wlocs 1 --param wids 1 --param wchars 1 -o "ex2a.t.xml.tt" \
+	../scripts/dtatw-txml2tt.xsl ex2a.t.xml
+ dta-cab-xmlrpc-client.perl -noprofile -verbose=info -s http://localhost:8088 -a dta.cab.default \
+	-raw -ic=TT -oc=TT -ol=1 -o "ex2a.dta-cab.tt" "ex2a.t.xml.tt" \
+	|| (rm -f "ex2a.dta-cab.tt"; false)
+##-- text output; 1169 toks in 1.397s: 836.79 tok/sec

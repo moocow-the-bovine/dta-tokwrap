@@ -132,7 +132,7 @@ GetOptions(
 	   'keeptmp|keep|k!' => \$twopts{keeptmp},
 	   'format-xml|format|fmt|pretty-xml|pretty|fx|px:i'  => sub { $docopts{format} = $_[1]||1; },
 	   'noformat-xml|noformat|nofmt|nopretty-xml|nopretty|nofx|nopx'  => sub { $docopts{format} = 0; },
-	   'document-option|docopt|do=s%' => \%docopts,
+	   'document-option|docopt|do|dO|O=s%' => \%docopts,
 
 	   ##-- Log options
 	   'log-config|logconfig|logconf|log-rc|logrc|lc=s' => \$logConfFile,
