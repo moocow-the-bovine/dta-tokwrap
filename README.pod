@@ -335,6 +335,19 @@ replacing them with newlines.
 Regex hack, fast but not robust, use with caution.
 See also L</"dtatw-rm-lb.xsl">
 
+=item dtatw-tt-dictapply.perl
+
+Script to apply a type-"dictionary" in one-word-per-line (.tt) format to a
+token corpus in one-word-per-line (.tt) format.  Especially useful together with
+standard UNIX utilities such as cut, grep, sort, and uniq.
+
+=item dtatw-cabtt2xml.perl
+
+Script to convert DTA::CAB::Format::TT (one-word-per-line with variable analysis
+fields identified by conventional prefixes) files to expanded .t.xml format used
+by dta-tokwrap.  The expanded format should be identical to that used by the
+DTA::CAB::Format::Xml class.  See also L<dtatw-txml2tt.xsl>.
+
 =item file-substr.perl
 
 Script to extract a portion of a file,
@@ -454,8 +467,19 @@ Replaces C<E<lt>lb/E<gt>> elements with newlines.
 
 Converts "master" tokenized XML output format (F<*.t.xml>) to
 TAB-separated one-word-per-line format
-(F<*.mr.t> aka F<*.t> aka F<*.tt> aka "tt" aka "CSV" aka "TnT" aka "TreeTagger" aka "vertical" aka "moot-native" aka ...).
-See the F<mootfiles(5)> manpage for details.
+(F<*.mr.t>
+aka F<*.t>
+aka F<*.tt>
+aka "tt"
+aka "CSV"
+aka DTA::CAB::Format::TT
+aka "TnT"
+aka "TreeTagger"
+aka "vertical"
+aka "moot-native"
+aka ...).
+See the F<mootfiles(5)> manpage for basic format details, and
+see the top of the XSL script for some influential transformation parameters.
 
 =back
 
