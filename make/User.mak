@@ -24,14 +24,18 @@ xmldir = ./xmlsrc
 
 ## xml=XMLFILES
 ##  + list of all DTA "base-format" XML sources (default: all .chr.xml files in XMLDIR)
-xml  = $(xmldir)/ex2a.xml
+#xml  = $(xmldir)/ex2a.xml
+xml  = $(xmldir)/ex2.xml
 #xml = $(wildcard $(xmldir)/*.xml)
 #xml = $(wildcard $(xmldir)/*.chr.xml) $(wildcard $(xmldir)/*.char.xml)
 #xml = $(wildcard $(xmldir)/*.chr.xml)
 #xml = $(xmldir)/berg_ostasienbotanik_1866_pb.chr.xml $(xmldir)/boeheim_waffenkunde_1890.chr.xml
 #xml = $(xmldir)/berg_ostasienbotanik_1866_pb.chr.xml
 
-
+## corpus=NAME
+##  + unique name for this corpus
+##  + unused (?!)
+#corpus = $(notdir $(xmldir))
 
 ##======================================================================
 ## Variables: dta-tokwrap.perl
@@ -107,7 +111,7 @@ profile = no
 ## INPLACE=YES_OR_NO_OR_EMPTY
 ##  + set to "yes" to use local development code
 ##  + default depends on whether ../src/dtatw-mkindex.c exists
-#inplace = yes
+#inplace = no
 
 ##======================================================================
 ## Variables: archiving & distribution
@@ -149,4 +153,5 @@ cab_analyzer = dta.cab.default
 
 ## cab_options=OPTIONS
 ##  + additional options for dta-cab-xmlrpc-client.perl
-cab_options = -noprofile -verbose=info
+#cab_options = -noprofile -verbose=info
+cab_options = -verbose=info

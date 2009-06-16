@@ -31,6 +31,8 @@ xml    ?= $(wildcard $(xmldir),*.chr.xml) $(wildcard $(xmldir),*.char.xml)
 outdir = .
 tmpdir = $(outdir)
 
+corpus ?= $(notdir $(xmldir))
+
 XML = $(notdir $(xml))
 
 ##--------------------------------------------------------------
@@ -348,16 +350,20 @@ CLEAN_FILES += *.t.xml
 ## Rules: tokenized: xml-t: master xml output -> .tt
 
 %.t.xml.t: $(XSL_DIR)/dtatw-txml2tt.xsl %.t.xml
-	xsltproc --param sids 1 --param wids 0 --param wlocs 0 -o "$@" $^
+	xsltproc --param w_loc 0 --param w_cab 0 --param w_a 0 -o "$@" $^
 
 %.t.xml.tt: $(XSL_DIR)/dtatw-txml2tt.xsl %.t.xml
-	xsltproc --param sids 1 --param wlocs 1 --param wids 1 --param wchars 1 -o "$@" $^
+	xsltproc -o "$@" $^
 
-xml-t: $(XML:.xml=.t.xml.t)
-xml-tt: $(XML:.xml=.t.xml.tt)
+xml-t: t-xml-t
+xml-tt: t-xml-tt
+t-xml-t: $(XML:.xml=.t.xml.t)
+t-xml-tt: $(XML:.xml=.t.xml.tt)
 
-no-xml-t: ; rm -f *.t.xml.t
-no-xml-tt: ; rm -f *.t.xml.tt
+no-xml-t: no-t-xml-t
+no-xml-tt: no-t-xml-tt
+no-t-xml-t: ; rm -f *.t.xml.t
+no-t-xml-tt: ; rm -f *.t.xml.tt
 
 CLEAN_FILES += *.t.xml.t *.t.xml.tt
 
@@ -437,74 +443,97 @@ no-cws-xml: ; rm -r *.cws.xml
 CLEAN_FILES += *.cws.xml
 
 ##======================================================================
-## Rules: DTA::CAB analysis (v1): .t.xml -> .dta-cab.xml
-## + slow: 561 tok/sec
+## Rules: DTA::CAB analysis: direct: (v1): .t.xml -> .dta-cab.xml.bytok
+## + slow: 673 tok/sec
+## + gets us "true" dta-cab XML format:
+#    <sentences xml:base="ex2a.xml">...
+#    <s xml:id="s1">...
+#     <w xml:id="w1" b="13 6" t="Critik" c="c1 c2 c3 c4 c5 c6">
+#       <xlit t="Critik" isLatin1="1" isLatinExt="1"/>
+#       <lts>
+#         <a hi="kRitik" w="0"/>
+#       </lts>
+#       <eqpho>
+#         <a t="Critik"/>
+#         <a t="Kritik"/>
+#       </eqpho>
+#       <morph/>
+#       <msafe safe="0"/>
+#       <rewrite>
+#         <a hi="Kritik" w="5">
+#           <lts>
+#             <a hi="kRitik" w="0"/>
+#           </lts>
+#           <morph>
+#             <a hi="Kritik[_NN][abstr][fem][sg]*" w="0"/>
+#             <a hi="Kritik[_NN][k_l_h_sozeinh][fem][sg]*" w="0"/>
+#           </morph>
+#         </a>
+#       </rewrite>
+#     </w>
 
-cab-xml: dta-cab-xml
-dta-cab-xml: $(XML:.xml=.dta-cab.xml)
+cab-xml-bytok: dta-cab-xml-bytok
+dta-cab-xml-bytok: $(XML:.xml=.dta-cab.xml.bytok)
 
-%.dta-cab.xml: %.t.xml
+%.dta-cab.xml.bytok: %.t.xml
 	dta-cab-xmlrpc-client.perl $(cab_options) -s=$(cab_server) -a=$(cab_analyzer) -raw -ic=Xml -oc=Xml -ol=1 -o="$@" "$<" \
 	  || (rm -f "$@"; false)
 
-no-dta-cab-xml: ; rm -f *.dta-cab.xml
-no-cab-xml: no-dta-cab-xml
-CLEAN_FILES += *.dta-cab.xml
+no-dta-cab-xml-bytok: ; rm -f *.dta-cab.xml.bytok
+no-cab-xml-bytok: no-dta-cab-xmlw-bytok
+CLEAN_FILES += *.dta-cab.xml.bytok
 
 ##======================================================================
-## Rules: DTA::CAB analysis (v2): .t -> .dta-cab.t -> .dta.cab.t.xml
-## + faster (874 tok/sec), but incorrect (not DTA::CAB::Format::Xml format!)
+## Rules: DTA::CAB Analysis: type-wise
 
-cab-t: dta-cab-t
-dta-cab-t: $(XML:.xml=.dta-cab.t)
+##--------------------------------------------------------------
+## Token->Type extraction: .t.xml.t -> .types.t
 
-%.dta-cab.t: %.t
-	dta-cab-xmlrpc-client.perl $(cab_options) -s $(cab_server) -a $(cab_analyzer) -raw -ic=TT -oc=TT -o "$@" "$<" \
-	  || (rm -f "$@"; false)
+types: types-t
+types-t: $(XML:.xml=.types.t)
+%.types.t: $(XML:.xml=.t.xml.tt)
+	cut -d$$'\t' -f 1 $< | grep -v '^%%' | grep . | sort | uniq > $@ || (rm -f $@; false)
 
-no-dta-cab-t: ; rm -f *.dta-cab.t
-no-cab-t: no-dta-cab-t
-CLEAN_FILES += *.dta-cab.t
+no-types-t: ; rm -f *.types.t
+CLEAN_FILES += *.types.t
 
-cab-t-xml: dta-cab-t-xml
-dta-cab-t-xml: $(XML:.xml=.dta-cab.t.xml)
+##--------------------------------------------------------------
+## Type-wise analysis (DTA::CAB): types.t -> types.dta-cab.tt
 
-%.dta-cab.t.xml: %.dta-cab.t %.cx %.bx tokwrap
-#	dta-cab-convert.perl $(cab_options) -ic=TT -oc=Xml -ol=1 -o "$@" "$<" || (rm -f "$@"; false)
-ifeq "$(TOKWRAP_ALL)" "yes"
-	$(TOKWRAP) -t tok2xml -dO tokfile=$< -dO xtokfile=$@ $(xmldir)/$*.xml
-else
-	$(PROG_DIR)dtatw-tok2xml $< $*.cx $*.bx $@ $*.xml
-endif
-
-no-dta-cab-t-xml: ; rm -f *.dta-cab.t.xml
-no-cab-t-xml: no-dta-cab-t-xml
-CLEAN_FILES += *.dta-cab.t.xml
-
-##======================================================================
-## Rules: DTA::CAB analysis (v3): .t.xml -> .dta-cab.tt.xml
-## + better, but loses /*/@xml:base and //s/@xml:id
-
-cab-pre-tt: dta-cab-pre-tt
-dta-cab-pre-tt: $(XML:.xml=.t.xml.tt)
-
-cab-tt-xml: dta-cab-tt-xml
-dta-cab-tt-xml: $(XML:.xml=.dta-cab.tt.xml)
-
-%.dta-cab.tt.xml: %.t.xml.tt
-	dta-cab-xmlrpc-client.perl $(cab_options) -s $(cab_server) -a $(cab_analyzer) -raw -ic=TT -oc=Xml -ol=1 -o "$@" "$<" \
-	  || (rm -f "$@"; false)
-
-cab-tt: dta-cab-tt
-dta-cab-tt: $(XML:.xml=.dta-cab.tt)
-
-%.dta-cab.tt: %.t.xml.tt
+types-tt: types-cab-tt
+types-cab-tt: $(XML:.xml=.types.dta-cab.tt)
+%.types.dta-cab.tt: %.types.t
 	dta-cab-xmlrpc-client.perl $(cab_options) -s $(cab_server) -a $(cab_analyzer) -raw -ic=TT -oc=TT -ol=1 -o "$@" "$<" \
 	  || (rm -f "$@"; false)
 
-no-dta-cab-tt-xml: ; rm -f *.dta-cab.tt.xml *.dta-cab.tt
-no-cab-tt-xml: no-dta-cab-tt-xml
-CLEAN_FILES += *.dta-cab.tt.xml *.dta-cab.tt
+no-types-tt: no-types-cab-tt
+no-types-cab-tt: ; rm -f *.types.dta-cab.tt
+CLEAN_FILES += *.types.dta-cab.tt
+
+##--------------------------------------------------------------
+## Type->Token back-mapping: (.types.dta-cab.tt, .t.xml.tt) -> (.dta-cab.tt)
+
+cab-tt: dta-cab-tt
+dta-cab-tt: $(XML:.xml=.dta-cab.tt)
+%.dta-cab.tt: %.types.dta-cab.tt %.t.xml.tt scripts
+	$(SCRIPT_DIR)dtatw-tt-dictapply.perl $< $*.t.xml.tt > $@ || (rm -f $@; false)
+
+no-cab-tt: no-dta-cab-tt
+no-dta-cab-tt: ; rm -f *.dta-cab.tt
+CLEAN_FILES += *.dta-cab.tt
+
+##--------------------------------------------------------------
+## DTA::CAB XML (from type-wise analysis): .dta-cab.tt -> .dta-cab.xml
+
+cab-xml: dta-cab-xml
+dta-cab-xml: $(XML:.xml=.dta-cab.xml)
+%.dta-cab.xml: %.dta-cab.tt scripts
+#	dta-cab-convert.perl -verbose=info $< -oc=Xml -ol=1 -o $@  ##-- slow
+	$(SCRIPT_DIR)dtatw-cabtt2xml.perl $< > $@ || (rm -f $@; false)
+
+no-cab-xml: no-dta-cab-xml
+no-dta-cab-xml: ; rm -f *.dta-cab.xml
+CLEAN_FILES += *.dta-cab.xml
 
 ##======================================================================
 ## Rules: archiving
