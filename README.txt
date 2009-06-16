@@ -201,6 +201,19 @@ TOOLS
         replacing them with newlines. Regex hack, fast but not robust, use
         with caution. See also "dtatw-rm-lb.xsl"
 
+    dtatw-tt-dictapply.perl
+        Script to apply a type-"dictionary" in one-word-per-line (.tt)
+        format to a token corpus in one-word-per-line (.tt) format.
+        Especially useful together with standard UNIX utilities such as cut,
+        grep, sort, and uniq.
+
+    dtatw-cabtt2xml.perl
+        Script to convert DTA::CAB::Format::TT (one-word-per-line with
+        variable analysis fields identified by conventional prefixes) files
+        to expanded .t.xml format used by dta-tokwrap. The expanded format
+        should be identical to that used by the DTA::CAB::Format::Xml class.
+        See also dtatw-txml2tt.xsl.
+
     file-substr.perl
         Script to extract a portion of a file, specified by byte offset and
         length. Useful for debugging index files created by other tools.
@@ -263,8 +276,10 @@ TOOLS
     dtatw-txml2tt.xsl
         Converts "master" tokenized XML output format (*.t.xml) to
         TAB-separated one-word-per-line format (*.mr.t aka *.t aka *.tt aka
-        "tt" aka "CSV" aka "TnT" aka "TreeTagger" aka "vertical" aka
-        "moot-native" aka ...). See the mootfiles(5) manpage for details.
+        "tt" aka "CSV" aka DTA::CAB::Format::TT aka "TnT" aka "TreeTagger"
+        aka "vertical" aka "moot-native" aka ...). See the mootfiles(5)
+        manpage for basic format details, and see the top of the XSL script
+        for some influential transformation parameters.
 
   C Programs
     Several C programs are included with the distribution. These are used by

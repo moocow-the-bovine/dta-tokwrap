@@ -25,8 +25,8 @@ xmldir = ./xmlsrc
 ## xml=XMLFILES
 ##  + list of all DTA "base-format" XML sources (default: all .chr.xml files in XMLDIR)
 #xml  = $(xmldir)/ex2a.xml
-xml  = $(xmldir)/ex2.xml
-#xml = $(wildcard $(xmldir)/*.xml)
+#xml  = $(xmldir)/ex2.xml
+xml = $(wildcard $(xmldir)/*.xml)
 #xml = $(wildcard $(xmldir)/*.chr.xml) $(wildcard $(xmldir)/*.char.xml)
 #xml = $(wildcard $(xmldir)/*.chr.xml)
 #xml = $(xmldir)/berg_ostasienbotanik_1866_pb.chr.xml $(xmldir)/boeheim_waffenkunde_1890.chr.xml
@@ -153,5 +153,5 @@ cab_analyzer = dta.cab.default
 
 ## cab_options=OPTIONS
 ##  + additional options for dta-cab-xmlrpc-client.perl
-#cab_options = -noprofile -verbose=info
-cab_options = -verbose=info
+cab_options = -noprofile -verbose=info
+#cab_options = -verbose=info

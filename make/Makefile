@@ -491,7 +491,7 @@ CLEAN_FILES += *.dta-cab.xml.bytok
 
 types: types-t
 types-t: $(XML:.xml=.types.t)
-%.types.t: $(XML:.xml=.t.xml.tt)
+%.types.t: %.t.xml.tt
 	cut -d$$'\t' -f 1 $< | grep -v '^%%' | grep . | sort | uniq > $@ || (rm -f $@; false)
 
 no-types-t: ; rm -f *.types.t
