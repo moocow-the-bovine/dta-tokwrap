@@ -31,7 +31,7 @@ xml    ?= $(wildcard $(xmldir),*.chr.xml) $(wildcard $(xmldir),*.char.xml)
 outdir = .
 tmpdir = $(outdir)
 
-corpus ?= $(notdir $(xmldir))
+#corpus ?= $(notdir $(xmldir)) ##-- UNUSED
 
 XML = $(notdir $(xml))
 

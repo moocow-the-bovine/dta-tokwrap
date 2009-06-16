@@ -45,6 +45,8 @@ bin_SCRIPTS = \
 	dtatw-rm-c.perl \
 	dtatw-rm-w.perl \
 	dtatw-rm-s.perl \
+	dtatw-tt-dictapply.perl \
+	dtatw-cabtt2xml.perl \
 	file-substr.perl
 
 #-----------------------------------------------------------------------

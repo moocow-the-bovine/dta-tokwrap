@@ -34,7 +34,7 @@ xml  = $(xmldir)/ex2.xml
 
 ## corpus=NAME
 ##  + unique name for this corpus
-##  + unused (?!)
+##  + UNUSED
 #corpus = $(notdir $(xmldir))
 
 ##======================================================================
