@@ -34,8 +34,8 @@ xml = $(wildcard $(xmldir)/*.xml)
 
 ## corpus=NAME
 ##  + unique name for this corpus
-##  + UNUSED
-#corpus = $(notdir $(xmldir))
+##  + for summaries
+corpus = $(notdir $(xmldir))
 
 ##======================================================================
 ## Variables: dta-tokwrap.perl

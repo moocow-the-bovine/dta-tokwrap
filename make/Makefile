@@ -31,7 +31,7 @@ xml    ?= $(wildcard $(xmldir),*.chr.xml) $(wildcard $(xmldir),*.char.xml)
 outdir = .
 tmpdir = $(outdir)
 
-#corpus ?= $(notdir $(xmldir)) ##-- UNUSED
+corpus ?= $(notdir $(xmldir)) ##-- UNUSED
 
 XML = $(notdir $(xml))
 
@@ -189,7 +189,9 @@ REALCLEAN_FILES += \
 
 all: t-xml s-xml w-xml a-xml
 
-extra: cab-xml cws-xml cws-noc-fmt-xml
+extra: cab-xml cws-xml cws-noc-fmt-xml summary
+
+summary: rw-summary
 
 .SECONDARY: 
 
@@ -534,6 +536,48 @@ dta-cab-xml: $(XML:.xml=.dta-cab.xml)
 no-cab-xml: no-dta-cab-xml
 no-dta-cab-xml: ; rm -f *.dta-cab.xml
 CLEAN_FILES += *.dta-cab.xml
+
+##======================================================================
+## Rules: Summaries
+
+##--------------------------------------------------------------
+## Rules: Summaries: types
+
+corpus-types: $(corpus).types
+$(corpus).types: $(XML:.xml=.types.t)
+	cat $^ | grep -v '^%%' | grep . | sort | uniq > $@ || (rm -f $@; false)
+
+corpus-typf: $(corpus).ftypes
+$(corpus).typf: $(XML:.xml=.t)
+	cat $^ | grep -v '^%%' | cut -d$$'\t' -f1 | grep . | sort | uniq -c \
+	| sed -e's/^[ ]*\([0-9][0-9]*\) \(.*\)/\2\t\[freq\] \1/1' \
+	> $@ || (rm -f $@; false)
+
+REALCLEAN_FILES += *.types *.typf
+
+##--------------------------------------------------------------
+## Rules: Summaries: dict
+
+corpus-dict: $(corpus).dict
+$(corpus).dict: $(XML:.xml=.types.dta-cab.tt)
+	cat $^ | grep -v '^%%' | grep . | sort | uniq > $@ || (rm -f $@; false)
+
+corpus-dictf: $(corpus).dictf
+%.dictf: %.typf %.dict scripts
+	$(SCRIPT_DIR)dtatw-tt-dictapply.perl $*.dict $*.typf > $@ || (rm -f $@; false)
+
+REALCLEAN_FILES += *.dict *.dictf
+
+##--------------------------------------------------------------
+## Rules: Summaries: rewrite
+
+corpus-rw: $(corpus).rw-summary
+%.rw-summary: %.dictf
+	cat $^ | fgrep '[rw]' \
+	| sed -e's/^\([^\t]*\)\t\[freq\] \([^\t]*\).*\t\(\[rw\][^\t]*\).*/\1\t\2\t\3/1' - \
+	| sort -t$$'\t' -k2 -nr > $@ || (rm -f $@; false)
+
+REALCLEAN_FILES += *.rw-summary
 
 ##======================================================================
 ## Rules: archiving
