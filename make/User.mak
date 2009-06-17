@@ -18,8 +18,8 @@
 
 ## xmldir=XMLDIR
 ##  + source directory containing DTA "base-format" XML sources
-#xmldir = ./release
-xmldir = ./xmlsrc
+xmldir = ./release
+#xmldir = ./xmlsrc
 #xmldir = ../examples
 #xmldir = ./don
 
@@ -27,9 +27,9 @@ xmldir = ./xmlsrc
 ##  + list of all DTA "base-format" XML sources (default: all .chr.xml files in XMLDIR)
 #xml  = $(xmldir)/ex2a.xml
 #xml  = $(xmldir)/ex2.xml
-xml = $(wildcard $(xmldir)/*.xml)
+#xml = $(wildcard $(xmldir)/*.xml)
 #xml = $(wildcard $(xmldir)/*.chr.xml) $(wildcard $(xmldir)/*.char.xml)
-#xml = $(wildcard $(xmldir)/*.chr.xml)
+xml = $(wildcard $(xmldir)/*.chr.xml)
 #xml = $(xmldir)/berg_ostasienbotanik_1866_pb.chr.xml $(xmldir)/boeheim_waffenkunde_1890.chr.xml
 #xml = $(xmldir)/berg_ostasienbotanik_1866_pb.chr.xml
 
