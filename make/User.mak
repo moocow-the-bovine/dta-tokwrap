@@ -18,6 +18,7 @@
 
 ## xmldir=XMLDIR
 ##  + source directory containing DTA "base-format" XML sources
+#xmldir = ./release
 xmldir = ./xmlsrc
 #xmldir = ../examples
 #xmldir = ./don

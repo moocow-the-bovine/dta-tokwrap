@@ -191,7 +191,7 @@ all: t-xml s-xml w-xml a-xml
 
 extra: cab-xml cws-xml cws-noc-fmt-xml summary
 
-summary: rw-summary
+summary: rw-summary unk-summary
 
 .SECONDARY: 
 
@@ -516,8 +516,8 @@ CLEAN_FILES += *.types.dta-cab.tt
 ## Type->Token back-mapping: (.types.dta-cab.tt, .t.xml.tt) -> (.dta-cab.tt)
 
 cab-tt: dta-cab-tt
-dta-cab-tt: $(XML:.xml=.dta-cab.tt)
-%.dta-cab.tt: %.types.dta-cab.tt %.t.xml.tt scripts
+dta-cab-tt: $(XML:.xml=.toks.dta-cab.tt)
+%.toks.dta-cab.tt: %.types.dta-cab.tt %.t.xml.tt scripts
 	$(SCRIPT_DIR)dtatw-tt-dictapply.perl $< $*.t.xml.tt > $@ || (rm -f $@; false)
 
 no-cab-tt: no-dta-cab-tt
@@ -525,17 +525,25 @@ no-dta-cab-tt: ; rm -f *.dta-cab.tt
 CLEAN_FILES += *.dta-cab.tt
 
 ##--------------------------------------------------------------
-## DTA::CAB XML (from type-wise analysis): .dta-cab.tt -> .dta-cab.xml
+## DTA::CAB XML (from token-expansion of type-wise analysis): .toks.dta-cab.tt -> .dta-cab.xml
 
 cab-xml: dta-cab-xml
 dta-cab-xml: $(XML:.xml=.dta-cab.xml)
-%.dta-cab.xml: %.dta-cab.tt scripts
+%.dta-cab.xml: %.toks.dta-cab.tt scripts
 #	dta-cab-convert.perl -verbose=info $< -oc=Xml -ol=1 -o $@  ##-- slow
 	$(SCRIPT_DIR)dtatw-cabtt2xml.perl $< > $@ || (rm -f $@; false)
 
 no-cab-xml: no-dta-cab-xml
 no-dta-cab-xml: ; rm -f *.dta-cab.xml
 CLEAN_FILES += *.dta-cab.xml
+
+##--------------------------------------------------------------
+## DTA::CAB: cleanup
+
+cab: cab-xml
+
+no-cab: no-dta-cab
+no-dta-cab: ; rm -f *.dta-cab.*
 
 ##======================================================================
 ## Rules: Summaries
@@ -571,13 +579,21 @@ REALCLEAN_FILES += *.dict *.dictf
 ##--------------------------------------------------------------
 ## Rules: Summaries: rewrite
 
+rw-summary: $(corpus).rw-summary
 corpus-rw: $(corpus).rw-summary
 %.rw-summary: %.dictf
 	cat $^ | fgrep '[rw]' \
 	| sed -e's/^\([^\t]*\)\t\[freq\] \([^\t]*\).*\t\(\[rw\][^\t]*\).*/\1\t\2\t\3/1' - \
 	| sort -t$$'\t' -k2 -nr > $@ || (rm -f $@; false)
 
-REALCLEAN_FILES += *.rw-summary
+unk-summary: $(corpus).unk-summary
+corpus-unk: $(corpus).unk-summary
+%.unk-summary: %.dictf
+	cat $^ | fgrep -v '[rw]' | fgrep -v '[morph]' | egrep -v '^[^'$$'\t'']*[[:digit:][:punct:]]' \
+	| sed -e's/^\([^\t]*\)\t\[freq\] \([^\t]*\).*/\1\t\2/1' - \
+	| sort -t$$'\t' -k2 -nr > $@ || (rm -f $@; false)
+
+REALCLEAN_FILES += *.rw-summary *.unk-summary
 
 ##======================================================================
 ## Rules: archiving
