@@ -61,7 +61,7 @@ sub defaults {
 	  rmns   =>undef,
 	  inplace=>1,
 
-	  ##-- stylesheet: insert-hings
+	  ##-- stylesheet: insert-hints
 	  hint_sb_xpaths => [
 			     ##-- title page
 			     qw(titlePage byline titlePart docAuthor docImprint pubPlace publisher docDate),
