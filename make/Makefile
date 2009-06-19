@@ -198,10 +198,22 @@ summary: rw-summary unk-summary
 ##======================================================================
 ## Rules: show configuration
 
-config:
+config: twconfig
+
+twconfig:
 	@echo "inplace=$(inplace)"
 	@echo "dummytok=$(dummytok)"
+	@echo "abbrevlex=$(abbrevlex)"
+	@echo "mwelex=$(mwelex)"
+	@echo "verbose=$(verbose)"
+	@echo "loglevel=$(loglevel)"
+	@echo "logfile=$(logfile)"
+	@echo "stderr=$(stderr)"
+	@echo "trace=$(trace)"
+	@echo "profile=$(profile)"
 	@echo "TOKWRAP=$(TOKWRAP)"
+
+srcconfig:
 	@echo "xmldir=$(xmldir)"
 	@echo "xml=$(xml)"
 	@echo "XML=$(XML)"
