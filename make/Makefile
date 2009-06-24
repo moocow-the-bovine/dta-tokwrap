@@ -68,9 +68,11 @@ endif
 endif
 
 ifeq "$(dummytok)" "no"
-TOKWRAP_OPTS += -nodummytok -weak-hints
+#TOKWRAP_OPTS += -nodummytok -weak-hints
+TOKWRAP_OPTS += -nodummytok
 else
-TOKWRAP_OPTS += -dummytok -strong-hints
+#TOKWRAP_OPTS += -dummytok -strong-hints
+TOKWRAP_OPTS += -dummytok
 endif
 
 ifneq "$(abbrevlex)" ""

@@ -21,7 +21,7 @@ WriteMakefile
 		    'Env::Path' =>0.18,
 		    'File::Basename'=>undef,
 		    'Cwd'=>undef,
-		    'Log::Log4perl'=>1.21,
+		    'Log::Log4perl'=>1.20,
 		    ##--
 		    #'Tie::Cache'=>undef,
 		    #'File::Basename'=>undef,

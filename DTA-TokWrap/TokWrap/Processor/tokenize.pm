@@ -31,7 +31,7 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##    abbrevLex => $filename,              ##-- for --to-abbrev-lex=FILE (default: "${RCDIR}/dta_abbrevs.lex"; '' for none)
 ##    mweLex => $filename,                 ##-- for --to-mwe-lex=FILE    (default: "${RCDIR}/dta_mwe.lex"; '' for none)
 ##    tomata2stderr => $bool,              ##-- if false, subprocess stderr will be ignored (default=defined($TRACE_RUNCMD))
-##    tomata2opts => \@options,            ##-- additional options for tokenizer program
+##    tomata2opts => \@options,            ##-- additional options (strings) for tokenizer program (default='--to --to-offset --to-analyses')
 ##    inplace => $bool,                    ##-- prefer in-place programs for search?
 sub defaults {
   my $that = shift;
@@ -40,7 +40,7 @@ sub defaults {
 	  tomata2   =>undef,
 	  #abbrevLex => "${RCDIR}/dta_abbrevs.lex",  ##-- gets set in init()
 	  #mweLex    => "${RCDIR}/dta_mwe.lex",      ##-- gets set in init()
-	  tomata2opts=>[ '--to', '--to-offset', ],
+	  tomata2opts=>[ '--to', '--to-offset', '--to-analyses' ],
 	  tomata2stderr=>defined($DTA::TokWrap::Utils::TRACE_RUNCMD),
 	  inplace=>1,
 	 );
