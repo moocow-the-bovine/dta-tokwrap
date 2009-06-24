@@ -15,14 +15,24 @@ our $indentW2  = "\n        ";
 our $indentW3  = "\n          ";
 our $indentW4  = "\n            ";
 
+sub xmlstr {
+  my $s = shift;
+  $s =~ s/\&/&amp;/g;
+  $s =~ s/\</&lt;/g;
+  $s =~ s/\>/&gt;/g;
+  $s =~ s/\"/&quot;/g;
+  $s =~ s/\'/&apos;/g;
+  return $s;
+}
+
 while (<>) {
   chomp;
   if (/^\%\% xml\:base=(.*)$/) {
-    $xmlbase=$1;
+    $xmlbase=xmlstr($1);
     next;
   }
   elsif (/^\%\% Sentence (.*)$/) {
-    $outbuf .= "${indentS}<$sElt xml:id=\"$1\">" if (!$isS);
+    $outbuf .= "${indentS}<$sElt xml:id=\"".xmlstr($1)."\">" if (!$isS);
     $isS = 1;
     next;
   }
@@ -42,7 +52,7 @@ while (<>) {
 
   ($wtext,$wfields) = split(/\t/,$_,2);
   ($wloc,$wid,$wchars) = ('','','');
-  ($wxlit, $wmsafe, $wlts, $weqpho, $wmorph, @wrw, @rwlts, @rwmorph, $wa) = qw();
+  ($wxlit, $wmsafe, $wlts, $weqpho, $wmorph, $wmlatin, @wrw, @rwlts, @rwmorph, $wa) = qw();
   foreach (split(/\t/,$wfields)) {
     if (/^(\d+ \d+)/ || /^\[loc\] (\d+ \d+)/) {
       $wloc = $1;
@@ -54,42 +64,46 @@ while (<>) {
       $wchars = $1;
     }
     elsif (/^\[xlit\] l1=(\S*) lx=(\S*) l1s=([^\t]*)/) {
-      $wxlit = "<xlit t=\"$3\" isLatin1=\"$1\" isLatinExt=\"$2\"/>";
+      $wxlit = "<xlit t=\"".xmlstr($3)."\" isLatin1=\"$1\" isLatinExt=\"$2\"/>";
     }
     elsif (/^\[lts\] (.*?)(?: \<([^\>]*)\>)?$/) {
-      $wlts .= "${indentW2}<a hi=\"$1\" w=\"".(defined($2) ? $2 : '')."\"/>";
+      $wlts .= "${indentW2}<a hi=\"".xmlstr($1)."\" w=\"".(defined($2) ? xmlstr($2) : '')."\"/>";
     }
     elsif (/^\[morph\] (.*?)(?: \<([^\>]*)\>)?$/) {
-      $wmorph .= "${indentW2}<a hi=\"$1\" w=\"".(defined($2) ? $2 : '')."\"/>";
+      $wmorph .= "${indentW2}<a hi=\"".xmlstr($1)."\" w=\"".(defined($2) ? xmlstr($2) : '')."\"/>";
+    }
+    elsif (/^\[morph\/lat?\] (.*?)(?: \<([^\>]*)\>)?$/) {
+      $wmlatin .= "${indentW2}<a hi=\"".xmlstr($1)."\" w=\"".(defined($2) ? xmlstr($2) : '')."\"/>";
     }
     elsif (/^\[eqpho\] (.*)/) {
-      $weqpho .= "${indentW2}<a t=\"$1\"/>";
+      $weqpho .= "${indentW2}<a t=\"".xmlstr($1)."\"/>";
     }
     elsif (/^\[morph\/safe\] (.*)/) {
       $wmsafe .= "<msafe safe=\"$1\"/>";
     }
     elsif (/^\[rw\] (.*?)(?: \<([^\>]*)\>)?$/) {
-      push(@wrw,"<a hi=\"$1\" w=\"".(defined($2) ? $2 : '')."\">");
+      push(@wrw,"<a hi=\"".xmlstr($1)."\" w=\"".(defined($2) ? xmlstr($2) : '')."\">");
     }
     elsif (/^\[rw\/lts\] (.*?)(?: \<([^\>]*)\>)?$/) {
-      $rwlts[$#wrw]   .= "${indentW4}<a hi=\"$1\" w=\"".(defined($2) ? $2 : '')."\"/>";
+      $rwlts[$#wrw]   .= "${indentW4}<a hi=\"".xmlstr($1)."\" w=\"".(defined($2) ? xmlstr($2) : '')."\"/>";
     }
     elsif (/^\[rw\/morph\] (.*?)(?: \<([^\>]*)\>)?$/) {
-      $rwmorph[$#wrw] .= "${indentW4}<a hi=\"$1\" w=\"".(defined($2) ? $2 : '')."\"/>";
+      $rwmorph[$#wrw] .= "${indentW4}<a hi=\"".xmlstr($1)."\" w=\"".(defined($2) ? xmlstr($2) : '')."\"/>";
     }
     else {
-      $wa .= "${indentW1}<a>$_</a>";
+      $wa .= "${indentW1}<a>".xmlstr($_)."</a>";
     }
   }
 
   ##-- append xml-ified token to buffer
   $outbuf .=
     (''
-     .$indentW."<w xml:id=\"$wid\" t=\"$wtext\" b=\"$wloc\" c=\"$wchars\">"
+     .$indentW."<w xml:id=\"".xmlstr($wid)."\" t=\"".xmlstr($wtext)."\" b=\"$wloc\" c=\"$wchars\">"
      .(defined($wxlit) ? ($indentW1.$wxlit) : '') #"$indentW1<xlit/>"
      .(defined($wlts)    ? ($indentW1."<lts>${wlts}${indentW1}</lts>") : '') #"$indentW1<lts/>"
      .(defined($weqpho)  ? ($indentW1."<eqpho>${weqpho}${indentW1}</eqpho>") : '') #"$indentW1<eqpho/>"
      .(defined($wmorph)  ? ($indentW1."<morph>${wmorph}${indentW1}</morph>") : '') #"$indentW1<morph/>"
+     .(defined($wmlatin) ? ($indentW1."<mlatin>${wmlatin}${indentW1}</mlatin>") : '') #"$indentW1<mlatin/>"
      .(defined($wmsafe)  ? ($indentW1.$wmsafe) : '') #"<msafe/>"
      .(@wrw
        ? ($indentW1.'<rewrite>'
