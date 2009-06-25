@@ -54,6 +54,7 @@ XML_TXTLB = $(XML_TXT:.txt.xml=.txt+lb.xml)
 ##  + source xml files WITH <c> elements and WITH <lb/> linebreaks, (no-op for literals)
 #XML_CHR   = test1.chr.xml test-3k.chr.xml ex1.chr.xml $(XML_TXTLB:.txt+lb.xml=.chr.xml)
 XML_CHR = $(XML_TXTLB:.txt+lb.xml=.chr.xml)
+XML_CHR += $(wildcard *.aligned.xml)
 #XML_CHR += $(wildcard *.chr.xml)
 #XML_CHR += test1.chr.xml test-3k.chr.xml
 #XML_CHR += kraepelin_arzneimittel_1892.chr.xml
