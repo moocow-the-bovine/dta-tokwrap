@@ -154,8 +154,8 @@ arcfile = $(arcdir)/$(arcname).tar.gz
 ## Variables: installation
 
 ## install_to=DIR
-##  + destination directory for install (default = ./install)
-install_to = /home/dta/dta_tokenized_xml
+##  + destination directory for install (default = ./installed)
+#install_to = /home/dta/dta_tokenized_xml
 
 ## install_user=USER
 ## install_group=GROUP

@@ -186,6 +186,7 @@ REALCLEAN_FILES += \
 
 
 
+
 ##======================================================================
 ## Rules: top-level
 
@@ -300,6 +301,11 @@ sx-nons-fmt: $(XML:.xml=.sx.nons.fmt)
 no-sx-nons-fmt: ; rm -f *.sx.nons.fmt
 CLEAN_FILES += *.sx.nons *.sx.fmt *.sx.nons.fmt *.sx.fmt.nons
 
+MISC_FILES += \
+	$(XML:.xml=.cx) \
+	$(XML:.xml=.sx) \
+	$(XML:.xml=.tx)
+
 ##======================================================================
 ## Rules: serialization (serialized block index: bx0)
 
@@ -309,6 +315,8 @@ bx0: $(XML:.xml=.bx0)
 
 no-bx0: ; rm -f *.bx0 bx0.stamp
 CLEAN_FILES += *.bx0 bx0.stamp
+
+MISC_FILES += $(XML:.xml=.bx0)
 
 ##======================================================================
 ## Rules: serialized text + index (bx, txt)
@@ -333,6 +341,8 @@ no-bx: no-bx-txt
 no-txt: no-bx-txt
 CLEAN_FILES += *.bx *.txt
 
+MISC_FILES += $(XML:.xml=.bx) $(XML:.xml=.txt)
+
 ##======================================================================
 ## Rules: tokenization
 
@@ -346,6 +356,8 @@ endif
 
 no-t: ; rm -f *.t
 CLEAN_FILES += *.t
+
+MISC_FILES += $(XML:.xml=.t)
 
 ##======================================================================
 ## Rules: tokenized: master xml output
@@ -392,6 +404,12 @@ standoff: s-xml w-xml a-xml
 no-standoff: no-s-xml no-w-xml no-a-xml
 
 %-standoff: %.s.xml %.w.xml %.a.xml
+
+STANDOFF_XML_FILES = \
+	$(XML:.xml=.s.xml) \
+	$(XML:.xml=.w.xml) \
+	$(XML:.xml=.a.xml) \
+	$(XML:.xml=.t.xml)
 
 ##--------------------------------------------------------------
 ## standoff: .s.xml
@@ -457,6 +475,8 @@ cws-xml: $(XML:.xml=.cws.xml)
 
 no-cws-xml: ; rm -r *.cws.xml
 CLEAN_FILES += *.cws.xml
+
+CWS_XML_FILES = $(XML:.xml=.cws.xml) $(XML:.xml=.cws.noc.xml)
 
 ##======================================================================
 ## Rules: DTA::CAB analysis: direct: (v1): .t.xml -> .dta-cab.xml.bytok
@@ -551,6 +571,8 @@ no-cab-xml: no-dta-cab-xml
 no-dta-cab-xml: ; rm -f *.dta-cab.xml
 CLEAN_FILES += *.dta-cab.xml
 
+CAB_XML_FILES = $(XML:.xml=.dta-cab.xml)
+
 ##--------------------------------------------------------------
 ## DTA::CAB: cleanup
 
@@ -558,6 +580,11 @@ cab: cab-xml
 
 no-cab: no-dta-cab
 no-dta-cab: ; rm -f *.dta-cab.*
+
+CAB_MISC_FILES = \
+	$(XML:.xml=.toks.dta-cab.tt) \
+	$(XML:.xml=.types.dta-cab.tt)
+
 
 ##======================================================================
 ## Rules: Summaries
@@ -569,7 +596,7 @@ corpus-types: $(corpus).types
 $(corpus).types: $(XML:.xml=.types.t)
 	cat $^ | grep -v '^%%' | grep . | sort | uniq > $@ || (rm -f $@; false)
 
-corpus-typf: $(corpus).ftypes
+corpus-typf: $(corpus).typf
 $(corpus).typf: $(XML:.xml=.t)
 	cat $^ | grep -v '^%%' | cut -d$$'\t' -f1 | grep . | sort | uniq -c \
 	| sed -e's/^[ ]*\([0-9][0-9]*\) \(.*\)/\2\t\[freq\] \1/1' \
@@ -590,6 +617,8 @@ corpus-dictf: $(corpus).dictf
 
 REALCLEAN_FILES += *.dict *.dictf
 
+CAB_MISC_FILES += $(corpus).dictf
+
 ##--------------------------------------------------------------
 ## Rules: Summaries: rewrite
 
@@ -607,6 +636,7 @@ corpus-unk: $(corpus).unk-summary
 	| sed -e's/^\([^\t]*\)\t\[freq\] \([^\t]*\).*/\1\t\2/1' - \
 	| sort -t$$'\t' -k2 -nr > $@ || (rm -f $@; false)
 
+SUMMARY_FILES    = $(patsubst %, $(corpus).%-summary, rw unk)
 REALCLEAN_FILES += *.rw-summary *.unk-summary
 
 ##======================================================================
@@ -646,29 +676,83 @@ no-arc: no-arcdir
 ## Rules: install
 
 ifeq "$(USER)" "root"
- INSTALL_DATA = install -o $(install_user) -g $(install_group) -m $(install_mode)
- INSTALL_DIR  = install -o $(install_user) -g $(install_group) -m $(install_dirmode) -d
+ INSTALL_DATA = install -p -o $(install_user) -g $(install_group) -m $(install_mode)
+ INSTALL_DIR  = install -p -o $(install_user) -g $(install_group) -m $(install_dirmode) -d
 else
  INSTALL_DATA = install -m $(install_mode)
- INSTALL_DIR  = install -m $(install_dirmode) -d
+ INSTALL_DIR  = mkdir -p
 endif
 
 INSTALL_FILES =
+INSTALL_DEPS  =
+
+##-- install targets: defaults
+install_to ?=./installed
+
+install_makefile ?=yes
+install_sources  ?=yes
+install_standoff ?=yes
+install_cws_xml  ?=yes
+install_cab_xml  ?=yes
+install_summaries ?=no
+install_misc      ?=no
+install_cab_misc  ?=no
+
+
+##-- install targets: append
 ifneq "$(install_makefile)" "no"
- INSTALL_FILES += Makefile *.mak $(config)
+ INSTALL_FILES += Makefile $(wildcard *.mak) $(config)
 endif
 
 ifneq "$(install_sources)" "no"
- INSTALL_FILES += $(XML)
+ INSTALL_DEPS += $(patsubst %,$(xmldir)/%,$(XML))
 endif
 
 ifneq "$(install_standoff)" "no"
- INSTALL_FILES += $(XML:.xml=.t.xml)
- INSTALL_FILES += $(XML:.xml=.s.xml)
- INSTALL_FILES += $(XML:.xml=.w.xml)
- INSTALL_FILES += $(XML:.xml=.a.xml)
+ INSTALL_FILES += $(STANDOFF_XML_FILES)
 endif
 
+ifneq "$(install_cws_xml)" "no"
+ INSTALL_FILES += $(XML:.xml=.cws.xml)
+endif
+
+ifneq "$(install_cab_xml)" "no"
+ INSTALL_FILES += $(CAB_XML_FILES)
+endif
+
+ifneq "$(install_summaries)" "no"
+ INSTALL_FILES += $(SUMMARY_FILES)
+endif
+
+ifneq "$(install_misc)" "no"
+ INSTALL_FILES += $(MISC_FILES)
+endif
+
+ifneq "$(install_cab_misc)" "no"
+ INSTALL_FILES += $(CAB_MISC_FILES)
+endif
+
+INSTALL_FILES += $(INSTALL_EXTRA_FILES)
+
+##-- install: rules
+install: $(INSTALL_FILES) $(INSTALL_DEPS)
+	$(INSTALL_DIR) $(install_to)
+	for f in $(INSTALL_FILES); do $(INSTALL_DATA) -v $$f $(install_to)/$$f ;done
+ifneq "$(install_sources)" "no"
+	$(INSTALL_DIR) $(install_to)/$(notdir $(xmldir))
+	for f in $(XML); do $(INSTALL_DATA) -v $(xmldir)/$$f $(install_to)/$(notdir $(xmldir))/$$f; done
+endif
+
+uninstall:
+	-for f in $(INSTALL_FILES); do rm -rf $(install_to)/`basename $$f`; done
+ifneq "$(install_sources)" "no"
+	-for f in $(XML); do rm -rf $(install_to)/$(notdir $(xmldir))/$$f; done
+	-rmdir $(install_to)/$(notdir $(xmldir))
+endif
+	-rmdir $(install_to)
+
+force-uninstall:
+	-rm -rf $(install_to)
 
 ##======================================================================
 ## Rules: utility programs (inplace="yes" only!)
