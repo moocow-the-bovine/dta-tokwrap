@@ -29,8 +29,6 @@ rsync =rsync -e ssh -vzaC
 ## up_files
 ##  + list of source files on server
 up_files = `$(up_rsync) --list-only $(up_include) $(up_fromurl)/ ./ | awk '{print $$5}' | grep '\.xml$$'`
-which-up:
-	echo "up_files=" $(up_files)
 
 
 ##--------------------------------------------------------------

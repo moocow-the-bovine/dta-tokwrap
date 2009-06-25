@@ -614,7 +614,9 @@ REALCLEAN_FILES += *.rw-summary *.unk-summary
 
 arc: $(arcfile)
 
-arcdir: $(ARC_TARGETS) $(xml)
+arcdir: $(arcname)/stamp
+
+$(arcname)/stamp: $(ARC_TARGETS) $(xml)
 	rm -rf $(arcname)
 	mkdir $(arcname)
 	mkdir $(arcname)/data
@@ -627,6 +629,7 @@ arcdir: $(ARC_TARGETS) $(xml)
 	    ln `readlink -f $$f` $(arcname)/sources/`basename $$f` ; \
 	  done; \
 	fi
+	date -I > $@
 
 no-arcdir:
 	rm -rd $(arcname)
@@ -638,6 +641,34 @@ $(arcfile): arcdir
 
 no-arc: no-arcdir
 	rm -f $(arcfile)
+
+##======================================================================
+## Rules: install
+
+ifeq "$(USER)" "root"
+ INSTALL_DATA = install -o $(install_user) -g $(install_group) -m $(install_mode)
+ INSTALL_DIR  = install -o $(install_user) -g $(install_group) -m $(install_dirmode) -d
+else
+ INSTALL_DATA = install -m $(install_mode)
+ INSTALL_DIR  = install -m $(install_dirmode) -d
+endif
+
+INSTALL_FILES =
+ifneq "$(install_makefile)" "no"
+ INSTALL_FILES += Makefile *.mak $(config)
+endif
+
+ifneq "$(install_sources)" "no"
+ INSTALL_FILES += $(XML)
+endif
+
+ifneq "$(install_standoff)" "no"
+ INSTALL_FILES += $(XML:.xml=.t.xml)
+ INSTALL_FILES += $(XML:.xml=.s.xml)
+ INSTALL_FILES += $(XML:.xml=.w.xml)
+ INSTALL_FILES += $(XML:.xml=.a.xml)
+endif
+
 
 ##======================================================================
 ## Rules: utility programs (inplace="yes" only!)

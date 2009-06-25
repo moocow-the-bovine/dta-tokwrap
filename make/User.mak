@@ -18,18 +18,28 @@
 
 ## xmldir=XMLDIR
 ##  + source directory containing DTA "base-format" XML sources
-xmldir = ./release
+##
+## xml=XMLFILES
+##  + list of all DTA "base-format" XML sources (default: all .chr.xml files in XMLDIR)
+
+##-- release
+#xmldir = ./release
+#xml    = $(wildcard $(xmldir)/*.aligned.xml)
+
+##-- small test
+xmldir = ./xmlsrc
+xml    = $(xmldir)/ex2a.xml
+
+##-- others
 #xmldir = ./xmlsrc
 #xmldir = ../examples
 #xmldir = ./don
-
-## xml=XMLFILES
-##  + list of all DTA "base-format" XML sources (default: all .chr.xml files in XMLDIR)
+#
 #xml  = $(xmldir)/ex2a.xml
 #xml  = $(xmldir)/ex2.xml
 #xml = $(wildcard $(xmldir)/*.xml)
 #xml = $(wildcard $(xmldir)/*.chr.xml) $(wildcard $(xmldir)/*.char.xml)
-xml = $(wildcard $(xmldir)/*.chr.xml)
+#xml = $(wildcard $(xmldir)/*.chr.xml)
 #xml = $(xmldir)/berg_ostasienbotanik_1866_pb.chr.xml $(xmldir)/boeheim_waffenkunde_1890.chr.xml
 #xml = $(xmldir)/berg_ostasienbotanik_1866_pb.chr.xml
 
@@ -139,6 +149,58 @@ arcname = dta-tokwrap-$(notdir $(PWD)).$(shell date +"%Y-%m-%d").$(shell hostnam
 ## arcfile=FILE
 ##  + complete filename of .tar.gz archive
 arcfile = $(arcdir)/$(arcname).tar.gz
+
+##======================================================================
+## Variables: installation
+
+## install_to=DIR
+##  + destination directory for install (default = ./install)
+install_to = /home/dta/dta_tokenized_xml
+
+## install_user=USER
+## install_group=GROUP
+## install_mode=FILEMODE
+install_user  = dta
+install_group = users
+install_mode    = 0644
+install_dirmode = 0755
+
+## install_makefile
+##  + install makefile(s) (default=yes)
+#install_makefiles = yes
+
+## install_sources
+##  + install source XML files? (default=yes)
+#install_sources = yes
+
+## install_standoff
+##  + install standoff XML files? (default=yes)
+#install_standoff = yes
+
+## install_cws_xml
+##  + install .cws.xml files? (default=no)
+#install_cws_xml = no
+
+## install_cab_xml
+##  + install .dta-cab.xml files? (default=yes)
+#install_cab_xml = yes
+
+## install_summaries
+##  + install summary files? (default=no)
+#install_summaries = no
+
+## install_misc
+##  + install misc tokwrap files? (default=no)
+#install_misc = no
+
+## install_cab_misc
+##  + install misc .dta-cab.* files? (default=no)
+#install_cab_misc = no
+
+## install_extra_files=EXTRA_FILES
+##  + extra files to install (default=none)
+#install_extra_files =
+
 
 ##======================================================================
 ## Variables: DTA::CAB stuff
