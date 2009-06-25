@@ -179,7 +179,7 @@ install_dirmode = 0755
 
 ## install_cws_xml
 ##  + install .cws.xml files? (default=no)
-#install_cws_xml = no
+install_cws_xml = yes
 
 ## install_cab_xml
 ##  + install .dta-cab.xml files? (default=yes)
@@ -187,15 +187,15 @@ install_dirmode = 0755
 
 ## install_summaries
 ##  + install summary files? (default=no)
-#install_summaries = no
+install_summaries = yes
 
 ## install_misc
 ##  + install misc tokwrap files? (default=no)
-#install_misc = no
+install_misc = yes
 
 ## install_cab_misc
 ##  + install misc .dta-cab.* files? (default=no)
-#install_cab_misc = no
+install_cab_misc = yes
 
 ## install_extra_files=EXTRA_FILES
 ##  + extra files to install (default=none)
