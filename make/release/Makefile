@@ -10,24 +10,28 @@
 ##--------------------------------------------------------------
 ## Variables: Server Sources
 
-## up_fromurl, up_frompats
+## up_fromurl, up_include
 ##  + for update
-up_fromurl = kirk.bbaw.de:/home/dta/DTA_Produktion/volltext/konvertierung/05_run/
-up_include = --include=*.txt.xml
-
-#rsync=rsync -e ssh -vuzaC
-#rsync=rsync -e ssh --verbose --update --compress --archive --cvs-exclude
 ##--
-#rsync  =rsync -e ssh -vuzaC --no-perms --chmod=Fa-x,go-wx
-##rsync =rsync -e ssh --verbose --update --compress --archive --cvs-exclude --no-perms --chmod=Fa-x,go-wx
+## SOURCE: kirk.bbaw.de (without <c>-ids, coords, etc.)
+#up_fromurl = kirk.bbaw.de:/home/dta/DTA_Produktion/volltext/konvertierung/05_run/
+#up_include = --include=*.txt.xml
 ##--
-rsync  =rsync -e ssh -vzaC --no-perms --chmod=Fa-x,go-wx
-#rsync =rsync -e ssh --verbose --compress --archive --cvs-exclude --no-perms --chmod=Fa-x,go-wx
+## SOURCE: dta@lal.dwds.de:~dta/dta_aligned_xml (with <c>-ids, coords, etc.)
+up_fromurl = dta@lal.dwds.de:/home/dta/dta_aligned_xml
+up_include = --include=*.xml
+up_rsync   = $(rsync) --no-perms --chmod=Fa-x,go-wx
 
+##--
+#rsync =rsync -e ssh --verbose --compress --archive --cvs-exclude
+rsync =rsync -e ssh -vzaC
 
 ## up_files
-##  + source files on server
-up_files = `$(rsync) --list-only $(up_include) $(up_fromurl) ./ | awk '{print $$5}' | grep '\.xml$$'`
+##  + list of source files on server
+up_files = `$(up_rsync) --list-only $(up_include) $(up_fromurl)/ ./ | awk '{print $$5}' | grep '\.xml$$'`
+which-up:
+	echo "up_files=" $(up_files)
+
 
 ##--------------------------------------------------------------
 ## Variables: Sources
@@ -134,7 +138,7 @@ config:
 
 up: update
 update:
-	$(rsync) $(up_include) --update $(up_fromurl) ./
+	$(rsync) $(up_include) --update $(up_fromurl)/ ./
 
 force-update: import
 im: import
