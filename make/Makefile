@@ -190,9 +190,9 @@ REALCLEAN_FILES += \
 ##======================================================================
 ## Rules: top-level
 
-all: t-xml s-xml w-xml a-xml
+all: src-xml-errors t-xml s-xml w-xml a-xml so-xml-errors
 
-extra: cab-xml cws-xml cws-noc-fmt-xml summary
+extra: cab-xml cws-xml cws-noc-fmt-xml extra-xml-errors summary
 
 summary: rw-summary unk-summary
 
@@ -585,6 +585,43 @@ CAB_MISC_FILES = \
 	$(XML:.xml=.toks.dta-cab.tt) \
 	$(XML:.xml=.types.dta-cab.tt)
 
+##======================================================================
+## Rules: well-formed check
+
+wfcheck: xml-errors
+xml-errors: src-xml-errors so-xml-errors
+
+extra-wfcheck: extra-xml-errors
+extra-xml-errors: cab-xml-errors cws-xml-errors
+
+src-wfcheck: src-xml-errors
+src-xml-errors: $(corpus).src.xml.errors
+$(corpus).src.xml.errors: $(patsubst %,$(xmldir)/%,$(XML))
+	-xmlint --noout $^ 2>$@
+
+so-wfcheck: so-xml-errors
+so-xml-errors: $(corpus).so.xml.errors
+$(corpus).so.xml.errors: $(STANDOFF_XML_FILES)
+	-xmllint --noout $^ 2>$@
+
+cab-wfcheck: cab-xml-errors
+cab-xml-errors: $(corpus).cab.xml.errors
+$(corpus).cab.xml.errors: $(XML:.xml=.dta-cab.xml)
+	-xmllint --noout $^ 2>$@
+
+cws-wfcheck: cws-xml-errors
+cws-xml-errors: $(corpus).cws.xml.errors
+$(corpus).cws.xml.errors: $(XML:.xml=.cws.xml)
+	-xmllint --noout $^ 2>$@
+
+all-wfcheck: all-xml-errors
+all-xml-errors: $(corpus).all.xml.errors
+%.all.xml.errors: %.so.xml.errors %.cab.xml.errors %.cws.xml.errors
+	cat $^ > $@
+
+no-xml-errors: ; rm -f *.xml.errors
+
+CLEAN_FILES += *.xml.errors
 
 ##======================================================================
 ## Rules: Summaries
@@ -637,7 +674,7 @@ corpus-unk: $(corpus).unk-summary
 	| sort -t$$'\t' -k2 -nr > $@ || (rm -f $@; false)
 
 SUMMARY_FILES    = $(patsubst %, $(corpus).%-summary, rw unk)
-REALCLEAN_FILES += *.rw-summary *.unk-summary
+CLEAN_FILES += *.rw-summary *.unk-summary
 
 ##======================================================================
 ## Rules: archiving
@@ -697,7 +734,6 @@ install_cab_xml  ?=yes
 install_summaries ?=no
 install_misc      ?=no
 install_cab_misc  ?=no
-
 
 ##-- install targets: append
 ifneq "$(install_makefile)" "no"
