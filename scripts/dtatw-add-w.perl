@@ -102,7 +102,7 @@ our $cRefAttr = 'ref'; ##-- <c> attribute carrying id-reference for .w.xml file
 sub so_cb_init {
   #($_xp) = @_;
   $wid     = undef;
-  @w_ids    = qw();
+  @w_ids   = qw();
   %cid2wid = qw();
 }
 
