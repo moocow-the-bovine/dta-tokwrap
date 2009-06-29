@@ -597,7 +597,7 @@ extra-xml-errors: cab-xml-errors cws-xml-errors
 src-wfcheck: src-xml-errors
 src-xml-errors: $(corpus).src.xml.errors
 $(corpus).src.xml.errors: $(patsubst %,$(xmldir)/%,$(XML))
-	-xmlint --noout $^ 2>$@
+	-xmllint --noout $^ 2>$@
 
 so-wfcheck: so-xml-errors
 so-xml-errors: $(corpus).so.xml.errors
