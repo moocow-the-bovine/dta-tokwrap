@@ -23,12 +23,13 @@
 ##  + list of all DTA "base-format" XML sources (default: all .chr.xml files in XMLDIR)
 
 ##-- release
-xmldir = ./release
-xml    = $(wildcard $(xmldir)/*.aligned.xml)
+#xmldir = ./release
+#xml    = $(wildcard $(xmldir)/*.aligned.xml)
 
 ##-- small test
-#xmldir = ./xmlsrc
+xmldir = ./xmlsrc
 #xml    = $(xmldir)/ex2a.xml
+xml    = $(wildcard $(xmldir)/*.xml)
 
 ##-- others
 #xmldir = ./xmlsrc
@@ -155,7 +156,7 @@ arcfile = $(arcdir)/$(arcname).tar.gz
 
 ## install_to=DIR
 ##  + destination directory for install (default = ./installed)
-install_to = /home/dta/dta_tokenized_xml
+#install_to = /home/dta/dta_tokenized_xml
 
 ## install_user=USER
 ## install_group=GROUP
@@ -218,3 +219,13 @@ cab_analyzer = dta.cab.default
 ##  + additional options for dta-cab-xmlrpc-client.perl
 cab_options = -noprofile -verbose=info
 #cab_options = -verbose=info
+
+##======================================================================
+## Variables: XML checking stuff
+
+## xml_wfcheck = COMMAND_PREFIX
+##  + command prefix for checking XML well-formedness
+##  + if given as empty string, will use xmlstarlet or xmllint (whichever is found first)
+##  + command should be calleable as
+##    $(COMMAND_PREFIX) FILE_LIST 2>$(ERROR_FILE)
+#xml_wfcheck =

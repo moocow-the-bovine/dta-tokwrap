@@ -159,7 +159,29 @@ SCRIPT_DEPS =
 TOKWRAP      =dta-tokwrap.perl $(TOKWRAP_OPTS)
 TOKWRAP_DEPS =
 
+
 endif
+
+##--------------------------------------------------------------
+## Configuration: well-formed checking
+
+ifeq "$(xml_wfcheck)" ""
+
+ifneq "$(shell which xmlstarlet)" ""
+xml_wfcheck := xmlstarlet val -w -e
+else
+ifneq "$(shell which xml)" ""
+xml_wfcheck := xml val -w -e
+else
+##--/ifneq "$(shell which xml)" ""
+xml_wfcheck := xmllint --noout
+endif
+##--/ifneq "$(shell which xml)" "":else
+endif
+##--/ifneq "$(shell which xmlstarlet)" ""
+
+endif
+##--/ifeq "$(xml_wfcheck)" ""
 
 ##--------------------------------------------------------------
 ## Configuration: Defaults: archiving & distribution
@@ -592,36 +614,40 @@ CAB_MISC_FILES = \
 ##======================================================================
 ## Rules: well-formed check
 
-wfcheck: xml-errors
 xml-errors: src-xml-errors so-xml-errors
-
-extra-wfcheck: extra-xml-errors
 extra-xml-errors: cab-xml-errors cws-xml-errors
 
-src-wfcheck: src-xml-errors
 src-xml-errors: $(corpus).src.xml.errors
-$(corpus).src.xml.errors: $(patsubst %,$(xmldir)/%,$(XML))
-	-xmllint --noout $^ 2>$@
-
-so-wfcheck: so-xml-errors
 so-xml-errors: $(corpus).so.xml.errors
-$(corpus).so.xml.errors: $(STANDOFF_XML_FILES)
-	-xmllint --noout $^ 2>$@
-
-cab-wfcheck: cab-xml-errors
 cab-xml-errors: $(corpus).cab.xml.errors
-$(corpus).cab.xml.errors: $(XML:.xml=.dta-cab.xml)
-	-xmllint --noout $^ 2>$@
-
-cws-wfcheck: cws-xml-errors
 cws-xml-errors: $(corpus).cws.xml.errors
-$(corpus).cws.xml.errors: $(XML:.xml=.cws.xml)
-	-xmllint --noout $^ 2>$@
-
-all-wfcheck: all-xml-errors
 all-xml-errors: $(corpus).all.xml.errors
+
+ifneq "$(xml_wfcheck)" "no"
+
+$(corpus).src.xml.errors: $(patsubst %,$(xmldir)/%,$(XML))
+	-$(xml_wfcheck) $^ 2>&1 >$@
+
+$(corpus).so.xml.errors: $(STANDOFF_XML_FILES)
+	-$(xml_wfcheck) val -w -e $^ 2>&1 > $@
+
+$(corpus).cab.xml.errors: $(XML:.xml=.dta-cab.xml)
+	-$(xml_wfcheck) val -w -e $^ 2>&1 > $@
+
+$(corpus).cws.xml.errors: $(XML:.xml=.cws.xml)
+	-$(xml_wfcheck) val -w -e $^ 2>&1 > $@
+
 %.all.xml.errors: %.so.xml.errors %.cab.xml.errors %.cws.xml.errors
 	cat $^ > $@
+
+else
+##--/ifneq "$(xml_wfcheck)" "no"
+
+%.xml.errors:
+	echo "Implicit XML well-formedness check DISABLED" > $@
+
+endif
+##--/ifeq "$(xml_wfcheck)" "no"
 
 no-xml-errors: ; rm -f *.xml.errors
 
