@@ -227,5 +227,6 @@ cab_options = -noprofile -verbose=info
 ##  + command prefix for checking XML well-formedness
 ##  + if given as empty string, will use xmlstarlet or xmllint (whichever is found first)
 ##  + command should be calleable as
-##    $(COMMAND_PREFIX) FILE_LIST 2>$(ERROR_FILE)
-#xml_wfcheck =
+##    $(COMMAND_PREFIX) FILE_LIST 2>&1 >$(ERROR_FILE)
+#xml_wfcheck = xmllint --noout
+#xml_wfcheck = xmlstarlet val -w -e
