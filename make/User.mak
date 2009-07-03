@@ -23,12 +23,12 @@
 ##  + list of all DTA "base-format" XML sources (default: all .chr.xml files in XMLDIR)
 
 ##-- release
-#xmldir = ./release
-#xml    = $(wildcard $(xmldir)/*.aligned.xml)
+xmldir = ./release
+xml    = $(wildcard $(xmldir)/*.aligned.xml)
 
 ##-- small test
-xmldir = ./xmlsrc
-xml    = $(xmldir)/ex2a.xml
+#xmldir = ./xmlsrc
+#xml    = $(xmldir)/ex2a.xml
 
 ##-- others
 #xmldir = ./xmlsrc
@@ -155,7 +155,7 @@ arcfile = $(arcdir)/$(arcname).tar.gz
 
 ## install_to=DIR
 ##  + destination directory for install (default = ./installed)
-#install_to = /home/dta/dta_tokenized_xml
+install_to = /home/dta/dta_tokenized_xml
 
 ## install_user=USER
 ## install_group=GROUP

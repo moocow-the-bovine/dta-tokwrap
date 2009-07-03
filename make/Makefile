@@ -192,9 +192,13 @@ REALCLEAN_FILES += \
 
 all: src-xml-errors t-xml s-xml w-xml a-xml so-xml-errors
 
-extra: cab-xml cws-xml cws-noc-fmt-xml extra-xml-errors summary
+all-xml: all cab-xml cws-xml cws-noc-fmt-xml extra-xml-errors
+
+extra: all-xml summary
 
 summary: rw-summary unk-summary
+
+cascade-all: all-xml
 
 .SECONDARY: 
 
@@ -239,7 +243,7 @@ REALCLEAN_DEPS += no-xml
 ## Rules: generic XML stuff
 
 ##-- pretty-printing: *.fmt[.xml]
-%.fmt: %w
+%.fmt: %
 	xmllint --format -o $@ $<
 %.fmt.xml: %.xml
 	xmllint --format -o $@ $<
