@@ -60,7 +60,7 @@ endif
 ## Configuration: Defaults: dta-tokwrap.perl: behavior
 
 ifeq "$(dummytok)" ""
-ifeq "$(shell which dwds_tomasotath)" ""
+ifeq "$(shell which dwds_tomasotath 2>/dev/null)" ""
 override dummytok := yes
 else
 override dummytok := no
@@ -167,18 +167,18 @@ endif
 
 ifeq "$(xml_wfcheck)" ""
 
-ifneq "$(shell which xmlstarlet)" ""
+ifneq "$(shell which xmlstarlet 2>/dev/null)" ""
 xml_wfcheck := xmlstarlet val -w -e
 else
-ifneq "$(shell which xml)" ""
+ifneq "$(shell which xml 2>/dev/null)" ""
 xml_wfcheck := xml val -w -e
 else
-##--/ifneq "$(shell which xml)" ""
+##--/ifneq "$(shell which xml 2>/dev/null)" ""
 xml_wfcheck := xmllint --noout
 endif
-##--/ifneq "$(shell which xml)" "":else
+##--/ifneq "$(shell which xml 2>/dev/null)" "":else
 endif
-##--/ifneq "$(shell which xmlstarlet)" ""
+##--/ifneq "$(shell which xmlstarlet 2>/dev/null)" ""
 
 endif
 ##--/ifeq "$(xml_wfcheck)" ""
