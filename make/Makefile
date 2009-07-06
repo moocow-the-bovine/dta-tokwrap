@@ -629,13 +629,13 @@ $(corpus).src.xml.errors: $(patsubst %,$(xmldir)/%,$(XML))
 	-$(xml_wfcheck) $^ 2>&1 >$@
 
 $(corpus).so.xml.errors: $(STANDOFF_XML_FILES)
-	-$(xml_wfcheck) val -w -e $^ 2>&1 > $@
+	-$(xml_wfcheck) $^ 2>&1 > $@
 
 $(corpus).cab.xml.errors: $(XML:.xml=.dta-cab.xml)
-	-$(xml_wfcheck) val -w -e $^ 2>&1 > $@
+	-$(xml_wfcheck) $^ 2>&1 > $@
 
 $(corpus).cws.xml.errors: $(XML:.xml=.cws.xml)
-	-$(xml_wfcheck) val -w -e $^ 2>&1 > $@
+	-$(xml_wfcheck) $^ 2>&1 > $@
 
 %.all.xml.errors: %.so.xml.errors %.cab.xml.errors %.cws.xml.errors
 	cat $^ > $@

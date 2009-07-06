@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test -z "$*" && args=("config=release.mak") || args=("$@")
+config="release.mak"
 
-echo "$0: make ${args[@]} all extra" 1>&2
-exec make "${args[@]}" all extra
+echo "$0: make config='$config' $@ all extra" 1>&2
+exec make config="$config" "$@" all extra
