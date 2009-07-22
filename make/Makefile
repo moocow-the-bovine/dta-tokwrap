@@ -426,7 +426,9 @@ CLEAN_FILES += *.t.xml.t *.t.xml.tt
 
 ##--------------------------------------------------------------
 ## standoff: top-level
-standoff: s-xml w-xml a-xml
+
+standoff: so-xml
+so-xml: s-xml w-xml a-xml
 no-standoff: no-s-xml no-w-xml no-a-xml
 
 %-standoff: %.s.xml %.w.xml %.a.xml
@@ -660,8 +662,23 @@ CLEAN_FILES += *.xml.errors
 ## Rules: Summaries: types
 
 corpus-types: $(corpus).types
-$(corpus).types: $(XML:.xml=.types.t)
-	cat $^ | grep -v '^%%' | grep . | sort | uniq > $@ || (rm -f $@; false)
+%.types: %.typf
+	cut -d$$'\t' -f 1 $< > $@
+
+corpus-lex: $(corpus).lex
+%.lex: %.types
+	cat $^ \
+	| unicruft -D \
+	| perl -CIO -n -e'print if (/^[[:alpha:]]+$$/);' \
+	| unicruft -d | sort | uniq > $@ || (rm -f $@; false)
+
+##-- $(corpus).lexf : for use as WORDS variable in dta/automata/pho-id/Makefile
+corpus-lexf: $(corpus).lexf
+%.lexf: %.typf
+	cat $^ \
+	| unicruft -D \
+	| perl -CIO -n -e'print "$$1\t$$2\n" if (/^([[:alpha:]]+)\t\[freq\] (\d+)$$/);' \
+	| unicruft -d | sort | uniq > $@ || (rm -f $@; false)
 
 corpus-typf: $(corpus).typf
 $(corpus).typf: $(XML:.xml=.t)
