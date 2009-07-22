@@ -283,6 +283,8 @@ CLEAN_FILES += *.nons *.nons.xml
 	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@ || (rm -f $@; false)
 %.noc.xml: %.xml scripts
 	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@ || (rm -f $@; false)
+%.noc.xml: $(xmldir)/%.xml scripts
+	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@ || (rm -f $@; false)
 CLEAN_FILES += *.noc *.noc.xml
 
 ##======================================================================

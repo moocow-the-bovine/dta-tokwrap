@@ -73,8 +73,12 @@ sub defaults {
 			     qw(note|table|argument),
 			     qw(figure),
 
-			     ##-- drama-specific (TOTO: check real examples)
-			     qw(speaker sp stage castList castItem role roleDesc set),
+			     ##-- drama-specific
+			     ## + e.g. goethe_iphegenie, schiller_kabale, hauptman_sonnenaufgang
+			     #qw(speaker sp stage castList castGroup castItem role roleDesc set),
+			     #qw(speaker sp stage castList castGroup castItem role roleDesc set),
+			     qw(castList|castList/head|castGroup),
+			     'castItem[not(parent::castGroup)]',
 			    ],
 	  hint_wb_xpaths => [
 			     ##-- main text: common
@@ -89,6 +93,12 @@ sub defaults {
 			     ##-- notes, tables, lists, etc.
 			     qw(row|cell),
 			     qw(list|item), ##-- maybe move one or both of these to 'sb_xpaths' ?
+
+			     ##-- drama-specific
+			     ## + e.g. goethe_iphegenie, schiller_kabale, hauptman_sonnenaufgang
+			     #qw(speaker sp stage castList castGroup castItem role roleDesc set),
+			     qw(sp|speaker|stage|set),
+			     qw(castGroup/castItem|role|roleDesc),
 			    ],
 	  hint_lb_xpaths => [
 			     ##-- segments
@@ -103,10 +113,11 @@ sub defaults {
 	  ##-- stylesheet: mark-sortkeys
 	  sortkey_attr => 'dta.tw.key',
 	  sort_ignore_xpaths => [
-				 qw(ref|fw|head)
+				 qw(ref|fw|head),
 				],
 	  sort_addkey_xpaths => [
 				 (map {"$_\[not(parent::seg)\]"} qw(table note argument figure)),
+				 qw(text front body back),
 				],
 	  sort_stylestr  => undef,
 	  sort_styleheet => undef,
@@ -230,6 +241,19 @@ sub hint_stylestr {
       <xsl:apply-templates select="*|@*"/>
     </xsl:copy>
   </xsl:template>
+
+  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+  <!-- templates: OTHER: castGroup (priority=10) -->
+  <xsl:template match="castGroup[count(./roleDesc)=1]" priority="10">
+    <xsl:copy>
+      <xsl:apply-templates select="@*"/>
+      <s/>
+      <xsl:apply-templates select="*[name()!=\'roleDesc\']"/>
+      <xsl:apply-templates select="roleDesc"/>
+      <s/>
+    </xsl:copy>
+  </xsl:template>
+
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- templates: DEFAULT: copy -->

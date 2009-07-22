@@ -90,6 +90,7 @@ sub initXmlParser {
   my ($xp,$eltname,%attrs);
   my ($xoff,$toff); ##-- $xoff,$toff: global: current XML-, tx-byte offset
   my ($xlen,$tlen); ##-- $xlen,$tlen: global: current XML-, tx-byte length
+  my ($bx0off);     ##-- $bx0off    : global: .bx0 byte-offset of current block
 
   ##-- save closure data (for debugging)
   @$mbx{qw(blocks keystack key2i)} = ($blocks, $keystack, $key2i);
@@ -106,7 +107,7 @@ sub initXmlParser {
     #my ($xp) = shift;
 
     $keyAttr   = $mbx->{sortkey_attr};
-    $blk       = {key=>'__ROOT__',elt=>'__ROOT__',xoff=>0,xlen=>0, toff=>0,tlen=>0};
+    $blk       = {key=>'__ROOT__',elt=>'__ROOT__',xoff=>0,xlen=>0, toff=>0,tlen=>0,bx0off=>0};
     $key       = $blk->{key};
     $blocks    = [ $blk ];
     $keystack  = [ $key ];
@@ -115,12 +116,14 @@ sub initXmlParser {
     ##-- offsets & lengths
     ($xoff,$xlen) = (0,0);
     ($toff,$tlen) = (0,0);
+    $bx0off       = 0;
 
     ##-- save closure data (for debugging)
     @$mbx{qw(blocks keystack key2i)} = ($blocks, $keystack, $key2i);
     @$mbx{qw(blkr keyr)}   = (\$blk, \$key);
     @$mbx{qw(xoffr xlenr)} = (\$xoff,\$xlen);
     @$mbx{qw(toffr tlenr)} = (\$toff,\$tlen);
+    $mbx->{bx0offr} = \$bx0off;
   };
 
   ##--------------------------------------
@@ -141,7 +144,8 @@ sub initXmlParser {
     if (exists($target_elts{$eltname})) {
       ($xlen,$tlen) = (0,0); ##-- hack for hints
       ($xoff,$xlen, $toff,$tlen) = split(/ /,$attrs{n}) if (exists($attrs{n}));
-      push(@$blocks, $blk={ key=>$key, elt=>$eltname, xoff=>$xoff,xlen=>$xlen, toff=>$toff,tlen=>$tlen });
+      $bx0off = $xp->current_byte();
+      push(@$blocks, $blk={ key=>$key, elt=>$eltname, bx0off=>$bx0off, xoff=>$xoff,xlen=>$xlen, toff=>$toff,tlen=>$tlen });
     }
   };
 
@@ -188,6 +192,7 @@ sub initXmlParser {
 ##   (
 ##    key    =>$sortkey, ##-- (inherited) sort key
 ##    elt    =>$eltname, ##-- element name which created this block
+##    bx0off =>$bx0off,  ##-- .bx0 byte offset of this block's flag
 ##    xoff   =>$xoff,    ##-- XML byte offset where this block run begins
 ##    xlen   =>$xlen,    ##-- XML byte length of this block (0 for hints)
 ##    toff   =>$toff,    ##-- raw-text byte offset where this block run begins
@@ -259,7 +264,9 @@ sub sort_blocks {
 	      sort {
 		($key2i->{$a->{key}} <=> $key2i->{$b->{key}}
 		 || $a->{key}  cmp $b->{key}
-		 || $a->{xoff} <=> $b->{xoff})
+		 || $a->{bx0off} <=> $b->{bx0off}
+		 #|| $a->{xoff} <=> $b->{xoff}
+		)
 	      } @$blocks
 	     );
   return $blocks;
