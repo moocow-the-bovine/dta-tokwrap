@@ -36,9 +36,9 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##     inplace => $bool,                      ##-- prefer in-place programs for search?
 ##     ##
 ##     ##-- Styleheet: insert-hints (<seg> elements and their children are handled implicitly)
-##     hint_sb_xpaths => \@xpaths,            ##-- add sentence-break hint (<s/>) for @xpath element open & close
-##     hint_wb_xpaths => \@xpaths,            ##-- ad word-break hint (<w/>) for @xpath element open & close
-##     hint_lb_xpaths => \@xpaths,            ##-- ad line-break hint (<lb/>) for @xpath element *close*
+##     hint_sb_xpaths => \@xpaths,            ##-- add internal sentence-break hint (<s/>) for @xpath element open & close
+##     hint_wb_xpaths => \@xpaths,            ##-- add internal word-break hint (<w/>) for @xpath element open & close
+##     hint_lb_xpaths => \@xpaths,            ##-- add internal line-break hint (<lb/>), + external whitespace for @xpath element *close*
 ##     ##
 ##     hint_stylestr  => $stylestr,           ##-- xsl stylesheet string
 ##     hint_styleheet => $stylesheet,         ##-- compiled xsl stylesheet
@@ -105,7 +105,7 @@ sub defaults {
 			     'seg',
 
 			     ##-- other things
-			     map { "$_\[not(parent::seg)\]" } qw(table note argument figure),
+			     #map { "$_\[not(parent::seg)\]" } qw(table note argument figure),
 			    ],
 	  hint_stylestr => undef,
 	  hint_stylesheet => undef,
@@ -173,14 +173,17 @@ sub hint_stylestr {
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- template: root: traverse -->
-  <xsl:template match="/">
-    <xsl:apply-templates select="*|@*"/>
+  <xsl:template match="/*" priority="100">
+    <xsl:copy>
+      <xsl:apply-templates select="*|@*"/>
+    </xsl:copy>
   </xsl:template>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- templates: implicit sentence breaks -->'.join('',
 						     map { "
   <xsl:template match=\"$_\">
+    <ws/>
     <xsl:copy>
       <xsl:apply-templates select=\"@*\"/>
       <s/>
@@ -194,6 +197,7 @@ sub hint_stylestr {
   <!-- templates: implicit token breaks -->'.join('',
 						     map { "
   <xsl:template match=\"$_\">
+    <ws/>
     <xsl:copy>
       <xsl:apply-templates select=\"@*\"/>
       <w/>
@@ -207,6 +211,7 @@ sub hint_stylestr {
   <!-- templates: implicit line breaks -->'.join('',
 						     map { "
   <xsl:template match=\"$_\">
+    <ws/>
     <xsl:copy>
       <xsl:apply-templates select=\"@*|*\"/>
       <lb/>
@@ -217,6 +222,7 @@ sub hint_stylestr {
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- templates: OTHER: seg (priority=10) -->
   <xsl:template match="seg[@part=\'I\']" priority="10">
+    <ws/>
     <xsl:copy>
       <xsl:apply-templates select="@*"/>
       <s/>
@@ -228,6 +234,7 @@ sub hint_stylestr {
   <!-- seg[@part=\'M\'] is handled by defaults -->
 
   <xsl:template match="seg[@part=\'F\']" priority="10">
+    <ws/>
     <xsl:copy>
       <xsl:apply-templates select="*|@*"/>
       <s/>
@@ -245,6 +252,7 @@ sub hint_stylestr {
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- templates: OTHER: castGroup (priority=10) -->
   <xsl:template match="castGroup[count(./roleDesc)=1]" priority="10">
+    <ws/>
     <xsl:copy>
       <xsl:apply-templates select="@*"/>
       <s/>
