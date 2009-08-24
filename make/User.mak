@@ -31,7 +31,8 @@ xmldir = ./xmlsrc
 #xml    = $(xmldir)/ex2a.xml
 #xml    = $(wildcard $(xmldir)/*.xml)
 #xml    = $(xmldir)/ex4.xml
-xml    = $(wildcard $(xmldir)/ex[345].xml)
+#xml    = $(wildcard $(xmldir)/ex[345].xml)
+xml    = $(xmldir)/ex6a.xml
 
 ##-- others
 #xmldir = ./xmlsrc
