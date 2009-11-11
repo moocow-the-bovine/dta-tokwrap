@@ -87,7 +87,13 @@ sub logInitialized { return Log::Log4perl->initialized(); }
 ## $logger = $class_or_obj->logger($category)
 ##  + wrapper for Log::Log4perl::get_logger($category)
 ##  + $category defaults to ref($class_or_obj)||$class_or_obj
-sub logger { Log::Log4perl::get_logger(ref($_[0])||$_[0]); }
+sub logger {
+  Log::Log4perl::get_logger(ref($_[0])||$_[0]);
+  ##--
+  #my $that = (shift || __PACKAGE__);
+  #$that->ensureLog;
+  #Log::Log4perl::get_logger(ref($that)||$that);
+}
 
 ##==============================================================================
 ## Methods: messages
