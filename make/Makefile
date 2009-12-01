@@ -214,7 +214,9 @@ REALCLEAN_FILES += \
 
 all: src-xml-errors t-xml s-xml w-xml a-xml so-xml-errors
 
-all-xml: all cab-xml cws-xml cws-noc-fmt-xml extra-xml-errors
+all-xml: all cab-xml-xlit cws-xml cws-noc-fmt-xml extra-xml-errors
+#cab-xml-full
+#cab-xml-xlit
 
 extra: all-xml summary
 
@@ -550,7 +552,34 @@ no-cab-xml-bytok: no-dta-cab-xmlw-bytok
 CLEAN_FILES += *.dta-cab.xml.bytok
 
 ##======================================================================
-## Rules: DTA::CAB Analysis: type-wise
+## Rules: DTA::CAB Analysis: unicruft only
+
+cab-xlit: dta-cab-xml-xlit
+cab-xml-xlit: dta-cab-xml-xlit
+dta-cab-xml-xlit: $(XML:.xml=.dta-cab.xml.xlit)
+
+%.dta-cab.tt.xlit: %.t.xml.tt cab-xlit.plm
+	dta-cab-analyze.perl -verbose=warn -noprofile -c=cab-xlit.plm -oc=TT -o=$@ $<
+
+%.dta-cab.xml.xlit: %.dta-cab.tt.xlit scripts
+	$(SCRIPT_DIR)dtatw-cabtt2xml.perl $< > $@ || (rm -f $@; false)
+
+no-cab-xlit: no-dta-cab-xlit
+no-dta-cab-xlit: ; rm -f *.dta-cab.xlit.*
+
+CLEAN_FILES += *.dta-cab.tt.xlit *.dta-cab.xml.xlit
+
+##-- alias: .dta-cab.xml -> .dta-cab.xml.xlit
+cab-xml: dta-cab-xml
+dta-cab-xml: $(XML:.xml=.dta-cab.xml)
+%.dta-cab.xml: %.dta-cab.xml.xlit
+	rm -f $@
+	ln $< $@
+
+CLEAN_FILES += *.dta-cab.xml
+
+##======================================================================
+## Rules: DTA::CAB Analysis: Full: type-wise
 
 ##--------------------------------------------------------------
 ## Token->Type extraction: .t.xml.t -> .types.t
@@ -591,17 +620,21 @@ CLEAN_FILES += *.dta-cab.tt
 ##--------------------------------------------------------------
 ## DTA::CAB XML (from token-expansion of type-wise analysis): .toks.dta-cab.tt -> .dta-cab.xml
 
-cab-xml: dta-cab-xml
-dta-cab-xml: $(XML:.xml=.dta-cab.xml)
-%.dta-cab.xml: %.toks.dta-cab.tt scripts
+cab-xml-full: dta-cab-xml-full
+dta-cab-xml-full: $(XML:.xml=.dta-cab.xml.full)
+%.dta-cab.xml.full: %.toks.dta-cab.tt scripts
 #	dta-cab-convert.perl -verbose=info $< -oc=Xml -ol=1 -o $@  ##-- slow
 	$(SCRIPT_DIR)dtatw-cabtt2xml.perl $< > $@ || (rm -f $@; false)
 
-no-cab-xml: no-dta-cab-xml
-no-dta-cab-xml: ; rm -f *.dta-cab.xml
-CLEAN_FILES += *.dta-cab.xml
+#%.dta-cab.xml: %.dta-cab.xml.full
+#	rm -f $@
+#	ln $< $@
 
-CAB_XML_FILES = $(XML:.xml=.dta-cab.xml)
+no-cab-xml-full: no-dta-cab-xml-full
+no-dta-cab-xml-full: ; rm -f *.dta-cab.xml.full
+CLEAN_FILES += *.dta-cab.xml *.dta-cab.xml.full
+
+CAB_XML_FILES = $(XML:.xml=.dta-cab.xml.full)
 
 ##--------------------------------------------------------------
 ## DTA::CAB: cleanup

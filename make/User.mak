@@ -28,9 +28,9 @@
 
 ##-- small test
 xmldir = ./xmlsrc
-xml    = $(xmldir)/test-raw.xml
+#xml    = $(xmldir)/test-raw.xml
 #xml    = $(xmldir)/ex2a.xml
-#xml    = $(wildcard $(xmldir)/*.xml)
+xml    = $(wildcard $(xmldir)/*.xml)
 #xml    = $(xmldir)/ex4.xml
 #xml    = $(wildcard $(xmldir)/ex[345].xml)
 #xml    = $(xmldir)/ex6a.xml
@@ -209,11 +209,16 @@ install_cab_misc = yes
 
 ##======================================================================
 ## Variables: DTA::CAB stuff
+##  + note that by default, DTA::CAB analysis is now performed locally,
+##    using the Unicruft transliterating analyzer only
+##  + to get full "old-style" analyses from a DTA::CAB server, call
+##    the 'dta-cab-xml-full' target; results will be in
+##    BASE.dta-cab.xml.full
 
 ## cab_server=URL
 ##  + URL of DTA::CAB server to query for creating .dta-cab.xml files
-#cab_server   = http://lal.dwds.de:8088
-cab_server   = http://localhost:8088
+cab_server   = http://services.dwds.de:8088
+#cab_server   = http://localhost:8088
 
 ## cab_analyzer=NAME
 ##  + analyzer name for creation of .dta-cab.xml files
