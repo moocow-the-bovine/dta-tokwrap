@@ -40,7 +40,7 @@ all-local: $(PODS:.pod=.txt)
 ## Subdirs: example 'make'
 
 EXMAKE_DIR   = make
-EXMAKE_FILES = Makefile User.mak
+EXMAKE_FILES = Makefile User.mak cab-xlit.plm
 EXMAKE_PATHS = $(addprefix $(EXMAKE_DIR)/,$(EXMAKE_FILES))
 
 pkgmak_DATA = $(EXMAKE_PATHS)
