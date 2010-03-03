@@ -22,7 +22,12 @@ void put_hacked_string(ParseData *data, const XML_Char *str, int len, int doEsca
 {
   int i;
   for (i=0; str[i] && (len < 0 || i < len); i++) {
-    if (str[i]==':') { fputc(colon_out, data->f_out); }
+    if (str[i]==':'
+	&& (i!=3 || strncmp(str,"xml:",3)!=0) 	//-- only hack non-"xml:" namespaces
+	)
+      {
+	fputc(colon_out, data->f_out);
+      }
     else if (doEscape) { put_escaped_char(data->f_out, str[i]); }
     else { fputc(str[i], data->f_out); }
   }
