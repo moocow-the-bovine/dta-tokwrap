@@ -214,7 +214,7 @@ REALCLEAN_FILES += \
 
 all: src-xml-errors t-xml s-xml w-xml a-xml so-xml-errors
 
-all-xml: all cab-xml-xlit cws-xml cws-noc-fmt-xml extra-xml-errors
+all-xml: all u-xml cab-xml-xlit cws-xml cws-noc-fmt-xml extra-xml-errors
 #cab-xml-full
 #cab-xml-xlit
 
@@ -550,6 +550,17 @@ dta-cab-xml-bytok: $(XML:.xml=.dta-cab.xml.bytok)
 no-dta-cab-xml-bytok: ; rm -f *.dta-cab.xml.bytok
 no-cab-xml-bytok: no-dta-cab-xmlw-bytok
 CLEAN_FILES += *.dta-cab.xml.bytok
+
+##======================================================================
+## Rules: tokenized: extended output (unicruft //w/@u and raw text //w/@t0 rsp @u0)
+
+u-xml: $(XML:.xml=.u.xml)
+
+%.u.xml: %.t.xml %.txt tokwrap
+	$(SCRIPT_DIR)dtatw-txml2uxml.perl -tf=$*.txt $< -o $@
+
+no-u-xml: ; rm -f *.u.xml
+CLEAN_FILES += *.u.xml
 
 ##======================================================================
 ## Rules: DTA::CAB Analysis: unicruft only
