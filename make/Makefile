@@ -384,8 +384,8 @@ else
 	$(TOKENIZER) $< > $@ || (rm -f $@; false)
 endif
 
-no-t: ; rm -f *.t
-CLEAN_FILES += *.t
+no-t: ; rm -f *.t *.t0
+CLEAN_FILES += *.t *.t0
 
 MISC_FILES += $(XML:.xml=.t)
 
