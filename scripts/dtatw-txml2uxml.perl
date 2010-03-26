@@ -20,7 +20,7 @@ our $keep_blanks = 0;
 our $txtfile = undef; ##-- default: from xml file
 our $do_t0 = 1;
 our $do_unicruft = 1;
-our $do_inter_token_chars = 1;
+our $do_inter_token_chars = 0;
 
 ##------------------------------------------------------------------------------
 ## Command-line
@@ -211,6 +211,7 @@ dtatw-txml2uxml.perl - DTA::TokWrap: convert .t.xml to enrichted .u.xml
   -textfile TXTFILE      # .txt file for TXMLFILE://w/@b locations
   -t0     , -not0        # do/don't output original text from TXTFILE as //w/@t0 (default=do)
   -cruft  , -nocruft     # do/don't output unicruft approximations as //w/@u rsp //w/@u0 (default=do)
+  -chars  , -nochars     # do/don't output inter-token chars as //c (default=don't)
 
  I/O Options:
   -ent    , -noent       # don't/do expand entities (default=don't (-ent))
