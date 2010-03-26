@@ -135,8 +135,11 @@ sub tokenize {
     unlink("${tfile}0") if (-e "${tfile}0");
     rename($doc->{tokfile}, "${tfile}0");
 
+    ##-- fix stupid interjections
+    $data =~ s/^(re\t\d+ \d+)\tITJ$/$1/mg;
+
     ##-- fix broken tokens
-    $data =~ s/\n([[:alpha:]]+)[\-\¬]\t(\d+) (\d+)\n([[:lower:]][[:alpha:]]*(?:[\-\¬]?))\t(\d+) (\d+)((?:\tTRUNC)?\n)/"\n$1$4\t$2 ".(($5+$6)-$2).$7/eg;
+    $data =~ s/\n([[:alpha:]][\-\¬[:alpha:]]*)[\-\¬]\t(\d+) (\d+)\n+([[:lower:]][[:alpha:]\']*(?:[\-\¬]?))\t(\d+) (\d+)((?:\tTRUNC)?\n)/"\n$1$4\t$2 ".(($5+$6)-$2).$7/eg;
 
     ##-- write back to doc (encoded)
     $doc->{tokdata} = encode('utf8',$data);
