@@ -11,6 +11,7 @@ use DTA::TokWrap::Base;
 use DTA::TokWrap::Utils qw(:progs :slurp :time);
 use DTA::TokWrap::Processor;
 
+use Encode qw(encode decode);
 use Carp;
 use strict;
 
@@ -27,6 +28,7 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ## %defaults = CLASS->defaults()
 ##  + static class-dependent defaults
 ##  + %args, %defaults, %$tz:
+##    fixtok => $bool,                     ##-- if true (default), attempt to fix common tomata2-tokenizer errors
 ##    tomata2 => $path_to_dwds_tomasotath, ##-- tokenizer program; default: search
 ##    abbrevLex => $filename,              ##-- for --to-abbrev-lex=FILE (default: "${RCDIR}/dta_abbrevs.lex"; '' for none)
 ##    mweLex => $filename,                 ##-- for --to-mwe-lex=FILE    (default: "${RCDIR}/dta_mwe.lex"; '' for none)
@@ -37,6 +39,7 @@ sub defaults {
   my $that = shift;
   return (
 	  $that->SUPER::defaults(),
+	  fixtok => 1,
 	  tomata2   =>undef,
 	  #abbrevLex => "${RCDIR}/dta_abbrevs.lex",  ##-- gets set in init()
 	  #mweLex    => "${RCDIR}/dta_mwe.lex",      ##-- gets set in init()
@@ -121,6 +124,23 @@ sub tokenize {
     or $tz->logconfess("tokenize($doc->{xmlbase}): open failed for pipe ($cmd |): $!");
   slurp_fh($cmdfh, \$doc->{tokdata});
   $cmdfh->close();
+
+  ##-- auto-fix
+  if ($tz->{fixtok}) {
+    my $data = decode('utf8',$doc->{tokdata});
+
+    ##-- hack: save original tokenizer output
+    $doc->saveTokFile();
+    my $tfile = $doc->{tokfile};
+    unlink("${tfile}0") if (-e "${tfile}0");
+    rename($doc->{tokfile}, "${tfile}0");
+
+    ##-- fix broken tokens
+    $data =~ s/\n([[:alpha:]]+)[\-\¬]\t(\d+) (\d+)\n([[:lower:]][[:alpha:]]*(?:[\-\¬]?))\t(\d+) (\d+)((?:\tTRUNC)?\n)/"\n$1$4\t$2 ".(($5+$6)-$2).$7/eg;
+
+    ##-- write back to doc (encoded)
+    $doc->{tokdata} = encode('utf8',$data);
+  }
 
   ##-- finalize
   $doc->{ntoks} = $tz->nTokens(\$doc->{tokdata});

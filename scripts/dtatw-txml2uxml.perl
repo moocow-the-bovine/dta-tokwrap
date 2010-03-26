@@ -20,6 +20,7 @@ our $keep_blanks = 0;
 our $txtfile = undef; ##-- default: from xml file
 our $do_t0 = 1;
 our $do_unicruft = 1;
+our $do_inter_token_chars = 1;
 
 ##------------------------------------------------------------------------------
 ## Command-line
@@ -31,6 +32,7 @@ GetOptions(##-- General
 	   'textfile|txtfile|text|txt|tf=s' => \$txtfile,
 	   't0!' => \$do_t0,
 	   'unicruft|cruft|u!' => \$do_unicruft,
+	   'inter-token-characters|inter-token-chars|chars|itc|c!' => \$do_inter_token_chars,
 
 	   ##-- formatting
 	   'entities|ent|e!' => sub { $expand_ents=!$_[1]; },
@@ -67,8 +69,10 @@ sub slurpText {
 ##  + uses global $txtbufr
 sub txml2uxml {
   my $doc = shift;
-  my ($wnod,$wb,$off,$len, $wt0,$wt);
-  foreach $wnod (@{$doc->findnodes('//w')}) {
+  my ($wi,$wnod,$wb,$off,$len, $wt0,$wt, $wpnod);
+  my $wnods = $doc->findnodes('//w');
+  my $poff  = 0;
+  foreach $wnod (@$wnods) {
     if ($do_unicruft) {
       ##-- unicruft approximation
       $wt = $wnod->getAttribute('t');
@@ -87,8 +91,66 @@ sub txml2uxml {
       ##-- raw text + unicruft
       $wnod->setAttribute('u0', decode('latin1',Unicruft::utf8_to_latin1_de($wt0))) if ($do_unicruft);
     }
+    if ($do_inter_token_chars) {
+      ##-- inter-token characters
+      $cnod = cNode($poff,$off);
+      $wnod->parentNode->insertBefore($cnod,$wnod);
+    }
+    $poff = $off+$len;
+  }
+  if ($do_inter_token_chars) {
+    ##-- final <c> node
+    $cnod = cNode($poff,length($$txtbufr));
+    $wnods->[$#$wnods]->parentNode->insertAfter($cnod, $wnods->[$#$wnods]);
   }
   return $doc;
+}
+
+## $cnod_or_undef = cNode($previous_offset,$current_offset)
+##  + creates a new <c> node for text range ($previous_offset..$current_offset)
+our ($poff,$off,$cstr,$cnod);
+BEGIN { *cNode=\&cNode1; }
+sub cNode2 {
+  ($poff,$off) = @_;
+  $cstr = substr($$txtbufr,$poff,($off-$poff));
+  $cstr = decode('utf8',$cstr) if (!utf8::is_utf8($cstr));
+  ##
+  $cnod = XML::LibXML::Text->new($cstr);
+  return $cnod;
+}
+
+sub cNode1 {
+  ($poff,$off) = @_;
+  $cstr = substr($$txtbufr,$poff,($off-$poff));
+  $cstr = decode('utf8',$cstr) if (!utf8::is_utf8($cstr));
+  ##
+  $cnod = XML::LibXML::Element->new('c');
+  #$cnod->setAttribute('t', $cstr);
+  $cnod->setAttribute('b', $poff." ".($off-$poff));
+  #$cnod->appendText($cstr);
+  $cnod->setAttribute('t',$cstr);
+  return $cnod;
+}
+
+sub cNode0 {
+  my ($poff,$off) = @_;
+  my $cstr = substr($$txtbufr,$poff,($off-$poff));
+  $cstr = decode('utf8',$cstr) if (!utf8::is_utf8($cstr));
+  ##
+  my $cnod = XML::LibXML::Element->new('c');
+  $cnod->setAttribute('t', $cstr);
+  $cnod->setAttribute('b', $poff." ".($off-$poff));
+  my ($ustr);
+  if ($do_unicruft) {
+    ##-- unicruft approximation
+    $cnod->setAttribute('u', $ustr=decode('latin1',Unicruft::utf8_to_latin1_de($cstr)));
+  }
+  if ($do_t0) {
+    ##-- raw text
+    $cnod->setAttribute('t0',$cstr);
+    $cnod->setAttribute('u0', $ustr) if ($do_unicruft);
+  }
+  return $cnod;
 }
 
 ##------------------------------------------------------------------------------
