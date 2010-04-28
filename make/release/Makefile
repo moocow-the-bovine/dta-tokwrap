@@ -18,7 +18,8 @@
 #up_include = --include=*.txt.xml
 ##--
 ## SOURCE: dta@lal.dwds.de:~dta/dta_aligned_xml (with <c>-ids, coords, etc.)
-up_fromurl = dta@lal.dwds.de:/home/dta/dta_aligned_xml
+#up_fromurl = dta@lal.dwds.de:/home/dta/dta_aligned_xml
+up_fromurl = kaskade.dwds.de:/home/dta/dta_aligned_xml
 up_include = --include=*.xml
 up_rsync   = $(rsync) --no-perms --chmod=Fa-x,go-wx
 
