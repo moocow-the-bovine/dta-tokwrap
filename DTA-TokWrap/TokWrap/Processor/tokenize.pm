@@ -141,6 +141,25 @@ sub tokenize {
     ##-- fix broken tokens
     $data =~ s/\n([[:alpha:]][\-\¬[:alpha:]]*)[\-\¬]\t(\d+) (\d+)\n+([[:lower:]][[:alpha:]\']*(?:[\-\¬]?))\t(\d+) (\d+)((?:\tTRUNC)?\n)/"\n$1$4\t$2 ".(($5+$6)-$2).$7/eg;
 
+    ##-- fix broken tokens with abbreviations
+    $data =~ s/^
+                ([[:alpha:]][[:alpha:]\-\¬]*)[\-\¬]\t                ##-- $1=w1.text [modulo final "-"]
+		(\d+)\ (\d+)                                         ##-- ($2,$3)=(w1.offset, w1.len)
+		.*\n+
+		((?:                                                 ##-- $4=w2.text [modulo final "."]
+		    [[:alpha:]\-\¬]*[aeiouäöü][[:alpha:]\-\¬]+       ##--   : .*[VOWEL].+
+		  |
+		    [[:alpha:]\-\¬]+[aeiouäöü][[:alpha:]\-\¬]*       ##--   : .+[VOWEL].*
+		))
+		\.                                                   ##--   : w2.text: final "."
+		\t(\d+)\ (\d+)                                       ##-- ($5,$6)=(w2.offset, w2.len)
+		\tXY\b.*\n                                           ##-- w2.tag = XY
+		#\tXY\t\$ABBREV\b.*\n                                 ##-- w2.tag = XY.ABBREV
+	      /(
+		"$1$4\t$2 ".($5+$6-$2-1)."\n"
+		.".\t".($5+$6-1)." 1\t\$.\n"
+	       )/mgxe;
+
     ##-- write back to doc (encoded)
     $doc->{tokdata} = encode('utf8',$data);
   }
