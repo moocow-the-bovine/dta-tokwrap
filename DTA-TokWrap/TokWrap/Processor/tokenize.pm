@@ -153,11 +153,12 @@ sub tokenize {
 		))
 		\.                                                   ##--   : w2.text: final "."
 		\t(\d+)\ (\d+)                                       ##-- ($5,$6)=(w2.offset, w2.len)
-		\tXY\b.*\n                                           ##-- w2.tag = XY
-		#\tXY\t\$ABBREV\b.*\n                                 ##-- w2.tag = XY.ABBREV
+		\tXY\b.*\n+                                          ##-- w2.tag = XY
+		#\tXY\t\$ABBREV\b.*\n+                                ##-- w2.tag = XY.ABBREV
 	      /(
 		"$1$4\t$2 ".($5+$6-$2-1)."\n"
 		.".\t".($5+$6-1)." 1\t\$.\n"
+		."\n"
 	       )/mgxe;
 
     ##-- write back to doc (encoded)
