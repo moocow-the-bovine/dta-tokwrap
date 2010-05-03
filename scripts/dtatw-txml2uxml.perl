@@ -18,7 +18,10 @@ our $expand_ents = 0;
 our $keep_blanks = 0;
 
 our $txtfile = undef; ##-- default: from xml file
+our $wpxfile = undef; ##-- default: from xml file
+our $cpxfile = undef; ##-- default: from xml file
 our $do_t0 = 1;
+our $do_pb = undef;
 our $do_unicruft = 1;
 our $do_inter_token_chars = 0;
 
@@ -30,7 +33,10 @@ GetOptions(##-- General
 
 	   ##-- text file?
 	   'textfile|txtfile|text|txt|tf=s' => \$txtfile,
+	   'wpx-file|wpxfile|wpxf|wpx|wpf=s' => \$wpxfile,
+	   'cpx-file|xpxfile|cpxf|cpx|cpf=s' => \$cpxfile,
 	   't0!' => \$do_t0,
+	   'pb!' => \$do_pb,
 	   'unicruft|cruft|u!' => \$do_unicruft,
 	   'inter-token-characters|inter-token-chars|chars|itc|c!' => \$do_inter_token_chars,
 
@@ -65,11 +71,26 @@ sub slurpText {
   return \$buf;
 }
 
+## $wpx = load_pxfile($pxfile)
+sub load_pxfile {
+  my $pxfile = shift;
+  my $px = {};
+  open(PX,"<$pxfile") or die("$0: load_pxfile(): open failed for '$pxfile': $!");
+  my ($line,$xid,@data);
+  while (defined($line=<PX>)) {
+    chomp($line);
+    next if ($line =~ /^\s*$/ || $line =~ /^\%\%/);
+    ($xid,@data) = split(/\t/,$line);
+    $px->{$xid} = [@data];
+  }
+  return $px;
+}
+
 ## $doc = txml2uxml($doc)
 ##  + uses global $txtbufr
 sub txml2uxml {
   my $doc = shift;
-  my ($wi,$wnod,$wb,$off,$len, $wt0,$wt, $wpnod);
+  my ($wi,$wnod,$wb,$off,$len, $wt0,$wt, $wpnod, $xid,$pxdata);
   my $wnods = $doc->findnodes('//w');
   my $poff  = 0;
   foreach $wnod (@$wnods) {
@@ -95,6 +116,21 @@ sub txml2uxml {
       ##-- inter-token characters
       $cnod = cNode($poff,$off);
       $wnod->parentNode->insertBefore($cnod,$wnod);
+    }
+    if ($do_pb) {
+      if (defined($wpx)) {
+	##-- pagebreak index from .wpx file
+	$xid = $wnod->getAttribute('id');
+	$xid = $wnod->getAttribute('xml:id') if (!defined($xid));
+	$pxdata=$wpx->{$xid};
+      }
+      elsif (defined($cpx)) {
+	##-- pagebreak index from .cpx file
+	$xid = $wnod->getAttribute('c');
+	$xid =~ s/\s.*$//; ##-- truncate
+	$pxdata=$cpx->{$xid};
+      }
+      $wnod->setAttribute('pb',($pxdata && defined($pxdata->[0]) ? $pxdata->[0] : '-1'));
     }
     $poff = $off+$len;
   }
@@ -173,15 +209,31 @@ our $infile = shift;
 our $doc   = $parser->parse_file($infile)
   or die("$prog: could not parse input .t.xml file '$infile': $!");
 
+##-- input basename
+our $inbase = $infile;
+$inbase =~ s/\.t\.xml//i;
+
 ##-- parse raw text buffer
 our ($txtbufr);
 if ($do_t0) {
-  if (!defined($txtfile)) {
-    $txtfile = $infile;
-    $txtfile =~ s/\.t\.xml//i;
-    $txtfile .= '.txt';
-  }
+  $txtfile = "$inbase.txt" if (!defined($txtfile));
   $txtbufr = slurpText($txtfile);
+}
+
+##-- pagebreak index (use one of $wpx or $cpx, depending on args)
+our ($wpx); ##-- $wpx: w/@id to page data: {$wid=>\@pxdata=[$pb_i,$pb_n,$pb_facs]}
+our ($cpx); ##-- $cpx: c/@id to page data: {$cid=>\@pxdata=[$pb_i,$pb_n,$pb_facs]}
+$do_pb=1 if (!defined($do_pb) && (defined($wpxfile) || defined($cpxfile)));
+if ($do_pb) {
+  if (!defined($wpxfile) && !defined($cpxfile)) {
+    $wpxfile = "$inbase.wpx";
+    $cpxfile = "$inbase.cpx";
+  }
+  if (defined($wpxfile)) {
+    $wpx = load_pxfile($wpxfile);
+  } elsif (defined($cpxfile)) {
+    $cpx = load_pxfile($cpxfile);
+  }
 }
 
 ##-- maybe pull in unicruft
@@ -209,6 +261,8 @@ dtatw-txml2uxml.perl - DTA::TokWrap: convert .t.xml to enrichted .u.xml
 
  Processing Options
   -textfile TXTFILE      # .txt file for TXMLFILE://w/@b locations
+  -wpxfile  WPXFILE      # .wpx file for output //w/@pb locations
+  -pb     , -nopb        # do/don't parse and output page break indices as //w/@pb (default=only if -wpxfile is given)
   -t0     , -not0        # do/don't output original text from TXTFILE as //w/@t0 (default=do)
   -cruft  , -nocruft     # do/don't output unicruft approximations as //w/@u rsp //w/@u0 (default=do)
   -chars  , -nochars     # do/don't output inter-token chars as //c (default=don't)

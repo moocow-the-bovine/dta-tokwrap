@@ -569,6 +569,7 @@ CLEAN_FILES += *.dta-cab.xml.bytok
 ##======================================================================
 ## Rules: tokenized: extended output (unicruft //w/@u and raw text //w/@t0 rsp @u0)
 
+##-- %.u.xml: unicruft + raw text
 u-xml: $(XML:.xml=.u.xml)
 
 %.u.xml: %.t.xml %.txt tokwrap
@@ -577,6 +578,18 @@ u-xml: $(XML:.xml=.u.xml)
 no-u-xml: ; rm -f *.u.xml
 CLEAN_FILES += *.u.xml
 
+##-- %.up.xml: unicruft + raw text + pagebreaks
+up-xml: $(XML:.xml=.up.xml)
+
+#%.up.xml: %.t.xml %.txt %.wpx tokwrap
+#	$(SCRIPT_DIR)dtatw-txml2uxml.perl -tf=$*.txt -wpx=$*.wpx $< -o $@
+##--
+%.up.xml: %.t.xml %.txt %.cpx tokwrap
+	$(SCRIPT_DIR)dtatw-txml2uxml.perl -tf=$*.txt -cpx=$*.cpx $< -o $@
+
+no-up-xml: ; rm -f *.up.xml
+CLEAN_FILES += *.up.xml
+
 ##======================================================================
 ## Rules: auxilliary indices
 
@@ -584,7 +597,7 @@ CLEAN_FILES += *.u.xml
 cpx: $(XML:.xml=.cpx)
 
 %.cpx: $(xmldir)/%.xml tokwrap
-	$(SCRIPT_DIR)dtatw-mkpx.perl $< -o $@
+	$(SCRIPT_DIR)dtatw-mkpx.perl -v=0 $< -o $@
 
 no-cpx: ; rm -f *.cpx
 CLEAN_FILES += *.cpx
