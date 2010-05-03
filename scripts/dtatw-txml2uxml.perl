@@ -261,8 +261,9 @@ dtatw-txml2uxml.perl - DTA::TokWrap: convert .t.xml to enrichted .u.xml
 
  Processing Options
   -textfile TXTFILE      # .txt file for TXMLFILE://w/@b locations
-  -wpxfile  WPXFILE      # .wpx file for output //w/@pb locations
-  -pb     , -nopb        # do/don't parse and output page break indices as //w/@pb (default=only if -wpxfile is given)
+  -cpxfile  WPXFILE      # .cpx file for output //w/@pb locations
+  -wpxfile  WPXFILE      # .wpx file for output //w/@pb locations (overrides -cpxfile)
+  -pb     , -nopb        # do/don't parse and output page break indices as //w/@pb (default=only if -wpxfile or -cpxfile is given)
   -t0     , -not0        # do/don't output original text from TXTFILE as //w/@t0 (default=do)
   -cruft  , -nocruft     # do/don't output unicruft approximations as //w/@u rsp //w/@u0 (default=do)
   -chars  , -nochars     # do/don't output inter-token chars as //c (default=don't)
