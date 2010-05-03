@@ -53,6 +53,7 @@ pod2usage({
 
 
 ##-- command-line: arguments
+push(@ARGV,'-') if (!@ARGV);
 our ($srcfile) = @ARGV;
 
 
