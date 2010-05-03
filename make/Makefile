@@ -206,23 +206,33 @@ REALCLEAN_DEPS += clean
 REALCLEAN_FILES += \
 	$(filter-out $(xml),$(XML)) \
 
+##--------------------------------------------------------------
+## Configuration: Defaults: Top-Level targets
 
+ALL_TARGETS ?= src-xml-errors t-xml s-xml w-xml a-xml so-xml-errors
 
+ALL_XML_TARGETS ?= all u-xml cpx cab-xml-xlit cws-xml cws-noc-fmt-xml extra-xml-errors
+#cab-xml-full
+#cab-xml-xlit
+
+EXTRA_TARGETS ?= all-xml summary
+
+SUMMARY_TARGETS ?= rw-summary unk-summary
+
+CASCADE_TARGETS ?= all-xml
 
 ##======================================================================
 ## Rules: top-level
 
-all: src-xml-errors t-xml s-xml w-xml a-xml so-xml-errors
+all: $(ALL_TARGETS)
 
-all-xml: all u-xml cab-xml-xlit cws-xml cws-noc-fmt-xml extra-xml-errors
-#cab-xml-full
-#cab-xml-xlit
+all-xml: $(ALL_XML_TARGETS)
 
-extra: all-xml summary
+extra: $(EXTRA_TARGETS)
 
-summary: rw-summary unk-summary
+summary: $(SUMMARY_TARGETS)
 
-cascade-all: all-xml
+cascade-all: $(ALL_XML_TARGETS)
 
 .SECONDARY: 
 
@@ -566,6 +576,17 @@ u-xml: $(XML:.xml=.u.xml)
 
 no-u-xml: ; rm -f *.u.xml
 CLEAN_FILES += *.u.xml
+
+##======================================================================
+## Rules: auxilliary indices
+
+cpx: $(XML:.xml=.cpx)
+
+%.cpx: $(xmldir)/%.xml tokwrap
+	$(SCRIPT_DIR)dtatw-mkpx.perl $< -o $@
+
+no-cpx: ; rm -f *.cpx
+CLEAN_FILES += *.cpx
 
 ##======================================================================
 ## Rules: DTA::CAB Analysis: unicruft only
