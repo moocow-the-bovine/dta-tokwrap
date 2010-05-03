@@ -580,6 +580,7 @@ CLEAN_FILES += *.u.xml
 ##======================================================================
 ## Rules: auxilliary indices
 
+##-- %.cpx: character-pagebreak index
 cpx: $(XML:.xml=.cpx)
 
 %.cpx: $(xmldir)/%.xml tokwrap
@@ -587,6 +588,14 @@ cpx: $(XML:.xml=.cpx)
 
 no-cpx: ; rm -f *.cpx
 CLEAN_FILES += *.cpx
+
+##-- %.wpx: word-pagebreak index
+wpx: $(XML:.xml=.wpx)
+%.wpx: %.cw.xml
+	$(SCRIPT_DIR)dtatw-mkpx.perl -i '^w$$' $< -o $@
+no-wpx: ; rm -f *.wpx
+CLEAN_FILES += *.wpx
+
 
 ##======================================================================
 ## Rules: DTA::CAB Analysis: unicruft only
