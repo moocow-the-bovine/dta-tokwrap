@@ -572,23 +572,20 @@ CLEAN_FILES += *.dta-cab.xml.bytok
 ##-- %.u.xml: unicruft + raw text
 u-xml: $(XML:.xml=.u.xml)
 
-%.u.xml: %.t.xml %.txt tokwrap
-	$(SCRIPT_DIR)dtatw-txml2uxml.perl -tf=$*.txt $< -o $@
+##-- {.t.xml,.txt}->.u.xml : (+t0, -pb)
+#%.u.xml: %.t.xml %.txt tokwrap
+#	$(SCRIPT_DIR)dtatw-txml2uxml.perl -tf=$*.txt $< -o $@
+##
+##-- {.t.xml,.txt,.wpx}->.u.xml : (+t0, +pb)
+#%.u.xml: %.t.xml %.txt %.wpx tokwrap
+#	$(SCRIPT_DIR)dtatw-txml2uxml.perl -tf=$*.txt -wpx=$*.wpx $< -o $@
+##
+##-- {.t.xml,.txt,.cpx}->.u.xml : (+t0, +pb)
+%.u.xml: %.t.xml %.txt %.cpx tokwrap
+	$(SCRIPT_DIR)dtatw-txml2uxml.perl -tf=$*.txt -cpx=$*.cpx $< -o $@
 
 no-u-xml: ; rm -f *.u.xml
 CLEAN_FILES += *.u.xml
-
-##-- %.up.xml: unicruft + raw text + pagebreaks
-up-xml: $(XML:.xml=.up.xml)
-
-#%.up.xml: %.t.xml %.txt %.wpx tokwrap
-#	$(SCRIPT_DIR)dtatw-txml2uxml.perl -tf=$*.txt -wpx=$*.wpx $< -o $@
-##--
-%.up.xml: %.t.xml %.txt %.cpx tokwrap
-	$(SCRIPT_DIR)dtatw-txml2uxml.perl -tf=$*.txt -cpx=$*.cpx $< -o $@
-
-no-up-xml: ; rm -f *.up.xml
-CLEAN_FILES += *.up.xml
 
 ##======================================================================
 ## Rules: auxilliary indices
