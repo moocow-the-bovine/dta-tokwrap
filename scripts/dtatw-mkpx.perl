@@ -154,7 +154,7 @@ __END__
 
 =head1 NAME
 
-dtatw-mkpx.perl - make character + pagebreak index for a DTA source XML file
+dtatw-mkpx.perl - make pagebreak index for a DTA source XML file
 
 =head1 SYNOPSIS
 
@@ -166,6 +166,7 @@ dtatw-mkpx.perl - make character + pagebreak index for a DTA source XML file
   -quiet                 # be silent
 
  I/O Options:
+  -index  REGEX          # target element regex (default='^c$')
   -output FILE           # specify output file (default='-' (STDOUT))
 
 =cut
@@ -188,7 +189,7 @@ Not yet written.
 
 =head1 DESCRIPTION
 
-Make a character + pagebreak index for a DTA source XML file.
+Make a pagebreak index for a DTA source XML file.
 
 =cut
 
