@@ -360,10 +360,15 @@ bx-txt: $(XML:.xml=.bx)
 %.bx:  %.bx %.txt
 %.txt: %.bx %.txt
 
-%.bx: %.bx0 %.tx tokwrap
-	$(TOKWRAP) -t mktxt $(xmldir)/$*.xml
-
-%.txt: %.bx0 %.tx tokwrap
+##-- separating these rules gets us t-xml re-made on 2 subsequent (make all)s
+#%.bx: %.bx0 %.tx tokwrap
+#	$(TOKWRAP) -t mktxt $(xmldir)/$*.xml
+#
+#%.txt: %.bx0 %.tx tokwrap
+#	$(TOKWRAP) -t mktxt $(xmldir)/$*.xml
+##
+##--
+%.bx %.txt: %.bx0 %.tx tokwrap
 	$(TOKWRAP) -t mktxt $(xmldir)/$*.xml
 
 no-bx-txt: ; rm -f *.bx *.txt
