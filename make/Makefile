@@ -602,7 +602,7 @@ CLEAN_FILES += *.cpx
 ##-- %.wpx: word-pagebreak index
 wpx: $(XML:.xml=.wpx)
 %.wpx: %.cw.xml
-	$(SCRIPT_DIR)dtatw-mkpx.perl -i '^w$$' $< -o $@
+	$(SCRIPT_DIR)dtatw-mkpx.perl -v=0 -i '^w$$' $< -o $@
 no-wpx: ; rm -f *.wpx
 CLEAN_FILES += *.wpx
 
