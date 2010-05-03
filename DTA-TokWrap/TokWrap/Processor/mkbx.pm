@@ -10,10 +10,12 @@ use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Utils qw(:progs :libxml :libxslt :slurp :time);
 use DTA::TokWrap::Processor;
+use Encode qw(encode decode);
 
 use XML::Parser;
 use IO::File;
 use Carp;
+no  bytes;
 use strict;
 
 ##==============================================================================
@@ -187,6 +189,7 @@ sub initXmlParser {
 ##    bx0doc  => $bx0doc,  ##-- (input) preliminary block-index data (XML::LibXML::Document)
 ##    txfile  => $txfile,  ##-- (input) raw text index filename
 ##    bxdata  => \@blocks, ##-- (output) serialized block index
+##    txtdata => $txtbuf,  ##-- (output) raw text buffer
 ##    mkbx_stamp0 => $f,   ##-- (output) timestamp of operation begin
 ##    mkbx_stamp  => $f,   ##-- (output) timestamp of operation end
 ##    bxdata_stamp => $f,  ##-- (output) timestamp of operation end
@@ -238,8 +241,25 @@ sub mkbx {
   ##-- populate block output-text keys
   $mbx->compute_block_text($blocks, \$txbuf);
 
-  ##-- update document
+  ##-- update document: raw bxdata
   $doc->{bxdata} = $blocks;
+
+  ##-- update document: txtdata: tokenizer input text buffer
+  $doc->{txtdata} = '';
+  my $txtbufr = \$doc->{txtdata};
+  $$txtbufr .= $_->{otext} foreach (@$blocks);
+  $$txtbufr .= "\n"; ##-- always terminate text file with a newline
+
+  ##-- hack: txtdata: tokenizer input text buffer
+  ##  + workaround for mantis bug #242 (http://odo.dwds.de/mantis/view.php?id=242)
+  ##    : '"kontinuierte" quotes @ zeilenanfang --> müll'
+  $$txtbufr = decode('UTF-8',$$txtbufr) if (!utf8::is_utf8($$txtbufr));
+  $$txtbufr =~ s/ (\n[^\x{201e}"\n]+\n)([\x{201e}"]) / $1."\$QKEEP:$2\$"              /sgxe;
+  $$txtbufr =~ s/ \n(\ *[\x{201e}"])                 / "\n".(" " x bytes::length($1)) /sgxe;
+  $$txtbufr =~ s/ \n\$QKEEP:([^\$]+)\$               / "\n".$1                        /sgxe;
+  $$txtbufr = encode('UTF-8',$$txtbufr);
+
+  ##-- stamp
   $doc->{mkbx_stamp} = $doc->{bxdata_stamp} = timestamp(); ##-- stamp
   return $doc;
 }
@@ -293,6 +313,7 @@ sub compute_block_text {
     ##-- specials
     if    ($blk->{elt} eq 'w')  { $blk->{otext}=$WB; }
     elsif ($blk->{elt} eq 's')  { $blk->{otext}=$SB; }
+
     elsif ($blk->{elt} eq 'lb') { $blk->{otext}=$LB; }
     elsif ($blk->{elt} eq 'ws') { $blk->{otext}=$WS; }
     else {
@@ -304,6 +325,7 @@ sub compute_block_text {
   }
   return $blocks;
 }
+
 
 ##==============================================================================
 ## Methods: I/O

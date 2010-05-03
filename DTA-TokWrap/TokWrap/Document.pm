@@ -788,15 +788,20 @@ sub saveTxtFile {
   ##-- get filehandle & print
   my $fh = ref($file) ? $file : IO::File->new(">$file");
   $fh->binmode() if (!ref($file));
-  $fh->print(
-	     map {
-	       (($debug_txt ? "[$_->{key}:$_->{elt}]\n" : qw()),
-		$_->{otext},
-		($debug_txt ? "\n[/$_->{key}:$_->{elt}]\n" : qw()),
-	       )
-	     } @$bxdata
-	    );
-  $fh->print("\n"); ##-- always terminate text file with a newline
+  if ($debug_txt) {
+    $fh->print(
+	       map {
+		 (($debug_txt ? "[$_->{key}:$_->{elt}]\n" : qw()),
+		  $_->{otext},
+		  ($debug_txt ? "\n[/$_->{key}:$_->{elt}]\n" : qw()),
+		 )
+	       } @$bxdata
+	      );
+    $fh->print("\n"); ##-- always terminate text file with a newline
+  } else {
+    ##-- dump raw text buffer
+    $fh->print($doc->{txtdata});
+  }
   $fh->close() if (!ref($file));
 
   $doc->{txtfile_stamp} = timestamp(); ##-- stamp
