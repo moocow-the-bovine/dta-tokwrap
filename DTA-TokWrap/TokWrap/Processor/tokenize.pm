@@ -138,23 +138,33 @@ sub tokenize {
     ##-- fix stupid interjections
     $data =~ s/^(re\t\d+ \d+)\tITJ$/$1/mg;
 
-    ##-- fix broken tokens
-    $data =~ s/\n([[:alpha:]][\-\¬[:alpha:]]*)[\-\¬]\t(\d+) (\d+)\n+([[:lower:]][[:alpha:]\']*(?:[\-\¬]?))\t(\d+) (\d+)((?:\tTRUNC)?\n)/"\n$1$4\t$2 ".(($5+$6)-$2).$7/eg;
+    ##-- fix line-broken tokens
+    ## + hypens:
+    ##   CP_HEX   CP_DEC LEN_U8   CHR_L1     CHR_U8_C         BLOCK                   NAME
+    ##   U+002D       45      1        -            -         Basic Latin             HYPHEN-MINUS
+    ##   U+00AC      172      2        ¬      \xc2\xac        Latin-1 Supplement      NOT SIGN
+    ##   U+2014     8212      3       [?] \xe2\x80\x94        General Punctuation     EM DASH       -- not really a connector, but it might be used!
+    ##
+    $data =~ s/\n
+	       ([[:alpha:]][\-\x{ac}[:alpha:]]*)[\-\x{ac}]\t(\d+)\ (\d+)\n+
+	       ([[:lower:]][[:alpha:]\']*(?:[\-\x{ac}]?))\t(\d+)\ (\d+)((?:\tTRUNC)?\n)
+	      /"\n$1$4\t$2 ".(($5+$6)-$2).$7
+	      /egx;
 
     ##-- fix broken tokens with abbreviations
     $data =~ s/^
-                ([[:alpha:]][[:alpha:]\-\¬]*)[\-\¬]\t                ##-- $1=w1.text [modulo final "-"]
-		(\d+)\ (\d+)                                         ##-- ($2,$3)=(w1.offset, w1.len)
+                ([[:alpha:]][[:alpha:]\-\x{ac}]*)[\-\x{ac}]\t                ##-- $1=w1.text [modulo final "-"]
+		(\d+)\ (\d+)                                                 ##-- ($2,$3)=(w1.offset, w1.len)
 		.*\n+
-		((?:                                                 ##-- $4=w2.text [modulo final "."]
-		    [[:alpha:]\-\¬]*[aeiouäöü][[:alpha:]\-\¬]+       ##--   : .*[VOWEL].+
+		((?:                                                         ##-- $4=w2.text [modulo final "."]
+		    [[:alpha:]\-\x{ac}]*[aeiouäöü][[:alpha:]\-\x{ac}]+       ##--   : .*[VOWEL].+
 		  |
-		    [[:alpha:]\-\¬]+[aeiouäöü][[:alpha:]\-\¬]*       ##--   : .+[VOWEL].*
+		    [[:alpha:]\-\x{ac}]+[aeiouäöü][[:alpha:]\-\x{ac}]*       ##--   : .+[VOWEL].*
 		))
-		\.                                                   ##--   : w2.text: final "."
-		\t(\d+)\ (\d+)                                       ##-- ($5,$6)=(w2.offset, w2.len)
-		\tXY\b.*\n+                                          ##-- w2.tag = XY
-		#\tXY\t\$ABBREV\b.*\n+                                ##-- w2.tag = XY.ABBREV
+		\.                                                           ##--   : w2.text: final "."
+		\t(\d+)\ (\d+)                                               ##-- ($5,$6)=(w2.offset, w2.len)
+		\tXY\b.*\n+                                                  ##-- w2.tag = XY
+		#\tXY\t\$ABBREV\b.*\n+                                        ##-- w2.tag = XY.ABBREV
 	      /(
 		"$1$4\t$2 ".($5+$6-$2-1)."\n"
 		.".\t".($5+$6-1)." 1\t\$.\n"
