@@ -36,7 +36,7 @@ GetOptions(##-- General
 	   'wpx-file|wpxfile|wpxf|wpx|wpf=s' => \$wpxfile,
 	   'cpx-file|xpxfile|cpxf|cpx|cpf=s' => \$cpxfile,
 	   't0!' => \$do_t0,
-	   'pb!' => \$do_pb,
+	   'pb|xp!' => \$do_pb,
 	   'unicruft|cruft|u!' => \$do_unicruft,
 	   'inter-token-characters|inter-token-chars|chars|itc|c!' => \$do_inter_token_chars,
 
@@ -81,6 +81,7 @@ sub load_pxfile {
     chomp($line);
     next if ($line =~ /^\s*$/ || $line =~ /^\%\%/);
     ($xid,@data) = split(/\t/,$line);
+    $data[3] = undef if (!$data[3] || $data[3] eq '//*');
     $px->{$xid} = [@data];
   }
   return $px;
@@ -130,7 +131,8 @@ sub txml2uxml {
 	$xid =~ s/\s.*$//; ##-- truncate
 	$pxdata=$cpx->{$xid};
       }
-      $wnod->setAttribute('pb',($pxdata && defined($pxdata->[0]) ? $pxdata->[0] : '-1'));
+      $wnod->setAttribute('pb', ($pxdata && defined($pxdata->[0]) ? $pxdata->[0] : '-1'));
+      $wnod->setAttribute('xp', $pxdata->[3]) if ($pxdata && defined($pxdata->[3]));
     }
     $poff = $off+$len;
   }
