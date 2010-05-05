@@ -23,6 +23,37 @@ use strict;
 ##==============================================================================
 our @ISA = qw(DTA::TokWrap::Processor);
 
+## $AUTOTUNE_MIN_C_PER_P
+##  + minimum number of <c> per <p> for inclusion of sentence break hints for <p> elements
+##    by autotune heuristics
+##  + idea: accomodate OCR over-recognition of <p> elements, esp. for verse (e.g. busch_max_1865)
+##  + empirical data:
+##    - over all phase2 files                      : min=73.6, max=115892, median=564, avg=2242, sd=12541  [max here is verse basically without <p>]
+##    - over all phase2 files with count(//p) >= 20: min=73.6, max=  2412, median=553, avg= 684, sd=  526  [well-coded verse outliers removed]
+our $AUTOTUNE_MIN_C_PER_P = 200;
+
+## $AUTOTUNE_MAX_LX_PER_L
+##  + maximum fraction of tx lines matching /[[:lower:]][\-¬]$/
+##    for application of $AUTOTUNE_MIN_C_PER_P autotune heuristic
+##  + idea: differentiate verse from prose (verse --> low ratio, prosa --> high ratio),
+##    since <p>-recognition errors are most likely for verse
+##  + empirical data:
+##    - over all phase2 files : min=0.0%, max=30.0%, median=22.0%, avg=16.50%, sd=9.15%
+##    - over known verse files: min=0.0%, max= 0.8%, median= 0.3%, avg= 0.31%, sd=0.30%
+##    - over known non-verse  : min=0.6%, max=29.9%, median=20.3%, avg=17.74%, sd=7.98%
+our $AUTOTUNE_MAX_LX_PER_L = 0.01; ##-- 1.0%
+
+## $AUTOTUNE_MAX_SP_PER_P
+##  + maximum ratio of <sp> to <p> elements for inclusion of sentence break hints for
+##    application of 
+##  + overrides $AUTOTUNE_MIN_C_PER_P, $AUTOTUNE_MAX_LX_PER_L
+##  + idea: for dramas, we can expect $AUTOTUNE_MIN_C_PER_P to be low, but <p>
+##    recognition is more likely to be a help than a hindrance...
+##  + empirical averages
+##    - over phase2 known     dramas: min=81%, max=101%, median=93%, avg=92%, sd=6.1%
+##    - over phase2 known non-dramas: min= 0%, max=  0%, median= 0%, avg= 0%, sd=0.0%
+our $AUTOTUNE_MAX_SP_PER_P = 0.5; ##-- 50%
+
 ##==============================================================================
 ## Constructors etc.
 ##==============================================================================
@@ -36,6 +67,7 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##     inplace => $bool,                      ##-- prefer in-place programs for search?
 ##     ##
 ##     ##-- Styleheet: insert-hints (<seg> elements and their children are handled implicitly)
+##     hint_autotune  => $bool,               ##-- use empirical heuristics to hack hint xpaths? (default=true)
 ##     hint_sb_xpaths => \@xpaths,            ##-- add internal sentence-break hint (<s/>) for @xpath element open & close
 ##     hint_wb_xpaths => \@xpaths,            ##-- add internal word-break hint (<w/>) for @xpath element open & close
 ##     hint_lb_xpaths => \@xpaths,            ##-- add internal line-break hint (<lb/>), + external whitespace for @xpath element *close*
@@ -62,12 +94,14 @@ sub defaults {
 	  inplace=>1,
 
 	  ##-- stylesheet: insert-hints
+	  hint_autotune  => 1,
 	  hint_sb_xpaths => [
 			     ##-- title page
 			     qw(titlePage byline titlePart docAuthor docImprint pubPlace publisher docDate),
 
 			     ##-- main text: common
-			     qw(div|p|text|front|back|body),
+			     qw(p),
+			     qw(div|text|front|back|body),
 
 			     ##-- notes, tables, lists, etc.
 			     qw(note|table|argument),
@@ -150,6 +184,7 @@ sub init {
 ##==============================================================================
 ## Methods: XSL stylesheets
 ##==============================================================================
+
 
 ##--------------------------------------------------------------
 ## Methods: XSL stylesheets: common
@@ -353,6 +388,56 @@ sub sort_stylestr {
 }
 
 ##--------------------------------------------------------------
+## Methods: XSL stylesheets: autotuning
+
+## undef = $mbx0->hint_autotune(\$sxbuf,$txfilename)
+##  + does hint autotuning
+sub hint_autotune {
+  my ($mbx0,$sxbufr,$txfile) = @_;
+
+  ##-- buffer txfile
+  my $txfh = IO::File->new("<$txfile")
+    or $mbx0->logconfess("autotune($txfile): could not open txfile '$txfile'");
+  $txfh->binmode(':utf8');
+  my $txbufr = slurp_fh($txfh)
+    or $mbx0->logconfess("autotune($txfile): could not slurp txfile '$txfile'");
+  $txfh->close();
+
+  ##-- cache original hint xpaths if required
+  my $sb_xpaths = ($mbx0->{hint_sb_xpaths_pretune}
+		   ? $mbx0->{hint_sb_xpaths_pretune}
+		   : ($mbx0->{hint_sb_xpaths_pretune}=$mbx0->{hint_sb_xpaths}));
+
+  ##-- count <p> and <p> elements
+  my $np  = 0+($$sxbufr =~ s/<p\b/<p/sg);
+  my $nsp = 0+($$sxbufr =~ s/<sp\b/<sp/sg);
+
+  ##-- count characters (bytes) and lines
+  my $nc  = length($$txbufr);           ##-- count number of logical utf8 characters in .tx buffer
+  my $nl  = ($$txbufr =~ s/$//mg);      ##-- count number of newlines in .tx buffer
+  my $nlx = 0+@{[$$txbufr =~ /[[:lower:]](?:\-|\x{ac})$/mg]}; ##-- estimate number of "line-broken" tokens
+
+  ##-- compute hints
+  my $c2p  = $nc/($np+1);
+  my $lx2l = $nlx/$nl;
+  my $sp2p = $nsp/($np+1);
+
+  if ($c2p     <= $AUTOTUNE_MIN_C_PER_P
+      && $lx2l <= $AUTOTUNE_MAX_LX_PER_L
+      && $sp2p <= $AUTOTUNE_MAX_SP_PER_P)
+    {
+      $mbx0->{hint_sb_xpaths} = [grep {$_ !~ /^p$/} @$sb_xpaths];
+    }
+  else {
+    $mbx0->{hint_sb_xpaths} = $sb_xpaths;
+  }
+
+  ##-- force stylesheet-regeneration
+  $mbx0->{hint_stylestr}   = $mbx0->hint_stylestr();
+}
+
+
+##--------------------------------------------------------------
 ## Methods: XSL stylesheets: debug
 
 ## undef = $mbx0->dump_string($str,$filename_or_fh)
@@ -373,6 +458,7 @@ sub dump_sort_stylesheet {
   $_[0]->dump_string($_[0]{sort_stylestr}, $_[1]);
 }
 
+
 ##==============================================================================
 ## Methods: mkbx0 (apply stylesheets)
 ##==============================================================================
@@ -381,6 +467,7 @@ sub dump_sort_stylesheet {
 ## + $doc is a DTA::TokWrap::Document object
 ## + %$doc keys:
 ##    sxfile  => $sxfile,  ##-- (input) structure index filename
+##    txfile  => $txfile,  ##-- (input) raw text index filename [only for autotune]
 ##    bx0doc  => $bx0doc,  ##-- (output) preliminary block-index data (XML::LibXML::Document)
 ##    mkbx0_stamp0 => $f,  ##-- (output) timestamp of operation begin
 ##    mkbx0_stamp  => $f,  ##-- (output) timestamp of operation end
@@ -392,30 +479,41 @@ sub mkbx0 {
   $mbx0->vlog($mbx0->{traceLevel},"mkbx0($doc->{xmlbase})");
   $doc->{mkbx0_stamp0} = timestamp();
 
-  ##-- sanity check(s)
+  ##-- sanity check(s): basic
   $mbx0 = $mbx0->new() if (!ref($mbx0));
   $mbx0->logconfess("mkbx0($doc->{xmlbase}): no dtatw-rm-namespaces program")
     if (!$mbx0->{rmns});
-  $mbx0->logconfess("mkbx0($doc->{xmlbase}): could not compile XSL stylesheets")
-    if (!$mbx0->ensure_stylesheets);
   $mbx0->logconfess("mbx0($doc->{xmlbase}): no .sx file defined")
     if (!$doc->{sxfile});
   $mbx0->logconfess("mbx0($doc->{xmlbase}): .sx file unreadable: $!")
     if (!-r $doc->{sxfile});
 
-  ##-- run command, buffer output to string
+  ##-- buffer sx file
   my $cmdfh = IO::File->new("'$mbx0->{rmns}' '$doc->{sxfile}'|")
     or $mbx0->logconfess("mkbx0($doc->{xmlbase}): open failed for pipe from '$mbx0->{rmns}': $!");
   my $sxbuf = '';
   slurp_fh($cmdfh, \$sxbuf);
   $cmdfh->close();
 
-  ##-- parse buffer
+  ##-- parse sx buffer
   my $xmlparser = libxml_parser(keep_blanks=>0);
   my $sxdoc = $xmlparser->parse_string($sxbuf)
     or $mbx0->logconfess("mkbx0($doc->{xmlbase}): could not parse namespace-hacked .sx document '$doc->{sxfile}': $!");
 
+  ##-- autotune?
+  if ($mbx0->{hint_autotune}) {
+    ##-- sanity checks: .tx
+    $mbx0->logconfess("mbx0($doc->{xmlbase}): no .tx file defined")
+      if (!$doc->{txfile});
+    $mbx0->logconfess("mbx0($doc->{xmlbase}): .tx file unreadable: $!")
+      if (!-r $doc->{txfile});
+
+    $mbx0->hint_autotune(\$sxbuf,$doc->{txfile});
+  }
+
   ##-- apply XSL stylesheets
+  $mbx0->logconfess("mkbx0($doc->{xmlbase}): could not compile XSL stylesheets")
+    if (!$mbx0->ensure_stylesheets);
   $sxdoc = $mbx0->{hint_stylesheet}->transform($sxdoc)
     or $mbx0->logconfess("mkbx0($doc->{xmlbase}): could not apply hint stylesheet to .sx document '$doc->{sxfile}': $!");
   $sxdoc = $mbx0->{sort_stylesheet}->transform($sxdoc)

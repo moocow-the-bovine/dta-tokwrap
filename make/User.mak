@@ -31,8 +31,8 @@
 
 ##-- small test
 xmldir = ./xmlsrc
-xml    = $(wildcard $(xmldir)/*.xml)
-#xml    = $(wildcard $(xmldir)/*.chr.xml)
+#xml    = $(wildcard $(xmldir)/*.xml)
+xml    = $(wildcard $(xmldir)/*.chr.xml)
 #xml    = $(xmldir)/test-raw.xml
 #xml    = $(xmldir)/ex2a.xml
 #xml    = $(xmldir)/ex2.xml
