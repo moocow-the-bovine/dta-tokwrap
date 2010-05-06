@@ -434,6 +434,7 @@ sub hint_autotune {
 
   ##-- force stylesheet-regeneration
   $mbx0->{hint_stylestr}   = $mbx0->hint_stylestr();
+  $mbx0->{hint_stylesheet} = xsl_stylesheet(string=>$mbx0->{hint_stylestr});
 }
 
 
