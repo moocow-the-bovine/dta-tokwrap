@@ -113,10 +113,13 @@ sub defaults {
 			     #qw(speaker sp stage castList castGroup castItem role roleDesc set),
 			     qw(castList|castList/head|castGroup),
 			     'castItem[not(parent::castGroup)]',
+
+			     ##-- non-sentential stuff
+			     qw(ref|fw|head), ##-- ... be safe if tokenizing EVERYTHING
 			    ],
 	  hint_wb_xpaths => [
 			     ##-- main text: common
-			     qw(head|fw),
+			     #qw(head|fw),
 
 			     ##-- citations & quotes (TODO: check real examples)
 			     qw(cit|q|quote),
@@ -147,11 +150,13 @@ sub defaults {
 	  ##-- stylesheet: mark-sortkeys
 	  sortkey_attr => 'dta.tw.key',
 	  sort_ignore_xpaths => [
-				 qw(ref|fw|head),
+				 qw(ref|fw|head), ##-- comment this out to tokenize EVERYTHING
+				 qw(teiHeader),
 				],
 	  sort_addkey_xpaths => [
 				 (map {"$_\[not(parent::seg)\]"} qw(table note argument figure)),
 				 qw(text front body back),
+				 qw(ref|fw|head),
 				],
 	  sort_stylestr  => undef,
 	  sort_styleheet => undef,
