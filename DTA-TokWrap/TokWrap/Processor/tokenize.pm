@@ -127,6 +127,7 @@ sub tokenize {
 
   ##-- auto-fix
   if ($tz->{fixtok}) {
+    $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase}): autofix (fixtok=$tz->{fixtok})");
     my $data = decode('utf8',$doc->{tokdata});
 
     ##-- hack: save original tokenizer output
@@ -152,6 +153,16 @@ sub tokenize {
 	      /egx;
 
     ##-- fix broken tokens with abbreviations
+
+    ##-- ARGH: busted for kurz_sonnenwirth_1855.chr.xml (svn r4570)
+    ## + pwd: dta/eval-corpus/xml.dta/
+    ## + call: dta-tokwrap.perl -keep -noinplace -nodummytok -verbose=5 -trace -noprofile  -t tokenize ../xml.raw/chr_xml/kurz_sonnenwirth_1855.chr.xml
+    ##
+    # @tmp = ($data =~ m/^([[:alpha:]][[:alpha:]\-\x{ac}]*)[\-\x{ac}]\t(\d+)\ (\d+).*\n+((?:[[:alpha:]\-\x{ac}]*[aeiouäöü][[:alpha:]\-\x{ac}]+|[[:alpha:]\-\x{ac}]+[aeiouäöü][[:alpha:]\-\x{ac}]*))\.\t(\d+)\ (\d+)\tXY\b.*\n+/mgx)
+    #
+    # @tmp = ($data =~ m/^(?:[[:alpha:]][[:alpha:]\-\x{ac}]*)[\-\x{ac}]\t(?:\d+)\ (?:\d+).*\n+(?:(?:[[:alpha:]\-\x{ac}]*[aeiouäöü][[:alpha:]\-\x{ac}]+|[[:alpha:]\-\x{ac}]+[aeiouäöü][[:alpha:]\-\x{ac}]*))\.\t(?:\d+)\ (?:\d+)\tXY\b.*\n+/mgx)
+
+
     $data =~ s/^
                 ([[:alpha:]][[:alpha:]\-\x{ac}]*)[\-\x{ac}]\t                ##-- $1=w1.text [modulo final "-"]
 		(\d+)\ (\d+)                                                 ##-- ($2,$3)=(w1.offset, w1.len)
