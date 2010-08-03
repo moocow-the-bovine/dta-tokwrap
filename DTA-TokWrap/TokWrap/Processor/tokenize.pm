@@ -137,6 +137,7 @@ sub tokenize {
     rename($doc->{tokfile}, "${tfile}0");
 
     ##-- fix stupid interjections
+    $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase}): autofix: ITJ");
     $data =~ s/^(re\t\d+ \d+)\tITJ$/$1/mg;
 
     ##-- fix line-broken tokens
@@ -146,6 +147,7 @@ sub tokenize {
     ##   U+00AC      172      2        ¬      \xc2\xac        Latin-1 Supplement      NOT SIGN
     ##   U+2014     8212      3       [?] \xe2\x80\x94        General Punctuation     EM DASH       -- not really a connector, but it might be used!
     ##
+    $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase}): autofix: linebreak");
     $data =~ s/\n
 	       ([[:alpha:]][\-\x{ac}[:alpha:]]*)[\-\x{ac}]\t(\d+)\ (\d+)\n+
 	       ([[:lower:]][[:alpha:]\']*(?:[\-\x{ac}]?))\t(\d+)\ (\d+)((?:\tTRUNC)?\n)
@@ -162,7 +164,7 @@ sub tokenize {
     #
     # @tmp = ($data =~ m/^(?:[[:alpha:]][[:alpha:]\-\x{ac}]*)[\-\x{ac}]\t(?:\d+)\ (?:\d+).*\n+(?:(?:[[:alpha:]\-\x{ac}]*[aeiouäöü][[:alpha:]\-\x{ac}]+|[[:alpha:]\-\x{ac}]+[aeiouäöü][[:alpha:]\-\x{ac}]*))\.\t(?:\d+)\ (?:\d+)\tXY\b.*\n+/mgx)
 
-
+    $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase}): autofix: linebreak + abbr");
     $data =~ s/^
                 ([[:alpha:]][[:alpha:]\-\x{ac}]*)[\-\x{ac}]\t                ##-- $1=w1.text [modulo final "-"]
 		(\d+)\ (\d+)                                                 ##-- ($2,$3)=(w1.offset, w1.len)
@@ -183,6 +185,7 @@ sub tokenize {
 	       )/mgxe;
 
     ##-- write back to doc (encoded)
+    $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase}): autofix: recode");
     $doc->{tokdata} = encode('utf8',$data);
   }
 
