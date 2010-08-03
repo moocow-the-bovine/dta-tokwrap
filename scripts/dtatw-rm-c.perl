@@ -1,4 +1,4 @@
 #!/usr/bin/perl -wp
 
-s|\<\/?|\b[^\>]*>||g;
-s|\<lb\b[^\>]*/>|<lb/>|g;
+s|</?c\b[^>]*>||g;       ##-- remove all <c> tags
+s|<lb\b[^\>]*/>|<lb/>|g; ##-- remove <lb> attributes too
