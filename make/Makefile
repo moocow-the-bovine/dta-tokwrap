@@ -416,12 +416,15 @@ CLEAN_FILES += *.t1
 MISC_FILES += $(XML:.xml=.t1)
 
 ##======================================================================
-## Rules: tokenization (link)
+## Rules: tokenization (symlink)
 
 t: $(XML:.xml=.t)
 %.t: %.t1
 	rm -f $@
-	ln $< $@
+	ln -s $< $@
+
+#	ln $< $@	##-- hardlinks make problems with e.g. -j4
+
 
 no-t: ; rm -f *.t *.t0 *.t1
 CLEAN_FILES += *.t
