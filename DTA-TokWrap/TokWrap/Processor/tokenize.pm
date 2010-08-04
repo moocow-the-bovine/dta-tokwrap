@@ -91,18 +91,17 @@ sub init {
 ## $doc_or_undef = $CLASS_OR_OBJECT->tokenize($doc)
 ## + $doc is a DTA::TokWrap::Document object
 ## + %$doc keys:
-##    txtfile => $txtfile,  ##-- (input) serialized text file
-##    tokdata => $tokdata,  ##-- (output) tokenizer output data (string)
-##    tokenize_stamp0 => $f, ##-- (output) timestamp of operation begin
-##    tokenize_stamp  => $f, ##-- (output) timestamp of operation end
-##    tokdata_stamp => $f,   ##-- (output) timestamp of operation end
+##    txtfile => $txtfile,    ##-- (input) serialized text file
+##    tokdata0 => $tokdata,   ##-- (output) tokenizer output data (string)
+##    tokenize_stamp0  => $f, ##-- (output) timestamp of operation end
+##    tokdata_stamp0 => $f,   ##-- (output) timestamp of operation end
 ## + may implicitly call $doc->mkbx() and/or $doc->saveTxtFile()
 sub tokenize {
   my ($tz,$doc) = @_;
 
   ##-- log, stamp
   $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase})");
-  $doc->{tokenize_stamp0} = timestamp();
+  $doc->{tokenize_stamp00} = timestamp();
 
   ##-- sanity check(s)
   $tz = $tz->new if (!ref($tz));
@@ -114,7 +113,8 @@ sub tokenize {
     if (!-r $doc->{txtfile});
 
   ##-- run program
-  $doc->{tokdata} = '';
+  $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase}): tomata2stderr=$tz->{tomata2stderr}");
+  $doc->{tokdata0} = '';
   my $cmd = ("'$tz->{tomata2}'"
 	     .' '.join(' ',map {"'$_'"} @{$tz->{tomata2opts}})
 	     ." '$doc->{txtfile}'"
@@ -122,76 +122,12 @@ sub tokenize {
 	    );
   my $cmdfh = opencmd("$cmd |")
     or $tz->logconfess("tokenize($doc->{xmlbase}): open failed for pipe ($cmd |): $!");
-  slurp_fh($cmdfh, \$doc->{tokdata});
+  slurp_fh($cmdfh, \$doc->{tokdata0});
   $cmdfh->close();
 
-  ##-- auto-fix
-  if ($tz->{fixtok}) {
-    $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase}): autofix (fixtok=$tz->{fixtok})");
-    my $data = decode('utf8',$doc->{tokdata});
-
-    ##-- hack: save original tokenizer output
-    $doc->saveTokFile();
-    my $tfile = $doc->{tokfile};
-    unlink("${tfile}0") if (-e "${tfile}0");
-    rename($doc->{tokfile}, "${tfile}0");
-
-    ##-- fix stupid interjections
-    $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase}): autofix: ITJ");
-    $data =~ s/^(re\t\d+ \d+)\tITJ$/$1/mg;
-
-    ##-- fix line-broken tokens
-    ## + hypens:
-    ##   CP_HEX   CP_DEC LEN_U8   CHR_L1     CHR_U8_C         BLOCK                   NAME
-    ##   U+002D       45      1        -            -         Basic Latin             HYPHEN-MINUS
-    ##   U+00AC      172      2        ¬      \xc2\xac        Latin-1 Supplement      NOT SIGN
-    ##   U+2014     8212      3       [?] \xe2\x80\x94        General Punctuation     EM DASH       -- not really a connector, but it might be used!
-    ##
-    $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase}): autofix: linebreak");
-    $data =~ s/\n
-	       ([[:alpha:]][\-\x{ac}[:alpha:]]*)[\-\x{ac}]\t(\d+)\ (\d+)\n+
-	       ([[:lower:]][[:alpha:]\']*(?:[\-\x{ac}]?))\t(\d+)\ (\d+)((?:\tTRUNC)?\n)
-	      /"\n$1$4\t$2 ".(($5+$6)-$2).$7
-	      /egx;
-
-    ##-- fix broken tokens with abbreviations
-
-    ##-- ARGH: busted for kurz_sonnenwirth_1855.chr.xml (svn r4570)
-    ## + pwd: dta/eval-corpus/xml.dta/
-    ## + call: dta-tokwrap.perl -keep -noinplace -nodummytok -verbose=5 -trace -noprofile  -t tokenize ../xml.raw/chr_xml/kurz_sonnenwirth_1855.chr.xml
-    ##
-    # @tmp = ($data =~ m/^([[:alpha:]][[:alpha:]\-\x{ac}]*)[\-\x{ac}]\t(\d+)\ (\d+).*\n+((?:[[:alpha:]\-\x{ac}]*[aeiouäöü][[:alpha:]\-\x{ac}]+|[[:alpha:]\-\x{ac}]+[aeiouäöü][[:alpha:]\-\x{ac}]*))\.\t(\d+)\ (\d+)\tXY\b.*\n+/mgx)
-    #
-    # @tmp = ($data =~ m/^(?:[[:alpha:]][[:alpha:]\-\x{ac}]*)[\-\x{ac}]\t(?:\d+)\ (?:\d+).*\n+(?:(?:[[:alpha:]\-\x{ac}]*[aeiouäöü][[:alpha:]\-\x{ac}]+|[[:alpha:]\-\x{ac}]+[aeiouäöü][[:alpha:]\-\x{ac}]*))\.\t(?:\d+)\ (?:\d+)\tXY\b.*\n+/mgx)
-
-    $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase}): autofix: linebreak + abbr");
-    $data =~ s/^
-                ([[:alpha:]][[:alpha:]\-\x{ac}]*)[\-\x{ac}]\t                ##-- $1=w1.text [modulo final "-"]
-		(\d+)\ (\d+)                                                 ##-- ($2,$3)=(w1.offset, w1.len)
-		.*\n+
-		((?:                                                         ##-- $4=w2.text [modulo final "."]
-		    [[:alpha:]\-\x{ac}]*[aeiouäöü][[:alpha:]\-\x{ac}]+       ##--   : .*[VOWEL].+
-		  |
-		    [[:alpha:]\-\x{ac}]+[aeiouäöü][[:alpha:]\-\x{ac}]*       ##--   : .+[VOWEL].*
-		))
-		\.                                                           ##--   : w2.text: final "."
-		\t(\d+)\ (\d+)                                               ##-- ($5,$6)=(w2.offset, w2.len)
-		\tXY\b.*\n+                                                  ##-- w2.tag = XY
-		#\tXY\t\$ABBREV\b.*\n+                                        ##-- w2.tag = XY.ABBREV
-	      /(
-		"$1$4\t$2 ".($5+$6-$2-1)."\n"
-		.".\t".($5+$6-1)." 1\t\$.\n"
-		."\n"
-	       )/mgxe;
-
-    ##-- write back to doc (encoded)
-    $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase}): autofix: recode");
-    $doc->{tokdata} = encode('utf8',$data);
-  }
-
   ##-- finalize
-  $doc->{ntoks} = $tz->nTokens(\$doc->{tokdata});
-  $doc->{tokenize_stamp} = $doc->{tokdata_stamp} = timestamp(); ##-- stamp
+  $doc->{ntoks} = $tz->nTokens(\$doc->{tokdata0});
+  $doc->{tokenize_stamp0} = $doc->{tokdata_stamp0} = timestamp(); ##-- stamp
   return $doc;
 }
 

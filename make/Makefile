@@ -389,19 +389,42 @@ CLEAN_FILES += *.bx *.txt
 MISC_FILES += $(XML:.xml=.bx) $(XML:.xml=.txt)
 
 ##======================================================================
-## Rules: tokenization
+## Rules: tokenization (raw)
 
-t: $(XML:.xml=.t)
-%.t: %.txt tokwrap
+t0: $(XML:.xml=.t0)
+%.t0: %.txt tokwrap
 ifeq "$(TOKENIZER)" ""
-	$(TOKWRAP) -t tokenize $(xmldir)/$*.xml
+	$(TOKWRAP) -t tokenize0 $(xmldir)/$*.xml
 else
 	$(TOKENIZER) $< > $@ || (rm -f $@; false)
 endif
 
-no-t: ; rm -f *.t *.t0
-CLEAN_FILES += *.t *.t0
+no-t0: ; rm -f *.t0
+CLEAN_FILES += *.t0
 
+MISC_FILES += $(XML:.xml=.t0)
+
+##======================================================================
+## Rules: tokenization (post-processing)
+
+t1: $(XML:.xml=.t1)
+%.t1: %.t0 tokwrap
+	$(TOKWRAP) -t tokenize1 $(xmldir)/$*.xml
+
+no-t1: ; rm -f *.t1
+CLEAN_FILES += *.t1
+MISC_FILES += $(XML:.xml=.t1)
+
+##======================================================================
+## Rules: tokenization (link)
+
+t: $(XML:.xml=.t)
+%.t: %.t1
+	rm -f $@
+	ln $< $@
+
+no-t: ; rm -f *.t *.t0 *.t1
+CLEAN_FILES += *.t
 MISC_FILES += $(XML:.xml=.t)
 
 ##======================================================================

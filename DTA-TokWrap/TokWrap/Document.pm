@@ -13,6 +13,7 @@ use DTA::TokWrap::Processor::mkbx0;
 use DTA::TokWrap::Processor::mkbx;
 use DTA::TokWrap::Processor::tokenize;
 use DTA::TokWrap::Processor::tokenize::dummy;
+use DTA::TokWrap::Processor::tokenize1;
 use DTA::TokWrap::Processor::tok2xml;
 use DTA::TokWrap::Processor::standoff;
 #use DTA::TokWrap::Processor::standoff::xsl;
@@ -98,8 +99,12 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    txtfile => $txtfile,  ##-- serialized & hinted text file (default="$tmpdir/$outbase.txt"; optional)
 ##
 ##    ##-- tokenize data (see DTA::TokWrap::Processor::tokenize, DTA::TokWrap::Processor::tokenize::dummy)
-##    tokdata => $tokdata,  ##-- tokenizer output data (slurped string)
-##    tokfile => $tokfile,  ##-- tokenizer output file (default="$tmpdir/$outbase.t"; optional)
+##    tokdata0 => $tokdata0,  ##-- tokenizer output data (slurped string)
+##    tokfile0 => $tokfile0,  ##-- tokenizer output file (default="$tmpdir/$outbase.t0"; optional)
+##
+##    ##-- post-tokenize data (see DTA::TokWrap::Processor::posttok)
+##    tokdata1 => $tokdata1,  ##-- post-tokenizer output data (slurped string)
+##    tokfile1 => $tokfile1,  ##-- post-tokenizer output file (default="$tmpdir/$outbase.t1"; optional)
 ##
 ##    ##-- tokenizer xml data (see DTA::TokWrap::Processor::tok2xml)
 ##    xtokdata => $xtokdata,  ##-- XML-ified tokenizer output data
@@ -169,8 +174,12 @@ sub defaults {
 	  txtfile => undef,
 
 	  ##-- tokenizer data
-	  tokdata => undef,
-	  tokfile => undef,
+	  tokdata0 => undef,
+	  tokfile0 => undef,
+
+	  ##-- post-tokenizer data
+	  tokdata1 => undef,
+	  tokfile1 => undef,
 
 	  ##-- tokenizer xml-ified data
 	  xtokdata => undef,
@@ -223,8 +232,12 @@ sub init {
   $doc->{txtfile} = $doc->{tmpdir}.'/'.$doc->{outbase}.".txt" if (!$doc->{txtfile});
 
   ##-- defaults: tokenizer output data (tokenize)
-  #$doc->{tokdata}  = undef;
-  $doc->{tokfile}  = $doc->{tmpdir}.'/'.$doc->{outbase}.".t" if (!$doc->{tokfile});
+  #$doc->{tokdata0}  = undef;
+  $doc->{tokfile0}  = $doc->{tmpdir}.'/'.$doc->{outbase}.".t0" if (!$doc->{tokfile0});
+
+  ##-- defaults: post-tokenizer output data (tokenize1)
+  #$doc->{tokdata1}  = undef;
+  $doc->{tokfile1}  = $doc->{tmpdir}.'/'.$doc->{outbase}.".t1" if (!$doc->{tokfile1});
 
   ##-- defaults: tokenizer xml data (tok2xml)
   #$doc->{xtokdata}  = undef;
@@ -374,11 +387,14 @@ BEGIN {
      (map {$_=>'mkindex'} qw(mkindex cx sx tx xx)),
      (map {$_=>[qw(mkbx0 saveBx0File)]} qw(mkbx0 bx0)),
      (map {$_=>[qw(loadBx0File mkbx saveBxFile saveTxtFile)]} qw(mkbx mktxt bx txt)),
-     (map {$_=>[qw(tokenize saveTokFile)]} qw(mktok tokenize tok t tt)),
+     ##
+     (map {$_=>[qw(tokenize saveTokFile0)]} qw(mktok0 tokenize0 tok0 t0 tt0)),
+     (map {$_=>[qw(tokenize1 saveTokFile1)]} qw(mktok1 tokenize1 tok1 t1 tt1)),
+     (map {$_=>[qw(tokenize saveTokFile0 tokenize1 saveTokFile1)]} qw(mktok tokenize tok t tt)),
 
      (map {
-       #$_=>[qw(loadTokFile loadBxFile loadCxFile tok2xml saveXtokFile)]
-       $_=>[qw(loadTokFile tok2xml saveXtokFile)]
+       #$_=>[qw(loadTokFile1 loadBxFile loadCxFile tok2xml saveXtokFile)]
+       $_=>[qw(loadTokFile1 tok2xml saveXtokFile)]
      } qw(mktxml tok2xml xtok txml ttxml tokxml)),
 
      (map {
@@ -486,6 +502,17 @@ sub mkbx {
 sub tokenize {
   $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: tokenize()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tokenize}) || $TOKENIZE_CLASS)->tokenize($_[0]);
+}
+BEGIN {
+  *tokenize0 = \&tokenize;
+}
+
+## $doc_or_undef = $doc->tokenize1($tokenize)
+## $doc_or_undef = $doc->tokenize1()
+##  + see DTA::TokWrap::Processor::tokenize1::tokenize1()
+sub tokenize1 {
+  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: tokenize1()") if ($_[0]{traceProc});
+  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tokenize1}) || 'DTA::TokWrap::Processor::tokenize1')->tokenize1($_[0]);
 }
 
 ## $doc_or_undef = $doc->tok2xml($tok2xml)
@@ -628,22 +655,38 @@ sub loadCxFile {
   return $cx;
 }
 
-## \$tokdata_or_undef = $doc->loadTokFile($filename_or_fh)
-## \$tokdata_or_undef = $doc->loadTokFile()
-##  + loads $doc->{tokdata} from $filename_or_fh (default=$doc->{tokfile})
-sub loadTokFile {
-  my ($doc,$file) = @_;
+## \$tokdataX_or_undef = $doc->loadTokFileN($i,$filename_or_fh)
+## \$tokdataX_or_undef = $doc->loadTokFileN($i)
+##  + loads $doc->{"tokdata${i}"} from $filename_or_fh (default=$doc->{"tokfile${i}"})
+sub loadTokFileN {
+  my ($doc,$i,$file) = @_;
 
   ##-- get file
-  $file = $doc->{tokfile} if (!$file);
-  $doc->logconfess("$doc->{xmlbase}: loadTokFile(): no .t file defined") if (!defined($file));
-  $doc->vlog($doc->{traceLoad}, "$doc->{xmlbase}: loadTokFile($file)") if ($doc->{traceLoad});
+  $file = $doc->{"tokfile${i}"} if (!$file);
+  $doc->logconfess("$doc->{xmlbase}: loadTokFileN($i): no .t$i file defined") if (!defined($file));
+  $doc->vlog($doc->{traceLoad}, "$doc->{xmlbase}: loadTokFileN($i,$file)") if ($doc->{traceLoad});
 
-  slurp_file($file,\$doc->{tokdata})
+  slurp_file($file,\$doc->{"tokdata${i}"})
     or $doc->logconfess("$doc->{xmlbase}: slurp_file() failed for token file '$file': $!");
 
-  $doc->{tokdata_stamp} = file_mtime($file);
-  return \$doc->{tokfile};
+  $doc->{"tokdata${i}_stamp"} = file_mtime($file);
+  return \$doc->{"tokdata${i}"};
+}
+
+## \$tokdata0_or_undef = $doc->loadTokFile0($filename_or_fh)
+## \$tokdata0_or_undef = $doc->loadTokFile0()
+##  + loads $doc->{tokdata0} from $filename_or_fh (default=$doc->{tokfile0})
+sub loadTokFile0 {
+  my $doc = shift;
+  return $doc->loadTokFileN(0,@_);
+}
+
+## \$tokdata1_or_undef = $doc->loadTokFile1($filename_or_fh)
+## \$tokdata1_or_undef = $doc->loadTokFile1()
+##  + loads $doc->{tokdata1} from $filename_or_fh (default=$doc->{tokfile1})
+sub loadTokFile1 {
+  my $doc = shift;
+  return $doc->loadTokFileN(1,@_);
 }
 
 ## \$xtokdata_or_undef = $doc->loadXtokFile($filename_or_fh)
@@ -808,24 +851,24 @@ sub saveTxtFile {
   return $file;
 }
 
-## $file_or_undef = $doc->saveTokFile($filename_or_fh,\$tokdata)
-## $file_or_undef = $doc->saveTokFile($filename_or_fh)
-## $file_or_undef = $doc->saveTokFile()
-##  + $filename_or_fh defaults to $doc->{tokfile}="$doc->{outdir}/$doc->{outbase}.t"
-##  + \$tokdata defaults to \$doc->{tokdata}
-##  + sets $doc->{tokfile_stamp}
-sub saveTokFile {
-  my ($doc,$file,$tokdatar) = @_;
+## $file_or_undef = $doc->saveTokFileN($i,$filename_or_fh,\$tokdata)
+## $file_or_undef = $doc->saveTokFileN($i,$filename_or_fh)
+## $file_or_undef = $doc->saveTokFileN()
+##  + $filename_or_fh defaults to $doc->{"tokfile${$i}"}="$doc->{outdir}/$doc->{outbase}.t${i}"
+##  + \$tokdata defaults to \$doc->{"tokdata${i}"}
+##  + sets $doc->{"tokfile_stamp${i}"}
+sub saveTokFileN {
+  my ($doc,$i,$file,$tokdatar) = @_;
 
   ##-- get data
-  $tokdatar = \$doc->{tokdata} if (!$tokdatar);
-  $doc->logconfess("$doc->{xmlbase}: saveTokFile(): no 'tokdata' defined") if (!$tokdatar || !defined($$tokdatar));
+  $tokdatar = \$doc->{"tokdata${i}"} if (!$tokdatar);
+  $doc->logconfess("$doc->{xmlbase}: saveTokFileN($i): no 'tokdata${i}' defined") if (!$tokdatar || !defined($$tokdatar));
 
   ##-- get file
-  $file = $doc->{tokfile} if (!defined($file));
-  $file = "$doc->{outdir}/$doc->{outbase}.t" if (!defined($file));
-  $doc->{tokfile} = $file if (!ref($file));
-  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveTokFile($file)") if ($doc->{traceSave});
+  $file = $doc->{"tokfile${i}"} if (!defined($file));
+  $file = "$doc->{outdir}/$doc->{outbase}.t${i}" if (!defined($file));
+  $doc->{"tokfile${i}"} = $file if (!ref($file));
+  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveTokFileN($i,$file)") if ($doc->{traceSave});
 
   ##-- get filehandle & print
   my $fh = ref($file) ? $file : IO::File->new(">$file");
@@ -833,8 +876,26 @@ sub saveTokFile {
   $fh->print( $$tokdatar );
   $fh->close() if (!ref($file));
 
-  $doc->{tokfile_stamp} = timestamp(); ##-- stamp
+  $doc->{"tokfile${i}_stamp"} = timestamp(); ##-- stamp
   return $file;
+}
+
+## $file_or_undef = $doc->saveTokFile0($filename_or_fh,\$tokdata)
+## $file_or_undef = $doc->saveTokFile0($filename_or_fh)
+## $file_or_undef = $doc->saveTokFile0()
+##  + wrapper for $doc->saveTokFileN(0,@_)
+sub saveTokFile0 {
+  my $doc = shift;
+  return $doc->saveTokFileN(0,@_);
+}
+
+## $file_or_undef = $doc->saveTokFile1($filename_or_fh,\$tokdata)
+## $file_or_undef = $doc->saveTokFile1($filename_or_fh)
+## $file_or_undef = $doc->saveTokFile1()
+##  + wrapper for $doc->saveTokFileN(1,@_)
+sub saveTokFile1 {
+  my $doc = shift;
+  return $doc->saveTokFileN(1,@_);
 }
 
 ## $file_or_undef = $doc->saveXtokFile($filename_or_fh,\$xtokdata,%opts)
@@ -1243,9 +1304,17 @@ see L<DTA::TokWrap::Processor::mkbx::mkbx()|DTA::TokWrap::Processor::mkbx/mkbx>.
 
 see
 L<DTA::TokWrap::Processor::tokenize::tokenize()|DTA::TokWrap::Processor::tokenize/tokenize>,
-L<DTA::TokWrap::Processor::tokenize::dummy::tokenize()|DTA::TokWrap::Processor::tokenize::dummy/tokenize>.
+L<DTA::TokWrap::Processor::tokenize::dummy::tokenize()|DTA::TokWrap::Processor::tokenize::dummy/tokenize>,
 
 Default tokenizer class is given by package-global $TOKENIZE_CLASS.
+
+=item tokenize1
+
+ $doc_or_undef = $doc->tokenize1($tokenize1);
+ $doc_or_undef = $doc->tokenize1();
+
+see
+L<DTA::TokWrap::Processor::tokenize1::tokenize1()|DTA::TokWrap::Processor::tokenize1/tokenize1>.
 
 =item tok2xml
 
@@ -1334,12 +1403,24 @@ package globals $CX_ID, $CX_XOFF, etc. are indices for $cx arrays
 
 =back
 
-=item loadTokFile
+=item loadTokFileN
 
- \$tokdata_or_undef = $doc->loadTokFile($filename_or_fh);
- \$tokdata_or_undef = $doc->loadTokFile();
+ \$tokdata_or_undef = $doc->loadTokFileN($n,$filename_or_fh);
+ \$tokdata_or_undef = $doc->loadTokFileN($n);
 
-loads $doc-E<gt>{tokdata} from $filename_or_fh (default=$doc-E<gt>{tokfile})
+loads $doc-E<gt>{"tokdata${n}"} from $filename_or_fh (default=$doc-E<gt>{"tokfile${n}"})
+
+=item loadTokFile0
+
+ \$tokdata0_or_undef = $doc->loadTokFile0(@args)
+
+Wrapper for $doc-E<gt>loadTokFileN(0,@args)
+
+=item loadTokFile1
+
+ \$tokdata1_or_undef = $doc->loadTokFile1(@args)
+
+Wrapper for $doc-E<gt>loadTokFileN(1,@args)
 
 =item loadXtokFile
 
@@ -1398,16 +1479,28 @@ and sets both $doc-E<gt>{txtfile} and $doc-E<gt>{txtfile_stamp}.
 
  debug=>$bool,  ##-- if true, debugging text will be printed (and saveBxFile() offsets will be wrong)
 
+=item saveTokFileN
 
-=item saveTokFile
+ $file_or_undef = $doc->saveTokFileN($n,$filename_or_fh,\$tokdata);
+ $file_or_undef = $doc->saveTokFileN($n,$filename_or_fh);
+ $file_or_undef = $doc->saveTokFileN($n);
 
- $file_or_undef = $doc->saveTokFile($filename_or_fh,\$tokdata);
- $file_or_undef = $doc->saveTokFile($filename_or_fh);
- $file_or_undef = $doc->saveTokFile();
+Saves tokenizer output data string $tokdata (default=$doc-E<gt>{"tokdata${n}"})
+to $filename_or_fh (default=$doc-E<gt>{"tokfile${n}"}="$doc-E<gt>{outdir}/$doc-E<gt>{outbase}.t${n}"),
+and sets both $doc-E<gt>{"tokfile${n}"} and $doc-E<gt>{"tokfile_stamp${n}"}.
 
-Saves tokenizer output data string $tokdata (default=$doc-E<gt>{tokdata})
-to $filename_or_fh (default=$doc-E<gt>{tokfile}="$doc-E<gt>{outdir}/$doc-E<gt>{outbase}.t"),
-and sets both $doc-E<gt>{tokfile} and $doc-E<gt>{tokfile_stamp}.
+
+=item saveTokFile0
+
+ $file_or_undef = $doc->saveTokFile0(@args)
+
+Wrapper for $doc-E<gt>saveTokFileN(0,@args)
+
+=item saveTokFile1
+
+ $file_or_undef = $doc->saveTokFile1(@args)
+
+Wrapper for $doc-E<gt>saveTokFileN(1,@args)
 
 =item saveXtokFile
 

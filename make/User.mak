@@ -100,7 +100,7 @@ corpus = $(notdir $(xmldir))
 
 ## verbose=LEVEL_OR_EMPTY
 ##  + verbosity level for dta-tokwrap.perl
-verbose = 0
+verbose ?= 0
 
 ## loglevel=LOGLEVEL_OR_EMPTY
 ##  + log level for dta-tokwrap.perl
@@ -127,6 +127,7 @@ profile = no
 ## twopts=USER_TOKWRAP_OPTIONS
 ##  + additional options and/or overrides for dta-tokwrap.perl
 #twopts=
+twopts = -traceAll -po tomata2stderr=0
 
 ##======================================================================
 ## Variables: in-place execution (use local development code, or don't)

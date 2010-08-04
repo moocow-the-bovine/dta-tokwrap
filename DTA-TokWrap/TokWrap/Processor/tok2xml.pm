@@ -68,10 +68,10 @@ sub init {
 ## $doc_or_undef = $CLASS_OR_OBJECT->tok2xml($doc)
 ## + $doc is a DTA::TokWrap::Document object
 ## + %$doc keys:
-##    tokfile  => $tokdata,  ##-- (input) tokenizer output file, must already be populated
-##    cxfile   => $cxfile,   ##-- (input) character index file, must already be populated
-##    bxfile   => $bxfile,   ##-- (input) block index data file, must already be populated
-##    xtokdata => $xtokdata, ##-- (output) tokenizer output as XML (string)
+##    tokfile1  => $tokfile1,  ##-- (input) tokenizer output file, must already be populated
+##    cxfile    => $cxfile,    ##-- (input) character index file, must already be populated
+##    bxfile    => $bxfile,    ##-- (input) block index data file, must already be populated
+##    xtokdata  => $xtokdata,  ##-- (output) tokenizer output as XML (string)
 ##    tok2xml_stamp0 => $f,  ##-- (output) timestamp of operation begin
 ##    tok2xml_stamp  => $f,  ##-- (output) timestamp of operation end
 ##    xtokdata_stamp => $f,  ##-- (output) timestamp of operation end
@@ -87,14 +87,14 @@ sub tok2xml {
   ##
   $t2x->logconfess("tok2xml($doc->{xmlbase}): no cxfile key defined") if (!$doc->{cxfile});
   $t2x->logconfess("tok2xml($doc->{xmlbase}): no bxfile key defined") if (!$doc->{bxfile});
-  $t2x->logconfess("tok2xml($doc->{xmlbase}): no tokfile key defined") if (!$doc->{tokfile});
+  $t2x->logconfess("tok2xml($doc->{xmlbase}): no tokfile1 key defined") if (!$doc->{tokfile1});
   ##
   file_try_open($doc->{cxfile}) || $t2x->logconfess("tok2xml($doc->{xmlbase}): could not open .cx file '$doc->{cxfile}': $!");
   file_try_open($doc->{bxfile}) || $t2x->logconfess("tok2xml($doc->{xmlbase}): could not open .bx file '$doc->{bxfile}': $!");
-  file_try_open($doc->{tokfile}) || $t2x->logconfess("tok2xml($doc->{xmlbase}): could not open .t file '$doc->{tokfile}': $!");
+  file_try_open($doc->{tokfile1}) || $t2x->logconfess("tok2xml($doc->{xmlbase}): could not open .t1 file '$doc->{tokfile1}': $!");
 
   ##-- run client program
-  my $cmdfh = opencmd("'$t2x->{t2x}' '$doc->{tokfile}' '$doc->{cxfile}' '$doc->{bxfile}' - '$doc->{xmlbase}' |")
+  my $cmdfh = opencmd("'$t2x->{t2x}' '$doc->{tokfile1}' '$doc->{cxfile}' '$doc->{bxfile}' - '$doc->{xmlbase}' |")
     or $t2x->logconfess("tok2xml($doc->{xmlbase}): open failed for pipe from '$t2x->{t2x}': $!");
   $doc->{xtokdata} = undef;
   slurp_fh($cmdfh,\$doc->{xtokdata});
@@ -238,17 +238,17 @@ $doc.
 
 Relevant %$doc keys:
 
- bxdata   => \@bxdata,  ##-- (input) block index data
- tokdata  => $tokdata,  ##-- (input) tokenizer output data (string)
- cxdata   => \@cxchrs,  ##-- (input) character index data (array of arrays)
- cxfile   => $cxfile,   ##-- (input) character index file
- xtokdata => $xtokdata, ##-- (output) tokenizer output as XML
- nchrs    => $nchrs,    ##-- (output) number of character index records
- ntoks    => $ntoks,    ##-- (output) number of tokens parsed
+ bxdata   => \@bxdata,   ##-- (input) block index data
+ tokdata1  => $tokdata1, ##-- (input) tokenizer output data (string)
+ cxdata   => \@cxchrs,   ##-- (input) character index data (array of arrays)
+ cxfile   => $cxfile,    ##-- (input) character index file
+ xtokdata => $xtokdata,  ##-- (output) tokenizer output as XML
+ nchrs    => $nchrs,     ##-- (output) number of character index records
+ ntoks    => $ntoks,     ##-- (output) number of tokens parsed
  ##
- tok2xml_stamp0 => $f,  ##-- (output) timestamp of operation begin
- tok2xml_stamp  => $f,  ##-- (output) timestamp of operation end
- xtokdata_stamp => $f,  ##-- (output) timestamp of operation end
+ tok2xml_stamp0 => $f,   ##-- (output) timestamp of operation begin
+ tok2xml_stamp  => $f,   ##-- (output) timestamp of operation end
+ xtokdata_stamp => $f,   ##-- (output) timestamp of operation end
 
 $%t2x keys (temporary, for debugging):
 
@@ -280,7 +280,7 @@ Sets %$t2x keys: ob2ci
 
 Low-level utility method.
 
-Actually populates $doc-E<gt>{xtokdata} by parsing $doc-E<gt>{tokdata},
+Actually populates $doc-E<gt>{xtokdata} by parsing $doc-E<gt>{tokdata1},
 referring to $t2x-E<gt>{ob2ci} for character-index lookup.
 
 =back

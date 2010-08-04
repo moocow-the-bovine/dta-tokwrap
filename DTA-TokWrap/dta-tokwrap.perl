@@ -839,16 +839,37 @@ Creates temporary serialized block-index file F<FILE.bx>
 and serialized text file F<FILE.txt>
 for each input document F<FILE.xml>.
 
+=item mktok0
+
+B<Alias(es):> tokenize0 tok0 t0 tt0
+
+B<Input(s):> FILE.txt
+
+B<Output(s):> FILE.t0
+
+Creates temporary CSV-format raw tokenizer output file F<FILE.t0>
+for each input document F<FILE.xml>
+
+=item mktok1
+
+B<Alias(es):> tokenize1 tok1 t1 tt1
+
+B<Input(s):> FILE.t0
+
+B<Output(s):> FILE.t1
+
+Creates temporary CSV-format post-processed tokenizer output file F<FILE.t1>
+for each input document F<FILE.xml>
+
 =item mktok
 
 B<Alias(es):> tokenize tok t tt
 
 B<Input(s):> FILE.txt
 
-B<Output(s):> FILE.t
+B<Output(s):> FILE.t0 FILE.t1
 
-Creates temporary CSV-format tokenizer output file F<FILE.t>
-for each input document F<FILE.xml>
+Wrapper for "mktok0 mktok1".
 
 =item mktxml
 
