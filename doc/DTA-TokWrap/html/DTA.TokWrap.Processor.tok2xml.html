@@ -137,17 +137,17 @@ in the
 $doc.</p>
 <p>Relevant %$doc keys:</p>
 <pre>
- bxdata   =&gt; \@bxdata,  ##-- (input) block index data
- tokdata  =&gt; $tokdata,  ##-- (input) tokenizer output data (string)
- cxdata   =&gt; \@cxchrs,  ##-- (input) character index data (array of arrays)
- cxfile   =&gt; $cxfile,   ##-- (input) character index file
- xtokdata =&gt; $xtokdata, ##-- (output) tokenizer output as XML
- nchrs    =&gt; $nchrs,    ##-- (output) number of character index records
- ntoks    =&gt; $ntoks,    ##-- (output) number of tokens parsed
+ bxdata   =&gt; \@bxdata,   ##-- (input) block index data
+ tokdata1  =&gt; $tokdata1, ##-- (input) tokenizer output data (string)
+ cxdata   =&gt; \@cxchrs,   ##-- (input) character index data (array of arrays)
+ cxfile   =&gt; $cxfile,    ##-- (input) character index file
+ xtokdata =&gt; $xtokdata,  ##-- (output) tokenizer output as XML
+ nchrs    =&gt; $nchrs,     ##-- (output) number of character index records
+ ntoks    =&gt; $ntoks,     ##-- (output) number of tokens parsed
  ##
- tok2xml_stamp0 =&gt; $f,  ##-- (output) timestamp of operation begin
- tok2xml_stamp  =&gt; $f,  ##-- (output) timestamp of operation end
- xtokdata_stamp =&gt; $f,  ##-- (output) timestamp of operation end</pre>
+ tok2xml_stamp0 =&gt; $f,   ##-- (output) timestamp of operation begin
+ tok2xml_stamp  =&gt; $f,   ##-- (output) timestamp of operation end
+ xtokdata_stamp =&gt; $f,   ##-- (output) timestamp of operation end</pre>
 <p>$%t2x keys (temporary, for debugging):</p>
 <pre>
  tb2ci   =&gt; $tb2ci,     ##-- (temp) s.t. vec($tb2ci, $txbyte, 32) = $char_index_of_txbyte
@@ -177,7 +177,7 @@ $doc.</p>
 <pre>
  \$tokxmlr = $t2x-&gt;process_tt_data($doc);</pre>
 <p>Low-level utility method.</p>
-<p>Actually populates $doc-&gt;{xtokdata} by parsing $doc-&gt;{tokdata},
+<p>Actually populates $doc-&gt;{xtokdata} by parsing $doc-&gt;{tokdata1},
 referring to $t2x-&gt;{ob2ci} for character-index lookup.</p>
 </dd>
 </dl>

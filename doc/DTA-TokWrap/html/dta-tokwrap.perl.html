@@ -545,14 +545,31 @@ for each input document <em class="file">FILE.xml</em></p>
 and serialized text file <em class="file">FILE.txt</em>
 for each input document <em class="file">FILE.xml</em>.</p>
 </dd>
+<dt><strong><a name="mktok0" class="item">mktok0</a></strong></dt>
+
+<dd>
+<p><strong>Alias(es):</strong> tokenize0 tok0 t0 tt0</p>
+<p><strong>Input(s):</strong> FILE.txt</p>
+<p><strong>Output(s):</strong> FILE.t0</p>
+<p>Creates temporary CSV-format raw tokenizer output file <em class="file">FILE.t0</em>
+for each input document <em class="file">FILE.xml</em></p>
+</dd>
+<dt><strong><a name="mktok1" class="item">mktok1</a></strong></dt>
+
+<dd>
+<p><strong>Alias(es):</strong> tokenize1 tok1 t1 tt1</p>
+<p><strong>Input(s):</strong> FILE.t0</p>
+<p><strong>Output(s):</strong> FILE.t1</p>
+<p>Creates temporary CSV-format post-processed tokenizer output file <em class="file">FILE.t1</em>
+for each input document <em class="file">FILE.xml</em></p>
+</dd>
 <dt><strong><a name="mktok" class="item">mktok</a></strong></dt>
 
 <dd>
 <p><strong>Alias(es):</strong> tokenize tok t tt</p>
 <p><strong>Input(s):</strong> FILE.txt</p>
-<p><strong>Output(s):</strong> FILE.t</p>
-<p>Creates temporary CSV-format tokenizer output file <em class="file">FILE.t</em>
-for each input document <em class="file">FILE.xml</em></p>
+<p><strong>Output(s):</strong> FILE.t0 FILE.t1</p>
+<p>Wrapper for &quot;mktok0 mktok1&quot;.</p>
 </dd>
 <dt><strong><a name="mktxml" class="item">mktxml</a></strong></dt>
 

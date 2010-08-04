@@ -45,6 +45,7 @@ our $VERSION = $DTA::TokWrap::Version::VERSION;
 ##     mkbx0    => $mkbx0,     ##-- DTA::TokWrap::Processor::mkbx0 object, or option-hash
 ##     mkbx     => $mkbx,      ##-- DTA::TokWrap::Processor::mkbx object, or option-hash
 ##     tokenize => $tok,       ##-- DTA::TokWrap::Processor::tokenize object, subclass object, or option-hash
+##     tokenize1 => $tok1,     ##-- DTA::TokWrap::Processor::tokenize1 object or option-hash
 ##     tok2xml  => $tok2xml,   ##-- DTA::TokWrap::Processor::tok2xml object, or option-hash
 ##     standoff => $standoff,  ##-- DTA::TokWrap::Processor::standoff object, or option-hash
 ##     ##
@@ -79,6 +80,7 @@ sub defaults {
 	  mkbx0 => undef,
 	  mkbx => undef,
 	  tokenize => undef,
+	  tokenize1 => undef,
 	  tok2xml => undef,
 	  standoff => undef,
 	 );
@@ -100,7 +102,7 @@ sub init {
 		  ALL => ($tw->{procOpts}||{}),
 		 );
   my ($class,%newopts);
-  foreach (qw(mkindex mkbx0 mkbx tokenize tok2xml standoff)) {
+  foreach (qw(mkindex mkbx0 mkbx tokenize tokenize1 tok2xml standoff)) {
     next if (UNIVERSAL::isa($tw->{$_},"DTA::TokWrap::Processor::$_"));
     $class   = $_ eq 'tokenize' ? $TOKENIZE_CLASS : "DTA::TokWrap::Processor::$_";
     %newopts = (%{$key2opts{ALL}}, ($key2opts{$_} ? %{$key2opts{$_}} : qw()));
@@ -151,7 +153,7 @@ sub logProfile {
   return if (!$level);
   my $logstr = "Summary:";
   my $profh = $tw->{profile};
-  #my @procs = (qw(mkindex mkbx0 mkbx tokenize tok2xml sowxml soaxml sosxml),'');
+  #my @procs = (qw(mkindex mkbx0 mkbx tokenize tokenize1 tok2xml sowxml soaxml sosxml),'');
   my @procs = (
 	       sort {
 		 ($a eq $b ? 0

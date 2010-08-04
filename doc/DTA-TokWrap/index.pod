@@ -71,6 +71,10 @@ L<DTA::TokWrap::Processor::tokenize|DTA::TokWrap::Processor::tokenize> - DTA tok
 
 =item *
 
+L<DTA::TokWrap::Processor::tokenize1|DTA::TokWrap::Processor::tokenize1> - DTA tokenizer wrappers: tokenizer post-processing
+
+=item *
+
 L<DTA::TokWrap::Processor::tokenize::dummy|DTA::TokWrap::Processor::tokenize::dummy> - DTA tokenizer wrappers: dtatw-tokenize-dummy
 
 =item *

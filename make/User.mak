@@ -127,7 +127,7 @@ profile = no
 ## twopts=USER_TOKWRAP_OPTIONS
 ##  + additional options and/or overrides for dta-tokwrap.perl
 #twopts=
-twopts = -traceAll -po tomata2stderr=0
+#twopts = -traceAll -po tomata2stderr=0
 
 ##======================================================================
 ## Variables: in-place execution (use local development code, or don't)

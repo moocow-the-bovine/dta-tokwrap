@@ -35,7 +35,7 @@ our @ISA = qw(DTA::TokWrap::Processor::tokenize);
 sub defaults {
   my $that = shift;
   return (
-	  $that->SUPER::defaults(),
+	  $that->DTA::TokWrap::Processor::defaults(),
 	  fixtok => 1,
 	 );
 }
@@ -68,6 +68,7 @@ sub tokenize1 {
   ##-- log, stamp
   $tp = $tp->new if (!ref($tp));
   $tp->vlog($tp->{traceLevel},"tokenize1($doc->{xmlbase}): fixtok=".($tp->{fixtok} ? 1 : 0));
+  $doc->{tokenize1_stamp0} = timestamp();
 
   ##-- sanity check(s)
   #(none)

@@ -360,8 +360,17 @@ for a more sophisticated implementation</p>
  $doc_or_undef = $doc-&gt;tokenize();</pre>
 <p>see
 <a href="DTA.TokWrap.Processor.tokenize.html#tokenize">DTA::TokWrap::Processor::tokenize::tokenize()</a>,
-<a href="DTA.TokWrap.Processor.tokenize.dummy.html#tokenize">DTA::TokWrap::Processor::tokenize::dummy::tokenize()</a>.</p>
+<a href="DTA.TokWrap.Processor.tokenize.dummy.html#tokenize">DTA::TokWrap::Processor::tokenize::dummy::tokenize()</a>,</p>
 <p>Default tokenizer class is given by package-global $TOKENIZE_CLASS.</p>
+</dd>
+<dt><strong><a name="tokenize1" class="item">tokenize1</a></strong></dt>
+
+<dd>
+<pre>
+ $doc_or_undef = $doc-&gt;tokenize1($tokenize1);
+ $doc_or_undef = $doc-&gt;tokenize1();</pre>
+<p>see
+<a href="DTA.TokWrap.Processor.tokenize1.html#tokenize1">DTA::TokWrap::Processor::tokenize1::tokenize1()</a>.</p>
 </dd>
 <dt><strong><a name="tok2xml" class="item">tok2xml</a></strong></dt>
 
@@ -443,13 +452,27 @@ for a more sophisticated implementation</p>
 </li>
 </ul>
 </dd>
-<dt><strong><a name="loadtokfile" class="item">loadTokFile</a></strong></dt>
+<dt><strong><a name="loadtokfilen" class="item">loadTokFileN</a></strong></dt>
 
 <dd>
 <pre>
- \$tokdata_or_undef = $doc-&gt;loadTokFile($filename_or_fh);
- \$tokdata_or_undef = $doc-&gt;loadTokFile();</pre>
-<p>loads $doc-&gt;{tokdata} from $filename_or_fh (default=$doc-&gt;{tokfile})</p>
+ \$tokdata_or_undef = $doc-&gt;loadTokFileN($n,$filename_or_fh);
+ \$tokdata_or_undef = $doc-&gt;loadTokFileN($n);</pre>
+<p>loads $doc-&gt;{&quot;tokdata${n}&quot;} from $filename_or_fh (default=$doc-&gt;{&quot;tokfile${n}&quot;})</p>
+</dd>
+<dt><strong><a name="loadtokfile0" class="item">loadTokFile0</a></strong></dt>
+
+<dd>
+<pre>
+ \$tokdata0_or_undef = $doc-&gt;loadTokFile0(@args)</pre>
+<p>Wrapper for $doc-&gt;<a href="#loadtokfilen"><code>loadTokFileN(0,@args)</code></a></p>
+</dd>
+<dt><strong><a name="loadtokfile1" class="item">loadTokFile1</a></strong></dt>
+
+<dd>
+<pre>
+ \$tokdata1_or_undef = $doc-&gt;loadTokFile1(@args)</pre>
+<p>Wrapper for $doc-&gt;<a href="#loadtokfilen"><code>loadTokFileN(1,@args)</code></a></p>
 </dd>
 <dt><strong><a name="loadxtokfile" class="item">loadXtokFile</a></strong></dt>
 
@@ -508,16 +531,30 @@ and sets both $doc-&gt;{txtfile} and $doc-&gt;{txtfile_stamp}.</p>
 <pre>
  debug=&gt;$bool,  ##-- if true, debugging text will be printed (and saveBxFile() offsets will be wrong)</pre>
 </dd>
-<dt><strong><a name="savetokfile" class="item">saveTokFile</a></strong></dt>
+<dt><strong><a name="savetokfilen" class="item">saveTokFileN</a></strong></dt>
 
 <dd>
 <pre>
- $file_or_undef = $doc-&gt;saveTokFile($filename_or_fh,\$tokdata);
- $file_or_undef = $doc-&gt;saveTokFile($filename_or_fh);
- $file_or_undef = $doc-&gt;saveTokFile();</pre>
-<p>Saves tokenizer output data string $tokdata (default=$doc-&gt;{tokdata})
-to $filename_or_fh (default=$doc-&gt;{tokfile}=&quot;$doc-&gt;{outdir}/$doc-&gt;{outbase}.t&quot;),
-and sets both $doc-&gt;{tokfile} and $doc-&gt;{tokfile_stamp}.</p>
+ $file_or_undef = $doc-&gt;saveTokFileN($n,$filename_or_fh,\$tokdata);
+ $file_or_undef = $doc-&gt;saveTokFileN($n,$filename_or_fh);
+ $file_or_undef = $doc-&gt;saveTokFileN($n);</pre>
+<p>Saves tokenizer output data string $tokdata (default=$doc-&gt;{&quot;tokdata${n}&quot;})
+to $filename_or_fh (default=$doc-&gt;{&quot;tokfile${n}&quot;}=&quot;$doc-&gt;{outdir}/$doc-&gt;{outbase}.t${n}&quot;),
+and sets both $doc-&gt;{&quot;tokfile${n}&quot;} and $doc-&gt;{&quot;tokfile_stamp${n}&quot;}.</p>
+</dd>
+<dt><strong><a name="savetokfile0" class="item">saveTokFile0</a></strong></dt>
+
+<dd>
+<pre>
+ $file_or_undef = $doc-&gt;saveTokFile0(@args)</pre>
+<p>Wrapper for $doc-&gt;<a href="#savetokfilen"><code>saveTokFileN(0,@args)</code></a></p>
+</dd>
+<dt><strong><a name="savetokfile1" class="item">saveTokFile1</a></strong></dt>
+
+<dd>
+<pre>
+ $file_or_undef = $doc-&gt;saveTokFile1(@args)</pre>
+<p>Wrapper for $doc-&gt;<a href="#savetokfilen"><code>saveTokFileN(1,@args)</code></a></p>
 </dd>
 <dt><strong><a name="savextokfile" class="item">saveXtokFile</a></strong></dt>
 

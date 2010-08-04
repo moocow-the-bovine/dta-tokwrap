@@ -28,7 +28,6 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ## %defaults = CLASS->defaults()
 ##  + static class-dependent defaults
 ##  + %args, %defaults, %$tz:
-##    fixtok => $bool,                     ##-- if true (default), attempt to fix common tomata2-tokenizer errors
 ##    tomata2 => $path_to_dwds_tomasotath, ##-- tokenizer program; default: search
 ##    abbrevLex => $filename,              ##-- for --to-abbrev-lex=FILE (default: "${RCDIR}/dta_abbrevs.lex"; '' for none)
 ##    mweLex => $filename,                 ##-- for --to-mwe-lex=FILE    (default: "${RCDIR}/dta_mwe.lex"; '' for none)
@@ -39,7 +38,6 @@ sub defaults {
   my $that = shift;
   return (
 	  $that->SUPER::defaults(),
-	  fixtok => 1,
 	  tomata2   =>undef,
 	  #abbrevLex => "${RCDIR}/dta_abbrevs.lex",  ##-- gets set in init()
 	  #mweLex    => "${RCDIR}/dta_mwe.lex",      ##-- gets set in init()
@@ -93,18 +91,18 @@ sub init {
 ## + %$doc keys:
 ##    txtfile => $txtfile,    ##-- (input) serialized text file
 ##    tokdata0 => $tokdata,   ##-- (output) tokenizer output data (string)
-##    tokenize_stamp0  => $f, ##-- (output) timestamp of operation end
-##    tokdata_stamp0 => $f,   ##-- (output) timestamp of operation end
+##    tokenize0_stamp  => $f, ##-- (output) timestamp of operation end
+##    tokdata0_stamp => $f,   ##-- (output) timestamp of operation end
 ## + may implicitly call $doc->mkbx() and/or $doc->saveTxtFile()
 sub tokenize {
   my ($tz,$doc) = @_;
 
   ##-- log, stamp
+  $tz = $tz->new if (!ref($tz));
   $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase})");
-  $doc->{tokenize_stamp00} = timestamp();
+  $doc->{tokenize0_stamp0} = timestamp();
 
   ##-- sanity check(s)
-  $tz = $tz->new if (!ref($tz));
   $tz->logconfess("tokenize($doc->{xmlbase}): no dwds_tomasotath program found")
     if (!$tz->{tomata2});
   $tz->logconfess("tokenize($doc->{xmlbase}): no .txt file defined")
@@ -127,7 +125,7 @@ sub tokenize {
 
   ##-- finalize
   $doc->{ntoks} = $tz->nTokens(\$doc->{tokdata0});
-  $doc->{tokenize_stamp0} = $doc->{tokdata_stamp0} = timestamp(); ##-- stamp
+  $doc->{tokenize0_stamp} = $doc->{tokdata0_stamp} = timestamp(); ##-- stamp
   return $doc;
 }
 
@@ -260,7 +258,7 @@ Relevant %$doc keys:
  bxdata  => \@bxdata,  ##-- (input) block data, used to generate $doc->{txtfile} if not present
  tokdata => $tokdata,  ##-- (output) tokenizer output data (string)
  ##
- tokenize_stamp0 => $f, ##-- (output) timestamp of operation begin
+ tokenize0_stamp0 => $f, ##-- (output) timestamp of operation begin
  tokenize_stamp  => $f, ##-- (output) timestamp of operation end
  tokdata_stamp => $f,   ##-- (output) timestamp of operation end
 

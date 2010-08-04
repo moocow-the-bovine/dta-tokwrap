@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "DTA-TOKWRAP.PERL 1"
-.TH DTA-TOKWRAP.PERL 1 "2009-06-11" "dta-tokwrap v0.17" "DTA Tokenization Utilities"
+.TH DTA-TOKWRAP.PERL 1 "2010-08-04" "dta-tokwrap v0.18" "DTA Tokenization Utilities"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -511,16 +511,35 @@ for each input document \fI\s-1FILE\s0.xml\fR
 Creates temporary serialized block-index file \fI\s-1FILE\s0.bx\fR
 and serialized text file \fI\s-1FILE\s0.txt\fR
 for each input document \fI\s-1FILE\s0.xml\fR.
+.IP "mktok0" 4
+.IX Item "mktok0"
+\&\fBAlias(es):\fR tokenize0 tok0 t0 tt0
+.Sp
+\&\fBInput(s):\fR \s-1FILE\s0.txt
+.Sp
+\&\fBOutput(s):\fR \s-1FILE\s0.t0
+.Sp
+Creates temporary CSV-format raw tokenizer output file \fI\s-1FILE\s0.t0\fR
+for each input document \fI\s-1FILE\s0.xml\fR
+.IP "mktok1" 4
+.IX Item "mktok1"
+\&\fBAlias(es):\fR tokenize1 tok1 t1 tt1
+.Sp
+\&\fBInput(s):\fR \s-1FILE\s0.t0
+.Sp
+\&\fBOutput(s):\fR \s-1FILE\s0.t1
+.Sp
+Creates temporary CSV-format post-processed tokenizer output file \fI\s-1FILE\s0.t1\fR
+for each input document \fI\s-1FILE\s0.xml\fR
 .IP "mktok" 4
 .IX Item "mktok"
 \&\fBAlias(es):\fR tokenize tok t tt
 .Sp
 \&\fBInput(s):\fR \s-1FILE\s0.txt
 .Sp
-\&\fBOutput(s):\fR \s-1FILE\s0.t
+\&\fBOutput(s):\fR \s-1FILE\s0.t0 \s-1FILE\s0.t1
 .Sp
-Creates temporary CSV-format tokenizer output file \fI\s-1FILE\s0.t\fR
-for each input document \fI\s-1FILE\s0.xml\fR
+Wrapper for \*(L"mktok0 mktok1\*(R".
 .IP "mktxml" 4
 .IX Item "mktxml"
 \&\fBAlias(es):\fR tok2xml xtok txml ttxml tokxml
