@@ -115,11 +115,12 @@ sub defaults {
 			     'castItem[not(parent::castGroup)]',
 
 			     ##-- non-sentential stuff
-			     qw(ref|fw|head), ##-- ... be safe if tokenizing EVERYTHING
+			     #qw(ref|fw|head), ##-- ... be safe if tokenizing EVERYTHING
+			     qw(ref|fw), ##-- ... be extra-safe if tokenizing EVERYTHING
 			    ],
 	  hint_wb_xpaths => [
-			     ##-- main text: common
-			     #qw(head|fw),
+			     ##-- non-sentential stuff
+			     qw(head|ref|fw), ##-- ... be safe if tokenizing EVERYTHING
 
 			     ##-- citations & quotes (TODO: check real examples)
 			     qw(cit|q|quote),
@@ -150,13 +151,14 @@ sub defaults {
 	  ##-- stylesheet: mark-sortkeys
 	  sortkey_attr => 'dta.tw.key',
 	  sort_ignore_xpaths => [
-				 qw(ref|fw|head), ##-- comment this out to tokenize EVERYTHING
+				 #qw(ref|fw|head), ##-- comment this out to tokenize EVERYTHING
+				 qw(ref|rw),       ##--  ... tokenize <head> (e.g. chapter titles), but not headers, footers, or references (TOC)
 				 qw(teiHeader),
 				],
 	  sort_addkey_xpaths => [
 				 (map {"$_\[not(parent::seg)\]"} qw(table note argument figure)),
 				 qw(text front body back),
-				 qw(ref|fw|head),
+				 qw(ref|fw|head),  ##-- extract these from running text
 				],
 	  sort_stylestr  => undef,
 	  sort_styleheet => undef,
