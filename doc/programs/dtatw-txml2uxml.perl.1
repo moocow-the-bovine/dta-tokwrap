@@ -123,39 +123,46 @@
 .rm #[ #] #H #V #F C
 .\" ========================================================================
 .\"
-.IX Title "DTATW-ADD-W.PERL 1"
-.TH DTATW-ADD-W.PERL 1 "2009-06-29" "dta-tokwrap v0.20" "DTA Tokenization Utilities"
+.IX Title "DTATW-TXML2UXML.PERL 1"
+.TH DTATW-TXML2UXML.PERL 1 "2010-05-05" "dta-tokwrap v0.20" "DTA Tokenization Utilities"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
-dtatw\-add\-w.perl \- splice standoff <w>\-records into original .char.xml files
+dtatw\-txml2uxml.perl \- DTA::TokWrap: convert .t.xml to enrichted .u.xml
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
 .Vb 1
-\& dtatw\-add\-w.perl [OPTIONS] CHAR_XML_FILE W_XML_FILE
+\& dtaec\-txml2uxml.perl [OPTIONS] [TXMLFILE]
 \&
 \& General Options:
 \&  \-help                  # this help message
-\&  \-verbose LEVEL         # set verbosity level (0<=LEVEL<=1)
-\&  \-quiet                 # be silent
+\&
+\& Processing Options
+\&  \-textfile TXTFILE      # .txt file for TXMLFILE://w/@b locations
+\&  \-cpxfile  WPXFILE      # .cpx file for output //w/@pb locations
+\&  \-wpxfile  WPXFILE      # .wpx file for output //w/@pb locations (overrides \-cpxfile)
+\&  \-pb     , \-nopb        # do/don\*(Aqt parse and output page break indices as //w/@pb (default=only if \-wpxfile or \-cpxfile is given)
+\&  \-t0     , \-not0        # do/don\*(Aqt output original text from TXTFILE as //w/@t0 (default=do)
+\&  \-cruft  , \-nocruft     # do/don\*(Aqt output unicruft approximations as //w/@u rsp //w/@u0 (default=do)
+\&  \-chars  , \-nochars     # do/don\*(Aqt output inter\-token chars as //c (default=don\*(Aqt)
 \&
 \& I/O Options:
-\&  \-output FILE           # specify output file (default=\*(Aq\-\*(Aq (STDOUT))
+\&  \-ent    , \-noent       # don\*(Aqt/do expand entities (default=don\*(Aqt (\-ent))
+\&  \-blanks , \-noblanks    # do/don\*(Aqt keep "ignorable" input blanks (default=don\*(Aqt (\-noblanks))
+\&  \-ws     , \-nows        # do/don\*(Aqt keep token\-internal whitespace (default=don\*(Aqt (\-nows))
+\&  \-format , \-noformat    # do/don\*(Aqt pretty\-print output? (default=do (\-format))
+\&  \-output OUTFILE        # specify output file (default=\*(Aq\-\*(Aq (STDOUT))
 .Ve
 .SH "OPTIONS AND ARGUMENTS"
 .IX Header "OPTIONS AND ARGUMENTS"
 Not yet written.
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-Splice standoff <w>\-records into original .char.xml files, producing .cw.xml files.
+Not yet written.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-\&\fIdtatw\-add\-c.perl\fR\|(1),
-\&\fIdta\-tokwrap.perl\fR\|(1),
-\&\fIdtatw\-add\-s.perl\fR\|(1),
-\&\fIdtatw\-rm\-c.perl\fR\|(1),
 \&...
 .SH "AUTHOR"
 .IX Header "AUTHOR"

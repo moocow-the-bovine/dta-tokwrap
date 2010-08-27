@@ -1,0 +1,127 @@
+Subject:
+Re: DDC::Indices to show
+From:
+Bryan Jurish <jurish@uni-potsdam.de>
+Date:
+Mon, 09 Aug 2010 00:01:36 +0200
+To:
+Alexander Geyken <geyken@bbaw.de>
+CC:
+Bryan Jurish <moocow@ling.uni-potsdam.de>, Marko Drotschmann <drotschmann@bbaw.de>, Jakob Steinmann <jakob_steinmann@gmx.de>, Matthias Schulz <mschulz@bbaw.de>, Susanne Haaf <susanne.haaf@urz.uni-heidelberg.de>
+
+moin allerseits,
+
+Grüsse aus dem Urlaub :-/
+
+On 2010-08-05 16:18:35, Alexander Geyken <geyken@bbaw.de> appears to
+have written:
+> > Hallo Bryan und Marko,
+> > 
+> > Kai hatte mir auf die Sprünge geholfen: IndicesToShow ist der Befehl in
+> > der DDC-Opt-Datei
+
+whoo-hoo!
+
+> > Anbei die opt-Datei von ddc zum DTA-Corpus: scheint mir kompatibel mit
+> > dem Format, das du (Marko) mir heute früh gezeigt hast
+> > (kaskade:/home/dta/dta_ddc_xml). (dta_2.opt scheint mir gefährlich --
+> > muss mal AlexS fragen, ob das wirklich der letzte ist.
+> > 
+> > Vorgehen könnten wir dann wie folgt:
+> > 
+> > * Änderungen opt-Datei
+> > zwischen Lts und Coord würden wir dann eine Spalte einfügen, z.B.
+> > CharSpan charspan normal storage
+> > IndicesToShow müsste dann um eine weitere Spalte ergänzt werden
+> > (das ist einfach, vorausgesetzt dta_2.opt ist die von AlexS benutzte
+> > offizielle DTA-opt-Datei)
+> > 
+> > * Änderungen DDC-Format
+> > was käme jetzt da rein für das Token: alle Zeichen-Offsets oder könnte
+> > man das komprimierter darstellen, als CharOffset;length?
+> > @Bryan: was meinst du und vor allem: kannst du das in das DDC-Format
+> > hineinrechnen, vorausgesetzt ich erfahre von Alex Siebert, an welcher
+> > Stelle der Kaskade das hineingerechnet werden müsste.
+
+Sofern die DDC-Format sich direkt aus einer der vom dta-tokwrap
+erstellten serialisierten tokenisierten Formaten (z.B. .t.xml, .u.xml,
+.cab.tt, usw) ergibt, kann ich das vermutlich direkt reinrechnen, sofern
+alle TokWrap Zwischendateien noch existieren (... und das tun sie,
+glaube ich).  Sicherer wäre es natürlich, wenn ich im tokwrap-Schritt
+die CharSpans schon berechne und sie direkt aus der Kaskade in die DDC
+Datei fliessen würden, oder wenn ich eine andere eindeutige
+Übersetzungsmöglichkeit in den DDC Dateien hätte (z.B. //w/@id oder
+*.t.xml://w/@c, auch nur als Kommentar).  CharSpans zu berechnen ist
+einfach (habe ich schon prototypischerweise gemacht; noch ist das aber
+nirgendwo eingebaut).  Die genaue Format müssten wir noch auskäsen,
+besonders wenn die <c>s noch umbenannt werden sollten.  Ich sehe
+momentan 4 Möglichkeiten für die Aufbau einer //c/@id :
+
+(1) durchgezählt pro Buch (wie bisher)
+  + e.g. c1, c2, c3, ..., c65536
+  + am einfachsten zu implementieren, aber unsicher bei Änderungen der
+Quelldateien: sensibel zur Hinzufügung/Löschen von einzelnen Zeichen
+
+(2) Durchgezählt pro Seite, Seiten durchgezählt pro Buch
+  + e.g. p1.c1, p1.c2, ... , p256.c256
+  + einfach und etwas sicherer, sensibel zur Hinzufügung/Löschen von
+ganzen Seiten
+
+(3) Durchgezählt pro Seite, Seiten mit //pb/@facs identifiziert
+  + e.g. p0000.c1, p0000.c2, ... , p00256.c256
+  + schön aber groß, unsicher falls ein <pb> kein @facs hat
+  + kann etwas komprimiert werden, wenn "0*" Präfixe von //pb/@facs
+trunkiert werden
+    - äquivalent bei der aktuellen Datenlage zu Methode (2)
+
+(4) Durchgezählt pro Seite, Seiten mit //pb/@n oder @facs oder Zähler
+identifiziert
+  + e.g.
+    - mit @n falls vorhanden: ...pn_xlii.c256, pn_1.c1, ..., pn_214.c256
+    - sonst mit @facs falls vorhanden: pf_1.c1, ..., pf_256.c256
+    - sonst mit Seitenzähler: pz_1.c1, ..., pz_256.c256
+  + paranoid (am sichersten), aber etwas haariger zu implementieren bzw
+hinterher zu interpretieren
+
+... m.E. müsste diese Frage geklärt werden, bevor wir CharSpans
+berechnen, denn die Format einer //c/@id bestimmt, in welcher Weise ich
+prüfen muss/kann/soll, ob 2 <c>s adjazent sind und somit komprimiert
+werden können.
+
+Wir können auch natürlich bei Methode (1) bleiben für //c/@id und die
+CharSpans in einem ganz anderen Format darstellen, z.B. (Listen von)
+"Offset+Length" Paare, relativ zum Seitenanfang zu interpretieren.  Das
+würde für meine Zwecke reichen (Verbindung externes Program -> DDC
+Websuche), aber ich bezweifle, ob das stabil genug für Jakob's Zwecke
+(DDC -> Annotator) sein wird: es ist m.W. keineswegs garantiert, dass
+die Reihenfolge der Zeichen im XSL-transformierten HTML identisch ist,
+mit der Reihenfolge der <c> Elemente im TEI-XML (@Matthias: ich glaube,
+Du hattest mir gegenüber mal erwähnt, dass 'ganze Blöcke auf der Seite
+herumgeschoben werden könnten': kannst Du die Existenz bzw.
+nicht-Existenz solcher Phänomene bestätigen?) ... wenn ich richtig
+verstanden habe, braucht Jakob "richtige" (d.h. eindeutige, stabile, und
+zuverlässige) ids, um eine sichere Verbindung zwischen der Suche und dem
+Annotator zu schaffen.
+
+Skripte für die Umbennung von //c/@id und die Berechnung von CharSpans
+kann ich von zu Hause aus einigermassen schnell Abends mal schreiben;
+möchte aber erstmal wissen, was überhaupt geschrieben werden muss...
+
+Mein Vorschlag:
+
+//c/@id: Mischung aus Methoden (2) und (3)
+  - pb/@facs mit trunkierter "0*" Präfix: p1.c1, ..., p256.c256
+  - sonst Zähler: pz1.c1, ..., pz256.c256
+  - werden als erste Schritt in TokWrap berechnet (oder sogar vor
+TokWrap so berechnet und in dieser Form dort hineingereicht)
+
+//w/@cs (CharSpan): Liste von "FromId+Len" Paare
+  - e.g.
+     aus <w t="foobar" t0="foo-&#10;bar" c="c1 c2 c3 c6 c7 c8"  ... />
+    wird <w t="foobar" t0="foo-&#10;bar" cs="c1+3 c6+3" .../>
+  - werden von TokWrap in *.u.xml hineingerechnet und dann mitgeschleift
+
+marmosets,
+	Bryan
+
+-- Bryan Jurish "There is *always* one more bug." jurish@uni-potsdam.de -Lubarsky's Law of Cybernetic Entomology 

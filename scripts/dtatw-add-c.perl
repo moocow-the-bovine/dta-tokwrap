@@ -236,6 +236,7 @@ Adds E<lt>cE<gt> elements to DTA XML files and/or assigns C<xml:id>s to existing
 =head1 SEE ALSO
 
 L<dta-tokwrap.perl(1)|dta-tokwrap.perl>,
+L<dtatw-cids2local.perl(1)|dtatw-cids2local.perl(1)>,
 L<dtatw-rm-c.perl(1)|dtatw-rm-c.perl>,
 ...
 

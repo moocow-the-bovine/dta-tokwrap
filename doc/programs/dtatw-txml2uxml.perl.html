@@ -2,7 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>dtatw-add-c.perl - add &lt;c&gt; elements to DTA XML documents</title>
+<title>dtatw-txml2uxml.perl - DTA::TokWrap: convert .t.xml to enrichted .u.xml</title>
 <link rel="stylesheet" href="dtatw.css" type="text/css" />
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
@@ -31,22 +31,33 @@
 
 <p>
 </p>
-<hr />
 <h1><a name="name">NAME</a></h1>
-<p>dtatw-add-c.perl - add &lt;c&gt; elements to DTA XML documents</p>
+<p>dtatw-txml2uxml.perl - DTA::TokWrap: convert .t.xml to enrichted .u.xml</p>
 <p>
 </p>
 <hr />
 <h1><a name="synopsis">SYNOPSIS</a></h1>
 <pre>
- dtatw-add-c.perl [OPTIONS] [XMLFILE(s)...]</pre>
+ dtaec-txml2uxml.perl [OPTIONS] [TXMLFILE]</pre>
 <pre>
  General Options:
   -help                  # this help message</pre>
 <pre>
+ Processing Options
+  -textfile TXTFILE      # .txt file for TXMLFILE://w/@b locations
+  -cpxfile  WPXFILE      # .cpx file for output //w/@pb locations
+  -wpxfile  WPXFILE      # .wpx file for output //w/@pb locations (overrides -cpxfile)
+  -pb     , -nopb        # do/don't parse and output page break indices as //w/@pb (default=only if -wpxfile or -cpxfile is given)
+  -t0     , -not0        # do/don't output original text from TXTFILE as //w/@t0 (default=do)
+  -cruft  , -nocruft     # do/don't output unicruft approximations as //w/@u rsp //w/@u0 (default=do)
+  -chars  , -nochars     # do/don't output inter-token chars as //c (default=don't)</pre>
+<pre>
  I/O Options:
-  -output FILE           # specify output file (default='-' (STDOUT))
-  -profile, -noprofile   # output profiling information? (default=no)</pre>
+  -ent    , -noent       # don't/do expand entities (default=don't (-ent))
+  -blanks , -noblanks    # do/don't keep &quot;ignorable&quot; input blanks (default=don't (-noblanks))
+  -ws     , -nows        # do/don't keep token-internal whitespace (default=don't (-nows))
+  -format , -noformat    # do/don't pretty-print output? (default=do (-format))
+  -output OUTFILE        # specify output file (default='-' (STDOUT))</pre>
 <p>
 </p>
 <hr />
@@ -56,15 +67,12 @@
 </p>
 <hr />
 <h1><a name="description">DESCRIPTION</a></h1>
-<p>Adds &lt;c&gt; elements to DTA XML files and/or assigns <code>xml:id</code>s to existing elements.</p>
+<p>Not yet written.</p>
 <p>
 </p>
 <hr />
 <h1><a name="see_also">SEE ALSO</a></h1>
-<p><a href="././dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a>,
-<em>dtatw-cids2local.perl(1)</em>,
-<em>dtatw-rm-c.perl(1)</em>,
-...</p>
+<p>...</p>
 <p>
 </p>
 <hr />

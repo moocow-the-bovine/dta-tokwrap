@@ -39,6 +39,7 @@ pkgxsl_DATA = \
 
 bin_SCRIPTS = \
 	dtatw-add-c.perl \
+	dtatw-cids2local.perl \
 	dtatw-mkpx.perl \
 	dtatw-add-w.perl \
 	dtatw-add-s.perl \

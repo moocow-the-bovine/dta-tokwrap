@@ -123,38 +123,85 @@
 .rm #[ #] #H #V #F C
 .\" ========================================================================
 .\"
-.IX Title "DTATW-ADD-W.PERL 1"
-.TH DTATW-ADD-W.PERL 1 "2009-06-29" "dta-tokwrap v0.20" "DTA Tokenization Utilities"
+.IX Title "DTATW-CIDS2LOCAL.PERL 1"
+.TH DTATW-CIDS2LOCAL.PERL 1 "2010-08-27" "dta-tokwrap v0.20" "DTA Tokenization Utilities"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
-dtatw\-add\-w.perl \- splice standoff <w>\-records into original .char.xml files
+dtatw\-cids2local.perl \- convert //c/@xml:id attributes to page\-local encoding
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
 .Vb 1
-\& dtatw\-add\-w.perl [OPTIONS] CHAR_XML_FILE W_XML_FILE
+\& dtatw\-cids2local.perl [OPTIONS] [XMLFILE(s)...]
 \&
-\& General Options:
+\& Options:
 \&  \-help                  # this help message
-\&  \-verbose LEVEL         # set verbosity level (0<=LEVEL<=1)
-\&  \-quiet                 # be silent
-\&
-\& I/O Options:
 \&  \-output FILE           # specify output file (default=\*(Aq\-\*(Aq (STDOUT))
+\&  \-trace  TRACEFILE      # send trace output to file (default=none)
 .Ve
 .SH "OPTIONS AND ARGUMENTS"
 .IX Header "OPTIONS AND ARGUMENTS"
 Not yet written.
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-Splice standoff <w>\-records into original .char.xml files, producing .cw.xml files.
+Converts \f(CW\*(C`//c/@xml:id\*(C'\fR attributes to page-local encoding.
+.PP
+New IDs are computed page-locally, where the page element associated
+with each \f(CW\*(C`//c\*(C'\fR is given by the XPath \f(CW\*(C`preceding::pb[1]\*(C'\fR, abbreviated
+hereafter as \f(CW$pb\fR.  The associated \f(CW$pb\fR supplies a (unique) prefix \f(CW$pbid\fR to all
+//c elements on the given page.  The prefix is determined according to the following
+rules:
+.IP "1." 4
+If \f(CW$pb\fR has a \f(CW@facs\fR attribute, it is used to define \f(CW$pbid\fR by removing any prefix
+matching the regex \f(CW\*(C`/#?f?0*/\*(C'\fR and prefixing a \*(L"p\*(R", e.g. the following //pb elements
+all map to \f(CW$pbid\fR=\*(L"p42\*(R":
+.Sp
+.Vb 5
+\&  <pb facs="42"/>
+\&  <pb facs="#42"/>
+\&  <pb facs="#f0042"/>
+\&  <pb facs="f00042"/>
+\&  <pb facs="000042"/>
+.Ve
+.IP "2." 4
+Otherwise, a global counter over all //pb elements is used (whose value is initialized
+to \*(L"0\*(R" (zero) before the initial //pb), prefixed by \*(L"pz\*(R".
+.Sp
+.Vb 5
+\&                  <!\-\- before first page: $pbid="pz0" \-\->
+\&  <pb />          <!\-\- first page, no @facs: $pbid="pz1" \-\->
+\&  <pb />          <!\-\- second page, no @facs: $pbid="pz2" \-\->
+\&  <pb facs="42"/> <!\-\- third page, with @facs: $pbid="p42" \-\->
+\&  <pb />          <!\-\- fourth page: $pbid="pz4" \-\->
+.Ve
+.PP
+Finally, //c/@xml:id attributes are computed by a page-local counter \f(CW$ci\fR,
+to be of the form \f(CW\*(C`${pbid}.c${ci}\*(C'\fR, e.g.:
+.PP
+.Vb 4
+\&  <!\-\- before first page \-\->
+\&  <c xml:id="pz0.c1"/>
+\&  <c xml:id="pz0.c2"/>
+\&  <!\-\- ... \-\->
+\&
+\&  <!\-\- first page, with @facs \-\->
+\&  <pb facs="#f0042"/>
+\&  <c xml:id="p42.c1"/>
+\&  <c xml:id="p42.c2"/>
+\&  <!\-\- ... \-\->
+\&
+\&  <!\-\- second page, no @facs \-\->
+\&  <pb/>
+\&  <c xml:id="pz2.c1"/>
+\&  <c xml:id="pz2.c2"/>
+\&  <!\-\- ... \-\->
+.Ve
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-\&\fIdtatw\-add\-c.perl\fR\|(1),
 \&\fIdta\-tokwrap.perl\fR\|(1),
-\&\fIdtatw\-add\-s.perl\fR\|(1),
+\&\fIdtatw\-add\-c.perl\fR\|(1),
 \&\fIdtatw\-rm\-c.perl\fR\|(1),
 \&...
 .SH "AUTHOR"
