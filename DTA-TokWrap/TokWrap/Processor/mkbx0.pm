@@ -152,7 +152,7 @@ sub defaults {
 	  sortkey_attr => 'dta.tw.key',
 	  sort_ignore_xpaths => [
 				 #qw(ref|fw|head), ##-- comment this out to tokenize EVERYTHING
-				 qw(ref|rw),       ##--  ... tokenize <head> (e.g. chapter titles), but not headers, footers, or references (TOC)
+				 qw(ref|fw),       ##--  ... tokenize <head> (e.g. chapter titles), but not headers, footers, or references (TOC)
 				 qw(teiHeader),
 				],
 	  sort_addkey_xpaths => [
