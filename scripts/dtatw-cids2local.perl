@@ -79,7 +79,7 @@ sub cb_start {
 
     ##-- compute and add new id
     $id_new = "$pb_idstr.c".++$c_i;
-    $cstr =~ s|(/?>)$|xml:id="$id_new"$1|;
+    $cstr =~ s|\s*(/?>)$| xml:id="$id_new"$1|;
 
     ##-- maybe print trace
     $tracefh->print($id_old, "\t", $id_new, "\n") if (defined($tracefh));
@@ -99,9 +99,9 @@ sub cb_start {
       #$pb_idstr = 'pf'.$pb_facs;
       $pb_idstr = 'p'.$pb_facs;
     }
-    elsif (defined($pb_n)) {
-      $pb_idstr = 'pn'.$pb_n;
-    }
+    #elsif (defined($pb_n)) { ##-- MAY RESULT IN NON-WF DATA ("validity error : xml:id : attribute value pn[V].c58 is not an NCName")
+    #  $pb_idstr = 'pn'.$pb_n;
+    #}
     else {
       $pb_idstr = 'pz'.$pb_i;
     }
