@@ -30,7 +30,8 @@
 
 
 ##-- small test
-#xmldir = ./xmlsrc
+xmldir = ./xmlsrc
+#xml = $(wildcard $(xmldir)/ex1a.xml)
 #xml = $(wildcard $(xmldir)/*.xml)
 #xml = $(wildcard $(xmldir)/*.chr.xml)
 #xml = $(xmldir)/test-raw.xml
@@ -40,10 +41,11 @@
 #xml = $(wildcard $(xmldir)/ex[345].xml)
 #xml = $(xmldir)/ex6a.xml
 #xml = $(xmldir)/ex6.xml
+xml = $(wildcard $(xmldir)/ex[56].xml)
 #xml = $(xmldir)/kurz.xml
 
-xmldir = ../examples
-xml    = $(xmldir)/kant_aufklaerung_1784.converted.chr.xml
+#xmldir = ../examples
+#xml    = $(xmldir)/kant_aufklaerung_1784.converted.chr.xml
 
 ##-- others
 #xmldir = ./xmlsrc
