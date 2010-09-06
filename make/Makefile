@@ -234,7 +234,7 @@ summary: $(SUMMARY_TARGETS)
 
 cascade-all: $(ALL_XML_TARGETS)
 
-#.SECONDARY: 
+#.SECONDARY:
 
 ##======================================================================
 ## Rules: show configuration
