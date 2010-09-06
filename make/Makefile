@@ -192,7 +192,6 @@ ARC_TARGETS ?= \
 	$(config) \
 	$(logfile) \
 	$(XML:.xml=.t.xml) \
-	$(XML:.xml=.tcs.xml) \
 	$(XML:.xml=.s.xml) \
 	$(XML:.xml=.w.xml) \
 	$(XML:.xml=.a.xml)
@@ -446,25 +445,6 @@ endif
 no-t-xml: ; rm -f *.t.xml
 CLEAN_FILES += *.t.xml
 
-##======================================================================
-## Rules: tokenized: .t.xml -> .tcs.xml (CharSpans)
-
-tcs-xml: $(XML:.xml=.tcs.xml)
-
-%.tcs.xml: %.tcs-cx.xml
-	rm -f $@
-	ln $< $@
-
-##-- %.tcs-cx.xml: use %.cx for adjacency test
-%.tcs-cx.xml: %.t.xml %.cx tokwrap
-	$(SCRIPT_DIR)dtatw-txml2cspan.perl -cx=$*.cx -o $@ $<
-
-##-- %.tcs-h.xml: use //c/@id heuristics for adjacency test (prefix equality && numeric suffix succession)
-%.tcs-h.xml: %.t.xml %.cx tokwrap
-	$(SCRIPT_DIR)dtatw-txml2cspan.perl -guess -o $@ $<
-
-no-tcs-xml: ; rm -f *.tcs.xml *.tcs-h.xml *.tcs-cx.xml
-CLEAN_FILES += *.tcs.xml
 
 ##======================================================================
 ## Rules: tokenized: xml-t: master xml output -> .tt
@@ -614,26 +594,32 @@ no-cab-xml-bytok: no-dta-cab-xmlw-bytok
 CLEAN_FILES += *.dta-cab.xml.bytok
 
 ##======================================================================
-## Rules: tokenized: extended output (unicruft //w/@u and raw text //w/@t0 rsp @u0)
+## Rules: tokenized: extended output
+## + //w/@u  : unicruft text
+## + //w/@t0 : raw text
+## + //w/@u0 : unicrufted raw text raw
+## + //w/@xp : xpath (also //s/@xp if compressed)
+## + //w/@cs : charSpans cs="CID+LEN CID+LEN ... CID+LEN"
 
-##-- %.u.xml: unicruft + raw text
+##-- %.u.xml: unicruft + raw text + xp (xpath
 u-xml: $(XML:.xml=.u.xml)
 
-##-- {.t.xml,.txt}->.u.xml : (+t0, -pb)
+##-- {.t.xml,.txt}->.u.xml : (+t0, +cruft, -pb)
 #%.u.xml: %.t.xml %.txt tokwrap
 #	$(SCRIPT_DIR)dtatw-txml2uxml.perl -tf=$*.txt $< -o $@
 ##
-##-- {.t.xml,.txt,.wpx}->.u.xml : (+t0, +pb)
+##-- {.t.xml,.txt,.wpx}->.u.xml : (+t0, +cruft, +pb)
 #%.u.xml: %.t.xml %.txt %.wpx tokwrap
 #	$(SCRIPT_DIR)dtatw-txml2uxml.perl -tf=$*.txt -wpx=$*.wpx $< -o $@
 ##
-##-- {.t.xml,.txt,.cpx}->.u.xml : (+t0, +pb)
+##-- {.t.xml,.txt,.cpx}->.u.xml : (+t0, +cruft, +pb)
 #%.u.xml: %.t.xml %.txt %.cpx tokwrap
 #	$(SCRIPT_DIR)dtatw-txml2uxml.perl -tf=$*.txt -cpx=$*.cpx $< -o $@
 ##
-##-- {.tcs.xml,.txt,.cpx}->.u.xml : (+t0, +pb, +cs)
-%.u.xml: %.tcs.xml %.txt %.cpx tokwrap
-	$(SCRIPT_DIR)dtatw-txml2uxml.perl -tf=$*.txt -cpx=$*.cpx $< -o $@
+##-- {.t.xml,.txt,.cpx,.cx}->.u.xml : (+t0, +cruft, +pb, +cs)
+#%.u.xml: %.t.xml %.txt %.cpx %.cx tokwrap ##-- weird: looks like loop in make dependencies!
+%.u.xml: %.t.xml %.cpx tokwrap
+	$(SCRIPT_DIR)dtatw-txml2uxml.perl -tf=$*.txt -cpx=$*.cpx -cx=$*.cx $< -o $@
 
 
 no-u-xml: ; rm -f *.u.xml

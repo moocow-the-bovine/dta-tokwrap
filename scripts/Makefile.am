@@ -52,6 +52,8 @@ bin_SCRIPTS = \
 	dtatw-txml2uxml.perl \
 	file-substr.perl
 
+#	dtatw-txml2cspan.perl
+
 #-----------------------------------------------------------------------
 # Variables: distribution
 #-----------------------------------------------------------------------

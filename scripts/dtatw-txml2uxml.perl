@@ -20,12 +20,17 @@ our $keep_blanks = 0;
 our $txtfile = undef; ##-- default: from xml file
 our $wpxfile = undef; ##-- default: from xml file
 our $cpxfile = undef; ##-- default: from xml file
+our $cxfile  = undef; ##-- default: none (use heuristics)
 our $do_t0 = 1;
 our $do_pb = undef;
 our $do_unicruft = 1;
 our $do_inter_token_chars = 0;
+our $do_trim_b = undef; ##-- trim //w/@b  (default: only if $do_t0)
 our $do_trim_text = 0; ##-- we really should do this, but keep it for compatibility now (2010-09-06)
 our $do_trim_xpaths = 1;
+our $do_spans = 1;
+our $do_keep_c = 0;
+our $do_guess_spans = 0;
 
 ##------------------------------------------------------------------------------
 ## Command-line
@@ -33,17 +38,26 @@ our $do_trim_xpaths = 1;
 GetOptions(##-- General
 	   'help|h' => \$help,
 
-	   ##-- text file?
+	   ##-- auxilliary file(s) & options
 	   'textfile|txtfile|text|txt|tf=s' => \$txtfile,
 	   'wpx-file|wpxfile|wpxf|wpx|wpf=s' => \$wpxfile,
 	   'cpx-file|xpxfile|cpxf|cpx|cpf=s' => \$cpxfile,
+	   'cx-file|cxfile|cxf|cx|cf=s' => \$cxfile,
+
+	   ##-- attribute selection
 	   't0!' => \$do_t0,
 	   'pb|xp!' => \$do_pb,
 	   'unicruft|cruft|u!' => \$do_unicruft,
-	   'inter-token-characters|inter-token-chars|chars|itc|c!' => \$do_inter_token_chars,
+	   'char-spans|charspans|cspans|spans|cs!' => \$do_spans,
+	   'keep-char-lists|keep-c|kc' => \$do_keep_c,
+	   'guess-char-spans|guess-spans|guess|g' => sub { $cxfile=undef; },
+
+	   ##-- trimming
+	   'inter-token-characters|inter-token-chars|chars|itc|ic!' => \$do_inter_token_chars,
+	   'trim-byte-locations|trim-byte-locs|trim-locs|trim-b!' => \$do_trim_b,
 	   'trim-text|trim-t|tt!' => \$do_trim_text,
 	   'trim-xpaths|trim-xp|trim-x|tx!' => \$do_trim_xpaths,
-	   'trim!' => sub { $do_trim_text=$do_trim_xpaths=$_[1]; },
+	   'trim!' => sub { $do_trim_text=$do_trim_xpaths=$do_trim_b=$_[1]; },
 
 	   ##-- formatting
 	   'entities|ent|e!' => sub { $expand_ents=!$_[1]; },
@@ -93,13 +107,43 @@ sub load_pxfile {
   return $px;
 }
 
+## \%c2prev = load_cxfile($cxfile)
+our (%c2prev); ##-- ($cid[$i] => $cid[$i-1])
+our $cx_use_lb = 0;
+our $cx_use_pb = 1;
+our $cx_use_special = 0;
+sub load_cxfile {
+  my $cxfile = shift;
+  %c2prev = qw();
+  open(CX,"<$cxfile") or die("$0: load_cxfile(): open failed for '$cxfile': $!");
+  my ($pcid,$cid);
+  while (defined($cid=<CX>)) {
+    chomp($cid);
+    next if ($cid =~ /^\s*$/ || $cid =~ /^\%\%/
+	     || (!$cx_use_special && $cid =~ /^\$/)
+	     || (!$cx_use_lb      && $cid eq '$LB$')
+	     || (!$cx_use_pb      && $cid eq '$PB$'));
+    $cid =~ s/\t.*$//;
+    $c2prev{$cid} = $pcid;
+    $pcid = $cid;
+  }
+  close(CX);
+  return \%c2prev;
+}
+
+
 ## $doc = txml2uxml($doc)
 ##  + uses global $txtbufr
 sub txml2uxml {
   my $doc = shift;
   my ($wi,$wnod,$wb,$off,$len, $wt0,$wt, $wu,$wu0, $wpnod, $xid,$pxdata);
+  my ($wc,@wcids,@wspans,$spans);
   my $wnods = $doc->findnodes('//w');
   my $poff  = 0;
+
+  ##-- adjacency predicate (for char spans)
+  my $char_adjacent_sub = defined($cxfile) ? \&char_adjacent_cx : \&char_adjacent_guess;
+
   foreach $wnod (@$wnods) {
     if ($do_unicruft) {
       ##-- unicruft approximation
@@ -122,7 +166,7 @@ sub txml2uxml {
       if ($do_unicruft) {
 	$wu0 = decode('latin1',Unicruft::utf8_to_latin1_de($wt0));
 	$wnod->setAttribute('u0', $wu0)
-	  if (!$do_trim_text || $wu0 ne $wt0);
+	  if (!$do_trim_text || $wu0 ne $wu);
       }
     }
     if ($do_inter_token_chars) {
@@ -148,6 +192,30 @@ sub txml2uxml {
       $wnod->setAttribute('pb', ($pxdata && defined($pxdata->[0]) ? $pxdata->[0] : '-1'));
       $wnod->setAttribute('xp', $pxdata->[3]) if ($pxdata && defined($pxdata->[3]));
     }
+    if ($do_spans) {
+      ##-- character spans
+      $wc    = $wnod->getAttribute('c');
+      @wcids  = split(/\s+/,$wc);
+      @wspans = ([0,0]); ##-- ([$from_i1,$to_i1], [$from_i2,$to_i2], ...)
+
+      for ($ci=1; $ci <= $#wcids; $ci++) {
+	if ($char_adjacent_sub->($wcids[$wspans[$#wspans][1]], $wcids[$ci])) {
+	  $wspans[$#wspans][1] = $ci;
+	} else {
+	  push(@wspans, [$ci,$ci]);
+	}
+      }
+
+      #$spans = join(' ', map {$_->[0]==$_->[1] ? $wcids[$_->[0]] : "$wcids[$_->[0]]-$wcids[$_->[1]]"} @wspans);
+      $spans = join(' ', map {$wcids[$_->[0]].'+'.($_->[1]-$_->[0]+1)} @wspans);
+      $wnod->removeAttribute('c') if (!$do_keep_c);
+      $wnod->setAttribute('cs',$spans);
+    }
+
+    ##-- trim byte locations
+    $wnod->removeAttribute('b') if ($do_trim_b);
+
+    ##-- update current token position
     $poff = $off+$len;
   }
   if ($do_inter_token_chars) {
@@ -162,7 +230,7 @@ sub txml2uxml {
     foreach $snod (@{$doc->findnodes('//s')}) {
       $wnods = $snod->findnodes('w');
       @wxp   = map {$_->getAttribute('xp')} @$wnods;
-      $sxp   = longestCommonPrefix(@wxp);
+      $sxp   = longestCommonXpathPrefix(@wxp);
       $snod->setAttribute('xp',$sxp);
       foreach $wi (0..$#wxp) {
 	$wxp = '-'.substr($wxp[$wi],length($sxp));
@@ -174,9 +242,29 @@ sub txml2uxml {
   return $doc;
 }
 
-## $prefix = longestCommonPrefix(@xpathStrings)
+## $bool = char_adjacent_cx($cid1, $cid2)
+##  + returns true iff "${cid1}${cid2}" is a substring of all cids
+##  + uses global \%c2prev
+our ($cp);
+sub char_adjacent_cx {
+  $cp = $c2prev{$_[1]};
+  return defined($cp) && $cp eq $_[0];
+}
+
+## $bool = char_adjacent_guess($cid1, $cid2)
+##  + returns true iff "${cid1}${cid2}" is a substring of all cids
+##  + uses heuristics
+our ($p1,$n1, $p2,$n2);
+sub char_adjacent_guess {
+  ($p1,$n1) = ($_[0] =~ m/^(.*?)(\d+)$/ ? ($1,$2) : ($_[0],-1));
+  ($p2,$n2) = ($_[1] =~ m/^(.*?)(\d+)$/ ? ($1,$2) : ($_[1],-1));
+  return ($p1 eq $p2 && $n2 == $n1+1);
+}
+
+
+## $prefix = longestCommonXpathPrefix(@xpathStrings)
 our ($lcp_p,$lcp_s);
-sub longestCommonPrefix {
+sub longestCommonXpathPrefix {
   $lcp_p = [split(/\//,shift)];
   foreach $lcp_s (map {[split(/\//,$_)]} @_) {
     while (@$lcp_p && grep {$#$lcp_s < $_ || $lcp_s->[$_] ne $lcp_p->[$_]} reverse (0..$#$lcp_p)) {
@@ -280,6 +368,12 @@ if ($do_pb) {
   }
 }
 
+##-- cx file index
+load_cxfile($cxfile) if (defined($cxfile) && $do_spans);
+
+##-- default options
+$do_trim_b = $do_t0 if (!defined($do_trim_b));
+
 ##-- maybe pull in unicruft
 if ($do_unicruft) {
   require Unicruft;
@@ -303,14 +397,22 @@ dtatw-txml2uxml.perl - DTA::TokWrap: convert .t.xml to enrichted .u.xml
  General Options:
   -help                  # this help message
 
- Processing Options:
+ Auxilliary Files Options:
   -textfile TXTFILE      # .txt file for TXMLFILE://w/@b locations
   -cpxfile  WPXFILE      # .cpx file for output //w/@pb locations
   -wpxfile  WPXFILE      # .wpx file for output //w/@pb locations (overrides -cpxfile)
+  -cxfile   CXFILE       # .cx file for output char-spans //w/@cs (default: none (use heuristics))
+
+ Attribute Insertion Options:
   -pb     , -nopb        # do/don't parse and output page break indices as //w/@pb (default=only if -wpxfile or -cpxfile is given)
   -t0     , -not0        # do/don't output original text from TXTFILE as //w/@t0 (default=do)
   -cruft  , -nocruft     # do/don't output unicruft approximations as //w/@u rsp //w/@u0 (default=do)
   -chars  , -nochars     # do/don't output inter-token chars as //c (default=don't)
+  -spans  , -nospans     # do/don't compute //w/@cs from //w/@c (default=do)
+  -keep-c , -nokeep-c    # do/don't keep //w/@c if computing //w/@cs (default=don't)
+  -guess  , -noguess     # do/don't use heuristics for computing //w/@cs (default only if CXFILE not given)
+
+ Attribute Trimming Options:
   -trim-t , -notrim-t    # do/don't trim redundant //w/(@t0,@u,@u0) attributes (default=don't)
   -trim-x , -notrim-x    # do/don't compress //w/@xp using sentence-wide prefixes (default=do)
   -trim   , -notrim      # set both -trim-t and -trim-x at the same time
