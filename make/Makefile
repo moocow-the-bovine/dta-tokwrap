@@ -192,6 +192,7 @@ ARC_TARGETS ?= \
 	$(config) \
 	$(logfile) \
 	$(XML:.xml=.t.xml) \
+	$(XML:.xml=.tcs.xml) \
 	$(XML:.xml=.s.xml) \
 	$(XML:.xml=.w.xml) \
 	$(XML:.xml=.a.xml)
@@ -234,7 +235,7 @@ summary: $(SUMMARY_TARGETS)
 
 cascade-all: $(ALL_XML_TARGETS)
 
-#.SECONDARY:
+.SECONDARY:
 
 ##======================================================================
 ## Rules: show configuration
@@ -446,6 +447,26 @@ no-t-xml: ; rm -f *.t.xml
 CLEAN_FILES += *.t.xml
 
 ##======================================================================
+## Rules: tokenized: .t.xml -> .tcs.xml (CharSpans)
+
+tcs-xml: $(XML:.xml=.tcs.xml)
+
+%.tcs.xml: %.tcs-cx.xml
+	rm -f $@
+	ln $< $@
+
+##-- %.tcs-cx.xml: use %.cx for adjacency test
+%.tcs-cx.xml: %.t.xml %.cx tokwrap
+	$(SCRIPT_DIR)dtatw-txml2cspan.perl -cx=$*.cx -o $@ $<
+
+##-- %.tcs-h.xml: use //c/@id heuristics for adjacency test (prefix equality && numeric suffix succession)
+%.tcs-h.xml: %.t.xml %.cx tokwrap
+	$(SCRIPT_DIR)dtatw-txml2cspan.perl -guess -o $@ $<
+
+no-tcs-xml: ; rm -f *.tcs.xml *.tcs-h.xml *.tcs-cx.xml
+CLEAN_FILES += *.tcs.xml
+
+##======================================================================
 ## Rules: tokenized: xml-t: master xml output -> .tt
 
 %.t.xml.t: $(XSL_DIR)/dtatw-txml2tt.xsl %.t.xml
@@ -607,8 +628,13 @@ u-xml: $(XML:.xml=.u.xml)
 #	$(SCRIPT_DIR)dtatw-txml2uxml.perl -tf=$*.txt -wpx=$*.wpx $< -o $@
 ##
 ##-- {.t.xml,.txt,.cpx}->.u.xml : (+t0, +pb)
-%.u.xml: %.t.xml %.txt %.cpx tokwrap
+#%.u.xml: %.t.xml %.txt %.cpx tokwrap
+#	$(SCRIPT_DIR)dtatw-txml2uxml.perl -tf=$*.txt -cpx=$*.cpx $< -o $@
+##
+##-- {.tcs.xml,.txt,.cpx}->.u.xml : (+t0, +pb, +cs)
+%.u.xml: %.tcs.xml %.txt %.cpx tokwrap
 	$(SCRIPT_DIR)dtatw-txml2uxml.perl -tf=$*.txt -cpx=$*.cpx $< -o $@
+
 
 no-u-xml: ; rm -f *.u.xml
 CLEAN_FILES += *.u.xml
