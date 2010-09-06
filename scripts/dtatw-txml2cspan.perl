@@ -18,6 +18,9 @@ our $expand_ents = 0;
 our $keep_blanks = 0;
 
 our $cxfile  = undef; ##-- default: none
+our $cx_use_lb = 0;
+our $cx_use_pb = 1;
+our $cx_use_speial = 0;
 our $span_attr = 'cs';
 
 ##------------------------------------------------------------------------------
@@ -28,6 +31,10 @@ GetOptions(##-- General
 
 	   ##-- other
 	   'cxfile|cxf|cx|c=s' => \$cxfile,
+	   'guess|heuristic|g' => sub { $cxfile=undef; },
+	   'use-special-records|use-specials|specials|special|sc!' => \$cx_use_special,
+	   'use-pb|pb!' => \$cx_use_pb,
+	   'use-lb|lb!' => \$cx_use_lb,
 
 	   ##-- formatting
 	   'entities|ent|e!' => sub { $expand_ents=!$_[1]; },
@@ -57,8 +64,10 @@ sub load_cxfile {
   my ($pcid,$cid);
   while (defined($cid=<CX>)) {
     chomp($cid);
-    next if ($cid =~ /^\s*$/ || $cid =~ /^\%\%/);
-    #next if ($cid =~ /^\$/);
+    next if ($cid =~ /^\s*$/ || $cid =~ /^\%\%/
+	     || (!$cx_use_special && $cid =~ /^\$/)
+	     || (!$cx_use_lb      && $cid eq '$LB$')
+	     || (!$cx_use_pb      && $cid eq '$PB$'));
     $cid =~ s/\t.*$//;
     $c2prev{$cid} = $pcid;
     $pcid = $cid;
@@ -158,7 +167,11 @@ dtatw-txml2cspan.perl - DTA::TokWrap: compute character spans for .t.xml files
   -help                  # this help message
 
  Processing Options:
+  -guess                 # use heuristics instead of CXFILE for adjacency test (default)
   -cxfile CXFILE         # use character adjacency data from CXFILE (default=use heuristic)
+  -lb      , -nolb       # do/don't use cx $LB$ records (default=don't)
+  -pb      , -nopb       # do/don't use cx $PB$ records (default=do)
+  -special , -nospecial  # do/don't use all cx special records ($LB$ etc.) (default=don't)
 
  I/O Options:
   -ent    , -noent       # don't/do expand entities (default=don't (-ent))

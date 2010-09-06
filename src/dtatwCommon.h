@@ -32,6 +32,9 @@ extern char *CX_NIL_ID; //-- default: "-"
 //-- CX_LB_ID : pseudo-ID for <lb/> records
 extern char *CX_LB_ID; //-- default: "$LB$"
 
+//-- CX_LB_ID : pseudo-ID for <pb/> records
+extern char *CX_PB_ID; //-- default: "$PB$"
+
 /*======================================================================
  * Debug
  */

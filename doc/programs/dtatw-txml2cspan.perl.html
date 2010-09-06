@@ -2,7 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>dtatw-txml2uxml.perl - DTA::TokWrap: convert .t.xml to enrichted .u.xml</title>
+<title>dtatw-txml2cspan.perl - DTA::TokWrap: compute character spans for .t.xml files</title>
 <link rel="stylesheet" href="dtatw.css" type="text/css" />
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
@@ -32,28 +32,23 @@
 <p>
 </p>
 <h1><a name="name">NAME</a></h1>
-<p>dtatw-txml2uxml.perl - DTA::TokWrap: convert .t.xml to enrichted .u.xml</p>
+<p>dtatw-txml2cspan.perl - DTA::TokWrap: compute character spans for .t.xml files</p>
 <p>
 </p>
 <hr />
 <h1><a name="synopsis">SYNOPSIS</a></h1>
 <pre>
- dtaec-txml2uxml.perl [OPTIONS] [TXMLFILE]</pre>
+ dtaec-txml2cspan.perl [OPTIONS] [TXMLFILE]</pre>
 <pre>
  General Options:
   -help                  # this help message</pre>
 <pre>
  Processing Options:
-  -textfile TXTFILE      # .txt file for TXMLFILE://w/@b locations
-  -cpxfile  WPXFILE      # .cpx file for output //w/@pb locations
-  -wpxfile  WPXFILE      # .wpx file for output //w/@pb locations (overrides -cpxfile)
-  -pb     , -nopb        # do/don't parse and output page break indices as //w/@pb (default=only if -wpxfile or -cpxfile is given)
-  -t0     , -not0        # do/don't output original text from TXTFILE as //w/@t0 (default=do)
-  -cruft  , -nocruft     # do/don't output unicruft approximations as //w/@u rsp //w/@u0 (default=do)
-  -chars  , -nochars     # do/don't output inter-token chars as //c (default=don't)
-  -trim-t , -notrim-t    # do/don't trim redundant //w/(@t0,@u,@u0) attributes (default=don't)
-  -trim-x , -notrim-x    # do/don't compress //w/@xp using sentence-wide prefixes (default=do)
-  -trim   , -notrim      # set both -trim-t and -trim-x at the same time</pre>
+  -guess                 # use heuristics instead of CXFILE for adjacency test (default)
+  -cxfile CXFILE         # use character adjacency data from CXFILE (default=use heuristic)
+  -lb      , -nolb       # do/don't use cx $LB$ records (default=don't)
+  -pb      , -nopb       # do/don't use cx $PB$ records (default=do)
+  -special , -nospecial  # do/don't use all cx special records ($LB$ etc.) (default=don't)</pre>
 <pre>
  I/O Options:
   -ent    , -noent       # don't/do expand entities (default=don't (-ent))

@@ -7,6 +7,7 @@
 char *prog = "dtatwCommon"; //-- used for error reporting
 char *CX_NIL_ID = "-";
 char *CX_LB_ID  = "$LB$";
+char *CX_PB_ID  = "$PB$";
 
 /*======================================================================
  * Utils: basename

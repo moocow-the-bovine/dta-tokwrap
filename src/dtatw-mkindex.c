@@ -141,6 +141,20 @@ void put_record_lb(TokWrapData *data)
   put_raw_text(data, 1, "\n");
 }
 
+//--------------------------------------------------------------
+void put_record_pb(TokWrapData *data)
+{
+  ByteOffset lb_xoff = XML_GetCurrentByteIndex(data->xp);
+  ByteOffset lb_xlen = XML_GetCurrentByteCount(data->xp);
+  put_record_raw(data->f_cx,
+		 CX_PB_ID,
+		 lb_xoff, lb_xlen,
+		 data->c_toffset, 0,
+		 ""
+		 );
+  //put_raw_text(data, 1, "\n");
+}
+
 
 /*======================================================================
  * Handlers
@@ -172,6 +186,11 @@ void cb_start(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
   }
   else if (strcmp(name,"lb")==0) {
     put_record_lb(data);
+    data->total_depth++;
+    return;
+  }
+  else if (strcmp(name,"pb")==0) {
+    put_record_pb(data);
     data->total_depth++;
     return;
   }

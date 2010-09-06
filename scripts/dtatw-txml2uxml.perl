@@ -24,6 +24,8 @@ our $do_t0 = 1;
 our $do_pb = undef;
 our $do_unicruft = 1;
 our $do_inter_token_chars = 0;
+our $do_trim_text = 0; ##-- we really should do this, but keep it for compatibility now (2010-09-06)
+our $do_trim_xpaths = 1;
 
 ##------------------------------------------------------------------------------
 ## Command-line
@@ -39,6 +41,9 @@ GetOptions(##-- General
 	   'pb|xp!' => \$do_pb,
 	   'unicruft|cruft|u!' => \$do_unicruft,
 	   'inter-token-characters|inter-token-chars|chars|itc|c!' => \$do_inter_token_chars,
+	   'trim-text|trim-t|tt!' => \$do_trim_text,
+	   'trim-xpaths|trim-xp|trim-x|tx!' => \$do_trim_xpaths,
+	   'trim!' => sub { $do_trim_text=$do_trim_xpaths=$_[1]; },
 
 	   ##-- formatting
 	   'entities|ent|e!' => sub { $expand_ents=!$_[1]; },
@@ -84,6 +89,7 @@ sub load_pxfile {
     $data[3] = undef if (!$data[3] || $data[3] eq '//*');
     $px->{$xid} = [@data];
   }
+  close(PX);
   return $px;
 }
 
@@ -91,14 +97,15 @@ sub load_pxfile {
 ##  + uses global $txtbufr
 sub txml2uxml {
   my $doc = shift;
-  my ($wi,$wnod,$wb,$off,$len, $wt0,$wt, $wpnod, $xid,$pxdata);
+  my ($wi,$wnod,$wb,$off,$len, $wt0,$wt, $wu,$wu0, $wpnod, $xid,$pxdata);
   my $wnods = $doc->findnodes('//w');
   my $poff  = 0;
   foreach $wnod (@$wnods) {
     if ($do_unicruft) {
       ##-- unicruft approximation
       $wt = $wnod->getAttribute('t');
-      $wnod->setAttribute('u', decode('latin1',Unicruft::utf8_to_latin1_de($wt)));
+      $wu = decode('latin1',Unicruft::utf8_to_latin1_de($wt));
+      $wnod->setAttribute('u', $wu) if (!$do_trim_text || $wu ne $wt);
     }
     if ($do_t0) {
       ##-- raw text
@@ -108,10 +115,15 @@ sub txml2uxml {
       }
       ($off,$len) = split(/\s+/,$wb);
       $wt0 = decode('utf8',substr($$txtbufr,$off,$len));
-      $wnod->setAttribute('t0', $wt0);
+      $wnod->setAttribute('t0', $wt0)
+	if (!$do_trim_text || $wt0 ne $wt);
 
       ##-- raw text + unicruft
-      $wnod->setAttribute('u0', decode('latin1',Unicruft::utf8_to_latin1_de($wt0))) if ($do_unicruft);
+      if ($do_unicruft) {
+	$wu0 = decode('latin1',Unicruft::utf8_to_latin1_de($wt0));
+	$wnod->setAttribute('u0', $wu0)
+	  if (!$do_trim_text || $wu0 ne $wt0);
+      }
     }
     if ($do_inter_token_chars) {
       ##-- inter-token characters
@@ -128,7 +140,9 @@ sub txml2uxml {
       elsif (defined($cpx)) {
 	##-- pagebreak index from .cpx file
 	$xid = $wnod->getAttribute('c');
-	$xid =~ s/\s.*$//; ##-- truncate
+	$xid = $wnod->getAttribute('cs') if (!defined($xid));
+	$xid = '' if (!defined($xid));
+	$xid =~ s/[\s\-].*$//; ##-- truncate
 	$pxdata=$cpx->{$xid};
       }
       $wnod->setAttribute('pb', ($pxdata && defined($pxdata->[0]) ? $pxdata->[0] : '-1'));
@@ -141,7 +155,35 @@ sub txml2uxml {
     $cnod = cNode($poff,length($$txtbufr));
     $wnods->[$#$wnods]->parentNode->insertAfter($cnod, $wnods->[$#$wnods]);
   }
+
+  ##-- trim xpaths
+  my ($snod,@wxp,$sxp,$wxp);
+  if ($do_trim_xpaths && (defined($wpx) || defined($cpx))) {
+    foreach $snod (@{$doc->findnodes('//s')}) {
+      $wnods = $snod->findnodes('w');
+      @wxp   = map {$_->getAttribute('xp')} @$wnods;
+      $sxp   = longestCommonPrefix(@wxp);
+      $snod->setAttribute('xp',$sxp);
+      foreach $wi (0..$#wxp) {
+	$wxp = '-'.substr($wxp[$wi],length($sxp));
+	$wnods->[$wi]->setAttribute('xp',$wxp);
+      }
+    }
+  }
+
   return $doc;
+}
+
+## $prefix = longestCommonPrefix(@xpathStrings)
+our ($lcp_p,$lcp_s);
+sub longestCommonPrefix {
+  $lcp_p = [split(/\//,shift)];
+  foreach $lcp_s (map {[split(/\//,$_)]} @_) {
+    while (@$lcp_p && grep {$#$lcp_s < $_ || $lcp_s->[$_] ne $lcp_p->[$_]} reverse (0..$#$lcp_p)) {
+      pop(@$lcp_p);
+    }
+  }
+  return join('/',@$lcp_p);
 }
 
 ## $cnod_or_undef = cNode($previous_offset,$current_offset)
@@ -261,7 +303,7 @@ dtatw-txml2uxml.perl - DTA::TokWrap: convert .t.xml to enrichted .u.xml
  General Options:
   -help                  # this help message
 
- Processing Options
+ Processing Options:
   -textfile TXTFILE      # .txt file for TXMLFILE://w/@b locations
   -cpxfile  WPXFILE      # .cpx file for output //w/@pb locations
   -wpxfile  WPXFILE      # .wpx file for output //w/@pb locations (overrides -cpxfile)
@@ -269,6 +311,9 @@ dtatw-txml2uxml.perl - DTA::TokWrap: convert .t.xml to enrichted .u.xml
   -t0     , -not0        # do/don't output original text from TXTFILE as //w/@t0 (default=do)
   -cruft  , -nocruft     # do/don't output unicruft approximations as //w/@u rsp //w/@u0 (default=do)
   -chars  , -nochars     # do/don't output inter-token chars as //c (default=don't)
+  -trim-t , -notrim-t    # do/don't trim redundant //w/(@t0,@u,@u0) attributes (default=don't)
+  -trim-x , -notrim-x    # do/don't compress //w/@xp using sentence-wide prefixes (default=do)
+  -trim   , -notrim      # set both -trim-t and -trim-x at the same time
 
  I/O Options:
   -ent    , -noent       # don't/do expand entities (default=don't (-ent))
