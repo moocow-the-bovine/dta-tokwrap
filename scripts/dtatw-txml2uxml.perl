@@ -233,7 +233,7 @@ sub txml2uxml {
       $sxp   = longestCommonXpathPrefix(@wxp);
       $snod->setAttribute('xp',$sxp);
       foreach $wi (0..$#wxp) {
-	$wxp = '-'.substr($wxp[$wi],length($sxp));
+	$wxp = '.'.substr($wxp[$wi],length($sxp));
 	$wnods->[$wi]->setAttribute('xp',$wxp);
       }
     }
