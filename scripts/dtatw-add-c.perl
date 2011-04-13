@@ -74,13 +74,17 @@ sub cb_char {
   $c_block = decode('UTF-8',$_[0]->original_string());
   while ($c_block =~ m/((?:\&[^\;]*\;)|(?: +)|(?:.))/sg) {
     $c_char = $1;
-    if ($c_char =~ /^\s+$/) {
-      if ($c_char =~ m/^ /) {
-	$c_char = ' '; ##-- bash multiple spaces to single spaces
-      } else {
-	$outfh->print($c_char);
-	next;
-      }
+    if ($c_char =~ /^\s+$/s) {
+      ##-- BUG Wed, 13 Apr 2011 16:04:21 +0200: bad handling of newlines in e.g.
+      ##     http://kaskade.dwds.de/dtae/book/view/brandes_naturlehre02_1831?p=70
+      ## + why is this code so complex anyways?
+      # if ($c_char =~ m/^ /) {
+      #	 $c_char = ' '; ##-- bash multiple spaces to single spaces
+      # } else {
+      #	 $outfh->print($c_char);
+      #	 next;
+      # }
+      $c_char = ' '; ##-- bash multiple spaces to single spaces
     }
     $outfh->print("<c xml:id=\"c", ++$cnum, "\">", encode('UTF-8',$c_char), "</c>");
   }
