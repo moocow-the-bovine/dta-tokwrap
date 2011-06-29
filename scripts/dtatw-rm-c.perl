@@ -1,4 +1,8 @@
-#!/usr/bin/perl -wp
+#!/usr/bin/perl -w
 
-s|</?c\b[^>]*>||g;       ##-- remove all <c> tags
+local $/=undef;
+$_=<>;
+s|\s+(?=<c\b)||g;        ##-- remove whitespace preceding <c> tags
+s|</?c\b[^>]*>||g;       ##-- remove all <c> tags (and any preceding whitespace)
 s|<lb\b[^\>]*/>|<lb/>|g; ##-- remove <lb> attributes too
+print;
