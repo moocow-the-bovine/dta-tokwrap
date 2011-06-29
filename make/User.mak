@@ -31,7 +31,7 @@
 
 ##-- small test
 xmldir = ./xmlsrc
-xml = $(wildcard $(xmldir)/ex1a.xml)
+#xml = $(wildcard $(xmldir)/ex1a.xml)
 #xml = $(wildcard $(xmldir)/*.xml)
 #xml = $(wildcard $(xmldir)/*.chr.xml)
 #xml = $(xmldir)/test-raw.xml
@@ -40,7 +40,7 @@ xml = $(wildcard $(xmldir)/ex1a.xml)
 #xml = $(xmldir)/ex4.xml
 #xml = $(wildcard $(xmldir)/ex[345].xml)
 #xml = $(xmldir)/ex6a.xml
-#xml = $(xmldir)/ex6.xml
+xml = $(xmldir)/ex6.xml
 #xml = $(wildcard $(xmldir)/ex[56].xml)
 #xml = $(xmldir)/kurz.xml
 

@@ -72,7 +72,7 @@ sub cb_char {
     return;
   }
   $c_block = decode('UTF-8',$_[0]->original_string());
-  while ($c_block =~ m/((?:\&[^\;]*\;)|(?: +)|(?:.))/sg) {
+  while ($c_block =~ m/((?:\&[^\;]*\;)|(?: +)|(?:\X))/sg) {
     $c_char = $1;
     if ($c_char =~ /^\s+$/s) {
       ##-- BUG Wed, 13 Apr 2011 16:04:21 +0200: bad handling of newlines in e.g.
