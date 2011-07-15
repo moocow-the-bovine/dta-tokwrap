@@ -17,6 +17,7 @@ use IO::File;
 
 use Carp;
 use strict;
+use utf8;
 
 ##==============================================================================
 ## Constants
@@ -145,6 +146,10 @@ sub defaults {
 			     ##-- other things
 			     #map { "$_\[not(parent::seg)\]" } qw(table note argument figure),
 			    ],
+	  hint_replace_xpaths => {
+				  ##-- formulae
+				  'formula' => '<ws/><w/><c text="FORMEL"/><w/><ws/>',
+				 },
 	  hint_stylestr => undef,
 	  hint_stylesheet => undef,
 
@@ -154,7 +159,7 @@ sub defaults {
 				 #qw(ref|fw|head), ##-- comment this out to tokenize EVERYTHING
 				 qw(ref|fw),       ##--  ... tokenize <head> (e.g. chapter titles), but not headers, footers, or references (TOC)
 				 qw(teiHeader),
-				 qw(formula),
+				 #qw(formula),
 				],
 	  sort_addkey_xpaths => [
 				 (map {"$_\[not(parent::seg)\]"} qw(table note argument figure)),
@@ -221,6 +226,18 @@ sub hint_stylestr {
       <xsl:apply-templates select="*|@*"/>
     </xsl:copy>
   </xsl:template>
+
+  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+  <!-- templates: implicit replacements -->'.join('',
+						  map { "
+  <xsl:template match=\"$_\">
+    <ws/>
+    <xsl:copy>
+      <xsl:apply-templates select=\"@*\"/>
+      $mbx0->{hint_replace_xpaths}{$_}
+    </xsl:copy>
+  </xsl:template>\n"
+							 } keys %{$mbx0->{hint_replace_xpaths}}).'
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- templates: implicit sentence breaks -->'.join('',

@@ -43,7 +43,8 @@ xmldir = ./xmlsrc
 #xml = $(xmldir)/ex6.xml
 #xml = $(wildcard $(xmldir)/ex[56].xml)
 #xml = $(xmldir)/kurz.xml
-xml = $(xmldir)/helm.xml
+#xml = $(xmldir)/helm.xml
+xml = $(xmldir)/huber.xml
 
 #xmldir = ../examples
 #xml    = $(xmldir)/kant_aufklaerung_1784.converted.chr.xml

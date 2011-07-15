@@ -10,7 +10,7 @@ use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Utils qw(:progs :libxml :libxslt :slurp :time);
 use DTA::TokWrap::Processor;
-use Encode qw(encode decode);
+use Encode qw(encode decode encode_utf8 decode_utf8);
 
 use XML::Parser;
 use IO::File;
@@ -150,6 +150,13 @@ sub initXmlParser {
       ($xoff,$xlen, $toff,$tlen) = split(/ /,$attrs{n}) if (exists($attrs{n}));
       $bx0off = $xp->current_byte();
       push(@$blocks, $blk={ key=>$key, elt=>$eltname, bx0off=>$bx0off, xoff=>$xoff,xlen=>$xlen, toff=>$toff,tlen=>$tlen });
+      if (defined($attrs{text})) {
+	##-- literal replacement text
+	#pop(@$blocks); ##-- DEBUG: ignore
+	$blk->{text} = $attrs{text};
+	@$blk{qw(xoff toff)} = @$blocks ? @{$blocks->[$#$blocks]}{qw(xoff toff)} : (0,0);
+	@$blk{qw(xlen tlen)} = (0,0);
+      }
     }
   };
 
@@ -202,6 +209,7 @@ sub initXmlParser {
 ##    xlen   =>$xlen,    ##-- XML byte length of this block (0 for hints)
 ##    toff   =>$toff,    ##-- raw-text byte offset where this block run begins
 ##    tlen   =>$tlen,    ##-- raw-text byte length of this block (0 for hints)
+##    text   =>$text,    ##-- raw-text for this block (overrides toff,tlen,xoff,xlen): e.g. inserted by $mkbx0->{hint_replace_xpaths}
 ##    otext  =>$otext,   ##-- output text for this block
 ##    otoff  =>$otoff,   ##-- output text byte offset where this block run begins
 ##    otlen  =>$otlen,   ##-- output text length (bytes)
@@ -253,11 +261,11 @@ sub mkbx {
   ##-- hack: txtdata: tokenizer input text buffer
   ##  + workaround for mantis bug #242 (http://odo.dwds.de/mantis/view.php?id=242)
   ##    : '"kontinuierte" quotes @ zeilenanfang --> müll'
-  $$txtbufr = decode('UTF-8',$$txtbufr) if (!utf8::is_utf8($$txtbufr));
+  $$txtbufr = decode_utf8($$txtbufr) if (!utf8::is_utf8($$txtbufr));
   $$txtbufr =~ s/ (\n[^\x{201e}"\n]+\n)([\x{201e}"]) / $1."\$QKEEP:$2\$"              /sgxe;
   $$txtbufr =~ s/ \n(\ *[\x{201e}"])                 / "\n".(" " x bytes::length($1)) /sgxe;
   $$txtbufr =~ s/ \n\$QKEEP:([^\$]+)\$               / "\n".$1                        /sgxe;
-  $$txtbufr = encode('UTF-8',$$txtbufr);
+  $$txtbufr = encode_utf8($$txtbufr);
 
   ##-- stamp
   $doc->{mkbx_stamp} = $doc->{bxdata_stamp} = timestamp(); ##-- stamp
@@ -271,7 +279,7 @@ sub mkbx {
 sub prune_empty_blocks {
   my ($mbx,$blocks) = @_;
   $blocks  = $mbx->{blocks} if (!$blocks);
-  @$blocks = grep { $_->{elt} ne 'c' || $_->{tlen} > 0 } @$blocks;
+  @$blocks = grep { $_->{elt} ne 'c' || defined($_->{text}) || $_->{tlen} > 0 } @$blocks;
   return $blocks;
 }
 
@@ -316,6 +324,10 @@ sub compute_block_text {
 
     elsif ($blk->{elt} eq 'lb') { $blk->{otext}=$LB; }
     elsif ($blk->{elt} eq 'ws') { $blk->{otext}=$WS; }
+    elsif (defined($blk->{text})) {
+      $mbx->debug("got literal text '$blk->{text}' (utf8=".(utf8::is_utf8($blk->{text}) ? 1 : 0).")");
+      $blk->{otext} = utf8::is_utf8($blk->{text}) ? encode_utf8($blk->{text}) : decode_utf8($blk->{text});
+    }
     else {
       $blk->{otext} = substr($$txbufr, $blk->{toff}, $blk->{tlen});
     }
