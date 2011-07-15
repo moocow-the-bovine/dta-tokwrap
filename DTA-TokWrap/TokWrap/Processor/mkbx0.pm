@@ -154,6 +154,7 @@ sub defaults {
 				 #qw(ref|fw|head), ##-- comment this out to tokenize EVERYTHING
 				 qw(ref|fw),       ##--  ... tokenize <head> (e.g. chapter titles), but not headers, footers, or references (TOC)
 				 qw(teiHeader),
+				 qw(formula),
 				],
 	  sort_addkey_xpaths => [
 				 (map {"$_\[not(parent::seg)\]"} qw(table note argument figure)),

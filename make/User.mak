@@ -40,9 +40,10 @@ xmldir = ./xmlsrc
 #xml = $(xmldir)/ex4.xml
 #xml = $(wildcard $(xmldir)/ex[345].xml)
 #xml = $(xmldir)/ex6a.xml
-xml = $(xmldir)/ex6.xml
+#xml = $(xmldir)/ex6.xml
 #xml = $(wildcard $(xmldir)/ex[56].xml)
 #xml = $(xmldir)/kurz.xml
+xml = $(xmldir)/helm.xml
 
 #xmldir = ../examples
 #xml    = $(xmldir)/kant_aufklaerung_1784.converted.chr.xml
