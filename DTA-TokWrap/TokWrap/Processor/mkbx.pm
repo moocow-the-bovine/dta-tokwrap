@@ -325,7 +325,7 @@ sub compute_block_text {
     elsif ($blk->{elt} eq 'lb') { $blk->{otext}=$LB; }
     elsif ($blk->{elt} eq 'ws') { $blk->{otext}=$WS; }
     elsif (defined($blk->{text})) {
-      $mbx->debug("got literal text '$blk->{text}' (utf8=".(utf8::is_utf8($blk->{text}) ? 1 : 0).")");
+      #$mbx->debug("got literal text '$blk->{text}' (utf8=".(utf8::is_utf8($blk->{text}) ? 1 : 0).")");
       $blk->{otext} = utf8::is_utf8($blk->{text}) ? encode_utf8($blk->{text}) : decode_utf8($blk->{text});
     }
     else {
