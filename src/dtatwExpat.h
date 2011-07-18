@@ -33,6 +33,20 @@ const XML_Char *get_attr(const XML_Char *aname, const XML_Char **attrs)
   return NULL;
 }
 
+/*--------------------------------------------------------------
+ * idval = get_xmlid(name, attrs)
+ *  + looks for "xml:id" or "id" attribute
+ */
+static inline
+const XML_Char *get_xmlid(const XML_Char **attrs)
+{
+  int i;
+  for (i=0; attrs[i]; i += 2) {
+    if (strcmp("id",attrs[i])==0 || strcmp("xml:id",attrs[i])==0) return attrs[i+1];
+  }
+  return NULL;
+}
+
 /*======================================================================
  * Utils: expat: parser context
  */

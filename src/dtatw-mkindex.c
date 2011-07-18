@@ -170,7 +170,7 @@ void cb_start(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
 	      prog, data->c_xoffset, XML_GetCurrentByteIndex(data->xp));
       exit(3);
     }
-    if ( (id=get_attr("xml:id", attrs)) ) {
+    if ( (id=get_xmlid(attrs)) ) {
       assert(strlen(id) < CIDBUFSIZE);
       strcpy(data->c_id,id);
     } else {

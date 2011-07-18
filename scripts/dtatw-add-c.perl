@@ -18,7 +18,9 @@ our $prog = basename($0);
 our $DEBUG = 0;
 
 ##-- vars: I/O
-our $outfile = "-"; ##-- default: stdout
+our $xmlns = ''; #'xmlns:';  ##-- 'xml:' namespace prefix+colon for output id attributes (empty for none)
+our $outfile = "-";          ##-- default: stdout
+
 
 ##-- profiling
 our $profile = 0;
@@ -40,6 +42,7 @@ GetOptions(##-- General
 	   'help|h' => \$help,
 
 	   ##-- I/O
+	   'id-namespace|xmlns|idns|ns!' => sub { $xmlns=$_[1] ? "xml:" : ''; },
 	   'output|out|o=s' => \$outfile,
 	   'profile|p!' => \$profile,
 	  );
@@ -58,7 +61,7 @@ pod2usage({
 
 ## undef = cb_init($expat)
 sub cb_init {
-  $cnum = 0;
+  #$cnum = 0;
   $text_depth = 0;
   $c_depth = 0;
 }
@@ -86,7 +89,7 @@ sub cb_char {
       # }
       $c_char = ' '; ##-- bash multiple spaces to single spaces
     }
-    $outfh->print("<c xml:id=\"c", ++$cnum, "\">", encode('UTF-8',$c_char), "</c>");
+    $outfh->print("<c ${xmlns}id=\"c", ++$cnum, "\">", encode('UTF-8',$c_char), "</c>");
   }
 }
 
@@ -101,10 +104,10 @@ sub cb_start {
     }
     ++$c_depth;
     $cs = $_[0]->original_string();
-    if ($cs !~ m/\bxml:id=/) {
-      ##-- pre-existing <c> WITOUT xml:id attribute: assign one
+    if ($cs !~ m/\s(?:xml\:)?id=\"[^\"]+\"/io) {
+      ##-- pre-existing <c> WITHOUT xml:id attribute: assign one
       ++$cnum;
-      $cs =~ s|(/?>)$| xml:id="c$cnum"$1|;
+      $cs =~ s|(/?>)$| ${xmlns}id="c$cnum"$1|o;
     }
     ##-- ... and print
     $outfh->print($cs);
@@ -162,7 +165,23 @@ $tv_started = [gettimeofday] if ($profile);
 
 ##-- parse file(s)
 foreach $infile (@ARGV) {
-  $xp->parsefile($infile);
+  ##-- slurp input file
+  local $/=undef;
+  open(XML,"<$infile") or die("$prog: open failed for input file '$infile': $!");
+  $buf = <XML>;
+  close XML;
+
+  ##-- initialize $cnum counter by checking any pre-assigned //c/@id values (fast regex hack)
+  $cnum = 0;
+  while ($buf =~ m/\<c\b[^\>]*\s(?:xml\:)?id=\"c([^\"]+)\"/iosg) {
+    $cnum = $1 if ($1 > $cnum);
+  }
+  print STDERR "$prog: initialized \$cnum=$cnum\n"; ##-- DEBUG
+
+  ##-- assign new //c/@ids
+  $xp->parse($buf);
+
+  ##-- profile
   $nchrs   += $cnum;
   $nxbytes += (-s $infile) if ($infile ne '-');
 }
@@ -207,6 +226,7 @@ dtatw-add-c.perl - add <c> elements to DTA XML documents
  I/O Options:
   -output FILE           # specify output file (default='-' (STDOUT))
   -profile, -noprofile   # output profiling information? (default=no)
+  -xmlns  , -noxmlns     # do/don't use 'xml:' namespace prefix on id attributes (default=don't)
 
 =cut
 
