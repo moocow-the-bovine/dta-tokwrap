@@ -14,6 +14,10 @@
 //#define WARN_ON_OVERLAP 1
 #undef WARN_ON_OVERLAP
 
+// COMPRESS_CIDS
+//  + if defined, c id lists will be compressed into '${CID_FIRST}+${LEN}' lists
+#define COMPRESS_CIDS 1
+
 //-- want_profile: if true, some profiling information will be printed to stderr
 //int want_profile = 1;
 int want_profile = 0;
@@ -35,7 +39,7 @@ const char *aElt   = "a";          //-- output token-analysis element
 const char *posAttr = "b";         //-- output byte-position attribute
 const char *olAttr  = "overlap";   //-- output overlap-properties attribute
 const char *textAttr = "t";        //-- output token-text attribute
-const char *cAttr    = "c";        //-- output token-chars attribute (space-separated xml:ids from .cx file)
+const char *cAttr    = "c";        //-- output token-chars attribute (space-separated (xml:)?ids from .cx file)
 
 
 /*======================================================================
@@ -95,8 +99,8 @@ typedef struct {
   cxRecord  *w_cx  [WORDBUF_CX_LEN];   //-- word .cx buffer
 } ttWordBuffer;
 
-unsigned int s_id_ctr = 0;  //-- counter for generated //s/@xml:id
-unsigned int w_id_ctr = 0;  //-- counter for generated //w/@xml:id
+unsigned int s_id_ctr = 0;  //-- counter for generated //s/@(xml:)?id
+unsigned int w_id_ctr = 0;  //-- counter for generated //w/@(xml:)?id
 
 //--------------------------------------------------------------
 /* tt_next_word(f_out, w0, w1, &s_open)
@@ -167,12 +171,12 @@ static void tt_next_word(FILE *f_out, ttWordBuffer *w0, ttWordBuffer *w1, int *s
     }
     //-- output: check for BOS (depending only on *s_open; regardless of ttwSB flag)
     if (!*s_open) {
-      fprintf(f_out, "%s<%s xml:id=\"s%lu\">", indent_s, sElt, ++s_id_ctr);
+      fprintf(f_out, "%s<%s %s=\"s%lu\">", indent_s, sElt, xmlid_name, ++s_id_ctr);
       *s_open = 1;
     }
 
     //-- output: w0: begin: open <w ...>
-    fprintf(f_out, "%s<%s xml:id=\"w%lu\"", indent_w, wElt, ++w_id_ctr);
+    fprintf(f_out, "%s<%s %s=\"w%lu\"", indent_w, wElt, xmlid_name, ++w_id_ctr);
 
     //-- output: w0: location
     if (posAttr)
@@ -187,15 +191,30 @@ static void tt_next_word(FILE *f_out, ttWordBuffer *w0, ttWordBuffer *w1, int *s
 
     //-- output: w0: c-ids
     if (cAttr) {
-      int i;
-      cxRecord *cx_prev = NULL; //-- previous cx record whose ID we've output, or NULL on first <c>
+      int i,j,len;
+      cxRecord *icx_prev = NULL; //-- previous cx record whose ID we've output, or NULL on first <c>
+      cxRecord *jcx_prev = NULL; //-- ... for compressed c id lists
       fprintf(f_out, " %s=\"", cAttr);
       for (i=0; i < w0->w_len; i++) {
-	cxRecord *cx = txtb2cx.data[w0->w_off+i];
-	if (!cx_id_ok(cx) || cx==cx_prev) continue;  //-- ignore pseudo-ids and duplicates
-	if (cx_prev) fputc(' ',f_out);
-	if (cx->id)  put_escaped_str(f_out, cx->id, -1);
-	cx_prev = cx;
+	cxRecord *icx = txtb2cx.data[w0->w_off+i];
+	if (!cx_id_ok(icx) || icx==icx_prev) continue;  //-- ignore pseudo-ids and duplicates
+	if (icx_prev) fputc(' ',f_out);
+	if (icx->id)  put_escaped_str(f_out, icx->id, -1);
+#ifdef COMPRESS_CIDS
+	//-- compressed //c id-list output: get adjacent run length
+	jcx_prev = icx;
+	for (len=1, j=(i+1); j < w0->w_len; j++) {
+	  cxRecord *jcx = txtb2cx.data[w0->w_off+j];
+	  if (jcx==jcx_prev) continue;  //-- ignore duplicates
+	  if (!cx_id_ok(jcx) || !cid_is_adjacent(jcx_prev->id,jcx->id)) break;
+	  jcx_prev = jcx;
+	  len++;
+	}
+	if (len > 1) fprintf(f_out, "+%d", len);
+	i=j-1;
+	icx = jcx_prev;
+#endif /* COMPRESS_CIDS */
+	icx_prev = icx;
       }
       fputc('"', f_out);
     }

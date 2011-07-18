@@ -29,14 +29,15 @@ void cb_start(ParseData *data, const XML_Char *name, const XML_Char **attrs)
   if (strcmp(name,"w")!=0) return;
   fprintf(data->f_out, "%s<w", indent_w);
   for (i=0; attrs[i] && (!xml_id || !ca || !ta); i += 2) {
-    if      (strcmp(attrs[i],"xml:id")==0) xml_id=attrs[i+1];
+    if      (strcmp(attrs[i],"id")==0)     xml_id=attrs[i+1];
+    else if (strcmp(attrs[i],"xml:id")==0) xml_id=attrs[i+1];
     else if (strcmp(attrs[i],"c")==0)          ca=attrs[i+1];
 #ifdef WANT_T_ATTR
     else if (strcmp(attrs[i],"t")==0)          ta=attrs[i+1];
 #endif
   }
   if (xml_id) {
-    fputs(" xml:id=\"", data->f_out);
+    fprintf(data->f_out, " %s=\"", xmlid_name);
     put_escaped_str(data->f_out, xml_id, -1);
     fputc('"', data->f_out);
   }

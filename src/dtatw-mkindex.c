@@ -6,7 +6,7 @@
  */
 
 #define CTBUFSIZE    256 //-- <c>-local text buffer size
-#define CIDBUFSIZE   256 //-- <c>-local xml:id buffer size
+#define CIDBUFSIZE   256 //-- <c>-local (xml:)?id buffer size
 
 typedef struct {
   XML_Parser xp;        //-- expat parser
@@ -22,7 +22,7 @@ typedef struct {
   ByteOffset loc_toff;  //-- last text-offset written to .sx as location-block (see LOC_FMT, cb_default())
   XML_Char c_tbuf[CTBUFSIZE]; //-- text buffer for current <c>
   int c_tlen;                 //-- byte length of text in character buffer c_tbuf[]
-  XML_Char c_id[CIDBUFSIZE];  //-- xml:id of current <c>
+  XML_Char c_id[CIDBUFSIZE];  //-- (xml:)?id of current <c>
   ByteOffset c_xoffset; //-- byte offset in XML stream at which current <c> started
   ByteOffset c_toffset; //-- byte offset in text stream at which current <c> started
 } TokWrapData;

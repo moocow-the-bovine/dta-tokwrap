@@ -8,6 +8,8 @@ char *prog = "dtatwCommon"; //-- used for error reporting
 char *CX_NIL_ID = "-";
 char *CX_LB_ID  = "$LB$";
 char *CX_PB_ID  = "$PB$";
+//char *xmlid_name = "xml:id";
+char *xmlid_name = "id";
 
 /*======================================================================
  * Utils: basename
@@ -434,4 +436,31 @@ bxRecord **cx2bxIndex(cxData *cxd, bxData *bxd, Offset2CxIndex *tx2cx)
   }
 
   return cx2bx;
+}
+
+//--------------------------------------------------------------
+int parse_cid(const char *idstr, int *prefix_len)
+{
+  int plen=0, ctr=0;
+  char *cp = strrchr(idstr, 'c');
+  if (cp != NULL) {
+    char *tailptr=NULL;
+    plen = cp-idstr;
+    ctr  = strtol(cp+1, &tailptr, 0);
+  }
+  if (prefix_len) *prefix_len = plen;
+  return ctr;
+}
+
+//--------------------------------------------------------------
+int cid_is_adjacent(const char *cid1, const char *cid2) {
+  int plen1,plen2;
+  int ctr1 = parse_cid(cid1, &plen1);
+  int ctr2 = parse_cid(cid2, &plen2);
+  return ((ctr1 != 0)
+	  //&& (ctr2 != 0)
+	  && (plen1==plen2)
+	  && (strncmp(cid1,cid2,plen1)==0)
+	  && (ctr2 = ctr1+1)
+	  );
 }

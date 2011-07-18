@@ -20,6 +20,7 @@ our $DEBUG = 0;
 ##-- vars: I/O
 our $outfile = "-";     ##-- default: stdout
 our $tracefile = undef; ##-- default: none
+our $xmlns = '';        ##-- output namespace prefix (e.g. "xml:")
 
 ##-- XML::Parser stuff
 our ($xp); ##-- underlying XML::Parser object
@@ -34,6 +35,7 @@ GetOptions(##-- General
 	   'help|h' => \$help,
 
 	   ##-- I/O
+	   'id-namespace|xmlns|idns|ns!' => sub { $xmlns=$_[1] ? 'xml:' : ''; },
 	   'output-file|outfile|output|out|o=s' => \$outfile,
 	   'trace-file|tracefile|trace|tf|t=s' => \$tracefile,
 	   'trace-stderr|te' => sub { $tracefh=\*STDERR; },
@@ -72,14 +74,13 @@ sub cb_start {
     %attrs = @_[2..$#_];
 
     ##-- get and remove old id
-    $id_old = $attrs{'xml:id'};
-    $id_old = $attrs{'id'} if (!defined($id_old));
+    $id_old = $attrs{'id'} || $attrs{'xml:id'};
     $cstr = $_[0]->original_string();
     $cstr =~ s/\b(?:xml:)?id=\"[^\"]*\"//;
 
     ##-- compute and add new id
     $id_new = "$pb_idstr.c".++$c_i;
-    $cstr =~ s|\s*(/?>)$| xml:id="$id_new"$1|;
+    $cstr =~ s|\s*(/?>)$| ${xmlns}id="$id_new"$1|;
 
     ##-- maybe print trace
     $tracefh->print($id_old, "\t", $id_new, "\n") if (defined($tracefh));
@@ -180,6 +181,7 @@ dtatw-cids2local.perl - convert //c/@xml:id attributes to page-local encoding
   -help                  # this help message
   -output FILE           # specify output file (default='-' (STDOUT))
   -trace  TRACEFILE      # send trace output to file (default=none)
+  -xmlns , -noxmlns      # do/don't prepend 'xml:' to output id attributes (default=don't)
 
 =cut
 

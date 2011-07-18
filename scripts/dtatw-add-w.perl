@@ -23,11 +23,11 @@ our $outfile = "-";   ##-- default: stdout
 
 ##-- vars: xml structure
 our $w_refAttr = 'n';      ##-- attribute in which to place id-reference for non-initial <w>-segments
-our $w_idAttr  = 'xml:id'; ##-- attribute in which to place literal id for initial <w>-segments
+our $w_idAttr  = 'id';     ##-- attribute in which to place literal id for initial <w>-segments
 
 ##-- vars: default filename infixes
 our $srcInfix = '.char';
-our $soInfix  = '.w';
+our $soInfix  = '.t';
 
 ##-- constants: verbosity levels
 our $vl_progress = 1;
@@ -107,16 +107,25 @@ sub so_cb_init {
 }
 
 ## undef = cb_start($expat, $elt,%attrs)
+our ($cs,@cids,$cp,$ci0,$cin);
 sub so_cb_start {
   #($_xp,$_elt,%_attrs) = @_;
   %_attrs = @_[2..$#_];
-  if ($_[1] eq 'c' && defined($cid=$_attrs{$cRefAttr})) {
+  if ($_[1] eq 'w') {
+    $wid = $_attrs{'id'} || $_attrs{'xml:id'};
+    push(@w_ids,$wid);
+    if (defined($cs=$_attrs{'cs'}) || defined($cs=$_attrs{'c'})) {
+      ##-- .t.xml or .u.xml format: id-list in @cs or @c attribute
+      @cids = map {
+	(m/^(.*)c([0-9]+)\+([0-9]+)/ ? (map {$1.'c'.$_} ($2..($2+$3-1))) : $_)
+      } split(' ',$cs);
+      $cid2wid{$_} = $wid foreach (@cids);
+    }
+  }
+  elsif ($_[1] eq 'c' && defined($cid=$_attrs{$cRefAttr})) {
+    ##-- .w.xml format (big & ugly)
     $cid =~ s/^\#//;
     $cid2wid{$cid} = $wid;
-  }
-  elsif ($_[1] eq 'w') {
-    $wid = $_attrs{'xml:id'};
-    push(@w_ids,$wid);
   }
 }
 
@@ -174,7 +183,7 @@ sub src2segs_cb_start {
   ##--------------------------
   if ($_[1] eq 'c') {
     %_attrs = @_[2..$#_];
-    $cid = $_attrs{'xml:id'};
+    $cid = $_attrs{'id'} || $_attrs{'xml:id'};
     $wid = $cid2wid{$cid||''} || '';
     if ($w_xref ne $wid) {
       ##-- flush current segment & start a new one
@@ -367,7 +376,7 @@ dtatw-add-w.perl - splice standoff <w>-records into original .char.xml files
 
 =head1 SYNOPSIS
 
- dtatw-add-w.perl [OPTIONS] CHAR_XML_FILE W_XML_FILE
+ dtatw-add-w.perl [OPTIONS] CHAR_XML_FILE (W|T|U)_XML_FILE
 
  General Options:
   -help                  # this help message

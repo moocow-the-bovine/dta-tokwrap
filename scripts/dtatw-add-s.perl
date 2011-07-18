@@ -22,12 +22,12 @@ our $DEBUG = 0;
 our $outfile = "-";   ##-- default: stdout
 
 ##-- vars: xml structure
-our $s_refAttr = 'n';      ##-- attribute in which to place id-reference for non-initial <w>-segments
-our $s_idAttr  = 'xml:id'; ##-- attribute in which to place literal id for initial <w>-segments
+our $s_refAttr = 'n';      ##-- attribute in which to place id-reference for non-initial <s>-segments
+our $s_idAttr  = 'id';     ##-- attribute in which to place literal id for initial <s>-segments
 
 ##-- vars: default filename infixes
 our $srcInfix = '.cw';
-our $soInfix  = '.s';
+our $soInfix  = '.t';
 
 ##-- constants: verbosity levels
 our $vl_progress = 1;
@@ -96,7 +96,7 @@ our ($wid);      ##-- id of currently open <w>, or undef
 our (@s_ids);     ##-- $sid = $s_ids[$wix];           # <s> id-strings in .s.xml doc-order (serialized order)
 our (%wid2sid);  ##-- $sid = $wid2sid{$wid}         # <s> id-strings from <w> id-strings
 
-our $wRefAttr = 'ref'; ##-- <w> attribute carrying id-reference for .s.xml file
+our $wRefAttr = 'ref'; ##-- <w> attribute carrying id-reference for .s.xml file (.. but 'id', 'xml:id' are checked first)
 
 ## undef = cb_init($expat)
 sub so_cb_init {
@@ -110,12 +110,12 @@ sub so_cb_init {
 sub so_cb_start {
   #($_xp,$_elt,%_attrs) = @_;
   %_attrs = @_[2..$#_];
-  if ($_[1] eq 'w' && defined($wid=$_attrs{$wRefAttr})) {
+  if ($_[1] eq 'w' && defined($wid=$_attrs{'id'} || $_attrs{'xml:id'} || $_attrs{$wRefAttr})) {
     $wid =~ s/^\#//;
     $wid2sid{$wid} = $sid;
   }
   elsif ($_[1] eq 's') {
-    $sid = $_attrs{'xml:id'};
+    $sid = $_attrs{'id'} || $_attrs{'xml:id'};
     push(@s_ids,$sid);
   }
 }
@@ -175,9 +175,9 @@ sub src2segs_cb_start {
   ##--------------------------
   if ($_[1] eq 'w') {
     %_attrs = @_[2..$#_];
-    if (!($wid = $_attrs{'xml:id'})) {
+    if (!($wid = $_attrs{'id'} || $_attrs{'xml:id'})) {
       if (!$_attrs{n}) {
-	##-- bogus '//w[not(@xml:id) and not(@n)]', maybe from OCR software: flush segment but otherwise ignore it
+	##-- bogus '//w[not(@id) and not(@n)]', maybe from OCR software: flush segment but otherwise ignore it
 	src2segs_flush_segment();
 	push(@is_w_stack,0);
 	return;
@@ -185,14 +185,12 @@ sub src2segs_cb_start {
       ($wid = $_attrs{'n'}) =~ s/^\#//;
     }
     $sid = $wid2sid{$wid||''} || '';
-    #if ($s_xref ne $sid) {
-      ##-- flush current segment & start a new one
-      src2segs_flush_segment();
-      $s_xref = $sid;
-      $s_xoff = $s_xend = $_[0]->current_byte();
-    #} else {
-    #  $s_xend = $_[0]->current_byte();
-    #}
+
+    ##-- flush current segment & start a new one
+    src2segs_flush_segment();
+    $s_xref = $sid;
+    $s_xoff = $s_xend = $_[0]->current_byte();
+
     push(@is_w_stack,1);
     return;
   }
@@ -378,7 +376,7 @@ dtatw-add-s.perl - splice standoff <s>-records into .cw.xml files
 
 =head1 SYNOPSIS
 
- dtatw-add-w.perl [OPTIONS] CW_XML_FILE S_XML_FILE
+ dtatw-add-w.perl [OPTIONS] CW_XML_FILE (S|T|U)_XML_FILE
 
  General Options:
   -help                  # this help message

@@ -27,12 +27,12 @@ void cb_start(ParseData *data, const XML_Char *name, const XML_Char **attrs)
 {
   const XML_Char *xml_id;
   if (strcmp(name,"s")==0) {
-    xml_id = get_attr("xml:id", attrs);
-    fprintf(data->f_out, "%s<s xml:id=\"%s\">", indent_s, (xml_id ? xml_id : ""));
+    xml_id = get_xmlid(attrs);
+    fprintf(data->f_out, "%s<s %s=\"%s\">", indent_s, xmlid_name, (xml_id ? xml_id : ""));
     data->s_depth++;
   }
   else if (data->s_depth > 0 && strcmp(name,"w")==0) {
-    xml_id = get_attr("xml:id", attrs);
+    xml_id = get_xmlid(attrs);
     fprintf(data->f_out, "%s<w ref=\"#%s\"/>", indent_w, (xml_id ? xml_id : ""));
     data->w_depth++;
   }

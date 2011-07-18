@@ -32,7 +32,7 @@ while (<>) {
     next;
   }
   elsif (/^\%\% Sentence (.*)$/) {
-    $outbuf .= "${indentS}<$sElt xml:id=\"".xmlstr($1)."\">" if (!$isS);
+    $outbuf .= "${indentS}<$sElt id=\"".xmlstr($1)."\">" if (!$isS);
     $isS = 1;
     next;
   }
@@ -98,7 +98,7 @@ while (<>) {
   ##-- append xml-ified token to buffer
   $outbuf .=
     (''
-     .$indentW."<w xml:id=\"".xmlstr($wid)."\" t=\"".xmlstr($wtext)."\" b=\"$wloc\" c=\"$wchars\">"
+     .$indentW."<w id=\"".xmlstr($wid)."\" t=\"".xmlstr($wtext)."\" b=\"$wloc\" c=\"$wchars\">"
      .(defined($wxlit) ? ($indentW1.$wxlit) : '') #"$indentW1<xlit/>"
      .(defined($wlts)    ? ($indentW1."<lts>${wlts}${indentW1}</lts>") : '') #"$indentW1<lts/>"
      .(defined($weqpho)  ? ($indentW1."<eqpho>${weqpho}${indentW1}</eqpho>") : '') #"$indentW1<eqpho/>"

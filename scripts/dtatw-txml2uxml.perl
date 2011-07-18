@@ -177,8 +177,7 @@ sub txml2uxml {
     if ($do_pb) {
       if (defined($wpx)) {
 	##-- pagebreak index from .wpx file
-	$xid = $wnod->getAttribute('id');
-	$xid = $wnod->getAttribute('xml:id') if (!defined($xid));
+	$xid = $wnod->getAttribute('id') || $wnod->getAttribute('xml:id');
 	$pxdata=$wpx->{$xid};
       }
       elsif (defined($cpx)) {

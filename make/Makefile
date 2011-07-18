@@ -534,18 +534,18 @@ splice: cw-xml cws-xml
 splice-noc: cws-noc-fmt-xml
 cws-noc-fmt-xml: $(XML:.xml=.cws.noc.fmt.xml)
 
-##-- splice: (.char.xml + .w.xml) --> .cw.xml
+##-- splice: (.char.xml + .t.xml) --> .cw.xml
 cw-xml: $(XML:.xml=.cw.xml)
-%.cw.xml: $(xmldir)/%.xml %.w.xml scripts
-	$(SCRIPT_DIR)dtatw-add-w.perl -q -o $@ $< $*.w.xml || (rm -f $@; false)
+%.cw.xml: $(xmldir)/%.xml %.t.xml scripts
+	$(SCRIPT_DIR)dtatw-add-w.perl -q -o $@ $< $*.t.xml || (rm -f $@; false)
 
 no-cw-xml: ; rm -r *.cw.xml
 CLEAN_FILES += *.cw.xml
 
-##-- splice: (.cw.xml + .s.xml) --> .cws.xml
+##-- splice: (.cw.xml + .t.xml) --> .cws.xml
 cws-xml: $(XML:.xml=.cws.xml)
-%.cws.xml: %.cw.xml %.s.xml scripts
-	$(SCRIPT_DIR)dtatw-add-s.perl -q -o $@ $< $*.s.xml  || (rm -f $@; false)
+%.cws.xml: %.cw.xml %.t.xml scripts
+	$(SCRIPT_DIR)dtatw-add-s.perl -q -o $@ $< $*.t.xml  || (rm -f $@; false)
 
 no-cws-xml: ; rm -r *.cws.xml
 CLEAN_FILES += *.cws.xml

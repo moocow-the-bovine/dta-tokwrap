@@ -23,7 +23,6 @@ our $outfile = "-";   ##-- default: stdout
 
 ##-- vars: xml structure
 our $c_nameRe  = '^c$';    ##-- element name to index
-our $c_idAttr  = 'xml:id'; ##-- attribute in which to read literal id for <c>s
 our $do_xpaths = 1;        ##-- index xpaths?
 
 ##-- constants: verbosity levels
@@ -99,7 +98,7 @@ sub cb_start {
   ##--------------------------
   if ($_[1] =~ $c_nameRe) {
     %_attrs = @_[2..$#_];
-    $cid = $_attrs{$c_idAttr};
+    $cid = $_attrs{'id'} || $_attrs{'xml:id'};
     $xpath = '/'.join('/', map {$path[$_].'['.$dtrs[$_]{$path[$_]}.']'} (0..$#path)) if ($do_xpaths);
     ##-- dump it
     $outfh->print(join("\t", ($cid||'NULL'), $N_pb, ($pb_n||'NULL'), ($pb_facs||'NULL'), $xpath), "\n");

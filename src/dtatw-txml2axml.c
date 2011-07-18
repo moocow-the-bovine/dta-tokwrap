@@ -5,12 +5,12 @@
  * Globals
  */
 
-#define XMLID_BUFLEN 1024 //-- maximum w/@xml:id length
+#define XMLID_BUFLEN 1024 //-- maximum w/@(xml:)?id length
 
 typedef struct {
   XML_Parser xp;            //-- expat parser
   FILE *f_out;              //-- output file
-  char  w_id[XMLID_BUFLEN]; //-- buffer for xml:id of currently open 'w' element
+  char  w_id[XMLID_BUFLEN]; //-- buffer for (xml:)?id of currently open 'w' element
   int w_depth;              //-- number of open 'w' elements
   int a_depth;              //-- number of open 'a' elements in open 'w' elements
 } ParseData;
@@ -30,7 +30,7 @@ void cb_start(ParseData *data, const XML_Char *name, const XML_Char **attrs)
   if (strcmp(name,"w")==0) {
     const XML_Char *xml_id;
     assert(data->w_depth==0 /* can't handle nested 'w' elements */);
-    xml_id = get_attr("xml:id", attrs);
+    xml_id = get_xmlid(attrs);
     assert(strlen(xml_id) < XMLID_BUFLEN /* id buffer overflow */);
     strcpy(data->w_id, xml_id);
     data->w_depth++;

@@ -26,7 +26,7 @@ typedef int ByteLen;
 
 extern char *prog;
 
-//-- CX_NIL_ID: pseudo-id used for missing xml:id attributes on <c> elements
+//-- CX_NIL_ID: pseudo-id used for missing (xml:)?id attributes on <c> elements
 extern char *CX_NIL_ID; //-- default: "-"
 
 //-- CX_LB_ID : pseudo-ID for <lb/> records
@@ -34,6 +34,9 @@ extern char *CX_LB_ID; //-- default: "$LB$"
 
 //-- CX_LB_ID : pseudo-ID for <pb/> records
 extern char *CX_PB_ID; //-- default: "$PB$"
+
+//-- xmlid_attr : output attribute for (xml:)?id attributes (default="id")
+extern char *xmlid_name; 
 
 /*======================================================================
  * Debug
@@ -188,7 +191,7 @@ size_t file_slurp(FILE *f, char **bufp, size_t buflen);
 
 // cxRecord : struct for character-index records as loaded from .cx file
 typedef struct {
-  char        *id;      //-- xml:id of source <c>
+  char        *id;      //-- (xml:)?id of source <c>
   ByteOffset xoff;      //-- original xml byte offset
   ByteLen    xlen;      //-- original xml byte length
   ByteOffset toff;      //-- .tx byte offset
@@ -266,5 +269,12 @@ Offset2CxIndex *txt2cxIndex(Offset2CxIndex *txto2cx, bxData *bxd, Offset2CxIndex
 // cx2bxIndex(): init/alloc: bxRecord *bx = cx2bx[cx_index]
 bxRecord **cx2bxIndex(cxData *cxd, bxData *bxd, Offset2CxIndex *tx2cx);
 
+// parse_cid(): parses //c/@id values into prefix && numeric counter (integer parsed following final 'c')
+//  + returns integer value of numeric counter (0 on error)
+//  + if prefix_len is non-null, it will hold the length of the prefix on return
+int parse_cid(const char *idstr, int *prefix_len);
+
+// cid_is_adjacent(): check whether cid2 immediately follows cid1 (uses parse_cid())
+int cid_is_adjacent(const char *cid1, const char *cid2);
 
 #endif /* DTATW_COMMON_H */
