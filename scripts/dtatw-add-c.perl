@@ -173,7 +173,7 @@ foreach $infile (@ARGV) {
 
   ##-- initialize $cnum counter by checking any pre-assigned //c/@id values (fast regex hack)
   $cnum = 0;
-  while ($buf =~ m/\<c\b[^\>]*\s(?:xml\:)?id=\"c([^\"]+)\"/iosg) {
+  while ($buf =~ m/\<c\b[^\>]*\s(?:xml\:)?id=\"c(\d+)\"/iosg) {
     $cnum = $1 if ($1 > $cnum);
   }
   print STDERR "$prog: initialized \$cnum=$cnum\n"; ##-- DEBUG
