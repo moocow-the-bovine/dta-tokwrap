@@ -176,7 +176,7 @@ foreach $infile (@ARGV) {
   while ($buf =~ m/\<c\b[^\>]*\s(?:xml\:)?id=\"c(\d+)\"/iosg) {
     $cnum = $1 if ($1 > $cnum);
   }
-  print STDERR "$prog: initialized \$cnum=$cnum\n"; ##-- DEBUG
+  #print STDERR "$prog: initialized \$cnum=$cnum\n"; ##-- DEBUG
 
   ##-- assign new //c/@ids
   $xp->parse($buf);
