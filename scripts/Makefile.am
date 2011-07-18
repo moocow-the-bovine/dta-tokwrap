@@ -50,6 +50,7 @@ bin_SCRIPTS = \
 	dtatw-tt-dictapply.perl \
 	dtatw-cabtt2xml.perl \
 	dtatw-txml2uxml.perl \
+	dtatw-splice.perl \
 	file-substr.perl
 
 #	dtatw-txml2cspan.perl

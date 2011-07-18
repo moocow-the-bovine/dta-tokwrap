@@ -168,10 +168,10 @@ endif
 ifeq "$(xml_wfcheck)" ""
 
 ifneq "$(shell which xmlstarlet 2>/dev/null)" ""
-xml_wfcheck := xmlstarlet val -w -e
+xml_wfcheck := xmlstarlet val -w -b -e
 else
 ifneq "$(shell which xml 2>/dev/null)" ""
-xml_wfcheck := xml val -w -e
+xml_wfcheck := xml val -w -b -e
 else
 ##--/ifneq "$(shell which xml 2>/dev/null)" ""
 xml_wfcheck := xmllint --noout
@@ -209,7 +209,8 @@ REALCLEAN_FILES += \
 ##--------------------------------------------------------------
 ## Configuration: Defaults: Top-Level targets
 
-ALL_TARGETS ?= src-xml-errors t-xml s-xml w-xml a-xml so-xml-errors
+#ALL_TARGETS ?= src-xml-errors t-xml s-xml w-xml a-xml so-xml-errors
+ALL_TARGETS ?= src-xml-errors t-xml t-xml-errors
 
 ALL_XML_TARGETS ?= all u-xml cpx cab-xml-xlit cws-xml cws-noc-fmt-xml extra-xml-errors
 #cab-xml-full
@@ -479,6 +480,9 @@ no-standoff: no-s-xml no-w-xml no-a-xml
 
 %-standoff: %.s.xml %.w.xml %.a.xml
 
+T_XML_FILES = \
+	$(XML:.xml=.t.xml)
+
 STANDOFF_XML_FILES = \
 	$(XML:.xml=.s.xml) \
 	$(XML:.xml=.w.xml) \
@@ -533,6 +537,7 @@ CLEAN_FILES += *.a.xml
 splice: cw-xml cws-xml
 splice-noc: cws-noc-fmt-xml
 cws-noc-fmt-xml: $(XML:.xml=.cws.noc.fmt.xml)
+cws-noc-xml: $(XML:.xml=.cws.noc.xml)
 
 ##-- splice: (.char.xml + .t.xml) --> .cw.xml
 cw-xml: $(XML:.xml=.cw.xml)
@@ -750,6 +755,7 @@ extra-xml-errors: cab-xml-errors cws-xml-errors
 
 src-xml-errors: $(corpus).src.xml.errors
 so-xml-errors: $(corpus).so.xml.errors
+t-xml-errors: $(corpus).t.xml.errors
 cab-xml-errors: $(corpus).cab.xml.errors
 cws-xml-errors: $(corpus).cws.xml.errors
 all-xml-errors: $(corpus).all.xml.errors
@@ -760,6 +766,9 @@ $(corpus).src.xml.errors: $(patsubst %,$(xmldir)/%,$(XML))
 	-$(xml_wfcheck) $^ 2>&1 >$@
 
 $(corpus).so.xml.errors: $(STANDOFF_XML_FILES)
+	-$(xml_wfcheck) $^ 2>&1 > $@
+
+$(corpus).t.xml.errors: $(T_XML_FILES)
 	-$(xml_wfcheck) $^ 2>&1 > $@
 
 $(corpus).cab.xml.errors: $(XML:.xml=.dta-cab.xml)
