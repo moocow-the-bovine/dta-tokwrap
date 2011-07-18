@@ -117,7 +117,7 @@ sub so_cb_start {
     if (defined($cs=$_attrs{'cs'}) || defined($cs=$_attrs{'c'})) {
       ##-- .t.xml or .u.xml format: id-list in @cs or @c attribute
       @cids = map {
-	(m/^(.*)c([0-9]+)\+([0-9]+)/ ? (map {$1.'c'.$_} ($2..($2+$3-1))) : $_)
+	(m/^(.*)c([0-9]+)\+([0-9]+)$/ ? (map {$1.'c'.$_} ($2..($2+$3-1))) : $_)
       } split(' ',$cs);
       $cid2wid{$_} = $wid foreach (@cids);
     }

@@ -182,10 +182,9 @@ sub txml2uxml {
       }
       elsif (defined($cpx)) {
 	##-- pagebreak index from .cpx file
-	$xid = $wnod->getAttribute('c');
-	$xid = $wnod->getAttribute('cs') if (!defined($xid));
+	$xid = $wnod->getAttribute('c') || $wnod->getAttribute('cs');
 	$xid = '' if (!defined($xid));
-	$xid =~ s/[\s\-].*$//; ##-- truncate
+	$xid =~ s/[\s\-\+].*$//; ##-- truncate
 	$pxdata=$cpx->{$xid};
       }
       $wnod->setAttribute('pb', ($pxdata && defined($pxdata->[0]) ? $pxdata->[0] : '-1'));
@@ -193,8 +192,10 @@ sub txml2uxml {
     }
     if ($do_spans) {
       ##-- character spans
-      $wc    = $wnod->getAttribute('c');
-      @wcids  = split(/\s+/,$wc);
+      $wc    = $wnod->getAttribute('c') || $wnod->getAttribute('cs');
+      @wcids  = map {
+	m/^(.*)c([0-9]+)\+([0-9]+)$/ ? (map {$1.'c'.$_} ($2..($2+$3-1))) : $_
+      } split(/\s+/,$wc);
       @wspans = ([0,0]); ##-- ([$from_i1,$to_i1], [$from_i2,$to_i2], ...)
 
       for ($ci=1; $ci <= $#wcids; $ci++) {
