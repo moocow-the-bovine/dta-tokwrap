@@ -3,7 +3,12 @@ digraph dataflow_perl_files {
   node [shape=rectangle,style=filled,fillcolor=pink,height=0.25,fontname="Courier"];
   edge [decorate=0,fontname="Courier"];
 
+  teifile [label="teifile: *.tei.xml",fillcolor=PowderBlue];
+  add_c  [label="dtatw-add-c.perl",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
+  teifile -> add_c;
+
   xmlfile [label="xmlfile: *.xml",fillcolor=PowderBlue];
+  add_c -> xmlfile;
 
   mkindex [label="mkindex",shape=diamond,fillcolor=PaleGreen,fontname="Courier-Bold"];
   xmlfile -> mkindex;
@@ -47,40 +52,43 @@ digraph dataflow_perl_files {
   cxfile -> tok2xml;
   tokfile -> tok2xml;
   tok2xml -> xtokfile;
-  
-  //-- standoff via C progs
-  standoff [label="standoff",shape=diamond,fillcolor=PaleGreen,fontname="Courier-Bold"];
+
+  //-- standoff via C progs (basically obsolete)
+  standoff [label="standoff",shape=diamond,fillcolor=PaleGreen,style=dotted,fontname="Courier-Bold"];
   xtokfile -> standoff;
 
-  /*
-    sofiles [label="sosfile: *.s.xml\nsowfile: *.w.xml\nsoafile: *.a.xml"];
-    standoff -> sofiles;
-  */
-
-  sosfile [label="sosfile: *.s.xml",fillcolor=PowderBlue];
-  sowfile [label="sowfile: *.w.xml",fillcolor=PowderBlue];
-  soafile [label="soafile: *.a.xml",fillcolor=PowderBlue];
+  sosfile [label="sosfile: *.s.xml",fillcolor=PowderBlue,style=dotted];
+  sowfile [label="sowfile: *.w.xml",fillcolor=PowderBlue,style=dotted];
+  soafile [label="soafile: *.a.xml",fillcolor=PowderBlue,style=dotted];
   standoff -> sosfile;
   standoff -> sowfile;
   standoff -> soafile;
   { rank=same; sosfile sowfile soafile; }
 
-  //-- standoff: xsl stylesheets (now obsolete)
-  /*
-  standoff_xsl [label="t2s.xsl\nt2w.xsl\nt2a.xsl",fillcolor=orange];
-  standoff -> standoff_xsl;
-  */
-
-  //-- splicint: external scripts
+  //-- splice-in: w,s: external scripts
   add_w  [label="dtatw-add-w.perl",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
-  sowfile -> add_w;
+  xtokfile /*sowfile*/ -> add_w;
   xmlfile -> add_w;
   add_w  -> cwfile;
   cwfile [label="-cwfile: *.cw.xml",fillcolor=yellow];
 
   add_s  [label="dtatw-add-s.perl",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
-  sosfile-> add_s;
+  xtokfile /*sosfile*/ -> add_s;
   cwfile -> add_s;
   add_s  -> cwsfile;
   cwsfile [label="-cwsfile: *.cws.xml",fillcolor=yellow];
+
+  //-- splice-in: generic (e.g. cab)
+  cab [label="dta-cab",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
+  xtokfile -> cab;
+
+  cabfile [label="-cabfile: *.cab.xml",fillcolor=yellow];
+  cab -> cabfile;
+
+  twsplice [label="dtatw-splice.perl",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
+  cabfile -> twsplice;
+  cwsfile -> twsplice;
+
+  cwscabfile [label="-teicabfile: *.cws.tei.xml",fillcolor=yellow];
+  twsplice -> cwscabfile;
 }

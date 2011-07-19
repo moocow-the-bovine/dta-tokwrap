@@ -76,14 +76,14 @@ if HAVE_EPSTOPDF
 #.eps.pdf:
 .ps.pdf:
 	epstopdf $< -o $@
-else
-if HAVE_PS2PDF
-.ps.pdf:
-	ps2pdf $< $@
+#else
+#if HAVE_PS2PDF
+#.ps.pdf:
+#	ps2pdf $< $@
 else
 .dot.pdf:
 	dot -Tpdf -o $@ $<
-endif
+#endif
 endif
 endif
 
