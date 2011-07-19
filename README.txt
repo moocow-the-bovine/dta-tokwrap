@@ -197,7 +197,7 @@ TOOLS
     dtatw-splice.perl
         Script to splice generic standoff attributes and/or content into a
         base file; useful e.g. for merging flat DTA::CAB standoff analyses
-        into TEI-structured .cws.xml files.
+        into TEI-structured *.cws.xml files.
 
         See "the dtatw-splice.perl manpage" for more details.
 
