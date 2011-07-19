@@ -35,6 +35,11 @@ our $cnum = 0;           ##-- $cnum: global index of <c> element (number of elts
 our $text_depth = 0;     ##-- number of open <text> elements
 our $c_depth = 0;        ##-- number of open <c> elements (should never be >1)
 
+our $guess_thresh = undef;   ##-- minimum percent of total input data bytes occurring in //c elements
+                             ##   in order to return input document as-is (0: always process)
+our $guess_default = 50;
+
+
 ##------------------------------------------------------------------------------
 ## Command-line
 ##------------------------------------------------------------------------------
@@ -43,15 +48,15 @@ GetOptions(##-- General
 
 	   ##-- I/O
 	   'id-namespace|xmlns|idns|ns!' => sub { $xmlns=$_[1] ? "xml:" : ''; },
+	   'guess|g!' => sub { $guess_thresh=($_[1] ? $guess_default : 0); },
+	   'guess-min|gm=f' => \$guess_thresh,
 	   'output|out|o=s' => \$outfile,
 	   'profile|p!' => \$profile,
 	  );
 
 
-pod2usage({
-	   -exitval=>0,
-	   -verbose=>0,
-	  }) if ($help);
+pod2usage({-exitval=>0,-verbose=>0}) if ($help);
+$guess_thresh = $guess_default if (!defined($guess_thresh));
 
 ##======================================================================
 ## Subs
@@ -171,9 +176,32 @@ foreach $infile (@ARGV) {
   $buf = <XML>;
   close XML;
 
+  ##-- optionally guess whether we need to add //c elements at all
+  if ($guess_thresh > 0) {
+    use bytes;
+    my $inbytes = length($buf);
+    my $cbytes  = 0;
+    my $nc = 0;
+    while ($buf =~ m|<c\b[^>]*>(?:[^<]{0,8})</c>|isgp) {
+      $cbytes += length(${^MATCH});
+      ++$nc;
+    }
+    my $cpct = $inbytes ? (100*$cbytes/$inbytes) : 'nan';
+    #printf STDERR "$prog: found $cbytes bytes for <c> elements in $inbytes total bytes (%.1f%%)\n", $cpct;
+
+    if ($cpct >= $guess_thresh) {
+      ##-- enough <c>s already: just dump the buffer
+      #printf STDERR "$prog: $infile contains %.1f%% //c data > threshhold=%s%% : dumping as-is\n", $cpct, $guess_thresh;
+      $outfh->print($buf);
+      $nxbytes += length($buf);
+      $nchrs   += $nc;
+      next;
+    }
+  }
+
   ##-- initialize $cnum counter by checking any pre-assigned //c/@id values (fast regex hack)
   $cnum = 0;
-  while ($buf =~ m/\<c\b[^\>]*\s(?:xml\:)?id=\"c(\d+)\"/iosg) {
+  while ($buf =~ m/\<c\b[^\>]*\s(?:xml\:)?id=\"c([0-9]+)\"/isg) {
     $cnum = $1 if ($1 > $cnum);
   }
   #print STDERR "$prog: initialized \$cnum=$cnum\n"; ##-- DEBUG
@@ -225,6 +253,8 @@ dtatw-add-c.perl - add <c> elements to DTA XML documents
 
  I/O Options:
   -output FILE           # specify output file (default='-' (STDOUT))
+  -guess-min PERCENT     # in -guess mode, minimum percentage of data in <c> elements which is 'enough' (default=50)
+  -guess  , -noguess     # do/don't attempt to guess whether 'enough' <c> elements are already present (default='-guess')
   -profile, -noprofile   # output profiling information? (default=no)
   -xmlns  , -noxmlns     # do/don't use 'xml:' namespace prefix on id attributes (default=don't)
 
