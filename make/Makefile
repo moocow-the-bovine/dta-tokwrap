@@ -779,6 +779,7 @@ extra-xml-errors: cab-xml-errors cws-xml-errors
 src-xml-errors: $(corpus).src.xml.errors
 so-xml-errors: $(corpus).so.xml.errors
 t-xml-errors: $(corpus).t.xml.errors
+ddc-t-xml-errors: $(corpus).ddc.t.xml.errors
 cab-xml-errors: $(corpus).cab.xml.errors
 cws-xml-errors: $(corpus).cws.xml.errors
 all-xml-errors: $(corpus).all.xml.errors
@@ -792,6 +793,9 @@ $(corpus).so.xml.errors: $(STANDOFF_XML_FILES)
 	-$(xml_wfcheck) $^ 2>&1 > $@
 
 $(corpus).t.xml.errors: $(T_XML_FILES)
+	-$(xml_wfcheck) $^ 2>&1 > $@
+
+$(corpus).ddc.t.xml.errors: $(T_XML_FILES:.t.xml=.ddc.t.xml)
 	-$(xml_wfcheck) $^ 2>&1 > $@
 
 $(corpus).cab.xml.errors: $(XML:.xml=.dta-cab.xml)
