@@ -203,8 +203,8 @@ AC_DEFUN([AX_DOC_DOT],
   fi
   ##
   if test -z "$EPSTOPDF" -o "$EPSTOPDF" = "no"; then
-    AC_MSG_WARN([epstopdf missing or disabled])
-    AC_MSG_WARN([- dot-generated pdf files might look ugly])
+    dnl AC_MSG_WARN([epstopdf missing or disabled])
+    dnl AC_MSG_WARN([- dot-generated pdf files might look ugly])
     EPSTOPDF=no
     HAVE_EPSTOPDF=no
   else
