@@ -1,0 +1,71 @@
+##-- rend ("Typographischer Kontextfilter"), from DTA django code:
+##
+$r=/b/	Fettgedruckt
+$r=/i/	Kursiv		##-- BUG: also retrieves $r=/in/ ("Schmuckinitial")
+$r=/g/	Sperrdruck
+$r=/k/	Kapitälchen
+$r=/u/	Unterstrichen
+$r=/in/	Schmuckinitial
+$r=/c/	Zentriert
+$r=/aq/	Antiqua
+$r=/fr/	Frakturwechsel
+$r=/up/	Hochgestellt
+$r=/do/	Tiefgestellt
+
+##-- rend: all (extracted from /home/dta/dta_ddc_xml/*.xml, Wed, 20 Jul 2011 13:54:42 +0200)
+51009079	-		##-- (none)
+1391760	et			##-- ? (usually 2 words at BOS)
+1028017	aq			##-- "Antiqua" (in Fraktur text)
+660928	g			##-- "Sperrdruck"
+349208	i			##-- "Kursiv"
+224712	fr			##-- "Frakturwechsel"
+103046	c			##-- "Zentriert"
+87536	b			##-- "Fettschrift"
+59047	k			##-- "Kapitälchen"
+29682	sub			##-- ? (e.g. chemical formulae "CaSO_4", but whole word marked as 'sub')
+				##   : fw's XML view shows "CaSO<hi rendition="#sub">4</hi>"
+23845	up			##-- "Hochgestellt"
+7971	in			##-- "Schmuckinitial"
+4089	u			##-- "Unterstrichen"
+2488	right			##-- ?
+78	frac			##-- ?
+38	ov			##-- ?
+38	un			##-- ?
+32	hochgestellt		##-- ?
+16	uu			##-- ?
+1	rotRight270		##-- ?
+
+
+##-- context ('con')
+$con=/front/		Vorstück
+$con=/back/		Nachstück
+$con=/head/		Überschrift
+$con=/left/		Marginalie
+$con=/foot/		Fußnote
+$con=/end/		Endnote
+$con=/argument/		Kapitelübersicht
+$con=/hi/		Hervorhebung
+$con=/cit/		Zitat
+$con=/fw/		Druckspezifika
+$con=/lg/		Vers
+$con=/stage/		Bühnenanweisung
+$con=/speaker/		Sprecher
+$con=/text/		Text
+
+
+##-- context: all (extracted from /home/dta/dta_ddc_xml/*.xml, Wed, 20 Jul 2011 13:54:42 +0200)
+54700761	text		##-- "Text"		##-- REVISE: use 'text' only for non-{front,back}
+4430985		note_foot	##-- ~ "Fußnote"
+1291176		lg		##-- "Vers"
+687386		end		##-- "Endnote"
+674602		front		##-- "Vorstück"
+232222		back		##-- "Nachstück"
+177149		note_left	##-- ~ "Marginalie"
+177149		right		##-- ? (probably right-margin note)
+98991		stage		##-- "Bühnenanweisung"
+96366		head		##-- "Überschrift"
+56739		speaker		##-- "Sprecher"
+32927		argument	##-- "Kapitelüberschrift"
+25555		cit		##-- "Zitat"
+0		hi		##-- "Hervorhebung" : MISSING
+0		fw		##-- "Druckspezifika": MISSING

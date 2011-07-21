@@ -30,6 +30,8 @@ our $do_rendition = 1;
 our $do_xcontext = 1;
 our $do_xpath = 0;
 our $do_bbox = 1;
+our $do_keep_c = 1;
+our $do_keep_b = 1;
 
 ##-- output attributes
 our $rendition_attr = 'xr';
@@ -61,6 +63,8 @@ GetOptions(##-- General
 	   'xcontext|context|xcon|con|xc!' => \$do_xcontext,
 	   'xpath|path|xp!' => \$do_xpath,
 	   'coordinates|coords|coord|c|bboxes|bbox|b!' => \$do_bbox,
+	   'keep-c|keepc|kc!' => \$do_keep_c,
+	   'keep-b|keepb|kb!' => \$do_keep_b,
 	   'output|out|o=s' => \$outfile,
 	   'format|f!' => \$format,
 	  );
@@ -214,19 +218,20 @@ sub cxml_cb_end {
 ## $wgood = apply_word($wnod,\@cids)
 ## $wgood = apply_word($wnod,\@cids,$bbsingle)
 ##  + populates globals: ($wnod,$wid,$cids,@cids,$wpage,$wrend,$wcon,$wxpath,@wbboxes)
-my ($wnod,$cids,@cids,@cns,$wpage,$wrend,$wcon,$wxpath,@cn2wnod,$bbsingle);
+my ($wnod,$wid,$cids,@cids,@cns,$wpage,$wrend,$wcon,$wxpath,@cn2wnod,$bbsingle);
 my ($wcns,@wbboxes,@cbboxes,$cbbox,$wbbox);
 sub apply_word {
   ($wnod,$cids,$bbsingle) = @_;
 
-#  ##-- get id
-#  if (!defined($wid) && !defined($wid=$wnod->getAttribute('id'))) {
-#    ##-- ...and ensure it's in the raw '//w/@id' attribute and not 'xml:id'
-#    if (!defined($wid=$wnod->getAttribute('xml:id'))) {
-#      warn("$0: //w node without \@id attribute at $txmlfile line ", $wnod->line_number, "\n");
-#    }
-#    $wnod->getAttributeNode('xml:id')->setNamespace('','');
-#  }
+  ##-- get id
+  if (!defined($wid=$wnod->getAttribute('id'))) {
+    ##-- ...and ensure it's in the raw '//w/@id' attribute and not 'xml:id'
+    if (!defined($wid=$wnod->getAttribute('xml:id'))) {
+      warn("$0: //w node without \@id attribute at $txmlfile line ", $wnod->line_number, "\n")
+	if ($verbose >= $vl_warn);
+    }
+    $wnod->getAttributeNode('xml:id')->setNamespace('','');
+  }
 
   ##-- get cids
   $cids = $wnod->getAttribute('c') || $wnod->getAttribute('cs') || '' if (!defined($cids));
@@ -239,7 +244,8 @@ sub apply_word {
     warn("$0: no //c/\@id list for //w at $txmlfile line ", $wnod->line_number, "\n");
   }
   elsif (!@cns) {
-    warn("$0: invalid //c/\@id list for //w at $txmlfile line ", $wnod->line_number, "\n");
+    warn("$0: invalid //c/\@id list for //w at $txmlfile line ", $wnod->line_number, "\n")
+      if ($verbose >= $vl_warn);
   }
 
   ##-- compute & assign: rendition (undef -> '')
@@ -289,7 +295,8 @@ sub apply_ddc_attrs {
   ##--------------------------------------
   ## apply: pass=1: the "easy" stuff
   my (%cid2wid);
-  foreach $wnod (@{$xdoc->findnodes('//w')}) {
+  my $wnods = $xdoc->findnodes('//w');
+  foreach $wnod (@$wnods) {
     push(@wnoc,$wnod) if (!apply_word($wnod));
   }
 
@@ -306,14 +313,16 @@ sub apply_ddc_attrs {
     ##-- guess: @cids (all unassigned //c/@ids between this word's neighbors)
     @cprev = $wprev ? cidlist($wprev->getAttribute('c')||$wprev->getAttribute('cs')||'') : qw();
     @cnext = $wnext ? cidlist($wnext->getAttribute('c')||$wnext->getAttribute('cs')||'') : qw();
-    @cns   = (@cprev && @cnext ? (grep {!exists($cn2wnod[$_])} ($cid2cn{$cprev[$#cprev]}..$cid2cn{$cnext[0]})) : qw());
-    @cids  = @cn2cid[@cns];
-
-    ##-- maybe we can apply already
-    if (@cids) {
-      apply_word($wnod,\@cids,1); ##-- use single-bbox mode for fallbacks
-      next;
-    }
+#    @cns   = (@cprev && @cnext ? (grep {!exists($cn2wnod[$_])} ($cid2cn{$cprev[$#cprev]}..$cid2cn{$cnext[0]})) : qw());
+#    @cids  = @cn2cid[@cns];
+#
+#    ##-- maybe we can apply already
+#    if (@cids) {
+#      warn("$0: using unclaimed <c>s to guess attributes for <w> at $txmlfile line ", $wnod->line_number, "\n")
+#	if ($verbose >= $vl_warn);
+#      apply_word($wnod,\@cids,1); ##-- use single-bbox mode for fallbacks
+#      next;
+#    }
 
     ##-- fallback: page: from predecessor
     if ($do_page) {
@@ -331,6 +340,8 @@ sub apply_ddc_attrs {
 	@bbprev = split(/\|/,$bbprev);
 	@bbnext = split(/\|/,$bbnext);
 	if (@bbprev && @bbnext) {
+	  print STDERR "$0: using neighbor bboxes to guess bbox for <w> at $txmlfile line ", $wnod->line_number, "\n"
+	    if ($verbose >= $vl_warn);
 	  if ($bbnext[2] < $bbprev[0]) {
 	    ##-- next:RIGHT << prev:LEFT: probably a line-break: use inter-line space
 	    $wbbox = [-1,$bbprev[3],-1,$bbnext[1]];
@@ -347,7 +358,23 @@ sub apply_ddc_attrs {
 	  }
 	}
       }
+      warn("$0: could not guess bbox for <w> at $txmlfile line ", $wnod->line_number, "\n")
+	if (!$wbbox && $verbose >= $vl_warn);
       $wnod->setAttribute($bbox_attr, join('|', ($wbbox ? @$wbbox : (-1,-1,-1,-1))));
+    }
+  }
+
+  ##--------------------------------------
+  ## apply: pass=3: remove 'c' attributes
+  if (!$do_keep_c) {
+    foreach $wnod (@$wnods) {
+      $wnod->removeAttribute('c');
+      $wnod->removeAttribute('cs');
+    }
+  }
+  if (!$do_keep_b) {
+    foreach $wnod (@$wnods) {
+      $wnod->removeAttribute('b');
     }
   }
 
@@ -482,6 +509,8 @@ dtatw-get-ddc-attrs.perl - get DDC-relevant attributes from DTA::TokWrap files
   -xcon   , -noxcon      # do/don't extract //w/@xcontext attributes (default=do)
   -xpath  , -noxpath     # do/don't extract //w/@xpath attributes (default=do)
   -bbox   , -nobbox      # do/don't extract //w/@bbox attributes (default=do)
+  -keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=keep)
+  -keep-b , -nokeep-b    # do/don't keep existing //w/@b attributes (default=keep)
   -output FILE           # specify output file (default='-' (STDOUT))
 
 =cut

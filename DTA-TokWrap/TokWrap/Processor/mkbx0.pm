@@ -98,7 +98,8 @@ sub defaults {
 	  hint_autotune  => 1,
 	  hint_sb_xpaths => [
 			     ##-- title page
-			     qw(titlePage byline titlePart docAuthor docImprint pubPlace publisher docDate),
+			     #qw(titlePage byline titlePart docAuthor docImprint pubPlace publisher docDate),
+			     qw(titlePage),
 
 			     ##-- main text: common
 			     qw(p),
@@ -120,6 +121,9 @@ sub defaults {
 			     qw(ref|fw), ##-- ... be extra-safe if tokenizing EVERYTHING
 			    ],
 	  hint_wb_xpaths => [
+			     ##-- title page
+			     qw(byline titlePart docAuthor docImprint pubPlace publisher docDate),
+
 			     ##-- non-sentential stuff
 			     qw(head|ref|fw), ##-- ... be safe if tokenizing EVERYTHING
 
@@ -138,6 +142,9 @@ sub defaults {
 			     #qw(speaker sp stage castList castGroup castItem role roleDesc set),
 			     qw(sp|speaker|stage|set),
 			     qw(castGroup/castItem|role|roleDesc),
+
+			     ##-- verse-specific
+			     #qw(lg),
 			    ],
 	  hint_lb_xpaths => [
 			     ##-- segments

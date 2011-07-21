@@ -51,6 +51,7 @@ bin_SCRIPTS = \
 	dtatw-cabtt2xml.perl \
 	dtatw-txml2uxml.perl \
 	dtatw-splice.perl \
+	dtatw-get-ddc-attrs.perl \
 	file-substr.perl
 
 #	dtatw-txml2cspan.perl
