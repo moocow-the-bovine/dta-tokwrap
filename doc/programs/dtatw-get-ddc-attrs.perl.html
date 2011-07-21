@@ -47,12 +47,13 @@
   -quiet                 # be silent</pre>
 <pre>
  I/O Options:
-  -blanks , -noblanks    # don't/do ignore 'ignorable' whitespace in T_XML_FILE file (default=ignored)
-  -page   , -nopage      # do/don't extract //w/@page attributes (default=do)
-  -rend   , -norend      # do/don't extract //w/@rendition attributes (default=do)
-  -xcon   , -noxcon      # do/don't extract //w/@xcontext attributes (default=do)
-  -xpath  , -noxpath     # do/don't extract //w/@xpath attributes (default=do)
-  -bbox   , -nobbox      # do/don't extract //w/@bbox attributes (default=do)
+  -page   , -nopage      # do/don't extract //w/@pb (pagebreak; default=do)
+  -rend   , -norend      # do/don't extract //w/@xr (rendition; default=do)
+  -xcon   , -noxcon      # do/don't extract //w/@xc (xml context; default=do)
+  -xpath  , -noxpath     # do/don't extract //w/@xp (xpath; default=don't)
+  -bbox   , -nobbox      # do/don't extract //w/@bb (bbox; default=do)
+  -cruft  , -nocruft     # do/don't extract //w/@u  (unicruft; default=do)
+  -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in T_XML_FILE file (default=don't)
   -keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=keep)
   -keep-b , -nokeep-b    # do/don't keep existing //w/@b attributes (default=keep)
   -output FILE           # specify output file (default='-' (STDOUT))</pre>

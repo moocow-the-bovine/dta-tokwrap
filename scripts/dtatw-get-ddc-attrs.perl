@@ -7,6 +7,7 @@ use Getopt::Long qw(:config no_ignore_case);
 use Encode qw(encode decode encode_utf8 decode_utf8);
 use File::Basename qw(basename);
 use Time::HiRes qw(gettimeofday tv_interval);
+use Unicruft;
 use Pod::Usage;
 
 use strict;
@@ -30,6 +31,7 @@ our $do_rendition = 1;
 our $do_xcontext = 1;
 our $do_xpath = 0;
 our $do_bbox = 1;
+our $do_unicruft = 1;
 our $do_keep_c = 1;
 our $do_keep_b = 1;
 
@@ -39,6 +41,7 @@ our $xcontext_attr  = 'xc';
 our $xpath_attr     = 'xp';
 our $page_attr      = 'pb';
 our $bbox_attr      = 'bb';
+our $unicruft_attr  = 'u';
 
 ##-- constants: verbosity levels
 our $vl_warn     = 1;
@@ -59,10 +62,11 @@ GetOptions(##-- General
 	   ##-- I/O
 	   'keep-blanks|blanks|whitespace|ws!' => \$keep_blanks,
 	   'page|pb|p!' => $do_page,
-	   'rendition|rend|r!' => \$do_rendition,
+	   'rendition|rend|xr|r!' => \$do_rendition,
 	   'xcontext|context|xcon|con|xc!' => \$do_xcontext,
 	   'xpath|path|xp!' => \$do_xpath,
-	   'coordinates|coords|coord|c|bboxes|bbox|b!' => \$do_bbox,
+	   'coordinates|coords|coord|c|bboxes|bbox|bb|b!' => \$do_bbox,
+	   'unicruft|cruft|u!' => \$do_unicruft,
 	   'keep-c|keepc|kc!' => \$do_keep_c,
 	   'keep-b|keepb|kb!' => \$do_keep_b,
 	   'output|out|o=s' => \$outfile,
@@ -219,7 +223,7 @@ sub cxml_cb_end {
 ## $wgood = apply_word($wnod,\@cids,$bbsingle)
 ##  + populates globals: ($wnod,$wid,$cids,@cids,$wpage,$wrend,$wcon,$wxpath,@wbboxes)
 my ($wnod,$wid,$cids,@cids,@cns,$wpage,$wrend,$wcon,$wxpath,@cn2wnod,$bbsingle);
-my ($wcns,@wbboxes,@cbboxes,$cbbox,$wbbox);
+my ($wcns,@wbboxes,@cbboxes,$cbbox,$wbbox,$wtxt,$utxt);
 sub apply_word {
   ($wnod,$cids,$bbsingle) = @_;
 
@@ -246,6 +250,18 @@ sub apply_word {
   elsif (!@cns) {
     warn("$0: invalid //c/\@id list for //w at $txmlfile line ", $wnod->line_number, "\n")
       if ($verbose >= $vl_warn);
+  }
+
+  ##-- compute & assign: unicruft
+  if ($do_unicruft) {
+    $wtxt = $wnod->getAttribute('t') || $wnod->getAttribute('text') || '';
+    $wtxt = decode_utf8($wtxt) if (!utf8::is_utf8($wtxt));
+    if ($wtxt =~ m(^[\x{00}-\x{ff}\p{Latin}\p{IsPunct}\p{IsMark}]*$)) {
+      $utxt = decode('latin1',Unicruft::utf8_to_latin1_de($wtxt));
+    } else {
+      $utxt = $wtxt;
+    }
+    $wnod->setAttribute($unicruft_attr,$utxt);
   }
 
   ##-- compute & assign: rendition (undef -> '')
@@ -503,12 +519,13 @@ dtatw-get-ddc-attrs.perl - get DDC-relevant attributes from DTA::TokWrap files
   -quiet                 # be silent
 
  I/O Options:
-  -blanks , -noblanks    # don't/do ignore 'ignorable' whitespace in T_XML_FILE file (default=ignored)
-  -page   , -nopage      # do/don't extract //w/@page attributes (default=do)
-  -rend   , -norend      # do/don't extract //w/@rendition attributes (default=do)
-  -xcon   , -noxcon      # do/don't extract //w/@xcontext attributes (default=do)
-  -xpath  , -noxpath     # do/don't extract //w/@xpath attributes (default=do)
-  -bbox   , -nobbox      # do/don't extract //w/@bbox attributes (default=do)
+  -page   , -nopage      # do/don't extract //w/@pb (pagebreak; default=do)
+  -rend   , -norend      # do/don't extract //w/@xr (rendition; default=do)
+  -xcon   , -noxcon      # do/don't extract //w/@xc (xml context; default=do)
+  -xpath  , -noxpath     # do/don't extract //w/@xp (xpath; default=don't)
+  -bbox   , -nobbox      # do/don't extract //w/@bb (bbox; default=do)
+  -cruft  , -nocruft     # do/don't extract //w/@u  (unicruft; default=do)
+  -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in T_XML_FILE file (default=don't)
   -keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=keep)
   -keep-b , -nokeep-b    # do/don't keep existing //w/@b attributes (default=keep)
   -output FILE           # specify output file (default='-' (STDOUT))

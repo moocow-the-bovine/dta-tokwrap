@@ -142,12 +142,13 @@ dtatw\-get\-ddc\-attrs.perl \- get DDC\-relevant attributes from DTA::TokWrap fi
 \&  \-quiet                 # be silent
 \&
 \& I/O Options:
-\&  \-blanks , \-noblanks    # don\*(Aqt/do ignore \*(Aqignorable\*(Aq whitespace in T_XML_FILE file (default=ignored)
-\&  \-page   , \-nopage      # do/don\*(Aqt extract //w/@page attributes (default=do)
-\&  \-rend   , \-norend      # do/don\*(Aqt extract //w/@rendition attributes (default=do)
-\&  \-xcon   , \-noxcon      # do/don\*(Aqt extract //w/@xcontext attributes (default=do)
-\&  \-xpath  , \-noxpath     # do/don\*(Aqt extract //w/@xpath attributes (default=do)
-\&  \-bbox   , \-nobbox      # do/don\*(Aqt extract //w/@bbox attributes (default=do)
+\&  \-page   , \-nopage      # do/don\*(Aqt extract //w/@pb (pagebreak; default=do)
+\&  \-rend   , \-norend      # do/don\*(Aqt extract //w/@xr (rendition; default=do)
+\&  \-xcon   , \-noxcon      # do/don\*(Aqt extract //w/@xc (xml context; default=do)
+\&  \-xpath  , \-noxpath     # do/don\*(Aqt extract //w/@xp (xpath; default=don\*(Aqt)
+\&  \-bbox   , \-nobbox      # do/don\*(Aqt extract //w/@bb (bbox; default=do)
+\&  \-cruft  , \-nocruft     # do/don\*(Aqt extract //w/@u  (unicruft; default=do)
+\&  \-blanks , \-noblanks    # do/don\*(Aqt keep \*(Aqignorable\*(Aq whitespace in T_XML_FILE file (default=don\*(Aqt)
 \&  \-keep\-c , \-nokeep\-c    # do/don\*(Aqt keep existing //w/@c and //w/@cs attributes (default=keep)
 \&  \-keep\-b , \-nokeep\-b    # do/don\*(Aqt keep existing //w/@b attributes (default=keep)
 \&  \-output FILE           # specify output file (default=\*(Aq\-\*(Aq (STDOUT))
