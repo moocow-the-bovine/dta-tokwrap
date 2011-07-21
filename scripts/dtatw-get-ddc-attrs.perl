@@ -264,16 +264,16 @@ sub apply_word {
     $wnod->setAttribute($unicruft_attr,$utxt);
   }
 
-  ##-- compute & assign: rendition (undef -> '')
+  ##-- compute & assign: rendition (undef -> '-')
   if ($do_rendition) {
-    $wrend = join(' ', luniq(map {split(' ',($cn2rend[$_]||''))} @cns)) || '';
-    $wnod->setAttribute($rendition_attr, $wrend);
+    $wrend = join('|', luniq(map {s/^\#//; $_} map {split(' ',($cn2rend[$_]||''))} @cns)) || '';
+    $wnod->setAttribute($rendition_attr, $wrend ? "|$wrend|" : '-');
   }
 
-  ##-- compute & assign: structural context: xcontext (undef -> '')
+  ##-- compute & assign: structural context: xcontext (undef -> '-')
   if ($do_xcontext) {
-    $wcon = join(' ', luniq(map {split(' ',($cn2xcon[$_]||''))} @cns)) || '';
-    $wnod->setAttribute($xcontext_attr, $wcon);
+    $wcon = join('|', luniq(map {split(' ',($cn2xcon[$_]||''))} @cns)) || '';
+    $wnod->setAttribute($xcontext_attr, $wcon ? "|$wcon|" : '-');
   }
 
   ##-- compute & assign: xpath (undef -> '/..' (== empty node set))
