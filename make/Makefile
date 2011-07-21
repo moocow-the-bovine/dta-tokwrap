@@ -126,6 +126,13 @@ endif
 TOKWRAP_OPTS += $(twopts)
 
 ##--------------------------------------------------------------
+## Configuration: Defaults: ddc attributes
+
+##-- DDC_ATTRS : arguments for dtatw-get-ddc-attrs.perl
+DDC_ATTRS ?= -xr -xc -noxp -pb -bb -u
+
+
+##--------------------------------------------------------------
 ## Configuration: Defaults: programs & in-place execution
 
 PERL = perl
@@ -158,7 +165,6 @@ SCRIPT_DEPS =
 
 TOKWRAP      =dta-tokwrap.perl $(TOKWRAP_OPTS)
 TOKWRAP_DEPS =
-
 
 endif
 
@@ -599,7 +605,7 @@ no-cab-xml-bytok: no-dta-cab-xmlw-bytok
 CLEAN_FILES += *.dta-cab.xml.bytok
 
 ##======================================================================
-## Rules: tokenized: extended output
+## Rules: tokenized: extended output (.u.xml)
 ## + //w/@u  : unicruft text
 ## + //w/@t0 : raw text
 ## + //w/@u0 : unicrufted raw text raw
@@ -648,6 +654,23 @@ wpx: $(XML:.xml=.wpx)
 	$(SCRIPT_DIR)dtatw-mkpx.perl -v=0 -i '^w$$' $< -o $@
 no-wpx: ; rm -f *.wpx
 CLEAN_FILES += *.wpx
+
+##======================================================================
+## Rules: tokenized: ddc attributes (%.ddc.t.xml)
+## + //w/@xr  : ddc $Rend field (rendition)
+## + //w/@xc  : ddc $Context field (structural context)
+## + //w/@xp  : (later) ddc $Xpath field (xpath)
+## + //w/@pb  : ddc $Page field (from //pb/@facs)
+## + //w/@bb  : ddc $Coord field (bounding box)
+## + //w/@u   : ddc $Token field (unicruft)
+
+ddc-t-xml: $(XML:.xml=.ddc.t.xml)
+
+%.ddc.t.xml: %.t.xml $(xmldir)/%.xml
+	$(SCRIPT_DIR)dtatw-get-ddc-attrs.perl $(DDC_ATTRS) -v=0 -o $@ $^
+
+no-ddc-t-xml: ; rm -f *.ddc.t.xml
+CLEAN_FILES += *.ddc.t.xml
 
 
 ##======================================================================

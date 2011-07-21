@@ -44,7 +44,7 @@ xmldir = ./xmlsrc
 #xml = $(wildcard $(xmldir)/ex[56].xml)
 #xml = $(xmldir)/kurz.xml
 #xml = $(xmldir)/helm.xml
-xml = $(xmldir)/huber.xml
+xml = $(xmldir)/huber.xml $(xmldir)/helm.xml
 
 #xmldir = ../examples
 #xml    = $(xmldir)/kant_aufklaerung_1784.converted.chr.xml
