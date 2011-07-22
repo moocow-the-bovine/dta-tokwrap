@@ -1051,8 +1051,21 @@ no-log: nolog
 nolog: ; rm -f *.log
 REALCLEAN_FILES += *.log
 
+TMPCLEAN_FILES ?= $(filter-out %.t.xml %.errors,$(CLEAN_FILES))
+
+cleanconfig:
+	@echo TMPCLEAN_DEPS=$(TMPCLEAN_DEPS)
+	@echo TMPCLEAN_FILES=$(TMPCLEAN_FILES)
+	@echo CLEAN_DEPS=$(CLEAN_DEPS)
+	@echo CLEAN_FILES=$(CLEAN_FILES)
+	@echo REALCLEAN_DEPS=$(REALCLEAN_DEPS)
+	@echo REALCLEAN_FILES=$(REALCLEAN_FILES)
+
+tmpclean:
+	test -z "$(TMPCLEAN_FILES)" || rm -f $(TMPCLEAN_FILES)
+
 clean: $(CLEAN_DEPS)
-	rm -f $(CLEAN_FILES)
+	test -z "$(CLEAN_FILES)" || rm -f $(CLEAN_FILES)
 
 realclean: $(REALCLEAN_DEPS)
-	rm -f $(REALCLEAN_FILES)
+	test -z "$(REALCLEAN_FILES)" || rm -f $(REALCLEAN_FILES)

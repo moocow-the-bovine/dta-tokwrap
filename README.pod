@@ -332,6 +332,27 @@ useful e.g. for merging flat DTA::CAB standoff analyses into TEI-structured
 
 See L<"the dtatw-splice.perl manpage"|dtatw-splice.perl> for more details.
 
+=item dtatw-get-ddc-attrs.perl
+
+Script to insert DDC-relevant attributes extracted from a base file into a *.t.xml file,
+producing a pre-DDC XML format file (by convention *.ddc.t.xml, a subset of the *.t.xml
+format).
+
+See L<"the dtatw-get-ddc-attrs.perl manpage"|dtatw-get-ddc-attrs.perl> for more details.
+
+=item dtatw-get-header.perl
+
+Simple script to extract a single header element from an XML file (e.g. for later
+inclusion in a DDC XML format file).
+
+See L<"the dtatw-get-header.perl manpage"|dtatw-get-header.perl> for more details.
+
+=item dtatw-xml2ddc.perl
+
+Script to convert *.ddc.t.xml files and optional headers to DDC-XML format.
+
+See L<"the dtatw-xml2ddc.perl manpage"|dtatw-xml2ddc.perl> for more details.
+
 =item dtatw-rm-c.perl
 
 Script to remove C<E<lt>cE<gt>> elements from an XML document.

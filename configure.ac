@@ -148,11 +148,18 @@ AC_CONFIG_LINKS([doc/programs/dta-tokwrap.perl.pod:DTA-TokWrap/dta-tokwrap.perl]
 AC_CONFIG_LINKS([doc/programs/dtatw-add-c.perl.pod:scripts/dtatw-add-c.perl])
 AC_CONFIG_LINKS([doc/programs/dtatw-add-w.perl.pod:scripts/dtatw-add-w.perl])
 AC_CONFIG_LINKS([doc/programs/dtatw-add-s.perl.pod:scripts/dtatw-add-s.perl])
+##
 dnl AC_CONFIG_LINKS([doc/programs/dtatw-rm-c.perl.pod:scripts/dtatw-rm-c.perl])   ##-- no pod docs (yet)
 dnl AC_CONFIG_LINKS([doc/programs/dtatw-rm-lb.perl.pod:scripts/dtatw-rm-lb.perl])   ##-- no pod docs (yet)
 dnl AC_CONFIG_LINKS([doc/programs/file-substr.perl.pod:scripts/file-substr.perl]) ##-- no pod docs (yet)
+AC_CONFIG_LINKS([doc/programs/dtatw-cids2local.perl.pod:scripts/dtatw-cids2local.perl])
+AC_CONFIG_LINKS([doc/programs/dtatw-mkpx.perl.pod:scripts/dtatw-mkpx.perl])
+AC_CONFIG_LINKS([doc/programs/dtatw-txml2uxml.perl.pod:scripts/dtatw-txml2uxml.perl])
+##
 AC_CONFIG_LINKS([doc/programs/dtatw-splice.perl.pod:scripts/dtatw-splice.perl])
 AC_CONFIG_LINKS([doc/programs/dtatw-get-ddc-attrs.perl.pod:scripts/dtatw-get-ddc-attrs.perl])
+AC_CONFIG_LINKS([doc/programs/dtatw-get-header.perl.pod:scripts/dtatw-get-header.perl])
+AC_CONFIG_LINKS([doc/programs/dtatw-xml2ddc.perl.pod:scripts/dtatw-xml2ddc.perl])
 AC_CONFIG_LINKS([doc/README.pod:README.pod])
 ##
 ## /Documentation

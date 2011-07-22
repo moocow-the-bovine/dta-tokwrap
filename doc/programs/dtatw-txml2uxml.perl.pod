@@ -1,1 +1,0 @@
-../../scripts/dtatw-txml2uxml.perl
