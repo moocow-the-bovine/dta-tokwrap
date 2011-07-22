@@ -74,8 +74,7 @@ sub cb_init {
 ## undef = cb_char($expat,$string)
 our ($c_block,$c_char);
 sub cb_char {
-  return if ($text_depth<=0);
-  if ($c_depth > 0) {
+  if ($text_depth <= 0 || $c_depth > 0) {
     $outfh->print($_[0]->original_string());
     return;
   }

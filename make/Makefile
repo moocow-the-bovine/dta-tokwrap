@@ -137,6 +137,19 @@ DDC_ATTRS ?= -xr -xc -noxp -pb -bb -u
 
 PERL = perl
 
+ifneq "$(TOKWRAP_ROOT)" ""
+
+SCRIPT_DIR  ?= $(TOKWRAP_ROOT)scripts/
+XSL_DIR     ?= $(SCRIPT_DIR)
+PROG_DIR    ?= $(TOKWRAP_ROOT)src/
+TOKWRAP_DIR ?= $(TOKWRAP_ROOT)DTA-TokWrap/
+TOKWRAP     ?= $(TOKWRAP_DIR)dta-tokwrap.perl $(TOKWRAP_OPTS)
+
+TOKWRAP_DEPS ?=
+PROG_DEPS    ?=
+SCRIPT_DEPS  ?=
+
+else
 ifeq "$(inplace)" "yes"
 
 XSL_DIR = ../scripts
@@ -155,17 +168,19 @@ TOKWRAP_DEPS = $(TOKWRAP_SRC)
 
 else
 
-XSL_DIR = /usr/local/share/dta-tokwrap/stylesheets
+XSL_DIR ?= /usr/local/share/dta-tokwrap/stylesheets
 
-PROG_DIR  =
-PROG_DEPS =
+TOKWRAP_DIR ?=
+TOKWRAP_DEPS ?=
+TOKWRAP ?= dta-tokwrap.perl $(TOKWRAP_OPTS)
 
-SCRIPT_DIR  =
-SCRIPT_DEPS =
+PROG_DIR  ?=
+PROG_DEPS ?=
 
-TOKWRAP      =dta-tokwrap.perl $(TOKWRAP_OPTS)
-TOKWRAP_DEPS =
+SCRIPT_DIR  ?=
+SCRIPT_DEPS ?=
 
+endif
 endif
 
 ##--------------------------------------------------------------

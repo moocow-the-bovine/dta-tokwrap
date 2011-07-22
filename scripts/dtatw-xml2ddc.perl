@@ -19,9 +19,12 @@ our ($help);
 
 ##-- vars: I/O
 our $xmlfile = undef;  ##-- required
+our $headfile = undef; ##-- default: none
 our $outfile  = "-";   ##-- default: stdout
 
 our $keep_blanks = 0;  ##-- keep input whitespace?
+our $add_dtadir  = 1;  ##-- add 'dtadir' idno to header if not already present?
+our $add_date = 1;     ##-- add 'date' field to header if not already present?
 our $format = 1;       ##-- output format level
 
 ##-- field selection
@@ -34,6 +37,11 @@ our $vl_warn     = 1;
 our $vl_progress = 2;
 our $verbose = $vl_progress;     ##-- print progress messages by default
 
+##-- globals: XML parser
+our $parser = XML::LibXML->new();
+$parser->keep_blanks($keep_blanks ? 1 : 0);
+$parser->line_numbers(1);
+
 ##------------------------------------------------------------------------------
 ## Command-line
 ##------------------------------------------------------------------------------
@@ -44,6 +52,9 @@ GetOptions(##-- General
 
 	   ##-- I/O
 	   'keep-blanks|blanks|whitespace|ws!' => \$keep_blanks,
+	   'header-file|hf=s' => \$headfile,
+	   'dtadir|dirname|dir!' => \$add_dtadir,
+	   'date!' => \$add_date,
 	   'index-field|index|i=s' => \@fields,
 	   'output|out|o=s' => \$outfile,
 	   'format|fmt!' => \$format,
@@ -60,39 +71,87 @@ $txmlfile = '-' if (!$txmlfile);
 ##======================================================================
 ## Subs: t-xml stuff (*.t.xml)
 
-## $txmldoc = load_txml($txmlfile)
+## $xmldoc = loadxml($xmlfile)
 ##  + loads and returns xml doc
-sub load_txml {
+sub loadxml {
   my $xmlfile = shift;
-
-  ##-- initialize LibXML parser
-  my $parser = XML::LibXML->new();
-  $parser->keep_blanks($keep_blanks ? 1 : 0);
-  $parser->line_numbers(1);
-
-  ##-- load xml
   my $xdoc = $xmlfile eq '-' ? $parser->parse_fh(\*STDIN) : $parser->parse_file($xmlfile);
-  die("$prog: could not parse .t.xml file '$xmlfile': $!") if (!$xdoc);
-
-  ##-- ... and just return here
+  die("$prog: could not parse XML file '$xmlfile': $!") if (!$xdoc);
   return $xdoc;
 }
 
+##======================================================================
+## X-Path utilities
+
+## $node          = get_xpath($root,\@xpspec)      ##-- scalar context
+## ($node,$isnew) = get_xpath($root,\@xpspec)      ##-- array context
+##  + gets or creates node corresponding to \@xpspec
+##  + each \@xpspec element is either
+##    - a SCALAR ($tagname), or
+##    - an ARRAY [$tagname, %attrs ]
+sub get_xpath {
+  my ($root,$xpspec) = @_;
+  my ($step,$xp,$tag,%attrs,$next);
+  my $isnew = 0;
+  foreach $step (@$xpspec) {
+    ($tag,%attrs) = ref($step) ? @$step : ($step);
+    $xp = $tag;
+    $xp .= "[".join(' and ', map {"\@$_='$attrs{$_}'"} sort keys %attrs)."]" if (%attrs);
+    if (!defined($next = $root->findnodes($xp)->[0])) {
+      $next = $root->addNewChild(undef,$tag);
+      $next->setAttribute($_,$attrs{$_}) foreach (sort keys %attrs);
+      $isnew = 1;
+    }
+    $root = $next;
+  }
+  return wantarray ? ($root,$isnew) : $root;
+}
+
+## $nod = ensure_xpath($root,\@xpspec,$default_value)
+sub ensure_xpath {
+  my ($root,$xpspec,$val) = @_;
+  my ($elt,$isnew) = get_xpath($root, $xpspec);
+  if ($isnew) {
+    $elt->appendText($val);
+  }
+  return $elt;
+}
 
 ##======================================================================
 ## MAIN
 
-##-- grab .t.xml file into a libxml doc & pre-index some data
+##-- grab .t.xml file into a libxml doc
 print STDERR "$prog: loading ddc-t-xml file '$txmlfile'...\n" if ($verbose>=$vl_progress);
-my $indoc = load_txml($txmlfile);
+my $indoc = loadxml($txmlfile);
+
+##-- grab header file
+my ($headdoc);
+if (defined($headfile)) {
+  print STDERR "$prog: loading header XML file '$headfile'...\n" if ($verbose>=$vl_progress);
+  $headdoc = loadxml($headfile)
+}
 
 ##-- create output document
 print STDERR "$prog: creating output document...\n" if ($verbose >= $vl_progress);
-my $outdoc = XML::LibXML::Document->new("1.0","UTF-8");
+my $outdoc  = XML::LibXML::Document->new("1.0","UTF-8");
 my $outroot = XML::LibXML::Element->new("TEI");
 $outdoc->setDocumentElement($outroot);
 
 ##-- populate output document: header
+if ($headdoc) {
+  $outroot->appendChild( $headdoc->documentElement->cloneNode(1) );
+}
+
+##-- header: metadata: dtadir
+if ($add_dtadir) {
+  (my $dirname = basename($txmlfile)) =~ s/\..*$//;
+  ensure_xpath($outroot, [qw(teiHeader fileDesc publicationStmt), ['idno',type=>"DTADIR"]], $dirname);
+}
+##-- header: metadata: date
+if ($add_date) {
+  my $date = basename($txmlfile) =~ m/^[^\.]*_([0-9]+)\./ ? $1 : 0;
+  ensure_xpath($outroot, [qw(teiHeader fileDesc), ['sourceDesc',n=>"orig"], qw(biblFull publicationStmt), ['date',type=>"first"]], $date);
+}
 
 ##-- populate output document: content
 BEGIN { *isa=\&UNIVERSAL::isa; }
@@ -140,6 +199,9 @@ dtatw-xml2ddc.perl - convert DTA::TokWrap ddc-t-xml files to DDC-parseable forma
   -quiet                 # be silent
 
  I/O Options:
+  -header HEADERFILE     # splice in teiHeader from HEADERFILE (default=none)
+  -dtadir , -nodtadir    # do/don't add an <idno type="dtadir"> if not already present (default=do)
+  -date   , -nodate      # do/don't add an <idno type="dtadir"> if not already present (default=do)
   -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in DDC_TXML_FILE file (default=don't)
   -index XPATH           # set XPATH source for an output index field, relative to //w (overrides DTA defaults)
   -output FILE           # specify output file (default='-' (STDOUT))
