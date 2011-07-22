@@ -201,6 +201,25 @@ TOOLS
 
         See "the dtatw-splice.perl manpage" for more details.
 
+    dtatw-get-ddc-attrs.perl
+        Script to insert DDC-relevant attributes extracted from a base file
+        into a *.t.xml file, producing a pre-DDC XML format file (by
+        convention *.ddc.t.xml, a subset of the *.t.xml format).
+
+        See "the dtatw-get-ddc-attrs.perl manpage" for more details.
+
+    dtatw-get-header.perl
+        Simple script to extract a single header element from an XML file
+        (e.g. for later inclusion in a DDC XML format file).
+
+        See "the dtatw-get-header.perl manpage" for more details.
+
+    dtatw-xml2ddc.perl
+        Script to convert *.ddc.t.xml files and optional headers to DDC-XML
+        format.
+
+        See "the dtatw-xml2ddc.perl manpage" for more details.
+
     dtatw-rm-c.perl
         Script to remove "<c>" elements from an XML document. Regex hack,
         fast but not exceedingly robust, use with caution. See also
