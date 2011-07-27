@@ -185,7 +185,7 @@ sub slurp_file {
   my $fh = $file;
   if (!ref($file)) {
     $fh = IO::File->new("<$file")
-      or die(__PACKAGE__, "::slurp_file(): open failed for file '$file': $!");
+      or confess(__PACKAGE__, "::slurp_file(): open failed for file '$file': $!");
     $fh->binmode();
   }
   local $/=undef;

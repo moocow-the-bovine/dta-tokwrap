@@ -2,7 +2,7 @@
 
 ## File: DTA::TokWrap::Processor::tokenize.pm
 ## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
-## Description: DTA tokenizer wrappers: tokenizer: placeholder for tomasoblabla
+## Description: DTA tokenizer wrappers: tokenizer: abstract base class
 
 package DTA::TokWrap::Processor::tokenize;
 
@@ -20,6 +20,8 @@ use strict;
 ##==============================================================================
 our @ISA = qw(DTA::TokWrap::Processor);
 
+our $DEFAULT_SUBCLASS = 'tomasotath'; ##-- default subclass
+
 ##==============================================================================
 ## Constructors etc.
 ##==============================================================================
@@ -27,60 +29,27 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ## $tz = CLASS_OR_OBJ->new(%args)
 ## %defaults = CLASS->defaults()
 ##  + static class-dependent defaults
-##  + %args, %defaults, %$tz:
-##    tomata2 => $path_to_dwds_tomasotath, ##-- tokenizer program; default: search
-##    abbrevLex => $filename,              ##-- for --to-abbrev-lex=FILE (default: "${RCDIR}/dta_abbrevs.lex"; '' for none)
-##    mweLex => $filename,                 ##-- for --to-mwe-lex=FILE    (default: "${RCDIR}/dta_mwe.lex"; '' for none)
-##    tomata2stderr => $bool,              ##-- if false, subprocess stderr will be ignored (default=defined($TRACE_RUNCMD))
-##    tomata2opts => \@options,            ##-- additional options (strings) for tokenizer program (default='--to --to-offset --to-analyses')
-##    inplace => $bool,                    ##-- prefer in-place programs for search?
-sub defaults {
-  my $that = shift;
-  return (
-	  $that->SUPER::defaults(),
-	  tomata2   =>undef,
-	  #abbrevLex => "${RCDIR}/dta_abbrevs.lex",  ##-- gets set in init()
-	  #mweLex    => "${RCDIR}/dta_mwe.lex",      ##-- gets set in init()
-	  tomata2opts=>[ '--to', '--to-offset', '--to-analyses' ],
-	  tomata2stderr=>defined($DTA::TokWrap::Utils::TRACE_RUNCMD),
-	  inplace=>1,
-	 );
+##  + nothing here
+sub new {
+  my ($that,%args) = @_;
+  my $class = $args{class};
+  $class = $DEFAULT_SUBCLASS if (!$class && (ref($that)||$that) eq __PACKAGE__);
+  if ($class) {
+    $that = __PACKAGE__ . "::$class";
+    delete($args{class});
+    return $class->new(%args);
+  }
+  return $that->SUPER::new(%args);
 }
+
+## %defaults = CLASS_OR_OBJ->defaults()
+##  + called by constructor
+##  + inherited dummy method
+#sub defaults { qw() }
 
 ## $tz = $tz->init()
-sub init {
-  my $tz = shift;
-
-  ##-- search for tokenizer program
-  if (!defined($tz->{tomata2})) {
-    $tz->{tomata2} = path_prog('dwds_tomasotath',
-			       prepend=>($tz->{inplace} ? ['.','../src'] : undef),
-			       warnsub=>sub {$tz->logconfess(@_)},
-			      );
-  }
-
-  ##-- ensure 'tomata2opts' is an ARRAY
-  $tz->{tomata2opts} = [] if (!defined($tz->{tomata2opts}));
-  $tz->{tomata2opts} = [ $tz->{tomata2opts} ] if (!ref($tz->{tomata2opts}));
-
-  ##-- abbr lex
-  $tz->{abbrevLex} = "${RCDIR}/dta_abbrevs.lex" if (!defined($tz->{abbrevLex}));
-  if ($tz->{abbrevLex} && ! -r $tz->{abbrevLex}) {
-    $tz->logconfess("bad abbreviation lexicon '$tz->{abbrevLex}'");
-  } elsif ($tz->{abbrevLex}) {
-    push(@{$tz->{tomata2opts}}, "--to-abbrev-lex=$tz->{abbrevLex}");
-  }
-
-  ##-- mwe lex
-  $tz->{mweLex} = "${RCDIR}/dta_mwe.lex" if (!defined($tz->{mweLex}));
-  if ($tz->{mweLex} && ! -r $tz->{mweLex}) {
-    $tz->logconfess("bad multiword-expression lexicon '$tz->{mweLex}'; ignoring");
-  } elsif ($tz->{mweLex}) {
-    push(@{$tz->{tomata2opts}}, "--to-mwe-lex=$tz->{mweLex}");
-  }
-
-  return $tz;
-}
+##  + inherited dummy method
+#sub init { $_[0] }
 
 ##==============================================================================
 ## Methods
@@ -96,37 +65,7 @@ sub init {
 ## + may implicitly call $doc->mkbx() and/or $doc->saveTxtFile()
 sub tokenize {
   my ($tz,$doc) = @_;
-
-  ##-- log, stamp
-  $tz = $tz->new if (!ref($tz));
-  $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase})");
-  $doc->{tokenize0_stamp0} = timestamp();
-
-  ##-- sanity check(s)
-  $tz->logconfess("tokenize($doc->{xmlbase}): no dwds_tomasotath program found")
-    if (!$tz->{tomata2});
-  $tz->logconfess("tokenize($doc->{xmlbase}): no .txt file defined")
-    if (!defined($doc->{txtfile}));
-  $tz->logconfess("tokenize($doc->{xmlbase}): .txt file '$doc->{txtfile}' not readable")
-    if (!-r $doc->{txtfile});
-
-  ##-- run program
-  $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase}): tomata2stderr=$tz->{tomata2stderr}");
-  $doc->{tokdata0} = '';
-  my $cmd = ("'$tz->{tomata2}'"
-	     .' '.join(' ',map {"'$_'"} @{$tz->{tomata2opts}})
-	     ." '$doc->{txtfile}'"
-	     .($tz->{tomata2stderr} ? '' : ' 2>/dev/null')
-	    );
-  my $cmdfh = opencmd("$cmd |")
-    or $tz->logconfess("tokenize($doc->{xmlbase}): open failed for pipe ($cmd |): $!");
-  slurp_fh($cmdfh, \$doc->{tokdata0});
-  $cmdfh->close();
-
-  ##-- finalize
-  $doc->{ntoks} = $tz->nTokens(\$doc->{tokdata0});
-  $doc->{tokenize0_stamp} = $doc->{tokdata0_stamp} = timestamp(); ##-- stamp
-  return $doc;
+  $tz->logconfess("tokenize(): abstract method called");
 }
 
 
@@ -177,11 +116,11 @@ DTA::TokWrap::Processor::tokenize - DTA tokenizer wrappers: tokenizer: default (
 
 =head1 DESCRIPTION
 
-B<WARNING>: this class is currently just a placeholder for the
-"official" low-level tokenizer (ToMaSoTaTh).  Until such time
-as the official tokenizer is functional, please use the
-L<DTA::TokWrap::Processor::tokenize::dummy|DTA::TokWrap::Processor::tokenize::dummy>
-sub-class, which uses a simple locally-built low-level tokenizer.
+This class is really just an abstract API specification.
+Actual tokenizer classes are e.g.
+L<DTA::TokWrap::Processor::tomasotath|DTA::TokWrap::Processor::tomasotath>
+and
+L<DTA::TokWrap::Processor::dummy|DTA::TokWrap::Processor::dummy>.
 
 DTA::TokWrap::Processor::tokenize provides an object-oriented
 L<DTA::TokWrap::Processor|DTA::TokWrap::Processor> wrapper
@@ -208,6 +147,11 @@ DTA::TokWrap::Processor::tokenize
 inherits from
 L<DTA::TokWrap::Processor|DTA::TokWrap::Processor>.
 
+=item $DEFAULT_SUBCLASS
+
+Default tokenizer subclass to use for DTA::TokWrap::Processor::tokenize-E<gt>new().
+Default value = 'tomasotath'.
+
 =back
 
 =cut
@@ -224,13 +168,13 @@ L<DTA::TokWrap::Processor|DTA::TokWrap::Processor>.
 
  $tz = $CLASS_OR_OBJ->new(%args);
 
-%args, %$tz: (none yet)
+%args, %$tz: none here; see subclass documentation.
 
 =item defaults
 
  %defaults = CLASS->defaults();
 
-Static class-dependent defaults.
+Static class-dependent defaults: none here; see subclass documentation.
 
 =back
 
@@ -248,7 +192,7 @@ Static class-dependent defaults.
 
  $doc_or_undef = $CLASS_OR_OBJECT->tokenize($doc);
 
-Runs the low-level tokenizer on the
+Performs actual tokenization of the
 serialized text from the
 L<DTA::TokWrap::Document|DTA::TokWrap::Document> object $doc.
 
@@ -298,10 +242,10 @@ Bryan Jurish E<lt>jurish@bbaw.deE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Bryan Jurish
+Copyright (C) 2009, 2011 by Bryan Jurish
 
 This package is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.8.7 or,
+it under the same terms as Perl itself, either Perl version 5.10.1 or,
 at your option, any later version of Perl 5 you may have available.
 
 =cut

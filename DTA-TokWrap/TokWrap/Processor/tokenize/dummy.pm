@@ -88,15 +88,15 @@ sub tokenize {
     if (!-r $doc->{txtfile});
 
   ##-- run program
-  $doc->{tokdata} = '';
+  $doc->{tokdata0} = '';
   my $cmdfh = opencmd("'$td->{tokenize}' '$doc->{txtfile}'|")
     or $td->logconfess("tokenize($doc->{xmlbase}): open failed for pipe ('$td->{tokenize}' '$doc->{txtfile}' |): $!");
-  slurp_fh($cmdfh, \$doc->{tokdata});
+  slurp_fh($cmdfh, \$doc->{tokdata0});
   $cmdfh->close();
 
   ##-- finalize
-  $doc->{ntoks} = $td->nTokens(\$doc->{tokdata});
-  $doc->{tokenize_stamp} = $doc->{tokdata_stamp} = timestamp(); ##-- stamp
+  $doc->{ntoks} = $td->nTokens(\$doc->{tokdata0});
+  $doc->{tokenize0_stamp} = $doc->{tokdata0_stamp} = timestamp(); ##-- stamp
   return $doc;
 }
 

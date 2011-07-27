@@ -159,7 +159,10 @@ GetOptions(
 	   "traceAll|trace-all!" => sub { setVerboseTrace($_[1],$verbose_max,1); },
 	   "dummy|no-act|n!" => \$docopts{dummy},
 	   "dummy-tokenizer|dummytok|dt!" => sub {
-	     $DTA::TokWrap::Document::TOKENIZE_CLASS = 'DTA::TokWrap::Processor::tokenize'.($_[1] ? '::dummy' : '');
+	     $DTA::TokWrap::Document::TOKENIZE_CLASS = ($_[1] ? 'dummy' : 'tomasotath');
+	   },
+	   "http-tokenizer|httptok|ht!" => sub {
+	     $DTA::TokWrap::Document::TOKENIZE_CLASS = ($_[1] ? 'http' : 'tomasotath');
 	   },
 
 	   'dump-xsl-stylesheets|dump-xsl:s' => \$dump_xsl_prefix,

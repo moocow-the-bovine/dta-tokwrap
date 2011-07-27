@@ -104,7 +104,7 @@ sub init {
   my ($class,%newopts);
   foreach (qw(mkindex mkbx0 mkbx tokenize tokenize1 tok2xml standoff)) {
     next if (UNIVERSAL::isa($tw->{$_},"DTA::TokWrap::Processor::$_"));
-    $class   = $_ eq 'tokenize' ? $TOKENIZE_CLASS : "DTA::TokWrap::Processor::$_";
+    $class   = $_ eq 'tokenize' ? "DTA::TokWrap::Processor::tokenize::$TOKENIZE_CLASS" : "DTA::TokWrap::Processor::$_";
     %newopts = (%{$key2opts{ALL}}, ($key2opts{$_} ? %{$key2opts{$_}} : qw()));
     if (UNIVERSAL::isa($tw->{$_},'ARRAY')) {
       $tw->{$_} = $class->new(%newopts, @{$tw->{$_}});

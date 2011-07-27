@@ -12,6 +12,8 @@ use DTA::TokWrap::Processor::mkindex;
 use DTA::TokWrap::Processor::mkbx0;
 use DTA::TokWrap::Processor::mkbx;
 use DTA::TokWrap::Processor::tokenize;
+use DTA::TokWrap::Processor::tokenize::http;
+use DTA::TokWrap::Processor::tokenize::tomasotath;
 use DTA::TokWrap::Processor::tokenize::dummy;
 use DTA::TokWrap::Processor::tokenize1;
 use DTA::TokWrap::Processor::tok2xml;
@@ -29,8 +31,10 @@ use strict;
 our @ISA = ('DTA::TokWrap::Base','Exporter');
 
 ## $TOKENIZE_CLASS
-##  + default tokenizer class
-our $TOKENIZE_CLASS = 'DTA::TokWrap::Processor::tokenize';
+##  + default tokenizer subclass
+#our $TOKENIZE_CLASS = 'http';
+our $TOKENIZE_CLASS = 'tomasotath';
+#our $TOKENIZE_CLASS = 'dummy';
 #our $TOKENIZE_CLASS = 'DTA::TokWrap::Processor::tokenize::dummy';
 
 ## $CX_ID   : {cxdata} index of id field
@@ -502,7 +506,7 @@ sub mkbx {
 ##  + default tokenizer class is given by package-global $TOKENIZE_CLASS
 sub tokenize {
   $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: tokenize()") if ($_[0]{traceProc});
-  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tokenize}) || $TOKENIZE_CLASS)->tokenize($_[0]);
+  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tokenize}) || "DTA::TokWrap::Processor::tokenize::$TOKENIZE_CLASS")->tokenize($_[0]);
 }
 BEGIN {
   *tokenize0 = \&tokenize;
@@ -1062,7 +1066,7 @@ DTA::TokWrap::Document inherits from L<DTA::TokWrap::Base|DTA::TokWrap::Base>.
 $TOKENIZE_CLASS
 
 Default tokenizer sub-processor class
-(default='L<DTA::TokWrap::Processor::tokenize|DTA::TokWrap::Processor::tokenize>').
+(default='L<DTA::TokWrap::Processor::tokenize|tokenize>').
 
 =item Variables: ($CX_ID,$CX_XOFF,$CX_XLEN,$CX_TOFF,$CX_TLEN,$CX_TEXT)
 
@@ -1305,9 +1309,11 @@ see L<DTA::TokWrap::Processor::mkbx::mkbx()|DTA::TokWrap::Processor::mkbx/mkbx>.
 
 see
 L<DTA::TokWrap::Processor::tokenize::tokenize()|DTA::TokWrap::Processor::tokenize/tokenize>,
-L<DTA::TokWrap::Processor::tokenize::dummy::tokenize()|DTA::TokWrap::Processor::tokenize::dummy/tokenize>,
+L<DTA::TokWrap::Processor::tokenize::http::tokenize()|DTA::TokWrap::Processor::tokenize::http/tokenize>,
+L<DTA::TokWrap::Processor::tokenize::tomasotath::tokenize()|DTA::TokWrap::Processor::tokenize::tomastotath/tokenize>,
+L<DTA::TokWrap::Processor::tokenize::dummy::tokenize()|DTA::TokWrap::Processor::tokenize::dummy/tokenize>.
 
-Default tokenizer class is given by package-global $TOKENIZE_CLASS.
+Default tokenizer subclass is given by package-global $TOKENIZE_CLASS.
 
 =item tokenize1
 
