@@ -2,7 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>DTA::TokWrap::Processor::tokenize - DTA tokenizer wrappers: tokenizer: default</title>
+<title>DTA::TokWrap::Processor::tokenize::tomasotath - DTA tokenizer wrappers: tokenizer: dwds_tomsatotath via command-line</title>
 <link rel="stylesheet" href="dtatw.css" type="text/css" />
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
@@ -11,7 +11,7 @@
 <body>
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
 <tr><td class="block" valign="middle">
-<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::tokenize - DTA tokenizer wrappers: tokenizer: default</span></strong></big>
+<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::tokenize::tomasotath - DTA tokenizer wrappers: tokenizer: dwds_tomsatotath via command-line</span></strong></big>
 </td></tr>
 </table>
 
@@ -44,31 +44,24 @@
 <p>
 </p>
 <h1><a name="name">NAME</a></h1>
-<p>DTA::TokWrap::Processor::tokenize - DTA tokenizer wrappers: tokenizer: default (NYI)</p>
+<p>DTA::TokWrap::Processor::tokenize::tomasotath - DTA tokenizer wrappers: tokenizer: dwds_tomsatotath via command-line</p>
 <p>
 <a href="#__index__"><small>(Back to Top)</small></a>
 </p>
 <hr />
 <h1><a name="synopsis">SYNOPSIS</a></h1>
 <pre>
- use DTA::TokWrap::Processor::tokenize;
+ use DTA::TokWrap::Processor::tokenize::tomasotath;
  
- $tz = DTA::TokWrap::Processor::tokenize-&gt;new(%args);
+ $tz = DTA::TokWrap::Processor::tokenize::tomasotath-&gt;new(%args);
  $doc_or_undef = $tz-&gt;tokenize($doc);</pre>
 <p>
 <a href="#__index__"><small>(Back to Top)</small></a>
 </p>
 <hr />
 <h1><a name="description">DESCRIPTION</a></h1>
-<p>This class is really just an abstract API specification.
-Actual tokenizer classes are e.g.
-<a href="DTA.TokWrap.Processor.tomasotath.html">DTA::TokWrap::Processor::tomasotath</a>
-and
-<a href="DTA.TokWrap.Processor.dummy.html">DTA::TokWrap::Processor::dummy</a>.</p>
-<p>DTA::TokWrap::Processor::tokenize provides an object-oriented
-<a href="DTA.TokWrap.Processor.html">DTA::TokWrap::Processor</a> wrapper
-for the tokenization of serialized text files
-for <a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> objects.</p>
+<p>This class is currently just a wrapper for the command-line
+low-level tokenizer <code>dwds_tomasotath</code> (ToMaSoTaTh).</p>
 <p>Most users should use the high-level
 <a href="DTA.TokWrap.html">DTA::TokWrap</a> wrapper class
 instead of using this module directly.</p>
@@ -79,15 +72,9 @@ instead of using this module directly.</p>
 <dt><strong><a name="_isa" class="item">@ISA</a></strong></dt>
 
 <dd>
-<p>DTA::TokWrap::Processor::tokenize
+<p>DTA::TokWrap::Processor::tokenize::tomasotath
 inherits from
-<a href="DTA.TokWrap.Processor.html">DTA::TokWrap::Processor</a>.</p>
-</dd>
-<dt><strong><a name="_default_subclass" class="item">$DEFAULT_SUBCLASS</a></strong></dt>
-
-<dd>
-<p>Default tokenizer subclass to use for DTA::TokWrap::Processor::tokenize-&gt;<a href="#new"><code>new()</code></a>.
-Default value = 'tomasotath'.</p>
+<a href="DTA.TokWrap.Processor.tokenize.html">DTA::TokWrap::Processor::tokenize</a>.</p>
 </dd>
 </dl>
 <p>
@@ -99,14 +86,14 @@ Default value = 'tomasotath'.</p>
 <dd>
 <pre>
  $tz = $CLASS_OR_OBJ-&gt;new(%args);</pre>
-<p>%args, %$tz: none here; see subclass documentation.</p>
+<p>%args, %$tz: (none yet)</p>
 </dd>
 <dt><strong><a name="defaults" class="item">defaults</a></strong></dt>
 
 <dd>
 <pre>
  %defaults = CLASS-&gt;defaults();</pre>
-<p>Static class-dependent defaults: none here; see subclass documentation.</p>
+<p>Static class-dependent defaults.</p>
 </dd>
 </dl>
 <p>
@@ -118,20 +105,7 @@ Default value = 'tomasotath'.</p>
 <dd>
 <pre>
  $doc_or_undef = $CLASS_OR_OBJECT-&gt;tokenize($doc);</pre>
-<p>Performs actual tokenization of the
-serialized text from the
-<a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> object $doc.</p>
-<p>Relevant %$doc keys:</p>
-<pre>
- txtfile =&gt; $txtfile,  ##-- (input) serialized text file (uses $doc-&gt;{bxdata} if $doc-&gt;{txtfile} is not defined)
- bxdata  =&gt; \@bxdata,  ##-- (input) block data, used to generate $doc-&gt;{txtfile} if not present
- tokdata =&gt; $tokdata,  ##-- (output) tokenizer output data (string)
- ##
- tokenize0_stamp0 =&gt; $f, ##-- (output) timestamp of operation begin
- tokenize_stamp  =&gt; $f, ##-- (output) timestamp of operation end
- tokdata_stamp =&gt; $f,   ##-- (output) timestamp of operation end</pre>
-<p>may implicitly call $doc-&gt;<code>mkbx()</code> and/or $doc-&gt;<code>saveTxtFile()</code>
-(but shouldn't).</p>
+<p>See <a href="DTA.TokWrap.Processor.tokenize.html#tokenize">DTA::TokWrap::Processor::tokenize::tokenize()</a>.</p>
 </dd>
 </dl>
 <p>
@@ -160,7 +134,7 @@ at your option, any later version of Perl 5 you may have available.</p>
 <p><a href="#__index__"><small>(Back to Top)</small></a></p>
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
 <tr><td class="block" valign="middle">
-<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::tokenize - DTA tokenizer wrappers: tokenizer: default</span></strong></big>
+<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::tokenize::tomasotath - DTA tokenizer wrappers: tokenizer: dwds_tomsatotath via command-line</span></strong></big>
 </td></tr>
 </table>
 

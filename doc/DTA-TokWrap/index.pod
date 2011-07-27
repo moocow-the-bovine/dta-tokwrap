@@ -79,6 +79,14 @@ L<DTA::TokWrap::Processor::tokenize::dummy|DTA::TokWrap::Processor::tokenize::du
 
 =item *
 
+L<DTA::TokWrap::Processor::tokenize::http|DTA::TokWrap::Processor::tokenize::http> - DTA tokenizer wrappers: http: external tokenizer via http (hack)
+
+=item *
+
+L<DTA::TokWrap::Processor::tokenize::tomasotath|DTA::TokWrap::Processor::tokenize::tomasotath> - DTA tokenizer wrappers: tokenizer: dwds_tomsatotath via command-line
+
+=item *
+
 L<DTA::TokWrap::Utils|DTA::TokWrap::Utils> - DTA tokenizer wrappers: generic utilities
 
 =item *
