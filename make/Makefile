@@ -188,6 +188,9 @@ endif
 
 ifeq "$(xml_wfcheck)" ""
 
+ifneq "$(shell which xmlwf 2>/dev/null)" ""
+xml_wfcheck := xmlwf
+else
 ifneq "$(shell which xmlstarlet 2>/dev/null)" ""
 xml_wfcheck := xmlstarlet val -w -b -e
 else
@@ -200,6 +203,8 @@ endif
 ##--/ifneq "$(shell which xml 2>/dev/null)" "":else
 endif
 ##--/ifneq "$(shell which xmlstarlet 2>/dev/null)" ""
+endif
+##--/ifneq "$(shell which xmlwf 2>/dev/null)" ""
 
 endif
 ##--/ifeq "$(xml_wfcheck)" ""
@@ -791,41 +796,47 @@ CAB_MISC_FILES = \
 xml-errors: src-xml-errors so-xml-errors
 extra-xml-errors: cab-xml-errors cws-xml-errors
 
-src-xml-errors: $(corpus).src.xml.errors
-so-xml-errors: $(corpus).so.xml.errors
-t-xml-errors: $(corpus).t.xml.errors
-ddc-t-xml-errors: $(corpus).ddc.t.xml.errors
-cab-xml-errors: $(corpus).cab.xml.errors
-cws-xml-errors: $(corpus).cws.xml.errors
-all-xml-errors: $(corpus).all.xml.errors
+src-xml-errors: $(corpus).src.xml_errors
+so-xml-errors: $(corpus).so.xml_errors
+t-xml-errors: $(corpus).t.xml_errors
+ddc-t-xml-errors: $(corpus).ddc.t.xml_errors
+cab-xml-errors: $(corpus).cab.xml_errors
+cws-xml-errors: $(corpus).cws.xml_errors
+all-xml-errors: $(corpus).all.xml_errors
 
 ifneq "$(xml_wfcheck)" "no"
 
-$(corpus).src.xml.errors: $(patsubst %,$(xmldir)/%,$(XML))
-	-$(xml_wfcheck) $^ 2>&1 >$@
+%.src.xml.errors: $(xmldir)/%.xml
+	-$(xml_wfcheck) $< 2>&1 > $@
 
-$(corpus).so.xml.errors: $(STANDOFF_XML_FILES)
-	-$(xml_wfcheck) $^ 2>&1 > $@
+%.xml.errors: %.xml
+	-$(xml_wfcheck) $< 2>&1 > $@
 
-$(corpus).t.xml.errors: $(T_XML_FILES)
-	-$(xml_wfcheck) $^ 2>&1 > $@
+$(corpus).src.xml_errors: $(XML:.xml=.src.xml.errors)
+	cat $^ > $@
 
-$(corpus).ddc.t.xml.errors: $(T_XML_FILES:.t.xml=.ddc.t.xml)
-	-$(xml_wfcheck) $^ 2>&1 > $@
+$(corpus).so.xml_errors: $(STANDOFF_XML_FILES:=.errors)
+	cat $^ > $@
 
-$(corpus).cab.xml.errors: $(XML:.xml=.dta-cab.xml)
-	-$(xml_wfcheck) $^ 2>&1 > $@
+$(corpus).t.xml_errors: $(T_XML_FILES:=.errors)
+	cat $^ > $@
 
-$(corpus).cws.xml.errors: $(XML:.xml=.cws.xml)
-	-$(xml_wfcheck) $^ 2>&1 > $@
+$(corpus).ddc.t.xml_errors: $(T_XML_FILES:.t.xml=.ddc.t.xml.errors)
+	cat $^ > $@
 
-%.all.xml.errors: %.so.xml.errors %.cab.xml.errors %.cws.xml.errors
+$(corpus).cab.xml_errors: $(XML:.xml=.dta-cab.xml.errors)
+	cat $^ > $@
+
+$(corpus).cws.xml_errors: $(XML:.xml=.cws.xml.errors)
+	cat $^ > $@
+
+%.all.xml_errors: %.so.xml_errors %.cab.xml_errors %.cws.xml_errors
 	cat $^ > $@
 
 else
 ##--/ifneq "$(xml_wfcheck)" "no"
 
-%.xml.errors:
+$(corpus).%.errors:
 	echo "Implicit XML well-formedness check DISABLED" > $@
 
 endif
@@ -833,7 +844,7 @@ endif
 
 no-xml-errors: ; rm -f *.xml.errors
 
-CLEAN_FILES += *.xml.errors
+CLEAN_FILES += *.xml.errors *.xml_errors
 
 ##======================================================================
 ## Rules: Summaries

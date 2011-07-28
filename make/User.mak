@@ -249,8 +249,9 @@ cab_options = -noprofile -verbose=info -ao do_eqpho=0 -ao do_eqrw=0
 
 ## xml_wfcheck = COMMAND_PREFIX
 ##  + command prefix for checking XML well-formedness
-##  + if given as empty string, will use xmlstarlet or xmllint (whichever is found first)
+##  + if given as empty string, will use xmlwf, xmlstarlet, or xmllint (whichever is found first)
 ##  + command should be calleable as
-##    $(COMMAND_PREFIX) FILE_LIST 2>&1 >$(ERROR_FILE)
-#xml_wfcheck = xmllint --noout
+##    $(COMMAND_PREFIX) FILE 2>&1 >$(ERROR_FILE)
+#xml_wfcheck = xmlwf
 #xml_wfcheck = xmlstarlet val -w -e
+#xml_wfcheck = xmllint --noout
