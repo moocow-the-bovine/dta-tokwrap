@@ -342,7 +342,7 @@ sub apply_ddc_attrs {
 
     ##-- fallback: page: from predecessor
     if ($do_page) {
-      $wpage = $wprev->getAttribute($page_attr);
+      $wpage = $wprev->getAttribute($page_attr) if ($wprev);
       $wpage = -1 if (!defined($wpage) || $wpage eq '');
       $wnod->setAttribute($page_attr,$wpage);
     }
