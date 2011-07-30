@@ -32,8 +32,14 @@ extern char *CX_NIL_ID; //-- default: "-"
 //-- CX_LB_ID : pseudo-ID for <lb/> records
 extern char *CX_LB_ID; //-- default: "$LB$"
 
-//-- CX_LB_ID : pseudo-ID for <pb/> records
+//-- CX_PB_ID : pseudo-ID for <pb/> records
 extern char *CX_PB_ID; //-- default: "$PB$"
+
+//-- CX_FORMULA_ID : pseudo-ID format for <formula/> records (given original byte offset)
+extern char *CX_FORMULA_ID; //-- default: "$FORMULA:%lu$"
+
+//-- CX_FORMULA_TEXT : text inserted for <formula/> records
+extern char *CX_FORMULA_TEXT; //-- default: " FORMULA "
 
 //-- xmlid_attr : output attribute for (xml:)?id attributes (default="id")
 extern char *xmlid_name; 
@@ -186,6 +192,9 @@ size_t file_slurp(FILE *f, char **bufp, size_t buflen);
  * Utils: .cx file(s)
  */
 
+// CX_HAVE_PB : whether to parse 'pb' field in cxRecord
+#define CX_HAVE_PB 1
+
 // CX_WANT_TEXT : whether to include (and parse) 'text' field in cxRecord
 #define CX_WANT_TEXT 1
 
@@ -196,6 +205,9 @@ typedef struct {
   ByteLen    xlen;      //-- original xml byte length
   ByteOffset toff;      //-- .tx byte offset
   ByteLen    tlen;      //-- .tx byte length
+#ifdef CX_HAVE_PB
+  int          pb;      //-- preceding::pb[1]/@facs (trimmed)
+#endif
 #ifdef CX_WANT_TEXT
   char      *text;      //-- output text (un-escaped)
 #endif

@@ -145,6 +145,9 @@ sub defaults {
 
 			     ##-- verse-specific
 			     #qw(lg),
+
+			     ##-- technical & mathematical
+			     #qw(formula),
 			    ],
 	  hint_lb_xpaths => [
 			     ##-- segments
@@ -155,7 +158,8 @@ sub defaults {
 			    ],
 	  hint_replace_xpaths => {
 				  ##-- formulae
-				  'formula' => '<ws/><w/><c text="FORMEL"/><w/><ws/>',
+				  #'formula' => '<ws/><w/><c text="FORMEL"/><w/><ws/>',
+				  'formula' => '<w/>',
 				 },
 	  hint_stylestr => undef,
 	  hint_stylesheet => undef,

@@ -8,6 +8,8 @@ char *prog = "dtatwCommon"; //-- used for error reporting
 char *CX_NIL_ID = "-";
 char *CX_LB_ID  = "$LB$";
 char *CX_PB_ID  = "$PB$";
+char *CX_FORMULA_ID  = "$FORMULA:%lu$";
+char *CX_FORMULA_TEXT  = " FORMULA ";
 //char *xmlid_name = "xml:id";
 char *xmlid_name = "id";
 
@@ -155,6 +157,13 @@ cxData *cxDataLoad(cxData *cxd, FILE *f)
     s0 = s1+1;
     s1 = next_tab(s0);
     cx.tlen = strtol(s0,&tail,0);
+
+#ifdef CX_HAVE_PB
+    //-- pb
+    s0 = s1+1;
+    s1 = next_tab(s0);
+    cx.pb = strtol(s0,&tail,0);
+#endif
 
 #ifdef CX_WANT_TEXT
     //-- text

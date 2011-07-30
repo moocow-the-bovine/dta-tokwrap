@@ -7,6 +7,25 @@
 
 #define CTBUFSIZE    256 //-- <c>-local text buffer size
 #define CIDBUFSIZE   256 //-- <c>-local (xml:)?id buffer size
+#define CRENDBUFSIZE 256 //-- <c>-local @rendition buffer size
+
+typedef struct {
+  int ulx; //-- bbox (ulx<=lrx; uly<=lry): upper-left x
+  int uly; //-- bbox (ulx<=lrx; uly<=lry): upper-left y
+  int lrx; //-- bbox (ulx<=lrx; uly<=lry): lower-right x
+  int lry; //-- bbox (ulx<=lrx; uly<=lry): lower-right y
+  char rend[CRENDBUFSIZE]; //-- //c/@rendition
+} TokWrapLoc;
+
+TokWrapLoc LocDefault;
+static inline
+void resetLoc(TokWrapLoc *lp) {
+  lp->ulx=-1;
+  lp->uly=-1;
+  lp->lrx=-1;
+  lp->lry=-1;
+  lp->rend[0]='\0';
+}
 
 typedef struct {
   XML_Parser xp;        //-- expat parser
@@ -26,6 +45,7 @@ typedef struct {
   ByteOffset c_xoffset; //-- byte offset in XML stream at which current <c> started
   ByteOffset c_toffset; //-- byte offset in text stream at which current <c> started
   int        pb_facs;  //-- most recent preceding:pb/@facs (trimmed)
+  TokWrapLoc c_loc;     //-- current location / rendition
 } TokWrapData;
 
 //-- want_profile: if true, some profiling information will be printed to stderr
@@ -64,7 +84,7 @@ void print_indexfile_header(FILE *f, int argc, char **argv)
     fprintf(f, "%%%%======================================================================\n");
   }
   if (want_outfile_colnames) {
-    fprintf(f, "%s$ID$\t$XML_OFFSET$\t$XML_LENGTH$\t$TX_OFFSET$\t$TX_LEN$\t$PB_FACS$\t$TEXT$\n", (want_outfile_comments ? "%% " : ""));
+    fprintf(f, "%s$ID$\t$XML_OFFSET$\t$XML_LENGTH$\t$TX_OFFSET$\t$TX_LEN$\t$PB_FACS:ULX,ULY,LRX,LRY:RENDITION$\t$TEXT$\n", (want_outfile_comments ? "%% " : ""));
   }
 }
 
@@ -108,14 +128,15 @@ void put_raw_text(TokWrapData *data, int tlen, const char *txt)
 }
 
 //--------------------------------------------------------------
-void put_record_raw(FILE *f, const char *id, ByteOffset xoffset, int xlen, ByteOffset toffset, int tlen, int pb, const char *txt)
+void put_record_raw(FILE *f, const char *id, ByteOffset xoffset, int xlen, ByteOffset toffset, int tlen, int pb, TokWrapLoc *locp, const char *txt)
 {
   if (!f) return;
-  fprintf(f, "%s\t%lu\t%d\t%lu\t%d\t%d\t%s\n",
+  if (!locp) locp = &LocDefault;
+  fprintf(f, "%s\t%lu\t%d\t%lu\t%d\t%d:%d,%d,%d,%d:%s\t%s\n",
 	  id,
 	  xoffset,xlen,
 	  toffset,(tlen < 0 ? 0 : tlen),
-	  pb,
+	  pb, locp->ulx,locp->uly,locp->lrx,locp->lry, locp->rend,
 	  index_text(txt,tlen));
 }
 
@@ -127,23 +148,24 @@ void put_record_char(TokWrapData *data)
 		 data->c_id,
 		 data->c_xoffset, c_xlen,
 		 data->c_toffset, data->c_tlen,
-		 data->pb_facs,
+		 data->pb_facs, &(data->c_loc),
 		 data->c_tbuf
 		 );
   put_raw_text(data, data->c_tlen, data->c_tbuf);
   data->c_tlen = 0; //-- reset
+  resetLoc(&data->c_loc);
 }
 
 //--------------------------------------------------------------
 void put_record_lb(TokWrapData *data)
 {
-  ByteOffset my_xoff = XML_GetCurrentByteIndex(data->xp);
-  ByteOffset my_xlen = XML_GetCurrentByteCount(data->xp);
+  ByteOffset lb_xoff = XML_GetCurrentByteIndex(data->xp);
+  ByteOffset lb_xlen = XML_GetCurrentByteCount(data->xp);
   put_record_raw(data->f_cx,
 		 CX_LB_ID,
-		 my_xoff, my_xlen,
+		 lb_xoff, lb_xlen,
 		 data->c_toffset,1,
-		 data->pb_facs,
+		 data->pb_facs, &(data->c_loc),
 		 "\n"
 		 );
   put_raw_text(data, 1, "\n");
@@ -152,34 +174,16 @@ void put_record_lb(TokWrapData *data)
 //--------------------------------------------------------------
 void put_record_pb(TokWrapData *data)
 {
-  ByteOffset my_xoff = XML_GetCurrentByteIndex(data->xp);
-  ByteOffset my_xlen = XML_GetCurrentByteCount(data->xp);
+  ByteOffset lb_xoff = XML_GetCurrentByteIndex(data->xp);
+  ByteOffset lb_xlen = XML_GetCurrentByteCount(data->xp);
   put_record_raw(data->f_cx,
 		 CX_PB_ID,
-		 my_xoff, my_xlen,
+		 lb_xoff, lb_xlen,
 		 data->c_toffset, 0,
-		 data->pb_facs,
+		 data->pb_facs, &(data->c_loc),
 		 ""
 		 );
   //put_raw_text(data, 1, "\n");
-}
-
-//--------------------------------------------------------------
-void put_record_formula(TokWrapData *data)
-{
-  ByteOffset my_xoff = XML_GetCurrentByteIndex(data->xp);
-  ByteOffset my_xlen = XML_GetCurrentByteCount(data->xp);
-  int my_tlen = strlen(CX_FORMULA_TEXT);
-  char formula_id[CIDBUFSIZE];
-  snprintf(formula_id, CIDBUFSIZE, CX_FORMULA_ID, my_xoff);
-  put_record_raw(data->f_cx,
-		 formula_id,
-		 my_xoff, my_xlen,
-		 data->c_toffset, my_tlen,
-		 data->pb_facs,
-		 CX_FORMULA_TEXT
-		 );
-  put_raw_text(data, my_tlen, CX_FORMULA_TEXT);
 }
 
 
@@ -190,48 +194,48 @@ void put_record_formula(TokWrapData *data)
 //--------------------------------------------------------------
 void cb_start(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
 {
-  if (data->text_depth) {
-    if (strcmp(name,"c")==0) { // || strcmp(name,"formula")==0
-      const char *id = CX_NIL_ID;
-      if (data->is_c) {
-	fprintf(stderr, "%s: cannot handle nested <c> elements starting at bytes %lu, %lu\n",
-		prog, data->c_xoffset, XML_GetCurrentByteIndex(data->xp));
-	exit(3);
+  if (data->text_depth && (strcmp(name,"c")==0 || strcmp(name,"formula")==0)) {
+    const char *id = CX_NIL_ID;
+    resetLoc(&data->c_loc);
+    if (data->is_c) {
+      fprintf(stderr, "%s: cannot handle nested <c> elements starting at bytes %lu, %lu\n",
+	      prog, data->c_xoffset, XML_GetCurrentByteIndex(data->xp));
+      exit(3);
+    }
+    for (; *attrs; attrs += 2) {
+      if (strcmp(*attrs,"id")==0 || strcmp(*attrs,"xml:id")==0) { id = attrs[1]; }
+      else if (strcmp(*attrs,"ulx")==0) { data->c_loc.ulx = strtol(attrs[1],NULL,10); }
+      else if (strcmp(*attrs,"uly")==0) { data->c_loc.uly = strtol(attrs[1],NULL,10); }
+      else if (strcmp(*attrs,"lrx")==0) { data->c_loc.lrx = strtol(attrs[1],NULL,10); }
+      else if (strcmp(*attrs,"lry")==0) { data->c_loc.lry = strtol(attrs[1],NULL,10); }
+      else if (strcmp(*attrs,"rendition")==0) {
+	assert(strlen(attrs[1]) < CRENDBUFSIZE);
+	strcpy(data->c_loc.rend,attrs[1]);
       }
-      for (; *attrs; attrs += 2) {
-	if (strcmp(*attrs,"id")==0 || strcmp(*attrs,"xml:id")==0) {
-	  id = attrs[1];
-	  assert(strlen(id) < CIDBUFSIZE);
-	  break;
-	}
-      }
-      strcpy(data->c_id,id);
-      data->c_xoffset = XML_GetCurrentByteIndex(data->xp);
-      data->c_tlen    = 0;
-      data->is_c      = 1;
-      data->n_chrs++;
-      data->total_depth++;
-      return;
     }
-    else if (strcmp(name,"lb")==0) {
-      put_record_lb(data);
-      data->total_depth++;
-      return;
+    assert(strlen(id) < CIDBUFSIZE);
+    strcpy(data->c_id,id);
+    data->c_xoffset = XML_GetCurrentByteIndex(data->xp);
+    data->c_tlen    = 0;
+    data->is_c      = 1;
+    data->n_chrs++;
+    data->total_depth++;
+    return;
+  }
+  else if (strcmp(name,"lb")==0) {
+    put_record_lb(data);
+    data->total_depth++;
+    return;
+  }
+  else if (strcmp(name,"pb")==0) {
+    const XML_Char *facs = get_attr("facs",attrs);
+    if (facs != NULL) {
+      for ( ; facs && (*facs=='#' || *facs=='f' || *facs=='0'); facs++) ;
+      data->pb_facs = strtol(facs,NULL,10);
     }
-    else if (strcmp(name,"pb")==0) {
-      const XML_Char *facs = get_attr("facs",attrs);
-      if (facs != NULL) {
-	for ( ; facs && (*facs=='#' || *facs=='f' || *facs=='0'); facs++) ;
-	data->pb_facs = strtol(facs,NULL,0);
-	//-- don't just return here: keep <pb> elements in the *.sx file
-	//data->total_depth++;
-	//return;
-      }
-      put_record_pb(data);
-    }
-    else if (strcmp(name,"formula")==0) {
-      put_record_formula(data);
-    }
+    put_record_pb(data);
+    data->total_depth++;
+    return;
   }
   else if (strcmp(name,"text")==0) {
     data->text_depth++;
@@ -340,6 +344,11 @@ int main(int argc, char **argv)
 
   //-- sanity checks & defaults
   assert(strlen(CX_NIL_ID) < CIDBUFSIZE);
+  LocDefault.ulx=-1;
+  LocDefault.uly=-1;
+  LocDefault.lrx=-1;
+  LocDefault.lry=-1;
+  LocDefault.rend[0]='\0';
 
   //-- command-line: usage
   if (argc <= 1) {
@@ -429,6 +438,7 @@ int main(int argc, char **argv)
   data.f_cx = f_cx;
   data.f_sx = f_sx;
   data.f_tx = f_tx;
+  data.c_loc = LocDefault;
 
   //-- parse input file
   n_xbytes = expat_parse_file(xp,f_in,filename_in);
