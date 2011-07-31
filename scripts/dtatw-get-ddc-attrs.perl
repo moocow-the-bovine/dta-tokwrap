@@ -27,6 +27,7 @@ our $format = 1;       ##-- output format level
 ##-- selection
 our $keep_blanks = 0;
 our $do_page = 1;
+our $do_line = 1;
 our $do_rendition = 1;
 our $do_xcontext = 1;
 our $do_xpath = 0;
@@ -40,6 +41,7 @@ our $rendition_attr = 'xr';
 our $xcontext_attr  = 'xc';
 our $xpath_attr     = 'xp';
 our $page_attr      = 'pb';
+our $line_attr      = 'lb';
 our $bbox_attr      = 'bb';
 our $unicruft_attr  = 'u';
 
@@ -61,7 +63,8 @@ GetOptions(##-- General
 
 	   ##-- I/O
 	   'keep-blanks|blanks|whitespace|ws!' => \$keep_blanks,
-	   'page|pb|p!' => $do_page,
+	   'page|pb|p!' => \$do_page,
+	   'line|lb|l!' => \$do_line,
 	   'rendition|rend|xr|r!' => \$do_rendition,
 	   'xcontext|context|xcon|con|xc!' => \$do_xcontext,
 	   'xpath|path|xp!' => \$do_xpath,
@@ -83,6 +86,10 @@ if (!defined($cxmlfile) || $cxmlfile eq '') {
   pod2usage({-exitval=>0,-verbose=>0,-msg=>"$prog: could not guess CHR_XML_FILE for T_XML_FILE=$txmlfile"})
     if ($cxmlfile eq $txmlfile);
 }
+
+##-- sanity checks
+$do_page = 1 if ($do_bbox);
+$do_line = 1 if ($do_bbox);
 
 ##======================================================================
 ## Subs: t-xml stuff (*.t.xml)
@@ -107,22 +114,57 @@ sub load_txml {
 
 
 ##======================================================================
+## Subs: character record packing
+
+##-- page packing: formats
+our %c_packas =
+  (
+   pb => 'l',
+   lb => 's',
+   (map {($_=>'l')} qw(ulx uly lrx lry)),
+   (map {($_=>'Z*')} qw(elt id xr xc xp)),
+  );
+our @c_pkeys = (
+		'elt', 'id',
+		($do_page ? 'pb' : qw()),
+		($do_line ? 'lb' : qw()),
+		($do_bbox ? qw(ulx uly lrx lry) : qw()),
+		($do_rendition ? 'xr' : qw()),
+		($do_xcontext ? 'xc' : qw()),
+		($do_xpath ? 'xp' : qw()),
+	       );
+our $c_pack  = join('',map {$c_packas{$_}} @c_pkeys);
+
+## $c_packed = c_pack(\%c)
+my ($_c_unpacked,$_c_packed);
+sub c_pack {
+  $_c_unpacked = shift;
+  return pack($c_pack, map {defined($_) ? $_ : ''} @$_c_unpacked{@c_pkeys});
+}
+
+## \%c = c_unpack($c_packed)
+sub c_unpack {
+  $_c_unpacked = {};
+  @$_c_unpacked{@c_pkeys} = unpack($c_pack,$_[0]);
+  return $_c_unpacked;
+}
+
+##======================================================================
 ## Subs: cxmlfile stuff (*.chr.xml)
 
 ## @stack: stack of element-data hashes
 ##  + each $edata on stack = {tag=>$tag, rendition=>\%rendition, context=>\%context, ...}
 ##  + global $edata: current top of stack
 ##  + $path: current xpath (without numeric positions)
-our (@stack,$edata,$xpath,$page);
+our (@stack,$edata,$xpath,$page,$line);
 
 ##-- $cid maps (for //c elements not assigned to any word)
 our %cid2cn   = qw();   ##-- %cid2cn  = ($cid=>$cn, ...)
-our @cn2cid   = qw();   ##-- @cn2cid  = ([$cn]=>$cid, ...): list of all (//c/@id)s in chr-xml file
-our @cn2page  = qw();   ##-- @cn2page = ([$cn]=>$pb_facs,...)
-our @cn2bbox  = qw();   ##-- @cn2bbox = ([$cn]=>"$ulx $uly $lrx $lry",...) with $ulx<=$lrx, $uly<=$lry; -1 for undef
-our @cn2rend  = qw();   ##-- @cn2rend = ([$cn]=>join(' ',@rendition_keys), ...)
-our @cn2xcon  = qw();   ##-- @cn2xcon = ([$cn]=>join(' ',@xcontext_keys), ...)
-our @cn2xpath = qw();   ##-- @cn2xpath = ([$cn]=>$xpath, ...) 
+
+##-- $c_packed = $cn2packed[$cn]
+## + with $cdata_packed = pack_cdata(%cdata)
+## + and  %cdata        = unpack_cdata($cdata_packed)
+our @cn2packed = qw();
 
 ## undef = cxml_cb_init($expat)
 sub cxml_cb_init {
@@ -131,13 +173,9 @@ sub cxml_cb_init {
   $edata = { rendition=>{}, xcontext=>{} };  ##-- current stack item
   $xpath = '';
   $page  = -1;
-  @cn2cid   = qw();
+  $line  =  1;
   %cid2cn  = qw();
-  @cn2page = qw();
-  @cn2bbox = qw();
-  @cn2rend = qw();
-  @cn2xcon = qw();
-  @cn2xpath = qw();
+  @cn2packed = qw();
 }
 
 ## undef = cxml_cb_final($expat)
@@ -146,7 +184,7 @@ sub cxml_cb_init {
 #  return \@w_segs0;
 #}
 
-our (%_attrs);
+our (%_attrs,%_c);
 our ($facs,$rendition,$xcontext);
 our ($cid,$cn);
 
@@ -170,15 +208,22 @@ sub cxml_cb_start {
   }
 
   ##-- tag-dispatch
-  if ($_[1] eq 'c' && (defined($cid=$_attrs{'id'}) || defined($cid=$_attrs{'xml:id'}))) {
+  if ($_[1] eq 'c' || $_[1] eq 'formula') {
     ##-- //c assigned to some //w: extract data
-    push(@cn2cid,$cid);
-    $cid2cn{$cid}  = $cn = $#cn2cid;
-    $cn2page[$cn]  = $page  if ($do_page);
-    $cn2rend[$cn]  = join(' ', keys(%{$edata->{rendition}})) if ($do_rendition);
-    $cn2xcon[$cn]  = join(' ', keys(%{$edata->{xcontext}}))  if ($do_xcontext);
-    $cn2bbox[$cn]  = join(' ', map {defined($_) ? $_ : -1} @_attrs{qw(ulx uly lrx lry)}) if ($do_bbox);
-    $cn2xpath[$cn] = $xpath if ($do_xpath);
+    $cid = $_attrs{'id'} || $_attrs{'xml:id'} || '$'.uc($_[1]).':'.($_[0]->current_byte).'$';
+    %_c = (
+	   %_attrs,
+	   elt=>$_[1],
+	   id=>$cid,
+	   pb=>$page,
+	   lb=>$line,
+	   ($do_rendition ? (xr=>join(' ', keys %{$edata->{rendition}})) : qw()),
+	   ($do_xcontext  ? (xc=>join(' ', keys %{$edata->{xcontext}})) : qw()),
+	   ($do_xpath     ? (xp=>$xpath) : qw()),
+	  );
+    $_c{$_} = -1 foreach (grep {!defined($_c{$_})} qw(ulx uly lrx lry));
+    push(@cn2packed,c_pack(\%_c));
+    $cid2cn{$cid} = $cn = $#cn2packed;
   }
   elsif ($do_xcontext && defined($xcontext=$xcontext_elts{$_[1]})) {
     ##-- structural context: element-based
@@ -189,9 +234,13 @@ sub cxml_cb_start {
     $xcontext = 'note_'.($_attrs{'place'}||'other');
     $edata->{xcontext} = { %{$edata->{xcontext}}, $xcontext=>undef };
   }
-  elsif ($do_page && $_[1] eq 'pb' && defined($facs=$_attrs{'facs'})) {
+  elsif ($do_page && $_[1] eq 'pb') {
     ##-- page break
-    ($page=$facs) =~ s/^\#?f?0*//;
+    ($page=$facs) =~ s/^\#?f?0*// if (defined($facs=$_attrs{'facs'}));
+    $line = 1;
+  }
+  elsif ($do_line && $_[1] eq 'lb') {
+    ++$line;
   }
 
   return;
@@ -218,36 +267,43 @@ sub cxml_cb_end {
 ##======================================================================
 ## Subs: merge
 
+##-- TODO: replace these here
+use vars qw(@cn2rend @cn2xcon @cn2xpath @cn2page @cn2bbox);
+
 ## $wgood = apply_word($wnod)
 ## $wgood = apply_word($wnod,\@cids)
 ## $wgood = apply_word($wnod,\@cids,$bbsingle)
 ##  + populates globals: ($wnod,$wid,$cids,@cids,$wpage,$wrend,$wcon,$wxpath,@wbboxes)
-my ($wnod,$wid,$cids,@cids,@cns,$wpage,$wrend,$wcon,$wxpath,@cn2wnod,$bbsingle);
-my ($wcns,@wbboxes,@cbboxes,$cbbox,$wbbox,$wtxt,$utxt);
+my ($wnod,$wid,$cids,@cids,@cns,@cs,$wpage,$wline,$wrend,$wcon,$wxpath,@cn2wnod,$bbsingle);
+my ($wcs,@wbboxes,@cbboxes,$cbbox,$wbbox,$wtxt,$utxt);
 sub apply_word {
   ($wnod,$cids,$bbsingle) = @_;
 
   ##-- get id
   if (!defined($wid=$wnod->getAttribute('id'))) {
     ##-- ...and ensure it's in the raw '//w/@id' attribute and not 'xml:id'
-    if (!defined($wid=$wnod->getAttribute('xml:id'))) {
+    if (defined($wid=$wnod->getAttribute('xml:id'))) {
+      $wnod->getAttributeNode('xml:id')->setNamespace('','');
+    }
+    else {
+      ##-- complain if no id is present
       warn("$0: //w node without \@id attribute at $txmlfile line ", $wnod->line_number, "\n")
 	if ($verbose >= $vl_warn);
     }
-    $wnod->getAttributeNode('xml:id')->setNamespace('','');
   }
 
   ##-- get cids
   $cids = $wnod->getAttribute('c') || $wnod->getAttribute('cs') || '' if (!defined($cids));
   @cids = ref($cids) ? @$cids : cidlist($cids);
   @cns  = grep {defined($_)} @cid2cn{@cids};
+  @cs   = map {c_unpack($_)} @cn2packed[@cns];
   if (!@cids && $warn_on_empty_cids && $verbose >= $vl_warn) {
     ##-- $wnod without a //c/@id list
     ##   + this happens e.g. for 'FORMEL' inserted via DTA::TokWrap::mkbx0 'hint_replace_xpaths'
     ##   + push these to @wnoc and try to fudge them in a second pass
     warn("$0: no //c/\@id list for //w at $txmlfile line ", $wnod->line_number, "\n");
   }
-  elsif (!@cns) {
+  elsif (!@cs) {
     warn("$0: invalid //c/\@id list for //w at $txmlfile line ", $wnod->line_number, "\n")
       if ($verbose >= $vl_warn);
   }
@@ -266,41 +322,48 @@ sub apply_word {
 
   ##-- compute & assign: rendition (undef -> '-')
   if ($do_rendition) {
-    $wrend = join('|', luniq(map {s/^\#//; $_} map {split(' ',($cn2rend[$_]||''))} @cns)) || '';
+    $wrend = join('|', luniq(map {s/^\#//; $_} map {split(' ',$_->{xr})} @cs)) || '';
     $wnod->setAttribute($rendition_attr, $wrend ? "|$wrend|" : '-');
   }
 
   ##-- compute & assign: structural context: xcontext (undef -> '-')
   if ($do_xcontext) {
-    $wcon = join('|', luniq(map {split(' ',($cn2xcon[$_]||''))} @cns)) || '';
+    $wcon = join('|', luniq(map {split(' ',$_->{xc})} @cs)) || '';
     $wnod->setAttribute($xcontext_attr, $wcon ? "|$wcon|" : '-');
   }
 
   ##-- compute & assign: xpath (undef -> '/..' (== empty node set))
   if ($do_xpath) {
-    $wxpath = @cns ? $cn2xpath[$cns[0]] : undef;
-    $wxpath = '/..' if (!$wxpath);
-    $wxpath =~ s|/c$||i;   ##-- prune final 'c'-element from //w xpath
+    $wxpath = @cs ? $cs[0]{xp} : undef;
+    $wxpath = '/..' if (!$wxpath); ##-- invalid xpath
+    $wxpath =~ s|/c$||i;           ##-- prune final 'c'-element from //w xpath
     $wnod->setAttribute($xpath_attr, $wxpath);
   }
 
   ##-- compute & assign: page (undef -> -1; non-empty @cids only)
   if ($do_page) {
-    $wpage = @cns ? $cn2page[$cns[0]] : undef;
-    $wpage = -1 if (!defined($wpage));
-    $wnod->setAttribute($page_attr, defined($wpage) ? $wpage : '-1');
+    $wpage = @cs ? $cs[0]{pb} : undef;
+    $wpage = -1 if (!defined($wpage) || $wpage eq '');
+    $wnod->setAttribute($page_attr, $wpage);
   }
 
-  ##-- compute & assign: bbox (undef -> ''; non-empty @cids only)
-  if ($do_bbox && @cns) {
-    @wbboxes = bboxes(\@cns,$bbsingle);
+  ##-- compute & assign: line (undef -> -1; non-empty @cids only)
+  if ($do_line) {
+    $wline = @cs ? $cs[0]{lb} : undef;
+    $wline = -1 if (!defined($wline) || $wline eq '');
+    $wnod->setAttribute($line_attr, $wline);
+  }
+
+  ##-- compute & assign: bbox (undef -> ''; non-empty @cids only) : TODO
+  if ($do_bbox && @cs) {
+    @wbboxes = bboxes(\@cs,$bbsingle);
     $wnod->setAttribute($bbox_attr, join('_', map {join('|',@$_)} @wbboxes));
   }
 
-  ##-- record: cid2wnod
+  ##-- record: cn2wnod
   $cn2wnod[$_] = $wnod foreach (@cns);
 
-  return scalar(@cns);
+  return scalar(@cs);
 }
 
 ## $xdoc = apply_ddc_attrs($xdoc)
@@ -319,7 +382,10 @@ sub apply_ddc_attrs {
   ##--------------------------------------
   ## apply: pass=2: words without //c/@id lists
   my ($wprev,$wnext, @cprev,@cnext, $bbprev,$bbnext,@bbprev,@bbnext);
-  foreach $wnod (@wnoc) {
+  foreach $wnod (
+		 qw() ##-- TODO: CONTINUE HERE: implement fallbacks for new packed <c>s
+		 #@wnoc
+		) {
     #$wid = $wnod->getAttribute('id') || next; ##-- skip //w nodes without ids
 
     ##-- get neighbors
@@ -329,16 +395,6 @@ sub apply_ddc_attrs {
     ##-- guess: @cids (all unassigned //c/@ids between this word's neighbors)
     @cprev = $wprev ? cidlist($wprev->getAttribute('c')||$wprev->getAttribute('cs')||'') : qw();
     @cnext = $wnext ? cidlist($wnext->getAttribute('c')||$wnext->getAttribute('cs')||'') : qw();
-#    @cns   = (@cprev && @cnext ? (grep {!exists($cn2wnod[$_])} ($cid2cn{$cprev[$#cprev]}..$cid2cn{$cnext[0]})) : qw());
-#    @cids  = @cn2cid[@cns];
-#
-#    ##-- maybe we can apply already
-#    if (@cids) {
-#      warn("$0: using unclaimed <c>s to guess attributes for <w> at $txmlfile line ", $wnod->line_number, "\n")
-#	if ($verbose >= $vl_warn);
-#      apply_word($wnod,\@cids,1); ##-- use single-bbox mode for fallbacks
-#      next;
-#    }
 
     ##-- fallback: page: from predecessor
     if ($do_page) {
@@ -417,8 +473,8 @@ sub cidlist {
   } split(' ',$_[0])
 }
 
-## @bboxes = bboxes(\@cns)
-## @bboxes = bboxes(\@cns,$single=0)
+## @bboxes = bboxes(\@cus)
+## @bboxes = bboxes(\@cus,$single=0)
 ##  + gets list of word bounding boxes @bboxes=($bbox1,$bbox2,...)
 ##    for a "word" composed of the characters in //c/@id array-ref \@cids
 ##  + each bbox $bbox in @bboxes is of the form
@@ -427,13 +483,12 @@ sub cidlist {
 ##  + if $single is true, at most a single bbox will be returned, otherwise
 ##    line- and column-breaks will be heuristically detected
 sub bboxes {
-  ($wcns,$bbsingle) = @_;
+  ($wcs,$bbsingle) = @_;
   @wbboxes = qw();
-  return @wbboxes if (!$wcns || !@$wcns);
-  @cbboxes = map {[split(' ',$cn2bbox[$_])]} grep {$cn2page[$_] eq $cn2page[$wcns->[0]]} @$wcns;
+  return @wbboxes if (!$wcs || !@$wcs);
+  @cbboxes = map {[@$_{qw(ulx uly lrx lry)}]} grep {$_->{pb} == $wcs->[0]{pb}} @$wcs;
   $wbbox   = undef;
   foreach $cbbox (@cbboxes) {
-    #($ulx,$uly,$lrx,$lry)=@$cbbox;
     next if (grep {$_ < 0} @$cbbox); ##-- skip //c bboxes with bad values
     if (!$wbbox) {
       ##-- initial bbox
@@ -446,7 +501,7 @@ sub bboxes {
       ##-- character:BOTTOM >> word:TOP: probably a column-break: new word bbox
       push(@wbboxes, $wbbox=[@$cbbox]);
     } else {
-      ##-- extend current word bbox if required
+      ##-- extend current word bbox
       $wbbox->[0] = $cbbox->[0] if ($cbbox->[0] < $wbbox->[0]);
       $wbbox->[1] = $cbbox->[1] if ($cbbox->[1] < $wbbox->[1]);
       $wbbox->[2] = $cbbox->[2] if ($cbbox->[2] > $wbbox->[2]);
@@ -519,7 +574,8 @@ dtatw-get-ddc-attrs.perl - get DDC-relevant attributes from DTA::TokWrap files
   -quiet                 # be silent
 
  I/O Options:
-  -page   , -nopage      # do/don't extract //w/@pb (pagebreak; default=do)
+  -page   , -nopage      # do/don't extract //w/@pb (page-break; default=do)
+  -line   , -noline      # do/don't extract //w/@lb (line-break; default=do)
   -rend   , -norend      # do/don't extract //w/@xr (rendition; default=do)
   -xcon   , -noxcon      # do/don't extract //w/@xc (xml context; default=do)
   -xpath  , -noxpath     # do/don't extract //w/@xp (xpath; default=don't)
