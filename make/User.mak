@@ -46,7 +46,10 @@ xml =
 #xml += $(xmldir)/kurz.xml
 #xml += $(xmldir)/helm.xml
 #xml += $(xmldir)/huber.xml $(xmldir)/helm.xml
-xml += $(xmldir)/weier.xml
+#xml += $(xmldir)/weier.xml
+xml += $(xmldir)/mendel_pflanzenhybriden_1866.aligned.xml
+xml += $(xmldir)/riemann_hypothesen_1867.aligned.xml
+xml += $(xmldir)/gauss_lehrsaetze_1840.aligned.xml
 
 #xmldir = ../examples
 #xml    = $(xmldir)/kant_aufklaerung_1784.converted.chr.xml
