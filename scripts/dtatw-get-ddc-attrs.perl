@@ -24,17 +24,24 @@ our $cxmlfile = "-";   ##-- default: stdin
 our $outfile  = "-";   ##-- default: stdout
 our $format = 1;       ##-- output format level
 
+##-- constants (hacks)
+our $PAGE_BOTTOM_Y = 50001;
+our $PAGE_TOP_Y = 1;
+our $MAX_FORMULA_PIX = 1024; ##-- any formula bboxes higher $MAX_FORMULA_PIX are chucked
+our $MIN_FORMULA_PIX = 100;  ##-- formula bboxes shorter than $MIN_FORMULA_PIX are extended
+our $CN2WN_BITS = 32;
+
 ##-- selection
 our $keep_blanks = 0;
 our $do_page = 1;
 our $do_line = 1;
 our $do_rendition = 1;
 our $do_xcontext = 1;
-our $do_xpath = 0;
+our $do_xpath = 1;
 our $do_bbox = 1;
 our $do_unicruft = 1;
-our $do_keep_c = 1;
-our $do_keep_b = 1;
+our $do_keep_c = 0;
+our $do_keep_b = 0;
 
 ##-- output attributes
 our $rendition_attr = 'xr';
@@ -44,6 +51,7 @@ our $page_attr      = 'pb';
 our $line_attr      = 'lb';
 our $bbox_attr      = 'bb';
 our $unicruft_attr  = 'u';
+our $formula_text   = ''; ##-- output text for //formula elements (undef: no change)
 
 ##-- constants: verbosity levels
 our $vl_warn     = 1;
@@ -72,6 +80,7 @@ GetOptions(##-- General
 	   'unicruft|cruft|u!' => \$do_unicruft,
 	   'keep-c|keepc|kc!' => \$do_keep_c,
 	   'keep-b|keepb|kb!' => \$do_keep_b,
+	   'formula-text|ft:s' => \$formula_text,
 	   'output|out|o=s' => \$outfile,
 	   'format|f!' => \$format,
 	  );
@@ -119,13 +128,14 @@ sub load_txml {
 ##-- page packing: formats
 our %c_packas =
   (
+   cn => 'l',
    pb => 'l',
    lb => 's',
    (map {($_=>'l')} qw(ulx uly lrx lry)),
    (map {($_=>'Z*')} qw(elt id xr xc xp)),
   );
 our @c_pkeys = (
-		'elt', 'id',
+		'elt', 'id', 'cn',
 		($do_page ? 'pb' : qw()),
 		($do_line ? 'lb' : qw()),
 		($do_bbox ? qw(ulx uly lrx lry) : qw()),
@@ -136,17 +146,18 @@ our @c_pkeys = (
 our $c_pack  = join('',map {$c_packas{$_}} @c_pkeys);
 
 ## $c_packed = c_pack(\%c)
-my ($_c_unpacked,$_c_packed);
 sub c_pack {
-  $_c_unpacked = shift;
-  return pack($c_pack, map {defined($_) ? $_ : ''} @$_c_unpacked{@c_pkeys});
+  return undef if (!defined($_[0]));
+  return pack($c_pack, map {defined($_) ? $_ : ''} @{$_[0]}{@c_pkeys});
 }
 
 ## \%c = c_unpack($c_packed)
+my ($_c_unpack_tmp);
 sub c_unpack {
-  $_c_unpacked = {};
-  @$_c_unpacked{@c_pkeys} = unpack($c_pack,$_[0]);
-  return $_c_unpacked;
+  return undef if (!defined($_[0]));
+  $_c_unpack_tmp = {};
+  @$_c_unpack_tmp{@c_pkeys} = unpack($c_pack,$_[0]);
+  return $_c_unpack_tmp;
 }
 
 ##======================================================================
@@ -162,8 +173,8 @@ our (@stack,$edata,$xpath,$page,$line);
 our %cid2cn   = qw();   ##-- %cid2cn  = ($cid=>$cn, ...)
 
 ##-- $c_packed = $cn2packed[$cn]
-## + with $cdata_packed = pack_cdata(%cdata)
-## + and  %cdata        = unpack_cdata($cdata_packed)
+## + with $cdata_packed = c_pack(%cdata)
+## + and  %cdata        = c_unpack($cdata_packed)
 our @cn2packed = qw();
 
 ## undef = cxml_cb_init($expat)
@@ -189,7 +200,7 @@ our ($facs,$rendition,$xcontext);
 our ($cid,$cn);
 
 our %xcontext_elts = (map {($_=>$_)}
-		      qw(text front body back head left foot end argument hi cit fw lg stage speaker)
+		      qw(text front body back head left foot end argument hi cit fw lg stage speaker formula table)
 		     );
 
 ## undef = cxml_cb_start($expat, $elt,%attrs)
@@ -211,10 +222,12 @@ sub cxml_cb_start {
   if ($_[1] eq 'c' || $_[1] eq 'formula') {
     ##-- //c assigned to some //w: extract data
     $cid = $_attrs{'id'} || $_attrs{'xml:id'} || '$'.uc($_[1]).':'.($_[0]->current_byte).'$';
+    $cn  = scalar(@cn2packed);
     %_c = (
 	   %_attrs,
 	   elt=>$_[1],
 	   id=>$cid,
+	   cn=>$cn,
 	   pb=>$page,
 	   lb=>$line,
 	   ($do_rendition ? (xr=>join(' ', keys %{$edata->{rendition}})) : qw()),
@@ -223,7 +236,7 @@ sub cxml_cb_start {
 	  );
     $_c{$_} = -1 foreach (grep {!defined($_c{$_})} qw(ulx uly lrx lry));
     push(@cn2packed,c_pack(\%_c));
-    $cid2cn{$cid} = $cn = $#cn2packed;
+    $cid2cn{$cid} = $cn;
   }
   elsif ($do_xcontext && defined($xcontext=$xcontext_elts{$_[1]})) {
     ##-- structural context: element-based
@@ -267,17 +280,159 @@ sub cxml_cb_end {
 ##======================================================================
 ## Subs: merge
 
-##-- TODO: replace these here
-use vars qw(@cn2rend @cn2xcon @cn2xpath @cn2page @cn2bbox);
+our ($wnods,@wfml,@wnoc,$cn2wn);
 
-## $wgood = apply_word($wnod)
-## $wgood = apply_word($wnod,\@cids)
-## $wgood = apply_word($wnod,\@cids,$bbsingle)
+## $xdoc = apply_ddc_attrs($xdoc)
+##  + calls apply_word() on all nodes
+##  + implements basic fallbacks
+sub apply_ddc_attrs {
+  my $xdoc = shift;
+
+  ##--------------------------------------
+  ## apply: pass=1: the "easy" stuff
+  $wnods = $xdoc->findnodes('//w');  ##-- all //w nodes
+  @wnoc  = qw();                     ##-- indices in @$wnods: //w nodes with no //c/@id list
+  @wfml  = qw();                     ##-- indices in @$wnods: formula //w nodes
+  $cn2wn = '';                       ##-- maps //c indices to //w indices of claiming wnod ("good" wnods only)
+  my ($wi);
+  for ($wi=0; $wi <= $#$wnods; $wi++) {
+    apply_word($wi);
+  }
+
+  ##--------------------------------------
+  ## apply: pass=2: formulae
+  if ($do_bbox) {
+    my ($c0,$wnod,@cs,@lprev_cs,@lnext_cs,$yprev,$ynext, $sd_prev,$sd_next);
+    my @clist_context = (1..1);
+    foreach $wi (@wfml) {
+      ##-- get //c list
+      $wnod = $wnods->[$wi];
+      @cs = grep {defined($_)} clist($wnod->getAttribute('c') || $wnod->getAttribute('cs') || '');
+      next if (!defined($c0=$cs[0]));
+
+      ##-- get characters by surrounding line(s)
+      #@lprev_cs = grep {$_->{elt} eq 'c'} map {clist_byline($c0->{pb}, $c0->{lb}-$_, $c0->{cn})} @clist_context;
+      #@lnext_cs = map {clist_byline($c0->{pb}, $c0->{lb}+$_, $c0->{cn})} @clist_context;
+
+      @lprev_cs = grep {$_->{elt} eq 'c' && vec($cn2wn,$_->{cn},$CN2WN_BITS)} map {clist_byline($c0->{pb}, $c0->{lb}-$_, $c0->{cn})} @clist_context;
+      @lnext_cs = grep {$_->{elt} eq 'c' && vec($cn2wn,$_->{cn},$CN2WN_BITS)} map {clist_byline($c0->{pb}, $c0->{lb}+$_, $c0->{cn})} (@clist_context);
+
+      if (0) {
+	##-- mu +/- sigma: unified: new
+	my $cctx = 8;
+	my $ypad = 100;
+	@lprev_cs = grep {$_->{elt} eq 'c' && $_->{pb}==$c0->{pb} && vec($cn2wn,$_->{cn},$CN2WN_BITS)} map {c_unpack($_)} grep {defined($_)} @cn2packed[(($c0->{cn}-$cctx)..($c0->{cn}-1))];;
+	@lnext_cs = grep {$_->{elt} eq 'c' && $_->{pb}==$c0->{pb} && vec($cn2wn,$_->{cn},$CN2WN_BITS)} map {c_unpack($_)} grep {defined($_)} @cn2packed[(($c0->{cn}+1)..($c0->{cn}+$cctx))];;
+
+	my @y_lo  = grep {defined($_) && $_>=0} map {$_->{uly}} @lprev_cs;
+	my $mu_lo = lavg(@y_lo);
+	#my $sd_lo = lavg(map {($_-$mu_lo)**2} @y_lo);
+	#@y_lo     = grep {($_-$mu_lo) <= $sd_lo} @y_lo;
+	@y_lo     = grep {$_ <= $mu_lo} @y_lo;
+
+	my @y_hi  = grep {defined($_) && $_>=0} map {$_->{lry}} @lnext_cs;
+	my $mu_hi = lavg(@y_hi);
+	#my $sd_hi = lavg(map {($_-$mu_hi)**2} @y_hi);
+	#@y_hi     = grep {($mu_hi-$_) <= $sd_hi} @y_hi;
+	@y_hi     = grep {$_ >= $mu_hi} @y_hi;
+
+	$yprev = int( lavg(@y_lo) || -1 );
+	$ynext = int( lavg(@y_hi) || -1 );
+      }
+      elsif (0) {
+	##-- mu +/- sigma: unified: old
+	my @lcs = (@lprev_cs,clist_byline(@$c0{qw(pb lb cn)}),@lnext_cs);
+	my @lys = grep {$_>=0} map {@$_{qw(lry uly)}} @lcs;
+	my $mu  = lavg(@lys);
+	my $sd  = defined($mu) ? sqrt( lavg(map {($_-$mu)**2} @lys) ) : 0;
+	if (defined($mu)) {
+	  $yprev = $mu+$sd;
+	  $ynext = $mu-$sd;
+	}
+      }
+      elsif (0) {
+	##-- get median y points: inner
+	$yprev = lmedian(grep {defined($_) && $_>=0} map {$_->{lry}} @lnext_cs);
+	$ynext = lmedian(grep {defined($_) && $_>=0} map {$_->{uly}} @lprev_cs);
+      }
+      elsif (0) {
+	##-- get median y points: outer
+	$yprev = lmedian(grep {defined($_) && $_>=0} map {$_->{uly}} @lnext_cs);
+	$ynext = lmedian(grep {defined($_) && $_>=0} map {$_->{lry}} @lprev_cs);
+      }
+      elsif (0) {
+	##-- get median y points: all
+	$ynext = lmedian(grep {defined($_) && $_>=0} map {@$_{qw(uly lry)}} @lprev_cs);
+	$yprev = lmedian(grep {defined($_) && $_>=0} map {@$_{qw(uly lry)}} @lnext_cs);
+      }
+      elsif (1) {
+	##-- get line bbox (min,max)
+	$yprev = lmax(grep {defined($_) && $_>=0} map {$_->{lry}} @lprev_cs);
+	$ynext = lmin(grep {defined($_) && $_>=0} map {$_->{uly}} @lnext_cs);
+      }
+
+      ##-- defaults
+      $yprev = -1 if (!defined($yprev) || $yprev <= 0);
+      $ynext = -1 if (!defined($ynext) || $ynext <= 0);
+
+      ##-- maximum bbox size hack
+      if ($ynext>=0 && $yprev>=0 && abs($ynext-$yprev) > $MAX_FORMULA_PIX) {
+	$yprev=$ynext=-1;
+      }
+
+      ##-- top/bottom of page
+      if ($yprev >= 0 && ($ynext < 0 || !@lnext_cs)) {
+	$ynext = $PAGE_BOTTOM_Y;
+      }
+      elsif ($ynext >= 0 && ($yprev < 0 || !@lprev_cs)) {
+	$yprev = $PAGE_TOP_Y;
+      }
+
+      ##-- bbox sanity condition
+      ($yprev,$ynext) = ($ynext,$yprev) if ($ynext>=0 && $yprev>=0 && $ynext < $yprev);
+
+      ##-- minimum size check
+      if ($yprev>=0 && $ynext>=0 && abs($ynext-$yprev)<$MIN_FORMULA_PIX) {
+	my $growby = ($MIN_FORMULA_PIX - abs($ynext-$yprev))/2;
+	$yprev -= $growby;
+	$ynext += $growby;
+      }
+
+      ##-- assign line-based bbox (if available)
+      warn("$0: could not guess bbox for formula <w> with id ", ($wnod->getAttribute('id')||'?'), " at $txmlfile line ", $wnod->line_number, "\n")
+	if ($verbose >= $vl_warn && ($yprev<0 && $ynext<0));
+
+      $wnod->setAttribute($bbox_attr, join('|', (-1,$yprev,-1,$ynext)));
+    }
+  }
+
+  ##--------------------------------------
+  ## apply: pass=3: remove 'c','b' attributes
+  if (!$do_keep_c) {
+    foreach (@$wnods) {
+      $_->removeAttribute('c');
+      $_->removeAttribute('cs');
+    }
+  }
+  if (!$do_keep_b) {
+    foreach (@$wnods) {
+      $_->removeAttribute('b');
+    }
+  }
+
+  return $xdoc;
+}
+
+## undef = apply_word($w_index)
+## undef = apply_word($w_index,\@cids)
+## undef = apply_word($w_index,\@cids,$bbsingle)
 ##  + populates globals: ($wnod,$wid,$cids,@cids,$wpage,$wrend,$wcon,$wxpath,@wbboxes)
-my ($wnod,$wid,$cids,@cids,@cns,@cs,$wpage,$wline,$wrend,$wcon,$wxpath,@cn2wnod,$bbsingle);
-my ($wcs,@wbboxes,@cbboxes,$cbbox,$wbbox,$wtxt,$utxt);
+my ($wi,$wnod,$wid,$cids,@cids,@cs,$wpage,$wline,$wrend,$wcon,$wxpath,$bbsingle);
+my ($wcs,@wbboxes,@cbboxes,$cbbox,$wbbox,$wtxt,$utxt,$w_is_formula);
+my (@cn2wnod);
 sub apply_word {
-  ($wnod,$cids,$bbsingle) = @_;
+  ($wi,$cids,$bbsingle) = @_;
+  $wnod = $wnods->[$wi];
 
   ##-- get id
   if (!defined($wid=$wnod->getAttribute('id'))) {
@@ -295,8 +450,7 @@ sub apply_word {
   ##-- get cids
   $cids = $wnod->getAttribute('c') || $wnod->getAttribute('cs') || '' if (!defined($cids));
   @cids = ref($cids) ? @$cids : cidlist($cids);
-  @cns  = grep {defined($_)} @cid2cn{@cids};
-  @cs   = map {c_unpack($_)} @cn2packed[@cns];
+  @cs   = map {c_unpack($_)} @cn2packed[grep {defined($_)} @cid2cn{@cids}];
   if (!@cids && $warn_on_empty_cids && $verbose >= $vl_warn) {
     ##-- $wnod without a //c/@id list
     ##   + this happens e.g. for 'FORMEL' inserted via DTA::TokWrap::mkbx0 'hint_replace_xpaths'
@@ -306,6 +460,14 @@ sub apply_word {
   elsif (!@cs) {
     warn("$0: invalid //c/\@id list for //w at $txmlfile line ", $wnod->line_number, "\n")
       if ($verbose >= $vl_warn);
+  }
+
+  ##-- detect: formula
+  $w_is_formula = (@cs && $cs[0]{elt} eq 'formula') || (@cids && $cids[0] =~ m/\$FORMULA:[0-9]+\$$/);
+
+  ##-- compute & assign: formula text (non-empty @cids only)
+  if ($formula_text ne '' && $w_is_formula) {
+    $wnod->setAttribute('t',$formula_text);
   }
 
   ##-- compute & assign: unicruft
@@ -337,6 +499,7 @@ sub apply_word {
     $wxpath = @cs ? $cs[0]{xp} : undef;
     $wxpath = '/..' if (!$wxpath); ##-- invalid xpath
     $wxpath =~ s|/c$||i;           ##-- prune final 'c'-element from //w xpath
+    $wxpath =~ s|^/TEI(?:/text/?)?||; ##-- prune leading '/TEI/text' from //w xpath
     $wnod->setAttribute($xpath_attr, $wxpath);
   }
 
@@ -360,98 +523,19 @@ sub apply_word {
     $wnod->setAttribute($bbox_attr, join('_', map {join('|',@$_)} @wbboxes));
   }
 
-  ##-- record: cn2wnod
-  $cn2wnod[$_] = $wnod foreach (@cns);
+  ##-- record: claim //c indices
+  vec($cn2wn, $_, $CN2WN_BITS) = $wi foreach (map {$_->{cn}} @cs);
 
-  return scalar(@cs);
+  ##-- record: special attributes
+  if ($w_is_formula) {
+    push(@wfml,$wi);
+  }
+  elsif (!@cs) {
+    ##-- @wnoc: //w node without //c id-list
+    push(@wnoc,$wi);
+  }
 }
 
-## $xdoc = apply_ddc_attrs($xdoc)
-sub apply_ddc_attrs {
-  my $xdoc = shift;
-  my @wnoc = qw(); ##-- $wnods with no //c/@id list
-
-  ##--------------------------------------
-  ## apply: pass=1: the "easy" stuff
-  my (%cid2wid);
-  my $wnods = $xdoc->findnodes('//w');
-  foreach $wnod (@$wnods) {
-    push(@wnoc,$wnod) if (!apply_word($wnod));
-  }
-
-  ##--------------------------------------
-  ## apply: pass=2: words without //c/@id lists
-  my ($wprev,$wnext, @cprev,@cnext, $bbprev,$bbnext,@bbprev,@bbnext);
-  foreach $wnod (
-		 qw() ##-- TODO: CONTINUE HERE: implement fallbacks for new packed <c>s
-		 #@wnoc
-		) {
-    #$wid = $wnod->getAttribute('id') || next; ##-- skip //w nodes without ids
-
-    ##-- get neighbors
-    $wprev = $wnod->findnodes('preceding::w[1]')->[0];
-    $wnext = $wnod->findnodes('following::w[1]')->[0];
-
-    ##-- guess: @cids (all unassigned //c/@ids between this word's neighbors)
-    @cprev = $wprev ? cidlist($wprev->getAttribute('c')||$wprev->getAttribute('cs')||'') : qw();
-    @cnext = $wnext ? cidlist($wnext->getAttribute('c')||$wnext->getAttribute('cs')||'') : qw();
-
-    ##-- fallback: page: from predecessor
-    if ($do_page) {
-      $wpage = $wprev->getAttribute($page_attr) if ($wprev);
-      $wpage = -1 if (!defined($wpage) || $wpage eq '');
-      $wnod->setAttribute($page_attr,$wpage);
-    }
-
-    ##-- fallback: bbox: from neighbors (without no intervening //c elements available)
-    if ($do_bbox) {
-      $wbbox = undef;
-      if (@cprev && @cnext && ($wprev->getAttribute($page_attr)||'') eq ($wnext->getAttribute($page_attr)||'')) {
-	($bbprev = $wprev->getAttribute($bbox_attr)||'') =~ s/^.*_//;
-	($bbnext = $wnext->getAttribute($bbox_attr)||'') =~ s/_.*$//;
-	@bbprev = split(/\|/,$bbprev);
-	@bbnext = split(/\|/,$bbnext);
-	if (@bbprev && @bbnext) {
-	  print STDERR "$0: using neighbor bboxes to guess bbox for <w> at $txmlfile line ", $wnod->line_number, "\n"
-	    if ($verbose >= $vl_warn);
-	  if ($bbnext[2] < $bbprev[0]) {
-	    ##-- next:RIGHT << prev:LEFT: probably a line-break: use inter-line space
-	    $wbbox = [-1,$bbprev[3],-1,$bbnext[1]];
-	    @$wbbox[1,3] = @$wbbox[3,1] if ($wbbox->[3] < $wbbox->[1]);
-	  } elsif ($bbnext[3] < $bbprev[1]) {
-	    ##-- next:BOTTOM >> prev:TOP: probably a column-break: use inter-column space
-	    $wbbox = [$bbprev[2],-1,$bbnext[0],-1];
-	    @$wbbox[0,2] = @$wbbox[2,0] if ($wbbox->[2] < $wbbox->[0]);
-	  } else {
-	    ##-- normal case: use inter-word space
-	    $wbbox = [@bbprev[2,3],@bbnext[0,1]];
-	    @$wbbox[0,2] = @$wbbox[2,0] if ($wbbox->[2] < $wbbox->[0]);
-	    @$wbbox[1,3] = @$wbbox[3,1] if ($wbbox->[3] < $wbbox->[1]);
-	  }
-	}
-      }
-      warn("$0: could not guess bbox for <w> at $txmlfile line ", $wnod->line_number, "\n")
-	if (!$wbbox && $verbose >= $vl_warn);
-      $wnod->setAttribute($bbox_attr, join('|', ($wbbox ? @$wbbox : (-1,-1,-1,-1))));
-    }
-  }
-
-  ##--------------------------------------
-  ## apply: pass=3: remove 'c' attributes
-  if (!$do_keep_c) {
-    foreach $wnod (@$wnods) {
-      $wnod->removeAttribute('c');
-      $wnod->removeAttribute('cs');
-    }
-  }
-  if (!$do_keep_b) {
-    foreach $wnod (@$wnods) {
-      $wnod->removeAttribute('b');
-    }
-  }
-
-  return $xdoc;
-}
 
 ##======================================================================
 ## Subs: generic
@@ -463,14 +547,105 @@ sub luniq {
   return map {(defined($lu_tmp) && $lu_tmp eq $_ ? qw() : ($lu_tmp=$_))} sort @_;
 }
 
-## @cids = cidlist($cids_str)
-##-- expand compressed //c/@id lists, also accepts old-style space-separated id-lists
+## $min = lmin(@list)
+my ($lmin_tmp);
+sub lmin {
+  $lmin_tmp=shift;
+  foreach (grep {defined($_)} @_) {
+    $lmin_tmp=$_ if (!defined($lmin_tmp) || $_ < $lmin_tmp);
+  }
+  return $lmin_tmp;
+}
+
+## $max = lmax(@list)
+my ($lmax_tmp);
+sub lmax {
+  $lmax_tmp=shift;
+  foreach (grep {defined($_)} @_) {
+    $lmax_tmp=$_ if (!defined($lmax_tmp) || $_ > $lmax_tmp);
+  }
+  return $lmax_tmp;
+}
+
+## $avg = lavg(@list)
+my ($lavg_tmp);
+sub lavg {
+  $lavg_tmp=undef;
+  $lavg_tmp += $_ foreach (grep {defined($_)} @_);
+  return undef if (!defined($lavg_tmp));
+  return $lavg_tmp/scalar(@_);
+}
+
+## $median = lmedian(@list)
+my (@lmed_tmp);
+sub lmedian {
+  @lmed_tmp = sort {$a<=>$b} grep {defined($_)} @_;
+  return undef if (!@lmed_tmp);
+  return scalar(@lmed_tmp)%2 == 0 ? (($lmed_tmp[@lmed_tmp/2-1]+$lmed_tmp[@lmed_tmp/2])/2) : @lmed_tmp[int(@lmed_tmp/2)];
+}
+
+## $stddev = lstddev(@list)
+my ($lsd_ex,$lsd_ex2);
+sub lstddev {
+  return undef if (!defined($lsd_ex = lavg(@_)));
+  $lsd_ex2 = lavg(map {$_**2} grep {defined($_)} @_);
+  return sqrt($lsd_ex2 - $lsd_ex**2);
+}
+
+
+## @cids = clist($cids_str)
+##  + expand compressed //c/@id lists, also accepts old-style space-separated id-lists
 sub cidlist {
   map {
     (m/^(.*)c([0-9]+)\+([0-9]+)$/
      ? (map {$1.'c'.$_} ($2..($2+$3-1)))
      : $_)
-  } split(' ',$_[0])
+  } (ref($_[0]) ? @{$_[0]} : split(' ',$_[0]));
+}
+
+## @cs = clist($cids_str)
+## @cs = clist(\@cids)
+##  + expand compressed //c/@id lists and unpack to hash
+##  + also accepts old-style space-separated id-lists
+sub clist {
+  return
+    (
+     map {c_unpack($_)}
+     @cn2packed[
+		grep {defined($_)}
+		@cid2cn{
+		  map {
+		    (m/^(.*)c([0-9]+)\+([0-9]+)$/
+		     ? (map {$1.'c'.$_} ($2..($2+$3-1)))
+		     : $_)
+		  } split(' ',$_[0])
+		}
+	       ]
+    );
+}
+
+## @clist = clist_byline($page,$line,$cn0)
+sub clist_byline {
+  my ($pb,$lb,$cn0) = @_;
+  $cn0 = 0 if (!defined($cn0));
+
+  my ($cn,$c);
+  my (@cs);
+  ##-- stupid linear scan: backwards until $cn <= FIRST_CHAR($page,$line)
+  for ($cn=$cn0; $cn > 0 && $cn <= $#cn2packed; $cn--) {
+    next if (!defined($c = c_unpack($cn2packed[$cn])));
+    last if ($c->{pb} < $pb || ($c->{pb}==$pb && $c->{lb} <  $lb));
+    next if ($c->{pb} > $pb || ($c->{pb}==$pb && $c->{lb} >= $lb));
+  }
+
+  ##-- stupid linear scan: forwards until $cn >= LAST_CHAR($page,$line), pushing onto @cs
+  for ( ; $cn >= 0 && $cn <= $#cn2packed; $cn++) {
+    next if (!defined($c = c_unpack($cn2packed[$cn])));
+    push(@cs,$c) if ($c->{pb}==$pb && $c->{lb}==$lb);
+    last if ($c->{pb} >$pb || ($c->{pb}==$pb && $c->{lb} > $lb));
+  }
+
+  return @cs;
 }
 
 ## @bboxes = bboxes(\@cus)
@@ -578,12 +753,13 @@ dtatw-get-ddc-attrs.perl - get DDC-relevant attributes from DTA::TokWrap files
   -line   , -noline      # do/don't extract //w/@lb (line-break; default=do)
   -rend   , -norend      # do/don't extract //w/@xr (rendition; default=do)
   -xcon   , -noxcon      # do/don't extract //w/@xc (xml context; default=do)
-  -xpath  , -noxpath     # do/don't extract //w/@xp (xpath; default=don't)
+  -xpath  , -noxpath     # do/don't extract //w/@xp (xpath; default=do)
   -bbox   , -nobbox      # do/don't extract //w/@bb (bbox; default=do)
   -cruft  , -nocruft     # do/don't extract //w/@u  (unicruft; default=do)
   -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in T_XML_FILE file (default=don't)
-  -keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=keep)
-  -keep-b , -nokeep-b    # do/don't keep existing //w/@b attributes (default=keep)
+  -keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=don't)
+  -keep-b , -nokeep-b    # do/don't keep existing //w/@b attributes (default=don't)
+  -formula-text TEXT     # output text for //formula elements (default='' (no change))
   -output FILE           # specify output file (default='-' (STDOUT))
 
 =cut

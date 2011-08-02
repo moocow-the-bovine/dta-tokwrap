@@ -129,8 +129,7 @@ TOKWRAP_OPTS += $(twopts)
 ## Configuration: Defaults: ddc attributes
 
 ##-- DDC_ATTRS : arguments for dtatw-get-ddc-attrs.perl
-DDC_ATTRS ?= -xr -xc -noxp -pb -bb -u -nokeep-c -nokeep-b
-
+DDC_ATTRS ?= -formula-text='[Formel]'
 
 ##--------------------------------------------------------------
 ## Configuration: Defaults: programs & in-place execution

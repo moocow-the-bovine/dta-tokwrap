@@ -223,6 +223,13 @@ install_cab_misc = yes
 ##  + extra files to install (default=none)
 #install_extra_files =
 
+##======================================================================
+## Variables: DDC and Taxi attributes (dtatw-get-ddc-attrs.perl)
+
+## DDC_ATTRS
+##  + command-line options for dtatw-get-ddc-attrs.perl
+#DDC_ATTRS ?= -formula-text='[Formel]'
+
 
 ##======================================================================
 ## Variables: DTA::CAB stuff
