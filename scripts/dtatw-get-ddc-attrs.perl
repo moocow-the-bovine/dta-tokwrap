@@ -302,7 +302,7 @@ sub apply_ddc_attrs {
   ##--------------------------------------
   ## apply: pass=2: formulae
   if ($do_bbox) {
-    my ($c0,$wnod,@cs,@lprev_cs,@lnext_cs,$yprev,$ynext, $sd_prev,$sd_next);
+    my ($c0,$wnod,@cs,@lprev_cs,@lnext_cs,$yprev,$ynext);
     my @clist_context = (1..1);
     foreach $wi (@wfml) {
       ##-- get //c list
@@ -311,65 +311,12 @@ sub apply_ddc_attrs {
       next if (!defined($c0=$cs[0]));
 
       ##-- get characters by surrounding line(s)
-      #@lprev_cs = grep {$_->{elt} eq 'c'} map {clist_byline($c0->{pb}, $c0->{lb}-$_, $c0->{cn})} @clist_context;
-      #@lnext_cs = map {clist_byline($c0->{pb}, $c0->{lb}+$_, $c0->{cn})} @clist_context;
-
       @lprev_cs = grep {$_->{elt} eq 'c' && vec($cn2wn,$_->{cn},$CN2WN_BITS)} map {clist_byline($c0->{pb}, $c0->{lb}-$_, $c0->{cn})} @clist_context;
-      @lnext_cs = grep {$_->{elt} eq 'c' && vec($cn2wn,$_->{cn},$CN2WN_BITS)} map {clist_byline($c0->{pb}, $c0->{lb}+$_, $c0->{cn})} (@clist_context);
+      @lnext_cs = grep {$_->{elt} eq 'c' && vec($cn2wn,$_->{cn},$CN2WN_BITS)} map {clist_byline($c0->{pb}, $c0->{lb}+$_, $c0->{cn})} @clist_context;
 
-      if (0) {
-	##-- mu +/- sigma: unified: new
-	my $cctx = 8;
-	my $ypad = 100;
-	@lprev_cs = grep {$_->{elt} eq 'c' && $_->{pb}==$c0->{pb} && vec($cn2wn,$_->{cn},$CN2WN_BITS)} map {c_unpack($_)} grep {defined($_)} @cn2packed[(($c0->{cn}-$cctx)..($c0->{cn}-1))];;
-	@lnext_cs = grep {$_->{elt} eq 'c' && $_->{pb}==$c0->{pb} && vec($cn2wn,$_->{cn},$CN2WN_BITS)} map {c_unpack($_)} grep {defined($_)} @cn2packed[(($c0->{cn}+1)..($c0->{cn}+$cctx))];;
-
-	my @y_lo  = grep {defined($_) && $_>=0} map {$_->{uly}} @lprev_cs;
-	my $mu_lo = lavg(@y_lo);
-	#my $sd_lo = lavg(map {($_-$mu_lo)**2} @y_lo);
-	#@y_lo     = grep {($_-$mu_lo) <= $sd_lo} @y_lo;
-	@y_lo     = grep {$_ <= $mu_lo} @y_lo;
-
-	my @y_hi  = grep {defined($_) && $_>=0} map {$_->{lry}} @lnext_cs;
-	my $mu_hi = lavg(@y_hi);
-	#my $sd_hi = lavg(map {($_-$mu_hi)**2} @y_hi);
-	#@y_hi     = grep {($mu_hi-$_) <= $sd_hi} @y_hi;
-	@y_hi     = grep {$_ >= $mu_hi} @y_hi;
-
-	$yprev = int( lavg(@y_lo) || -1 );
-	$ynext = int( lavg(@y_hi) || -1 );
-      }
-      elsif (0) {
-	##-- mu +/- sigma: unified: old
-	my @lcs = (@lprev_cs,clist_byline(@$c0{qw(pb lb cn)}),@lnext_cs);
-	my @lys = grep {$_>=0} map {@$_{qw(lry uly)}} @lcs;
-	my $mu  = lavg(@lys);
-	my $sd  = defined($mu) ? sqrt( lavg(map {($_-$mu)**2} @lys) ) : 0;
-	if (defined($mu)) {
-	  $yprev = $mu+$sd;
-	  $ynext = $mu-$sd;
-	}
-      }
-      elsif (0) {
-	##-- get median y points: inner
-	$yprev = lmedian(grep {defined($_) && $_>=0} map {$_->{lry}} @lnext_cs);
-	$ynext = lmedian(grep {defined($_) && $_>=0} map {$_->{uly}} @lprev_cs);
-      }
-      elsif (0) {
-	##-- get median y points: outer
-	$yprev = lmedian(grep {defined($_) && $_>=0} map {$_->{uly}} @lnext_cs);
-	$ynext = lmedian(grep {defined($_) && $_>=0} map {$_->{lry}} @lprev_cs);
-      }
-      elsif (0) {
-	##-- get median y points: all
-	$ynext = lmedian(grep {defined($_) && $_>=0} map {@$_{qw(uly lry)}} @lprev_cs);
-	$yprev = lmedian(grep {defined($_) && $_>=0} map {@$_{qw(uly lry)}} @lnext_cs);
-      }
-      elsif (1) {
-	##-- get line bbox (min,max)
-	$yprev = lmax(grep {defined($_) && $_>=0} map {$_->{lry}} @lprev_cs);
-	$ynext = lmin(grep {defined($_) && $_>=0} map {$_->{uly}} @lnext_cs);
-      }
+      ##-- get line bbox (min,max)
+      $yprev = lmax(grep {defined($_) && $_>=0} map {$_->{lry}} @lprev_cs);
+      $ynext = lmin(grep {defined($_) && $_>=0} map {$_->{uly}} @lnext_cs);
 
       ##-- defaults
       $yprev = -1 if (!defined($yprev) || $yprev <= 0);
@@ -391,7 +338,7 @@ sub apply_ddc_attrs {
       ##-- bbox sanity condition
       ($yprev,$ynext) = ($ynext,$yprev) if ($ynext>=0 && $yprev>=0 && $ynext < $yprev);
 
-      ##-- minimum size check
+      ##-- minimum-height check
       if ($yprev>=0 && $ynext>=0 && abs($ynext-$yprev)<$MIN_FORMULA_PIX) {
 	my $growby = ($MIN_FORMULA_PIX - abs($ynext-$yprev))/2;
 	$yprev -= $growby;
