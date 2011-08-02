@@ -344,6 +344,10 @@ sub apply_ddc_attrs {
 	$yprev -= $growby;
 	$ynext += $growby;
       }
+      
+      ##-- ensure integer
+      $yprev = int($yprev-0.5);
+      $ynext = int($ynext+0.5);
 
       ##-- assign line-based bbox (if available)
       warn("$0: could not guess bbox for formula <w> with id ", ($wnod->getAttribute('id')||'?'), " at $txmlfile line ", $wnod->line_number, "\n")
