@@ -47,15 +47,17 @@
   -quiet                 # be silent</pre>
 <pre>
  I/O Options:
-  -page   , -nopage      # do/don't extract //w/@pb (pagebreak; default=do)
+  -page   , -nopage      # do/don't extract //w/@pb (page-break; default=do)
+  -line   , -noline      # do/don't extract //w/@lb (line-break; default=do)
   -rend   , -norend      # do/don't extract //w/@xr (rendition; default=do)
   -xcon   , -noxcon      # do/don't extract //w/@xc (xml context; default=do)
-  -xpath  , -noxpath     # do/don't extract //w/@xp (xpath; default=don't)
+  -xpath  , -noxpath     # do/don't extract //w/@xp (xpath; default=do)
   -bbox   , -nobbox      # do/don't extract //w/@bb (bbox; default=do)
   -cruft  , -nocruft     # do/don't extract //w/@u  (unicruft; default=do)
   -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in T_XML_FILE file (default=don't)
-  -keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=keep)
-  -keep-b , -nokeep-b    # do/don't keep existing //w/@b attributes (default=keep)
+  -keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=don't)
+  -keep-b , -nokeep-b    # do/don't keep existing //w/@b attributes (default=don't)
+  -formula-text TEXT     # output text for //formula elements (default='' (no change))
   -output FILE           # specify output file (default='-' (STDOUT))</pre>
 <p>
 </p>
@@ -75,7 +77,7 @@
 <a href="././dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a>,
 <a href="././dtatw-add-w.perl.html">dtatw-add-w.perl(1)</a>,
 <a href="././dtatw-add-s.perl.html">dtatw-add-s.perl(1)</a>,
-<em>dtatw-splice.perl(1)</em>,
+<a href="././dtatw-splice.perl.html">dtatw-splice.perl(1)</a>,
 <em>dtatw-rm-c.perl(1)</em>,
 ...</p>
 <p>
