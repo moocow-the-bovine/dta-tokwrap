@@ -40,8 +40,8 @@ our $do_xcontext = 1;
 our $do_xpath = 1;
 our $do_bbox = 1;
 our $do_unicruft = 1;
-our $do_keep_c = 0;
-our $do_keep_b = 0;
+our $do_keep_c = 1;
+our $do_keep_b = 1;
 
 ##-- output attributes
 our $rendition_attr = 'xr';
@@ -708,8 +708,8 @@ dtatw-get-ddc-attrs.perl - get DDC-relevant attributes from DTA::TokWrap files
   -bbox   , -nobbox      # do/don't extract //w/@bb (bbox; default=do)
   -cruft  , -nocruft     # do/don't extract //w/@u  (unicruft; default=do)
   -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in T_XML_FILE file (default=don't)
-  -keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=don't)
-  -keep-b , -nokeep-b    # do/don't keep existing //w/@b attributes (default=don't)
+  -keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=keep)
+  -keep-b , -nokeep-b    # do/don't keep existing //w/@b attributes (default=keep)
   -formula-text TEXT     # output text for //formula elements (default='' (no change))
   -output FILE           # specify output file (default='-' (STDOUT))
 
