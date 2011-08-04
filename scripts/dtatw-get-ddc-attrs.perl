@@ -40,8 +40,12 @@ our $do_xcontext = 1;
 our $do_xpath = 1;
 our $do_bbox = 1;
 our $do_unicruft = 1;
+
 our $do_keep_c = 1;
 our $do_keep_b = 1;
+
+our $do_cofflen = 1;
+our $do_bofflen = 1;
 
 ##-- output attributes
 our $rendition_attr = 'xr';
@@ -51,6 +55,10 @@ our $page_attr      = 'pb';
 our $line_attr      = 'lb';
 our $bbox_attr      = 'bb';
 our $unicruft_attr  = 'u';
+our $coff_attr      = 'coff';
+our $clen_attr      = 'clen';
+our $boff_attr      = 'boff';
+our $blen_attr      = 'blen';
 our $formula_text   = ''; ##-- output text for //formula elements (undef: no change)
 
 ##-- constants: verbosity levels
@@ -78,6 +86,8 @@ GetOptions(##-- General
 	   'xpath|path|xp!' => \$do_xpath,
 	   'coordinates|coords|coord|c|bboxes|bbox|bb|b!' => \$do_bbox,
 	   'unicruft|cruft|u!' => \$do_unicruft,
+	   'char-offsets|c-offsets|coff|co!' => \$do_cofflen,
+	   'byte-offsets|b-offsets|boff|bo!' => \$do_bofflen,
 	   'keep-c|keepc|kc!' => \$do_keep_c,
 	   'keep-b|keepb|kb!' => \$do_keep_b,
 	   'formula-text|ft:s' => \$formula_text,
@@ -344,7 +354,7 @@ sub apply_ddc_attrs {
 	$yprev -= $growby;
 	$ynext += $growby;
       }
-      
+
       ##-- ensure integer
       $yprev = int($yprev-0.5);
       $ynext = int($ynext+0.5);
@@ -378,7 +388,7 @@ sub apply_ddc_attrs {
 ## undef = apply_word($w_index,\@cids)
 ## undef = apply_word($w_index,\@cids,$bbsingle)
 ##  + populates globals: ($wnod,$wid,$cids,@cids,$wpage,$wrend,$wcon,$wxpath,@wbboxes)
-my ($wi,$wnod,$wid,$cids,@cids,@cs,$wpage,$wline,$wrend,$wcon,$wxpath,$bbsingle);
+my ($wi,$wnod,$wid,$cids,@cids,@cs,$off,$len,$wpage,$wline,$wrend,$wcon,$wxpath,$bbsingle);
 my ($wcs,@wbboxes,@cbboxes,$cbbox,$wbbox,$wtxt,$utxt,$w_is_formula);
 my (@cn2wnod);
 sub apply_word {
@@ -411,6 +421,20 @@ sub apply_word {
   elsif (!@cs) {
     warn("$0: invalid //c/\@id list for //w at $txmlfile line ", $wnod->line_number, "\n")
       if ($verbose >= $vl_warn);
+  }
+
+  ##-- compute & assign: character offset-length split (default: off=-1, len=1)
+  if ($do_cofflen) {
+    ($off,$len) = split(/\+/,($cids||''),2);
+    $wnod->setAttribute($coff_attr, ($off||'-1'));
+    $wnod->setAttribute($clen_attr, (defined($len) && $len ne '' ? $len : 1));
+  }
+
+  ##-- compute & assign: byte offset-length split (default: off=-1, len=1)
+  if ($do_bofflen) {
+    ($off,$len) = split(' ', ($wnod->getAttribute('b')||''), 2);
+    $wnod->setAttribute($boff_attr, ($off||'-1'));
+    $wnod->setAttribute($blen_attr, (defined($len) && $len ne '' ? $len : 1));
   }
 
   ##-- detect: formula
@@ -707,6 +731,8 @@ dtatw-get-ddc-attrs.perl - get DDC-relevant attributes from DTA::TokWrap files
   -xpath  , -noxpath     # do/don't extract //w/@xp (xpath; default=do)
   -bbox   , -nobbox      # do/don't extract //w/@bb (bbox; default=do)
   -cruft  , -nocruft     # do/don't extract //w/@u  (unicruft; default=do)
+  -coff   , -nocoff      # do/don't extract //w/(@coff|@clen) from //w/@c or //w/@cs (default=do)
+  -boff   , -noboff      # do/don't extract //w/(@boff|@blen) from //w/@b (default=do)
   -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in T_XML_FILE file (default=don't)
   -keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=keep)
   -keep-b , -nokeep-b    # do/don't keep existing //w/@b attributes (default=keep)
