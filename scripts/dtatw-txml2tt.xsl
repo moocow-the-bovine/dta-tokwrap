@@ -9,11 +9,15 @@
   <xsl:param name="s_attrs"   select="1"/>    <!-- bool: output sentence attributes as DTA::CAB format comments? -->
   <xsl:param name="w_loc"     select="1"/>    <!-- bool: output token locations as DTA::CAB analyses? -->
   <xsl:param name="w_cab"     select="1"/>    <!-- bool: output DTA::CAB format analyses? -->
+  <xsl:param name="w_id"      select="1"/>    <!-- bool: output: CAB mode: @id (xml:id)? -->
+  <xsl:param name="w_c"       select="1"/>    <!-- bool: output: CAB mode: @c (chars)? -->
+  <xsl:param name="w_xr"      select="1"/>    <!-- bool: output: CAB mode: @xr (rendition)? -->
   <xsl:param name="w_a"       select="1"/>    <!-- bool: output other (tokenizer) analyses? -->
 
   <xsl:param name="w_loc_prefix" select="''"/>           <!-- location analysis prefix string -->
-  <xsl:param name="w_id_prefix"  select="'[xmlid] '"/>   <!-- xml:id analysis prefix string -->
-  <xsl:param name="w_c_prefix"   select="'[chars] '"/>   <!-- character-id-list analysis prefix string -->
+  <xsl:param name="w_id_prefix"  select="'[id] '"/>      <!-- xml:id analysis prefix string -->
+  <xsl:param name="w_c_prefix"   select="'[c] '"/>       <!-- character-id-list analysis prefix string -->
+  <xsl:param name="w_xr_prefix"  select="'[xr] '"/>      <!-- rendition prefix string -->
   <xsl:param name="w_a_prefix"   select="''"/>           <!-- default analysis prefix string -->
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
@@ -47,7 +51,7 @@
   <!-- main: template: w -->
   <xsl:template match="w">
     <xsl:value-of select="@t"/>
-    <xsl:if test="$w_loc or $w_cab">
+    <xsl:if test="$w_loc">
       <!-- loc -->
       <xsl:text>&#09;</xsl:text>
       <xsl:value-of select="$w_loc_prefix"/>
@@ -55,13 +59,23 @@
     </xsl:if>
     <xsl:if test="$w_cab">
       <!-- xml:id -->
-      <xsl:text>&#09;</xsl:text>
-      <xsl:value-of select="$w_id_prefix"/>
-      <xsl:value-of select="@xml:id"/>
+      <xsl:if test="$w_id">
+	<xsl:text>&#09;</xsl:text>
+	<xsl:value-of select="$w_id_prefix"/>
+	<xsl:value-of select="@xml:id"/>
+      </xsl:if>
       <!-- characters -->
-      <xsl:text>&#09;</xsl:text>
-      <xsl:value-of select="$w_c_prefix"/>
-      <xsl:value-of select="@c"/>
+      <xsl:if test="$w_c">
+	<xsl:text>&#09;</xsl:text>
+	<xsl:value-of select="$w_c_prefix"/>
+	<xsl:value-of select="@c"/>
+      </xsl:if>
+      <!-- rendition -->
+      <xsl:if test="$w_xr">
+	<xsl:text>&#09;</xsl:text>
+	<xsl:value-of select="$w_xr_prefix"/>
+	<xsl:value-of select="@xr"/>
+      </xsl:if>
     </xsl:if>
     <xsl:apply-templates select="*"/>
     <xsl:text>&#10;</xsl:text>
