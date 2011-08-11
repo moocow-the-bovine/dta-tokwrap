@@ -1,10 +1,10 @@
 ## -*- Mode: CPerl -*-
 
-## File: DTA::TokWrap::Processor::tokenize::tomasotath_02x.pm
+## File: DTA::TokWrap::Processor::tokenize::tomasotath.pm
 ## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
-## Description: DTA tokenizer wrappers: tokenizer: tomasoblabla (v0.2.x) via command-line
+## Description: DTA tokenizer wrappers: tokenizer: tomasoblabla (v0.4.x) via command-line
 
-package DTA::TokWrap::Processor::tokenize::tomasotath_02x;
+package DTA::TokWrap::Processor::tokenize::tomasotath;
 
 use DTA::TokWrap::Version;  ##-- imports $VERSION, $RCDIR
 use DTA::TokWrap::Base;
@@ -29,8 +29,7 @@ our @ISA = qw(DTA::TokWrap::Processor::tokenize);
 ##  + static class-dependent defaults
 ##  + %args, %defaults, %$tz:
 ##    tomata2 => $path_to_dwds_tomasotath, ##-- tokenizer program; default: search
-##    abbrevLex => $filename,              ##-- for --to-abbrev-lex=FILE (default: "${RCDIR}/dta_abbrevs.lex"; '' for none)
-##    mweLex => $filename,                 ##-- for --to-mwe-lex=FILE    (default: "${RCDIR}/dta_mwe.lex"; '' for none)
+##    abbrevLex => $filename,              ##-- for --to-abbrev=FILE (default: "${RCDIR}/dta_abbrevs.att"; '' for none)
 ##    tomata2stderr => $bool,              ##-- if false, subprocess stderr will be ignored (default=defined($TRACE_RUNCMD))
 ##    tomata2opts => \@options,            ##-- additional options (strings) for tokenizer program (default='--to --to-offset --to-analyses')
 ##    inplace => $bool,                    ##-- prefer in-place programs for search?
@@ -39,8 +38,7 @@ sub defaults {
   return (
 	  $that->SUPER::defaults(),
 	  tomata2   =>undef,
-	  #abbrevLex => "${RCDIR}/dta_abbrevs.lex",  ##-- gets set in init()
-	  #mweLex    => "${RCDIR}/dta_mwe.lex",      ##-- gets set in init()
+	  #abbrevLex => "${RCDIR}/dta_abbrevs.att",  ##-- gets set in init()
 	  tomata2opts=>[ '--to', '--to-offset', '--to-analyses' ],
 	  tomata2stderr=>defined($DTA::TokWrap::Utils::TRACE_RUNCMD),
 	  inplace=>1,
@@ -64,19 +62,11 @@ sub init {
   $tz->{tomata2opts} = [ $tz->{tomata2opts} ] if (!ref($tz->{tomata2opts}));
 
   ##-- abbr lex
-  $tz->{abbrevLex} = "${RCDIR}/dta_abbrevs.lex" if (!defined($tz->{abbrevLex}));
+  $tz->{abbrevLex} = "${RCDIR}/dta_abbrevs.att" if (!defined($tz->{abbrevLex}));
   if ($tz->{abbrevLex} && ! -r $tz->{abbrevLex}) {
     $tz->logconfess("bad abbreviation lexicon '$tz->{abbrevLex}'");
   } elsif ($tz->{abbrevLex}) {
-    push(@{$tz->{tomata2opts}}, "--to-abbrev-lex=$tz->{abbrevLex}");
-  }
-
-  ##-- mwe lex
-  $tz->{mweLex} = "${RCDIR}/dta_mwe.lex" if (!defined($tz->{mweLex}));
-  if ($tz->{mweLex} && ! -r $tz->{mweLex}) {
-    $tz->logconfess("bad multiword-expression lexicon '$tz->{mweLex}'; ignoring");
-  } elsif ($tz->{mweLex}) {
-    push(@{$tz->{tomata2opts}}, "--to-mwe-lex=$tz->{mweLex}");
+    push(@{$tz->{tomata2opts}}, "--to-abbrev=$tz->{abbrevLex}");
   }
 
   return $tz;
@@ -129,12 +119,12 @@ sub tokenize {
   return $doc;
 }
 
+
 ##==============================================================================
 ## Aliases
 ##==============================================================================
-#package DTA::TokWrap::Processor::tokenize::tomata;
-#our @ISA = qw(DTA::TokWrap::Processor::tokenize::tomasotath);
-
+package DTA::TokWrap::Processor::tokenize::tomata;
+our @ISA = qw(DTA::TokWrap::Processor::tokenize::tomasotath);
 
 1; ##-- be happy
 
@@ -149,7 +139,7 @@ __END__
 
 =head1 NAME
 
-DTA::TokWrap::Processor::tokenize::tomasotath_02x - DTA tokenizer wrappers: tokenizer: dwds_tomsatotath via command-line
+DTA::TokWrap::Processor::tokenize::tomasotath - DTA tokenizer wrappers: tokenizer: dwds_tomsatotath via command-line
 
 =cut
 
@@ -159,9 +149,9 @@ DTA::TokWrap::Processor::tokenize::tomasotath_02x - DTA tokenizer wrappers: toke
 
 =head1 SYNOPSIS
 
- use DTA::TokWrap::Processor::tokenize::tomasotath_02x;
+ use DTA::TokWrap::Processor::tokenize::tomasotath;
  
- $tz = DTA::TokWrap::Processor::tokenize::tomasotath_02x->new(%args);
+ $tz = DTA::TokWrap::Processor::tokenize::tomasotath->new(%args);
  $doc_or_undef = $tz->tokenize($doc);
 
 =cut
@@ -173,7 +163,7 @@ DTA::TokWrap::Processor::tokenize::tomasotath_02x - DTA tokenizer wrappers: toke
 =head1 DESCRIPTION
 
 This class is currently just a wrapper for the command-line
-low-level tokenizer C<dwds_tomasotath> (ToMaSoTaTh).
+low-level tokenizer C<dwds_tomasotath> (ToMaSoTaTh), v0.4.x.
 
 Most users should use the high-level
 L<DTA::TokWrap|DTA::TokWrap> wrapper class
@@ -191,7 +181,7 @@ instead of using this module directly.
 
 =item @ISA
 
-DTA::TokWrap::Processor::tokenize::tomasotath_02x
+DTA::TokWrap::Processor::tokenize::tomasotath
 inherits from
 L<DTA::TokWrap::Processor::tokenize|DTA::TokWrap::Processor::tokenize>.
 
