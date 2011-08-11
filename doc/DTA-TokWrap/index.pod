@@ -87,6 +87,18 @@ L<DTA::TokWrap::Processor::tokenize::tomasotath|DTA::TokWrap::Processor::tokeniz
 
 =item *
 
+L<DTA::TokWrap::Processor::tokenize::tomasotath|DTA::TokWrap::Processor::tokenize::tomasotath> - DTA tokenizer wrappers: tokenizer: dwds_tomsatotath via command-line
+
+=item *
+
+L<DTA::TokWrap::Processor::tokenize::tomasotath_021|DTA::TokWrap::Processor::tokenize::tomasotath_021> - DTA tokenizer wrappers: tokenizer: dwds_tomsatotath via command-line
+
+=item *
+
+L<DTA::TokWrap::Processor::tokenize::tomasotath_02x|DTA::TokWrap::Processor::tokenize::tomasotath_02x> - DTA tokenizer wrappers: tokenizer: dwds_tomsatotath via command-line
+
+=item *
+
 L<DTA::TokWrap::Utils|DTA::TokWrap::Utils> - DTA tokenizer wrappers: generic utilities
 
 =item *

@@ -123,6 +123,9 @@ sub tokenize {
 ##==============================================================================
 ## Aliases
 ##==============================================================================
+package DTA::TokWrap::Processor::tokenize::tomasotath;
+our @ISA = qw(DTA::TokWrap::Processor::tokenize::tomasotath_04x);
+
 package DTA::TokWrap::Processor::tokenize::tomata;
 our @ISA = qw(DTA::TokWrap::Processor::tokenize::tomasotath);
 
