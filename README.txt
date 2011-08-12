@@ -214,11 +214,17 @@ TOOLS
 
         See "the dtatw-get-header.perl manpage" for more details.
 
+        See "the dtatw-get-header.perl manpage" for more details.
+
     dtatw-xml2ddc.perl
         Script to convert *.ddc.t.xml files and optional headers to DDC-XML
         format.
 
         See "the dtatw-xml2ddc.perl manpage" for more details.
+
+    dtatw-t-check.perl
+        Simple script to check consistency of tokenizer output (*.t) offset
+        + length fields with input (*.txt) file.
 
     dtatw-rm-c.perl
         Script to remove "<c>" elements from an XML document. Regex hack,

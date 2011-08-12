@@ -347,11 +347,18 @@ inclusion in a DDC XML format file).
 
 See L<"the dtatw-get-header.perl manpage"|dtatw-get-header.perl> for more details.
 
+See L<"the dtatw-get-header.perl manpage"|dtatw-get-header.perl> for more details.
+
 =item dtatw-xml2ddc.perl
 
 Script to convert *.ddc.t.xml files and optional headers to DDC-XML format.
 
 See L<"the dtatw-xml2ddc.perl manpage"|dtatw-xml2ddc.perl> for more details.
+
+=item dtatw-t-check.perl
+
+Simple script to check consistency of tokenizer output (*.t) offset + length
+fields with input (*.txt) file.
 
 =item dtatw-rm-c.perl
 
