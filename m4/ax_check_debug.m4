@@ -28,38 +28,36 @@ if test "$enable_debug" == "yes" ; then
    dnl    + libtool  1.5.20
    dnl
    dnl AC_DISABLE_SHARED
-   if test "$GCC" == "yes" ; then
-     AC_MSG_NOTICE([GNU C compiler detected: setting appropriate debug flags])
-     OFLAGS="-g"
-   else
-     AC_MSG_WARN([GNU C compiler not detected: you must use CFLAGS to set compiler debugging flags])
-     OFLAGS=""
-   fi
+   ac_OFLAGS="-g"
 
    AC_DEFINE(DEBUG_ENABLED,1, [Define this to enable debugging code])
    DOXY_DEFINES="$DOXY_DEFINES DEBUG_ENABLED=1"
    CONFIG_OPTIONS="DEBUG=1"
 else
   AC_MSG_RESULT(no)
-  if test "$GCC" == "yes"; then
-   case "$USER_CFLAGS" in
-    *-O*)
-      AC_MSG_NOTICE([USER_CFLAGS appears already to contain optimization flags - skipping])
-      OFLAGS=""
-      ;;
-    *)
-     AC_MSG_NOTICE([GNU C compiler detected: setting default optimization flags])
-     #OFLAGS="-pipe -O2"
-     OFLAGS="-pipe -O" ##-- this is actually faster for our c progs!
-     ;;
-   esac
-  else
-    AC_MSG_WARN([GNU C compiler not detected: you must use CFLAGS to set compiler optimization flags])
-    OFLAGS=""
-  fi
+  ac_OFLAGS="-pipe -O" ##-- this is actually faster for dta-tokwrap c progs!
   #CONFIG_OPTIONS="$CONFIG_OPTIONS DEBUG=0"
   CONFIG_OPTIONS="DEBUG=0"
 fi
+
+case "$USER_CFLAGS" in
+  *-O*|*-g*)
+    AC_MSG_NOTICE([CFLAGS appears already to contain optimization and/or debug flags - skipping])
+    ac_OFLAGS=""
+    ;;
+  *)
+    ;;
+esac
+
+if test -n "$ac_OFLAGS" ; then
+  if test "$GCC" == "yes" ; then
+     AC_MSG_NOTICE([GNU C compiler detected: setting appropriate optimization and/or debugging flags: $ac_OFLAGS])
+     OFLAGS="$ac_OFLAGS"
+  else
+     AC_MSG_WARN([GNU C compiler not detected: you must use CFLAGS to set compiler optimization and/or debugging flags])
+     OFLAGS=""
+   fi
+fi  
 
 test -n "$OFLAGS" && USER_CFLAGS="$USER_CFLAGS $OFLAGS" && CFLAGS="$CLFAGS $OFLAGS"
 AC_SUBST(OFLAGS)

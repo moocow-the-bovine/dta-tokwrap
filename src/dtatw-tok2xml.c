@@ -334,6 +334,7 @@ static void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *fi
 
     //-- word: populate w1.w_cx[] buffer
     assert(w1.w_len < WORDBUF_CX_LEN /* buffer overflow */);
+    assert(w1.w_off+w1.w_len < txtb2cx.len /* positioning error would cause segfault */);
     memcpy(w1.w_cx, txtb2cx.data+w1.w_off, w1.w_len*sizeof(cxRecord*));
     w1.w_cx[w1.w_len] = NULL;
 
