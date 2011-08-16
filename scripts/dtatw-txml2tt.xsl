@@ -18,7 +18,7 @@
   <xsl:param name="w_id_prefix"  select="'[id] '"/>      <!-- xml:id analysis prefix string -->
   <xsl:param name="w_c_prefix"   select="'[c] '"/>       <!-- character-id-list analysis prefix string -->
   <xsl:param name="w_xr_prefix"  select="'[xr] '"/>      <!-- rendition prefix string -->
-  <xsl:param name="w_a_prefix"   select="''"/>           <!-- default analysis prefix string -->
+  <xsl:param name="w_a_prefix"   select="'[toka] '"/>    <!-- default analysis prefix string -->
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- options -->
