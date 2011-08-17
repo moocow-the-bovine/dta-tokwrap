@@ -129,7 +129,8 @@ TOKWRAP_OPTS += $(twopts)
 ## Configuration: Defaults: ddc attributes
 
 ##-- DDC_ATTRS : arguments for dtatw-get-ddc-attrs.perl
-DDC_ATTRS ?= -formula-text='[Formel]'
+DDC_ATTRS ?= -xr -xc -noxp -pb -bb -u -v=0
+
 
 ##--------------------------------------------------------------
 ## Configuration: Defaults: programs & in-place execution
@@ -686,7 +687,7 @@ CLEAN_FILES += *.wpx
 ddc-t-xml: $(XML:.xml=.ddc.t.xml)
 
 %.ddc.t.xml: %.t.xml $(xmldir)/%.xml
-	$(SCRIPT_DIR)dtatw-get-ddc-attrs.perl $(DDC_ATTRS) -v=0 -o $@ $^
+	$(SCRIPT_DIR)dtatw-get-ddc-attrs.perl $(DDC_ATTRS) -o $@ $^
 
 no-ddc-t-xml: ; rm -f *.ddc.t.xml
 CLEAN_FILES += *.ddc.t.xml
@@ -803,6 +804,11 @@ cab-xml-errors: $(corpus).cab.xml_errors
 cws-xml-errors: $(corpus).cws.xml_errors
 all-xml-errors: $(corpus).all.xml_errors
 
+t0-errors: $(corpus).t0_errors
+%.t0.errors: %.t0 %.txt tokwrap
+	-$(SCRIPT_DIR)dtatw-t-check.perl -q "$*.t0" "$*.txt" 2>&1 | tee $@
+#	-$(SCRIPT_DIR)dtatw-t-check.perl -q "$*.t0" "$*.txt" >$@ 2>&1
+
 ifneq "$(xml_wfcheck)" "no"
 
 %.src.xml.errors: $(xmldir)/%.xml
@@ -829,21 +835,26 @@ $(corpus).cab.xml_errors: $(XML:.xml=.dta-cab.xml.errors)
 $(corpus).cws.xml_errors: $(XML:.xml=.cws.xml.errors)
 	cat $^ > $@
 
+$(corpus).t0_errors: $(XML:.xml=.t0.errors)
+	cat $^ > $@
+
 %.all.xml_errors: %.so.xml_errors %.cab.xml_errors %.cws.xml_errors
 	cat $^ > $@
 
 else
 ##--/ifneq "$(xml_wfcheck)" "no"
 
-$(corpus).%.errors:
+$(corpus).%_errors:
 	echo "Implicit XML well-formedness check DISABLED" > $@
 
 endif
 ##--/ifeq "$(xml_wfcheck)" "no"
 
-no-xml-errors: ; rm -f *.xml.errors
+no-xml-errors: ; rm -f *.xml.errors *.xml_errors
+no-t0-errors: ; m -f *.t0_errors
+no-errors: ; rm -f *.errors *_errors
 
-CLEAN_FILES += *.xml.errors *.xml_errors
+CLEAN_FILES += *.xml.errors *.xml_errors *.t0.errors *.t0_errors
 
 ##======================================================================
 ## Rules: Summaries
