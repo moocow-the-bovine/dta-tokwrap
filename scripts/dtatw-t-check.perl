@@ -1,9 +1,28 @@
 #!/usr/bin/perl -w
 
 use bytes;
+use Getopt::Long ':config'=>'no_ignore_case';
 
-if (!@ARGV) {
-  print STDERR "Usage: $0 TT_FILE [TXT_FILE]\n";
+our ($help);
+our $verbose = 1;
+our $max_warnings = 10;
+GetOptions(
+	   'help|h' => \$help,
+	   'quiet|q!' => sub {$verbose = $_[1] ? 0 : 1},
+	   'max-warnings|max-warn|n=i' => \$max_warnings,
+	  );
+
+if (!@ARGV || $help) {
+  print STDERR
+    ("\n",
+     "Usage: $0 [OPTION(s)...] TT_FILE [TXT_FILE]\n",
+     "\n",
+     "Options:\n",
+     "  -help         ##-- this help message\n",
+     "  -quiet        ##-- only output errors\n",
+     "  -max-warn N   ##-- maximum number of warnings per input file (default=$max_warnings)\n",
+     "\n",
+    );
   exit 1;
 }
 $ttfile = shift;
@@ -23,7 +42,6 @@ if (!$txtfile) {
 }
 
 my $warned=0;
-my $max_warnings=10;
 sub tokwarn {
   warn(@_);
   ++$warned;
@@ -51,7 +69,7 @@ while (<TT>) {
 
   ##-- check content
   $buftext = substr($txtbuf, $off,$len);
-  $tokre   = join('', map {"\Q$_\E(?:(?:[ \n\r\t\-]|¬)*)"} split(//,$text));
+  $tokre   = join('', map {($_ eq '_' ? '[_\s]' : "\Q$_\E")."(?:(?:[ \n\r\t\-]|¬)*)"} split(//,$text));
   if ($buftext !~ $tokre) {
     tokwarn("$0: buffer text='$buftext' doesn't match token text for $toklabel\n");
   }
@@ -62,5 +80,9 @@ while (<TT>) {
     last;
   }
 }
-print "$0: $ttfile -> $txtfile : ", ($warned ? "NOT ok ($warned warnings)" : "ok"), "\n";
+
+##-- final report & exit
+if ($warned || $verbose >= 1) {
+  print "$0: $ttfile -> $txtfile : ", ($warned ? "NOT ok ($warned warnings)" : "ok"), "\n";
+}
 exit $warned;
