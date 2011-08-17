@@ -805,7 +805,7 @@ cws-xml-errors: $(corpus).cws.xml_errors
 all-xml-errors: $(corpus).all.xml_errors
 
 t0-errors: $(corpus).t0_errors
-%.t0.errors: %.t0 %.txt tokwrap
+%.t0.errors: %.t0 %.txt
 	-$(SCRIPT_DIR)dtatw-t-check.perl -q "$*.t0" "$*.txt" 2>&1 | tee $@
 #	-$(SCRIPT_DIR)dtatw-t-check.perl -q "$*.t0" "$*.txt" >$@ 2>&1
 
@@ -851,7 +851,7 @@ endif
 ##--/ifeq "$(xml_wfcheck)" "no"
 
 no-xml-errors: ; rm -f *.xml.errors *.xml_errors
-no-t0-errors: ; m -f *.t0_errors
+no-t0-errors: ; rm -f *.t0.errors *.t0_errors
 no-errors: ; rm -f *.errors *_errors
 
 CLEAN_FILES += *.xml.errors *.xml_errors *.t0.errors *.t0_errors
