@@ -32,7 +32,8 @@ our $MIN_FORMULA_PIX = 100;  ##-- formula bboxes shorter than $MIN_FORMULA_PIX a
 our $CN2WN_BITS = 32;
 
 ##-- selection
-our $keep_blanks = 0;
+our $keep_blanks = 0;  ##-- libxml parser attribute
+our $keep_ws = 0;      ##-- whether to keep word text-internal whitespace
 our $do_page = 1;
 our $do_line = 1;
 our $do_rendition = 1;
@@ -44,8 +45,8 @@ our $do_unicruft = 1;
 our $do_keep_c = 1;
 our $do_keep_b = 1;
 
-our $do_cofflen = 1;
-our $do_bofflen = 1;
+our $do_cofflen = 0;
+our $do_bofflen = 0;
 
 ##-- output attributes
 our $rendition_attr = 'xr';
@@ -78,21 +79,24 @@ GetOptions(##-- General
 	   'quiet|q' => sub { $verbose=!$_[1]; },
 
 	   ##-- I/O
-	   'keep-blanks|blanks|whitespace|ws!' => \$keep_blanks,
+	   'keep-blanks|blanks!' => \$keep_blanks,
+	   'output|out|o=s' => \$outfile,
+	   'format|f!' => \$format,
+
+	   ##-- behavior
+	   'whitespace|ws!' => \$keep_ws,
 	   'page|pb|p!' => \$do_page,
 	   'line|lb|l!' => \$do_line,
 	   'rendition|rend|xr|r!' => \$do_rendition,
 	   'xcontext|context|xcon|con|xc!' => \$do_xcontext,
 	   'xpath|path|xp!' => \$do_xpath,
 	   'coordinates|coords|coord|c|bboxes|bbox|bb|b!' => \$do_bbox,
-	   'unicruft|cruft|u!' => \$do_unicruft,
+	   'unicruft|cruft|u|transliterate|xlit|xl!' => \$do_unicruft,
 	   'char-offsets|c-offsets|coff|co!' => \$do_cofflen,
 	   'byte-offsets|b-offsets|boff|bo!' => \$do_bofflen,
 	   'keep-c|keepc|kc!' => \$do_keep_c,
 	   'keep-b|keepb|kb!' => \$do_keep_b,
 	   'formula-text|ft:s' => \$formula_text,
-	   'output|out|o=s' => \$outfile,
-	   'format|f!' => \$format,
 	  );
 
 pod2usage({-exitval=>0,-verbose=>0}) if ($help);
@@ -440,15 +444,23 @@ sub apply_word {
   ##-- detect: formula
   $w_is_formula = (@cs && $cs[0]{elt} eq 'formula') || (@cids && $cids[0] =~ m/\$FORMULA:[0-9]+\$$/);
 
+  ##-- get text
+  $wtxt = $wnod->getAttribute('t') || $wnod->getAttribute('text') || '';
+  $wtxt = decode_utf8($wtxt) if (!utf8::is_utf8($wtxt));
+
   ##-- compute & assign: formula text (non-empty @cids only)
   if ($formula_text ne '' && $w_is_formula) {
-    $wnod->setAttribute('t',$formula_text);
+    $wtxt = $formula_text;
+    $wnod->setAttribute('t',$wtxt);
+  }
+
+  ##-- compute & assign: whitespace-bashing
+  if ($keep_ws) {
+    $wnod->setAttribute('t',$wtxt) if ($wtxt =~ s/\s/_/g);
   }
 
   ##-- compute & assign: unicruft
   if ($do_unicruft) {
-    $wtxt = $wnod->getAttribute('t') || $wnod->getAttribute('text') || '';
-    $wtxt = decode_utf8($wtxt) if (!utf8::is_utf8($wtxt));
     if ($wtxt =~ m(^[\x{00}-\x{ff}\p{Latin}\p{IsPunct}\p{IsMark}]*$)) {
       $utxt = decode('latin1',Unicruft::utf8_to_latin1_de($wtxt));
     } else {
@@ -724,15 +736,16 @@ dtatw-get-ddc-attrs.perl - get DDC-relevant attributes from DTA::TokWrap files
   -quiet                 # be silent
 
  I/O Options:
+  -ws     , -nows        # do/don't keep whitespace in //w/@t (default=don't)
   -page   , -nopage      # do/don't extract //w/@pb (page-break; default=do)
   -line   , -noline      # do/don't extract //w/@lb (line-break; default=do)
   -rend   , -norend      # do/don't extract //w/@xr (rendition; default=do)
   -xcon   , -noxcon      # do/don't extract //w/@xc (xml context; default=do)
   -xpath  , -noxpath     # do/don't extract //w/@xp (xpath; default=do)
   -bbox   , -nobbox      # do/don't extract //w/@bb (bbox; default=do)
-  -cruft  , -nocruft     # do/don't extract //w/@u  (unicruft; default=do)
-  -coff   , -nocoff      # do/don't extract //w/(@coff|@clen) from //w/@c or //w/@cs (default=do)
-  -boff   , -noboff      # do/don't extract //w/(@boff|@blen) from //w/@b (default=do)
+  -xlit   , -noxlit      # do/don't extract //w/@u  (unicruft transliteration; default=do)
+  -coff   , -nocoff      # do/don't extract //w/(@coff|@clen) from //w/@c or //w/@cs (default=don't)
+  -boff   , -noboff      # do/don't extract //w/(@boff|@blen) from //w/@b (default=don't)
   -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in T_XML_FILE file (default=don't)
   -keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=keep)
   -keep-b , -nokeep-b    # do/don't keep existing //w/@b attributes (default=keep)
