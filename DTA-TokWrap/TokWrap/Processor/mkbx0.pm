@@ -171,6 +171,9 @@ sub defaults {
 				 qw(ref|fw),       ##--  ... tokenize <head> (e.g. chapter titles), but not headers, footers, or references (TOC)
 				 qw(teiHeader),
 				 #qw(formula),
+
+				 'choice[./sic and ./corr]/sic',
+				 'choice[./orig and ./reg]/orig',
 				],
 	  sort_addkey_xpaths => [
 				 (map {"$_\[not(parent::seg)\]"} qw(table note argument figure)),
