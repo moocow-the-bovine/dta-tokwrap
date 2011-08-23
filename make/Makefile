@@ -36,6 +36,22 @@ corpus ?= $(notdir $(xmldir)) ##-- UNUSED
 XML = $(notdir $(xml))
 
 ##--------------------------------------------------------------
+## Configuration: Defaults: shell
+
+## NICE : command prefix for considerate subprocesses
+##  + -c2 -n5 : best-effort class, 5/7 nice
+##  + -c3     : idle class; very nice
+#NICE ?= ionice -c2 -n5 nice -n10
+NICE ?= ionice -c3 nice -n10
+
+## SHELL : built-in make variable for command shell
+##  + we (ab)use it here to set nice and ionice priorities
+##  + setting 'pipefail' option causes pipelines to fail if any component command fails (not just the last command)
+ifeq ($(SHELL),/bin/sh)
+ SHELL = $(NICE) /bin/sh -o pipefail
+endif
+
+##--------------------------------------------------------------
 ## Configuration: Defaults: tokwrap
 
 ## TOKWRAP_OPTS
@@ -262,6 +278,7 @@ summary: $(SUMMARY_TARGETS)
 cascade-all: $(ALL_XML_TARGETS)
 
 .SECONDARY:
+.DELETE_ON_ERROR:
 
 ##======================================================================
 ## Rules: show configuration
@@ -319,11 +336,11 @@ CLEAN_FILES += *.nons *.nons.xml
 
 ##-- character removal *.noc[.xml]
 %.noc: % scripts
-	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@ || (rm -f $@; false)
+	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@ 
 %.noc.xml: %.xml scripts
-	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@ || (rm -f $@; false)
+	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@ 
 %.noc.xml: $(xmldir)/%.xml scripts
-	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@ || (rm -f $@; false)
+	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@ 
 CLEAN_FILES += *.noc *.noc.xml
 
 ##======================================================================
@@ -423,7 +440,7 @@ t0: $(XML:.xml=.t0)
 ifeq "$(TOKENIZER)" ""
 	$(TOKWRAP) -t tokenize0 $(xmldir)/$*.xml
 else
-	$(TOKENIZER) $< > $@ || (rm -f $@; false)
+	$(TOKENIZER) $< > $@ 
 endif
 
 no-t0: ; rm -f *.t0
@@ -568,7 +585,7 @@ cws-noc-xml: $(XML:.xml=.cws.noc.xml)
 ##-- splice: (.char.xml + .t.xml) --> .cw.xml
 cw-xml: $(XML:.xml=.cw.xml)
 %.cw.xml: $(xmldir)/%.xml %.t.xml scripts
-	$(SCRIPT_DIR)dtatw-add-w.perl -q -o $@ $< $*.t.xml || (rm -f $@; false)
+	$(SCRIPT_DIR)dtatw-add-w.perl -q -o $@ $< $*.t.xml 
 
 no-cw-xml: ; rm -r *.cw.xml
 CLEAN_FILES += *.cw.xml
@@ -576,7 +593,7 @@ CLEAN_FILES += *.cw.xml
 ##-- splice: (.cw.xml + .t.xml) --> .cws.xml
 cws-xml: $(XML:.xml=.cws.xml)
 %.cws.xml: %.cw.xml %.t.xml scripts
-	$(SCRIPT_DIR)dtatw-add-s.perl -q -o $@ $< $*.t.xml  || (rm -f $@; false)
+	$(SCRIPT_DIR)dtatw-add-s.perl -q -o $@ $< $*.t.xml  
 
 no-cws-xml: ; rm -r *.cws.xml
 CLEAN_FILES += *.cws.xml
@@ -617,8 +634,7 @@ cab-xml-bytok: dta-cab-xml-bytok
 dta-cab-xml-bytok: $(XML:.xml=.dta-cab.xml.bytok)
 
 %.dta-cab.xml.bytok: %.t.xml
-	dta-cab-xmlrpc-client.perl $(cab_options) -s=$(cab_server) -a=$(cab_analyzer) -raw -ic=Xml -oc=Xml -ol=1 -o="$@" "$<" \
-	  || (rm -f "$@"; false)
+	dta-cab-xmlrpc-client.perl $(cab_options) -s=$(cab_server) -a=$(cab_analyzer) -raw -ic=Xml -oc=Xml -ol=1 -o="$@" "$<"
 
 no-dta-cab-xml-bytok: ; rm -f *.dta-cab.xml.bytok
 no-cab-xml-bytok: no-dta-cab-xmlw-bytok
@@ -704,7 +720,7 @@ dta-cab-xml-xlit: $(XML:.xml=.dta-cab.xml.xlit)
 	dta-cab-analyze.perl -verbose=warn -noprofile -c=cab-xlit.plm -oc=TT -o=$@ $<
 
 %.dta-cab.xml.xlit: %.dta-cab.tt.xlit scripts
-	$(SCRIPT_DIR)dtatw-cabtt2xml.perl $< > $@ || (rm -f $@; false)
+	$(SCRIPT_DIR)dtatw-cabtt2xml.perl $< > $@ 
 
 no-cab-xlit: no-dta-cab-xlit
 no-dta-cab-xlit: ; rm -f *.dta-cab.xlit.*
@@ -729,7 +745,7 @@ CLEAN_FILES += *.dta-cab.xml
 types: types-t
 types-t: $(XML:.xml=.types.t)
 %.types.t: %.t.xml.tt
-	cut -d$$'\t' -f 1 $< | grep -v '^%%' | grep . | sort | uniq > $@ || (rm -f $@; false)
+	cut -d$$'\t' -f 1 $< | (grep -v '^%%' || true) | (grep . || true) | sort -u > $@ 
 
 no-types-t: ; rm -f *.types.t
 CLEAN_FILES += *.types.t
@@ -740,8 +756,7 @@ CLEAN_FILES += *.types.t
 types-tt: types-cab-tt
 types-cab-tt: $(XML:.xml=.types.dta-cab.tt)
 %.types.dta-cab.tt: %.types.t
-	dta-cab-xmlrpc-client.perl $(cab_options) -s $(cab_server) -a $(cab_analyzer) -raw -ic=TT -oc=TT -ol=1 -o "$@" "$<" \
-	  || (rm -f "$@"; false)
+	dta-cab-xmlrpc-client.perl $(cab_options) -s $(cab_server) -a $(cab_analyzer) -raw -ic=TT -oc=TT -ol=1 -o "$@" "$<"
 
 no-types-tt: no-types-cab-tt
 no-types-cab-tt: ; rm -f *.types.dta-cab.tt
@@ -753,7 +768,7 @@ CLEAN_FILES += *.types.dta-cab.tt
 cab-tt: dta-cab-tt
 dta-cab-tt: $(XML:.xml=.toks.dta-cab.tt)
 %.toks.dta-cab.tt: %.types.dta-cab.tt %.t.xml.tt scripts
-	$(SCRIPT_DIR)dtatw-tt-dictapply.perl $< $*.t.xml.tt > $@ || (rm -f $@; false)
+	$(SCRIPT_DIR)dtatw-tt-dictapply.perl $< $*.t.xml.tt > $@ 
 
 no-cab-tt: no-dta-cab-tt
 no-dta-cab-tt: ; rm -f *.dta-cab.tt
@@ -766,7 +781,7 @@ cab-xml-full: dta-cab-xml-full
 dta-cab-xml-full: $(XML:.xml=.dta-cab.xml.full)
 %.dta-cab.xml.full: %.toks.dta-cab.tt scripts
 #	dta-cab-convert.perl -verbose=info $< -oc=Xml -ol=1 -o $@  ##-- slow
-	$(SCRIPT_DIR)dtatw-cabtt2xml.perl $< > $@ || (rm -f $@; false)
+	$(SCRIPT_DIR)dtatw-cabtt2xml.perl $< > $@ 
 
 #%.dta-cab.xml: %.dta-cab.xml.full
 #	rm -f $@
@@ -871,7 +886,7 @@ corpus-lex: $(corpus).lex
 	cat $^ \
 	| unicruft -D \
 	| perl -CIO -n -e'print if (/^[[:alpha:]]+$$/);' \
-	| unicruft -d | sort | uniq > $@ || (rm -f $@; false)
+	| unicruft -d | sort -u > $@ 
 
 ##-- $(corpus).lexf : for use as WORDS variable in dta/automata/pho-id/Makefile
 corpus-lexf: $(corpus).lexf
@@ -879,13 +894,13 @@ corpus-lexf: $(corpus).lexf
 	cat $^ \
 	| unicruft -D \
 	| perl -CIO -n -e'print "$$1\t$$2\n" if (/^([[:alpha:]]+)\t\[freq\] (\d+)$$/);' \
-	| unicruft -d | sort | uniq > $@ || (rm -f $@; false)
+	| unicruft -d | sort -u > $@ 
 
 corpus-typf: $(corpus).typf
 $(corpus).typf: $(XML:.xml=.t)
-	cat $^ | grep -v '^%%' | cut -d$$'\t' -f1 | grep . | sort | uniq -c \
+	cat $^ | (grep -v '^%%' || true) | cut -d$$'\t' -f1 | (grep . || true) | sort | uniq -c \
 	| sed -e's/^[ ]*\([0-9][0-9]*\) \(.*\)/\2\t\[freq\] \1/1' \
-	> $@ || (rm -f $@; false)
+	> $@ 
 
 REALCLEAN_FILES += *.types *.typf
 
@@ -894,11 +909,11 @@ REALCLEAN_FILES += *.types *.typf
 
 corpus-dict: $(corpus).dict
 $(corpus).dict: $(XML:.xml=.types.dta-cab.tt)
-	cat $^ | grep -v '^%%' | grep . | sort | uniq > $@ || (rm -f $@; false)
+	cat $^ | grep -v '^%%' | grep . | sort | uniq > $@ 
 
 corpus-dictf: $(corpus).dictf
 %.dictf: %.typf %.dict scripts
-	$(SCRIPT_DIR)dtatw-tt-dictapply.perl $*.dict $*.typf > $@ || (rm -f $@; false)
+	$(SCRIPT_DIR)dtatw-tt-dictapply.perl $*.dict $*.typf > $@ 
 
 REALCLEAN_FILES += *.dict *.dictf
 
@@ -912,14 +927,14 @@ corpus-rw: $(corpus).rw-summary
 %.rw-summary: %.dictf
 	cat $^ | fgrep '[rw]' \
 	| sed -e's/^\([^\t]*\)\t\[freq\] \([^\t]*\).*\t\(\[rw\][^\t]*\).*/\1\t\2\t\3/1' - \
-	| sort -t$$'\t' -k2 -nr > $@ || (rm -f $@; false)
+	| sort -t$$'\t' -k2 -nr > $@ 
 
 unk-summary: $(corpus).unk-summary
 corpus-unk: $(corpus).unk-summary
 %.unk-summary: %.dictf
 	cat $^ | fgrep -v '[rw]' | fgrep -v '[morph]' | egrep -v '^[^'$$'\t'']*[[:digit:][:punct:]]' \
 	| sed -e's/^\([^\t]*\)\t\[freq\] \([^\t]*\).*/\1\t\2/1' - \
-	| sort -t$$'\t' -k2 -nr > $@ || (rm -f $@; false)
+	| sort -t$$'\t' -k2 -nr > $@ 
 
 SUMMARY_FILES    = $(patsubst %, $(corpus).%-summary, rw unk)
 CLEAN_FILES += *.rw-summary *.unk-summary

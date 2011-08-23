@@ -69,7 +69,7 @@ while (<TT>) {
 
   ##-- check content
   $buftext = substr($txtbuf, $off,$len);
-  $tokre   = join('', map {($_ eq '_' ? '[_\s]' : "\Q$_\E")."(?:(?:[ \n\r\t\-]|¬)*)"} split(//,$text));
+  $tokre   = join('', map {($_ eq '_' ? '[_\s]' : "\Q$_\E")."(?:(?:[ \n\r\t\-]|(?:¬)|(?:—)|(?:–))*)"} split(//,$text));
   if ($buftext !~ $tokre) {
     tokwarn("$0: buffer text='$buftext' doesn't match token text for $toklabel\n");
   }
