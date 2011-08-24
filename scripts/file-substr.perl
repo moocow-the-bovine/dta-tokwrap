@@ -1,27 +1,18 @@
 #!/usr/bin/perl -w
 
 use File::Basename qw(basename);
-use Getopt::Long ':config'=>'no_ignore_case';
 our $prog = basename($0);
 
-our $rawmode = 0;
-our ($help);
-GetOptions(
-	   'help|h' => \$help,
-	   'raw|r!' => \$rawmode,
-	  );
-
-if (@ARGV < 2 || $help) {
+if (@ARGV < 2 || grep {/^\-h/} @ARGV) {
   print STDERR <<EOF;
 
 Usage(s):
- $prog [OPTIONS] FILE [=?]OFFSET \"+\"[LENGTH=1]
- $prog [OPTIONS] FILE [=?]OFFSET \"-\"[OFFSET_FROM_FILE_END]
- $prog [OPTIONS] FILE [=?]OFFSET    [END_OFFSET] ##-- not inclusive
+ $prog FILE [=?]OFFSET \"+\"[LENGTH=1]
+ $prog FILE [=?]OFFSET \"-\"[OFFSET_FROM_FILE_END]
+ $prog FILE [=?]OFFSET    [END_OFFSET] ##-- not inclusive
 
-Options:
- -help              ##-- this help message
- -raw , -noraw      ##-- don't/do format output messages (-raw works like '=' as OFFSET prefix)
+Notes:
+ + if OFFSET begins with '=', formatting newlines and "---" separator(s) are supporessed.
 
 EOF
   exit 1;
@@ -33,7 +24,6 @@ while (@ARGV) {
   elsif ($lenarg =~ /^\-(.*)$/) { $len = (-s $file) - $1 - $off; }
   else                          { $len = $lenarg - $off; }
 
-  my $want_newlines = !$rawmode;
   if ($off =~ s/^\=//) {
     $want_newlines=0;
   } else {
