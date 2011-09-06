@@ -13,7 +13,7 @@ use DTA::TokWrap::Processor::mkbx0;
 use DTA::TokWrap::Processor::mkbx;
 use DTA::TokWrap::Processor::tokenize;
 use DTA::TokWrap::Processor::tokenize::http;
-use DTA::TokWrap::Processor::tokenize::tomasotath;
+use DTA::TokWrap::Processor::tokenize::tomasotath_04x;
 use DTA::TokWrap::Processor::tokenize::dummy;
 use DTA::TokWrap::Processor::tokenize1;
 use DTA::TokWrap::Processor::tok2xml;
