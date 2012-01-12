@@ -55,6 +55,7 @@ bin_SCRIPTS = \
 	dtatw-get-header.perl \
 	dtatw-xml2ddc.perl \
 	dtatw-t-check.perl \
+	dtatw-dtaid.sh \
 	file-substr.perl
 
 #	dtatw-txml2cspan.perl
