@@ -24,7 +24,8 @@ our $outfile = "-";             ##-- default: stdout
 our ($outfh);
 
 ##-- vars: selection
-our $header_elt = 'teiHeader';  ##-- header element name
+our $want_elt   = 'teiHeader';  ##-- header element name
+our %want_attrs = qw();         ##-- required header attributes (literal match only)
 
 ##-- XML::Parser stuff
 our ($xp); ##-- underlying XML::Parser object
@@ -36,7 +37,8 @@ GetOptions(##-- General
 	   'help|h' => \$help,
 
 	   ##-- I/O
-	   'header-element|he|element|elt|e=s' => \$header_elt,
+	   'header-element|he|element|elt|e=s' => \$want_elt,
+	   'header-attribute|ha|attribute|attr|a=s' => \%want_attrs,
 	   'output|out|o=s' => \$outfile,
 	  );
 
@@ -66,15 +68,17 @@ sub cb_xmldecl {
 #}
 
 ## undef = cb_start($expat, $elt,%attrs)
+our (%attrs);
 sub cb_start {
-  ++$is_header if ($_[1] eq $header_elt);
+  %attrs = @_[2..$#_];
+  ++$is_header if ($_[1] eq $want_elt && !grep {($attrs{$_}||'') ne $want_attrs{$_}} keys %want_attrs);
   $_[0]->default_current();
 }
 
 ## undef = cb_end($expat, $elt)
 sub cb_end {
   $_[0]->default_current();
-  if ($_[1] eq $header_elt) {
+  if ($is_header) {
     --$is_header;
     if ($is_header <= 0) {
       $outfh->print("\n");
@@ -119,7 +123,7 @@ my $infile = @ARGV ? shift : '-';
 $xp->parsefile($infile);
 
 ##-- oops: we should never get here: print a dummy header
-$outfh->print("<$header_elt/>\n");
+$outfh->print("<$want_elt/><!-- dummy header created by $0 -->\n");
 $outfh->close();
 
 =pod
@@ -135,6 +139,7 @@ dtatw-get-header.perl - extract a header element from an XML file
  Options:
   -help                  # this help message
   -element ELEMENT       # specify header element (default='teiHeader')
+  -attribute ATTR=VAL    # select only header elements with ATTR=VAL (may be multiply specifed)
   -output FILE           # specify output file (default='-' (STDOUT))
 
 =cut
