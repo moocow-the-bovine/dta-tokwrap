@@ -9,6 +9,6 @@ dir0=$(dirname "$0")
 for f in "$@"; do
   b=$(basename "$f")
   b=${b%%.*}
-  dtaid=$("$dir0"/dtatw-get-header.perl -e='idno' -a type=DTAID "$f" | perl -pe 's|^[^\>]*>||; s|\<.*$||;')
+  dtaid=$("$dir0"/dtatw-get-header.perl -e='idno' -a type=DTAID "$f" | perl -pe 's|^[^\>]*>\s*||; s|\s*\<.*$||;')
   echo -e "$f\t$b\t$dtaid"
 done
