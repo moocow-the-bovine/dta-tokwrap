@@ -71,7 +71,7 @@ sub cb_xmldecl {
 our (%attrs);
 sub cb_start {
   %attrs = @_[2..$#_];
-  ++$is_header if ($_[1] eq $want_elt && !grep {($attrs{$_}||'') ne $want_attrs{$_}} keys %want_attrs);
+  ++$is_header if ($is_header || ($_[1] eq $want_elt && !grep {($attrs{$_}||'') ne $want_attrs{$_}} keys %want_attrs));
   $_[0]->default_current();
 }
 
