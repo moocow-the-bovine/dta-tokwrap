@@ -17,7 +17,7 @@ foreach $f (@xmlfiles) {
   while (<XML>) {
     if ( m{\<\s*idno\b[^\>]*?\btype=\"DTAID\"[^\>]*?\>\s*([^\<\s]*?)\s*\</idno\>}si ) {
       $dtaid=$1;
-    last;
+      last;
     }
   }
   print "$f\t$base\t$dtaid\n";

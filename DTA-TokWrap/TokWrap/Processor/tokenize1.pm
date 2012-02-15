@@ -87,18 +87,20 @@ sub tokenize1 {
   else {
     my $data = decode('utf8',$$tdata0r);
 
-    ##-- fix stupid interjections
+    ##------------------------------------
+    ## fix: stupid interjections
     $tp->vlog($tp->{traceLevel},"autofix: re/ITJ");
     $data =~ s/^(re\t\d+ \d+)\tITJ$/$1/mg;
 
-    ##-- fix: line-broken tokens: get list of suspects
+    ##------------------------------------
+    ## fix: line-broken tokens, part 1: get list of suspects
     ## NOTE:
     ##  + we do this fix in 2 passes to allow some fine-grained checks (e.g. %nojoin_txt2)
     ##  + also, at least 1 dta file (kurz_sonnenwirth_1855.xml) caused the original single-regex
-    ##    implementation to choke (or at least to churn cpu cycles for over 5 minutes wihthout
+    ##    implementation to choke (or at least to churn cpu cycles for over 5 minutes without
     ##    producing any results, for some as-yet-undetermined reason)
     ##  + the 2-pass approach using a simpler regex for the large buffer and the @-, @+ arrays
-    ##    rather then ()-groups doesn't cause the same race-condition-like behavior... go figure
+    ##    rather then ()-groups, but doesn't cause the same race-condition-like behavior... go figure
     ## -moocow Wed, 04 Aug 2010 13:37:25 +0200
     ##
     ## + hypens we might want to pay attention to:
@@ -110,7 +112,7 @@ sub tokenize1 {
     $tp->vlog($tp->{traceLevel},"autofix: linebreak: find suspects");
     my @suspects = qw();
     while (
-	   $data =~ /
+	   $data =~ /^
 		      [[:alpha:]\'\-\x{ac}]*                        ##-- w1.text [modulo final "-"]
 		      [\-\x{ac}]                                    ##--   : w1.final "-"
 		      \t.*                                          ##--   : w1.rest
@@ -125,7 +127,8 @@ sub tokenize1 {
 	push(@suspects, [$-[0], $+[0]-$-[0]]);
       }
 
-    ##-- fix: line-broken tokens: fix
+    ##------------------------------------
+    ## fix: line-broken tokens, part 2: repair
     $tp->vlog($tp->{traceLevel},"autofix: linebreak: check \& apply");
     my %nojoin_txt2 = map {($_=>undef)} qw(und oder als wie noch sondern ſondern);
 
@@ -180,10 +183,78 @@ sub tokenize1 {
       substr($data,$_->[0],$_->[1]) = $repl if (defined($repl));
     }
 
-    ##-- write data back to doc (encoded)
+    ##------------------------------------
+    ## fix: pre-numeric abbreviations (e.g. biblical books), part 1: collect suspects
+    my %nabbrs   = (map {($_=>undef)}
+		    qw( Bar Dan Deut Esra Est Ex Galater Man Hos Ijob Job Jak Col Kor Cor Mal Mark Ri ),
+		   );
+    @suspects = qw();
+    while (
+	   $data =~ /^
+		     [[:alpha:]]+\t.*\n		##-- w1
+		     \.\t.*\n			##-- "." [as punct]
+		     \n+		    	##-- EOS
+		     [0-9]+[^\n]*\n		##-- w2 (arabic number)
+		    /mxg
+	  )
+      {
+	push(@suspects, [$-[0], $+[0]-$-[0]]);
+      }
+
+    ##------------------------------------
+    ## fix: pre-numeric abbreviations (e.g. biblical books), part 2: repair
+    my ($offd,$lend);
+    foreach (reverse @suspects) {
+      $s_str = substr($data,$_->[0],$_->[1]);
+      $repl  = undef;
+
+      if (
+	  $s_str =~ m/^([^\t\n]*)            ##-- $1: w1.txt
+		      \t(\d+)\ (\d+)         ##-- ($2,$3): (w1.off, w1.len)
+		      ([^\n]*)               ##-- $4: w1.rest
+		      \n                     ##-- w1.EOT
+		      ##
+		      \.		     ##-- dot:"."
+		      \t(\d+)\ (\d+)	     ##-- ($5,$6): (dot.off, dot.len)
+		      ([^\n]*)		     ##-- $7: dot.rest
+		      \n		     ##-- dot.EOT
+		      ##
+		      \n+		     ##-- EOS
+		      ##
+		      ([^\t\n]*)             ##-- $8: w2.txt
+		      \t(\d+)\ (\d+)         ##-- ($9,$10): (w2.off, w2.len)
+		      ([^\n]*)               ##-- $11: w2.rest
+		      \n+$                   ##-- w2.EOT
+		     /sx
+	 ) {
+	($txt1,$off1,$len1,$rest1, $offd,$lend, $txt2,$off2,$len2,$rest2) = ($1,$2,$3,$4, $5,$6, $8,$9,$10,$11);
+
+	##-- check for known pre-numeric abbrevs
+	if (exists($nabbrs{$txt1})) {
+	  $repl = (
+		   "$txt1.\t$off1 ".(($offd+$lend)-$off1)."\tXY\t\$ABBREV\n"
+		   ."$txt2\t$off2 $len2$rest2\n"
+		  );
+	}
+
+	##-- DEBUG
+	#print STDERR "  - NABBR: ($txt1 \@$off1.$len1 :$rest1)  +  ($txt2 \@$off2.$len2 :$rest2)  -->  ".(defined($repl) ? $repl : "IGNORE\n");
+      } else {
+	$tp->logwarn("tokenize1(): couldn't parse pre-numeric suspect line at t0-file offset $_->[0], length $_->[1] - skipping");
+	next;
+      }
+
+      ##-- apply actual replacement
+      substr($data,$_->[0],$_->[1]) = $repl if (defined($repl));
+    }
+
+
+    ##------------------------------------
+    ## finalize: write data back to doc (encoded)
     $tp->vlog($tp->{traceLevel},"autofix: recode");
     $doc->{tokdata1} = encode('utf8',$data);
   }
+  ##-- /ifelse:fixtok
 
   ##-- finalize
   $doc->{ntoks} = $tp->nTokens(\$doc->{tokdata1});
