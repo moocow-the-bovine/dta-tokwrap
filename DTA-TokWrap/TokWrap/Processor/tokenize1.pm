@@ -186,8 +186,9 @@ sub tokenize1 {
     ##------------------------------------
     ## fix: pre-numeric abbreviations (e.g. biblical books), part 1: collect suspects
     my %nabbrs   = (map {($_=>undef)}
-		    qw( Bar Dan Deut Esra Est Ex Galater Man Hos Ijob Job Jak Col Kor Cor Mal Mark Ri ),
+		    qw( Bar Dan Deut Esra Est Ex Galater Man Hos Ijob Job Jak Col Kor Cor Mal Mark Ri Sir ),
 		   );
+    my $nabbr_max_distance = 3; ##-- max number of text bytes between end(w1) and start(w2), including EOS-dot
     @suspects = qw();
     while (
 	   $data =~ /^
@@ -230,7 +231,7 @@ sub tokenize1 {
 	($txt1,$off1,$len1,$rest1, $offd,$lend, $txt2,$off2,$len2,$rest2) = ($1,$2,$3,$4, $5,$6, $8,$9,$10,$11);
 
 	##-- check for known pre-numeric abbrevs
-	if (exists($nabbrs{$txt1})) {
+	if (exists($nabbrs{$txt1}) && ($off2-($off1+$len1)) <= $nabbr_max_distance)
 	  $repl = (
 		   "$txt1.\t$off1 ".(($offd+$lend)-$off1)."\tXY\t\$ABBREV\n"
 		   ."$txt2\t$off2 $len2$rest2\n"
