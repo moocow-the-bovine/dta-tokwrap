@@ -186,9 +186,10 @@ sub tokenize1 {
     ##------------------------------------
     ## fix: pre-numeric abbreviations (e.g. biblical books), part 1: collect suspects
     my %nabbrs   = (map {($_=>undef)}
-		    qw( Bar Dan Deut Esra Est Ex Galater Man Hos Ijob Job Jak Col Kor Cor Mal Mark Ri Sir ),
+		    qw( Bar Dan Deut Esra Est Ex Galater Man Hos Ijob Job Jak Col Kor Cor Mal Ri Sir ),
+		    #qw( Mark ), ##-- heuristics too dodgy
 		   );
-    my $nabbr_max_distance = 3; ##-- max number of text bytes between end(w1) and start(w2), including EOS-dot
+    my $nabbr_max_distance = 2; ##-- max number of text bytes between end(w1) and start(w2), including EOS-dot
     @suspects = qw();
     while (
 	   $data =~ /^
