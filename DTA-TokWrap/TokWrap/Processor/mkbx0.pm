@@ -116,6 +116,9 @@ sub defaults {
 			     qw(castList|castList/head|castGroup),
 			     'castItem[not(parent::castGroup)]',
 
+			     ##-- verse-specific
+			     qw(lg),
+
 			     ##-- non-sentential stuff
 			     #qw(ref|fw|head), ##-- ... be safe if tokenizing EVERYTHING
 			     qw(ref|fw), ##-- ... be extra-safe if tokenizing EVERYTHING
