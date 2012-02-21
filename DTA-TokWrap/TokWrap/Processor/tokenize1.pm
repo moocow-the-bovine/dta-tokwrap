@@ -231,7 +231,7 @@ sub tokenize1 {
 	($txt1,$off1,$len1,$rest1, $offd,$lend, $txt2,$off2,$len2,$rest2) = ($1,$2,$3,$4, $5,$6, $8,$9,$10,$11);
 
 	##-- check for known pre-numeric abbrevs
-	if (exists($nabbrs{$txt1}) && ($off2-($off1+$len1)) <= $nabbr_max_distance)
+	if (exists($nabbrs{$txt1}) && ($off2-($off1+$len1)) <= $nabbr_max_distance) {
 	  $repl = (
 		   "$txt1.\t$off1 ".(($offd+$lend)-$off1)."\tXY\t\$ABBREV\n"
 		   ."$txt2\t$off2 $len2$rest2\n"
