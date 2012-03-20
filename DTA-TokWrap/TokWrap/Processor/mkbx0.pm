@@ -66,6 +66,7 @@ our $AUTOTUNE_MAX_SP_PER_P = 0.5; ##-- 50%
 ##     ##-- Programs
 ##     rmns    => $path_to_xml_rm_namespaces, ##-- default: search
 ##     inplace => $bool,                      ##-- prefer in-place programs for search?
+##     auto_prevnext => $bool,                ##-- if true (default), @prev|@next chains will be auto-sanitized
 ##     ##
 ##     ##-- Styleheet: insert-hints (<seg> elements and their children are handled implicitly)
 ##     hint_autotune  => $bool,               ##-- use empirical heuristics to hack hint xpaths? (default=true)
@@ -93,6 +94,7 @@ sub defaults {
 	  ##-- programs
 	  rmns   =>undef,
 	  inplace=>1,
+	  auto_prevnext => 1,
 
 	  ##-- stylesheet: insert-hints
 	  hint_autotune  => 1,
@@ -102,8 +104,7 @@ sub defaults {
 			     qw(titlePage),
 
 			     ##-- main text: common
-			     qw(p),
-			     qw(div|text|front|back|body),
+			     qw(p|div|text|front|back|body),
 
 			     ##-- notes, tables, lists, etc.
 			     qw(note|table|argument),
@@ -175,12 +176,18 @@ sub defaults {
 				 qw(teiHeader),
 				 #qw(formula),
 
-				 'choice[./sic and ./corr]/sic',
-				 'choice[./orig and ./reg]/orig',
+				 ##-- choice elements (<FW, 2012-03: always index 'sic'; TODO: pull corr|reg in at CAB level -- argh!)
+				 qw(choice/corr choice/reg),
+				 ##--
+				 #'choice[./sic and ./corr]/sic',
+				 #'choice[./orig and ./reg]/orig',
 				],
 	  sort_addkey_xpaths => [
+				 #'*[@next and not(@prev)]',
+				 #(map {"$_\[not(parent::seg or ancestor::*\[\@next or \@prev\])\]"} qw(table note argument figure)),
+				 ##--
 				 (map {"$_\[not(parent::seg)\]"} qw(table note argument figure)),
-				 qw(text front body back),
+				 qw(text|front|body|back),
 				 qw(ref|fw|head),  ##-- extract these from running text
 				],
 	  sort_stylestr  => undef,
@@ -263,9 +270,9 @@ sub hint_stylestr {
     <ws/>
     <xsl:copy>
       <xsl:apply-templates select=\"@*\"/>
-      <s/>
+      <xsl:if test=\"not(./\@prev)\"><s/></xsl:if>
       <xsl:apply-templates select=\"*\"/>
-      <s/>
+      <xsl:if test=\"not(./\@next)\"><s/></xsl:if>
     </xsl:copy>
   </xsl:template>\n"
 							 } @{$mbx0->{hint_sb_xpaths}}).'
@@ -295,6 +302,38 @@ sub hint_stylestr {
     </xsl:copy>
   </xsl:template>\n"
 							 } @{$mbx0->{hint_lb_xpaths}}).'
+
+  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+  <!-- templates: OTHER: @prev|@next (priority=20) -->
+
+  <xsl:template match="*[@next and not(@prev)]" priority="20">
+    <xsl:copy>
+      <xsl:apply-templates select="*|@*"/>
+      <xsl:call-template name="chain.next">
+	<xsl:with-param name="nextid" select="@next"/>
+      </xsl:call-template>
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="*[@prev]" priority="20">
+    <!-- ignore by default: these should get pulled in by named template "chain.next" -->
+  </xsl:template>
+
+
+  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+  <!-- templates: NAMED: chain.next -->
+
+  <xsl:template name="chain.next">
+    <xsl:param name="nextid" select="./@next"/>
+    <xsl:if test="$nextid">
+      <xsl:variable name="nextnod" select="id($nextid)"/>
+      <ws/>
+      <xsl:apply-templates select="$nextnod/*"/>
+      <xsl:call-template name="chain.next">
+	<xsl:with-param name="nextid" select="$nextnod/@next"/>
+      </xsl:call-template>
+    </xsl:if>
+  </xsl:template>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- templates: OTHER: seg (priority=10) -->
@@ -479,6 +518,41 @@ sub hint_autotune {
   $mbx0->{hint_stylesheet} = xsl_stylesheet(string=>$mbx0->{hint_stylestr});
 }
 
+##--------------------------------------------------------------
+## Methods: XSL stylesheets: prev|next-chain sanitization
+
+## $sxdoc = $mbx0->sanitize_chains($sxdoc)
+##  + sanitizes @prev|@next chains in-place in $sxdoc (an XML::LibXML::Document) for $mbx0->{auto_prevnext} flag
+sub sanitize_chains {
+  my ($mbx0,$xmldoc) = @_;
+
+  my ($nod,$nodid,$refid,$refnod);
+  my $id=0;
+  foreach $nod (@{$xmldoc->findnodes('//*[@prev or @next]')}) {
+    $nodid = $nod->getAttribute('id') || $nod->getAttribute('xml:id') || $nod->getAttribute('xml_id');
+    if (!defined($nodid)) {
+      $nodid = sprintf("dtatw.mkbx0.%0.4x", ++$id);
+      $nod->setAttribute('xml:id'=>$nodid);
+    }
+    if (defined($refid = $nod->getAttribute('prev'))) {
+      $refid  =~ s/^\#//;
+      $refnod = $xmldoc->findnodes("id('$refid')")->[0];
+      if ($refnod && !$refnod->getAttribute('next')) {
+	$refnod->setAttribute('next'=>$nodid);
+      }
+    }
+    if (defined($refid = $nod->getAttribute('next'))) {
+      $refid  =~ s/^\#//;
+      $refnod = $xmldoc->findnodes("id('$refid')")->[0];
+      if ($refnod && !$refnod->getAttribute('prev')) {
+	$refnod->setAttribute('prev'=>$nodid);
+      }
+    }
+  }
+
+  return $xmldoc;
+}
+
 
 ##--------------------------------------------------------------
 ## Methods: XSL stylesheets: debug
@@ -553,6 +627,9 @@ sub mkbx0 {
 
     $mbx0->hint_autotune(\$sxbuf,$doc->{txfile});
   }
+
+  ##-- auto-sanitize (prev|next)-chains
+  $mbx0->sanitize_chains($sxdoc) if ($mbx0->{auto_prevnext});
 
   ##-- apply XSL stylesheets
   $mbx0->logconfess("mkbx0($doc->{xmlbase}): could not compile XSL stylesheets")

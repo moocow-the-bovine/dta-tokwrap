@@ -85,6 +85,7 @@ sub initXmlParser {
   my $blocks = [];   ##-- \@blocks : all parsed blocks
   my $keystack = []; ##-- \@keystack : stack of (inherited) sort keys
   my $key2i = {};    ##-- \%key2i : maps keys to the block-index of their first occurrence, for block-sorting
+  #my $id2key = {};   ##-- maps xml:id attributes to their keys (used for serialization of (prev|next)-chains)
   my ($keyAttr);     ##-- $keyAttr : attribute name for sort keys
 
   ##-- @target_elts : block- and/or hint-like elements
@@ -290,6 +291,7 @@ sub sort_blocks {
   my ($mbx,$blocks) = @_;
   my $key2i = $mbx->{key2i};
   $blocks = $mbx->{blocks} if (!$blocks);
+
   @$blocks = (
 	      sort {
 		($key2i->{$a->{key}} <=> $key2i->{$b->{key}}

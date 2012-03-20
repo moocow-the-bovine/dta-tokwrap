@@ -35,7 +35,8 @@ pkgxsl_DATA = \
 	dtatw-assign-cids.xsl \
 	dtatw-rm-c.xsl \
 	dtatw-rm-lb.xsl \
-	dtatw-txml2tt.xsl
+	dtatw-txml2tt.xsl \
+	dtatw-serialize-prevnext.xsl
 
 bin_SCRIPTS = \
 	dtatw-add-c.perl \
@@ -56,6 +57,7 @@ bin_SCRIPTS = \
 	dtatw-xml2ddc.perl \
 	dtatw-t-check.perl \
 	dtatw-ls-ids.perl \
+	dtatw-sanitize-prevnext.perl \
 	file-substr.perl
 
 #	dtatw-txml2cspan.perl

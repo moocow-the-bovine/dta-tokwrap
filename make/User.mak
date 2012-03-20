@@ -51,7 +51,9 @@ xml =
 #xml += $(xmldir)/riemann_hypothesen_1867.aligned.xml
 #xml += $(xmldir)/gauss_lehrsaetze_1840.aligned.xml
 #xml += $(xmldir)/carus.xml
-xml  += $(xmldir)/schlemihl.xml
+#xml  += $(xmldir)/schlemihl.xml
+#xml  +=  $(xmldir)/kant-r.xml $(xmldir)/wrangel.xml
+xml  +=  $(xmldir)/kant-a.xml
 
 #xmldir = ../examples
 #xml    = $(xmldir)/kant_aufklaerung_1784.converted.chr.xml

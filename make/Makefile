@@ -48,7 +48,7 @@ NICE ?= ionice -c3 nice -n10
 ##  + we (ab)use it here to set nice and ionice priorities
 ##  + setting 'pipefail' option causes pipelines to fail if any component command fails (not just the last command)
 ifeq ($(SHELL),/bin/sh)
- SHELL = $(NICE) /bin/sh -o pipefail
+ SHELL = $(NICE) /bin/bash -o pipefail
 endif
 
 ##--------------------------------------------------------------
