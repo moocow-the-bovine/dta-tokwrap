@@ -53,7 +53,9 @@ xml =
 #xml += $(xmldir)/carus.xml
 #xml  += $(xmldir)/schlemihl.xml
 #xml  +=  $(xmldir)/kant-r.xml $(xmldir)/wrangel.xml
-xml  +=  $(xmldir)/kant-a.xml
+xml  +=  $(xmldir)/kant-r.xml
+#xml  +=  $(xmldir)/wrangel.xml
+#xml  +=  $(xmldir)/kant-a.xml
 
 #xmldir = ../examples
 #xml    = $(xmldir)/kant_aufklaerung_1784.converted.chr.xml

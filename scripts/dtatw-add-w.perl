@@ -325,14 +325,21 @@ our %wid2nsegs = qw();  ##-- ($wid => $n_segments_for_wid, ...)
 foreach (@w_segs) {
   push(@$_, ++$wid2nsegs{$_->[0]});
 }
-print STDERR
-  ("$prog: assigned ", scalar(@w_segs), " segments to ", scalar(keys(%wid2nsegs)), " tokens",
-   ": ", (@w_segs-keys(%wid2nsegs)), " discontinuities\n",
-  )
-  if ($verbose>=$vl_progress);
+
+if ($verbose>=$vl_progress) {
+  my $nitems   = scalar(keys(%wid2nsegs));
+  my $ndiscont = scalar(grep {$_>1} values %wid2nsegs);
+  my $pdiscont = ($nitems==0 ? 'NaN' : sprintf("%.1f", 100*$ndiscont/$nitems));
+  print STDERR
+    ("$prog: assigned ", scalar(@w_segs), " segments to $nitems tokens",
+     #": ", (@w_segs-keys(%wid2nsegs)), " discontinuities\n",
+     "; $ndiscont discontinuous ($pdiscont%)\n",
+    );
+}
 
 ##-- output: splice in <w>-segments
 our $off = 0; ##-- global offset
+our ($xref_this,$xref_prev,$xref_next);
 foreach (@w_segs) {
   ##-- common vars
   ($xref,$xoff,$xlen,$segi) = @$_;
@@ -342,18 +349,27 @@ foreach (@w_segs) {
   $outfh->print(substr($srcbuf, $off, ($xoff-$off)));
 
   ##-- splice in start-tag
+  ## + CHANGED Tue, 20 Mar 2012 16:28:51 +0100 (moocow): dta-tokwrap v0.28
+  ##    - use @prev,@next attributes for segmentation
+  ##    - keep old @part attributes for compatibility (but throw out $w_refAttr ("n"))
   if ($nsegs==1) {
     ##-- start-tag: single-segment item
     $outfh->print("<w $w_idAttr=\"$xref\">");
-  } elsif ($segi==1) {
-    ##-- start-tag: multi-segment item: initial segment
-    $outfh->print("<w part=\"I\" $w_idAttr=\"$xref\">");
-  } elsif ($segi==$nsegs) {
-    ##-- start-tag: multi-segment item: final segment
-    $outfh->print("<w part=\"F\" $w_refAttr=\"#$xref\">");
   } else {
-    ##-- start-tag: multi-segment item: middle segment
-    $outfh->print("<w part=\"M\" $w_refAttr=\"#$xref\">");
+    $xref_this = "${xref}".($segi>1 ? ("_".($segi-1)) : '');
+    $xref_prev = "${xref}".($segi>2 ? ("_".($segi-2)) : '');
+    $xref_next = "${xref}_${segi}";
+
+    if ($segi==1) {
+      ##-- start-tag: multi-segment item: initial segment
+      $outfh->print("<w part=\"I\" $w_idAttr=\"$xref_this\" next=\"#$xref_next\">");
+    } elsif ($segi==$nsegs) {
+      ##-- start-tag: multi-segment item: final segment
+      $outfh->print("<w part=\"F\" $w_idAttr=\"$xref_this\" prev=\"#$xref_prev\">"); #." $w_refAttr=\"#$xref\""
+    } else {
+      ##-- start-tag: multi-segment item: middle segment
+      $outfh->print("<w part=\"M\" $w_idAttr=\"$xref_this\" prev=\"#$xref_prev\" next=\"#$xref_next\">"); #." $w_refAttr=\"#$xref\""
+    }
   }
 
   ##-- splice in segment content and end-tag

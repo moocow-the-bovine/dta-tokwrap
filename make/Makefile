@@ -581,11 +581,12 @@ splice: cw-xml cws-xml
 splice-noc: cws-noc-fmt-xml
 cws-noc-fmt-xml: $(XML:.xml=.cws.noc.fmt.xml)
 cws-noc-xml: $(XML:.xml=.cws.noc.xml)
+cw-noc-xml: $(XML:.xml=.cw.noc.xml)
 
 ##-- splice: (.char.xml + .t.xml) --> .cw.xml
 cw-xml: $(XML:.xml=.cw.xml)
 %.cw.xml: $(xmldir)/%.xml %.t.xml scripts
-	$(SCRIPT_DIR)dtatw-add-w.perl -q -o $@ $< $*.t.xml 
+	$(SCRIPT_DIR)dtatw-add-w.perl -q -o=$@ $< $*.t.xml 
 
 no-cw-xml: ; rm -r *.cw.xml
 CLEAN_FILES += *.cw.xml
@@ -593,12 +594,20 @@ CLEAN_FILES += *.cw.xml
 ##-- splice: (.cw.xml + .t.xml) --> .cws.xml
 cws-xml: $(XML:.xml=.cws.xml)
 %.cws.xml: %.cw.xml %.t.xml scripts
-	$(SCRIPT_DIR)dtatw-add-s.perl -q -o $@ $< $*.t.xml  
+	$(SCRIPT_DIR)dtatw-add-s.perl -q -o=$@ $< $*.t.xml  
 
 no-cws-xml: ; rm -r *.cws.xml
 CLEAN_FILES += *.cws.xml
 
-CWS_XML_FILES = $(XML:.xml=.cws.xml) $(XML:.xml=.cws.noc.xml)
+##-- splice: (.cw.noc.xml + .t.xml) --> .ws.xml
+ws-xml: $(XML:.xml=.ws.xml)
+%.ws.xml: %.cw.noc.xml %.t.xml scripts
+	$(SCRIPT_DIR)dtatw-add-s.perl -q -o=$@ $< $*.t.xml  
+
+no-ws-xml: ; rm -r *.ws.xml
+CLEAN_FILES += *.ws.xml
+
+CWS_XML_FILES = $(XML:.xml=.cws.xml) $(XML:.xml=.cws.noc.xml) $(XML:.cw.noc.xml) $(XML:.xml=.cw.xml)
 
 ##======================================================================
 ## Rules: DTA::CAB analysis: direct: (v1): .t.xml -> .dta-cab.xml.bytok

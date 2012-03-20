@@ -325,14 +325,20 @@ our %sid2nsegs = qw();  ##-- ($sid => $n_segments_for_sid, ...)
 foreach (@s_segs) {
   push(@$_, ++$sid2nsegs{$_->[0]});
 }
-print STDERR
-  ("$prog: assigned ", scalar(@s_segs), " segments to ", scalar(keys(%sid2nsegs)), " sentences",
-   ": ", (@s_segs-keys(%sid2nsegs)), " discontinuities\n",
-  )
-  if ($verbose>=$vl_progress);
+if ($verbose>=$vl_progress) {
+  my $nitems   = scalar(keys(%sid2nsegs));
+  my $ndiscont = scalar(grep {$_>1} values %sid2nsegs);
+  my $pdiscont = ($nitems==0 ? 'NaN' : sprintf("%.1f", 100*$ndiscont/$nitems));
+  print STDERR
+    ("$prog: assigned ", scalar(@s_segs), " segments to $nitems sentences",
+     #": ", (@s_segs-keys(%sid2nsegs)), " discontinuities\n",
+     "; $ndiscont discontinuous ($pdiscont%)\n",
+    );
+}
 
 ##-- output: splice in <s>-segments
 our $off = 0; ##-- global offset
+our ($xref_this,$xref_prev,$xref_next);
 foreach (@s_segs) {
   ##-- common vars
   ($xref,$xoff,$xlen,$segi) = @$_;
@@ -342,18 +348,27 @@ foreach (@s_segs) {
   $outfh->print(substr($srcbuf, $off, ($xoff-$off)));
 
   ##-- splice in start-tag
+  ## + CHANGED Tue, 20 Mar 2012 16:28:51 +0100 (moocow): dta-tokwrap v0.28
+  ##    - use @prev,@next attributes for segmentation
+  ##    - keep old @part attributes for compatibility (but throw out $s_refAttr ("n"))
   if ($nsegs==1) {
     ##-- start-tag: single-segment item
     $outfh->print("<s $s_idAttr=\"$xref\">");
-  } elsif ($segi==1) {
-    ##-- start-tag: multi-segment item: initial segment
-    $outfh->print("<s part=\"I\" $s_idAttr=\"$xref\">");
-  } elsif ($segi==$nsegs) {
-    ##-- start-tag: multi-segment item: final segment
-    $outfh->print("<s part=\"F\" $s_refAttr=\"#$xref\">");
   } else {
-    ##-- start-tag: multi-segment item: middle segment
-    $outfh->print("<s part=\"M\" $s_refAttr=\"#$xref\">");
+    $xref_this = "${xref}".($segi>1 ? ("_".($segi-1)) : '');
+    $xref_prev = "${xref}".($segi>2 ? ("_".($segi-2)) : '');
+    $xref_next = "${xref}_${segi}";
+
+    if ($segi==1) {
+      ##-- start-tag: multi-segment item: initial segment
+      $outfh->print("<s part=\"I\" $s_idAttr=\"$xref_this\" next=\"#$xref_next\">");
+    } elsif ($segi==$nsegs) {
+      ##-- start-tag: multi-segment item: final segment
+      $outfh->print("<s part=\"F\" $s_idAttr=\"$xref_this\" prev=\"#$xref_prev\">"); #." $s_refAttr=\"#$xref\""
+    } else {
+      ##-- start-tag: multi-segment item: middle segment
+      $outfh->print("<s part=\"M\" $s_idAttr=\"$xref_this\" prev=\"#$xref_prev\" next=\"#$xref_next\">"); #." $s_refAttr=\"#$xref\""
+    }
   }
 
   ##-- splice in segment content and end-tag
