@@ -263,9 +263,9 @@ sub mkbx {
   ##  + workaround for mantis bug #242 (http://odo.dwds.de/mantis/view.php?id=242)
   ##    : '"kontinuierte" quotes @ zeilenanfang --> müll'
   $$txtbufr = decode_utf8($$txtbufr) if (!utf8::is_utf8($$txtbufr));
-  $$txtbufr =~ s/ (\n[^\x{201e}"\n]+\n)([\x{201e}"]) / $1."\$QKEEP:$2\$"              /sgxe;
-  $$txtbufr =~ s/ \n(\ *[\x{201e}"])                 / "\n".(" " x bytes::length($1)) /sgxe;
-  $$txtbufr =~ s/ \n\$QKEEP:([^\$]+)\$               / "\n".$1                        /sgxe;
+  $$txtbufr =~ s/ (\n[^\x{201e}\x{ab}\x{bb}"\n]+\n)([\x{201e}"]) / $1."\$QKEEP:$2\$"              /sgxe;
+  $$txtbufr =~ s/ \n(\ *[\x{201e}\x{ab}\x{bb}"])                 / "\n".(" " x bytes::length($1)) /sgxe;
+  $$txtbufr =~ s/ \n\$QKEEP:([^\$]+)\$				 / "\n".$1                        /sgxe;
   $$txtbufr = encode_utf8($$txtbufr);
 
   ##-- stamp
