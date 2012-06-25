@@ -109,6 +109,7 @@ sub defaults {
 			     ##-- notes, tables, lists, etc.
 			     qw(note|table|argument),
 			     qw(figure),
+			     'item[ref]',
 
 			     ##-- drama-specific
 			     ## + e.g. goethe_iphegenie, schiller_kabale, hauptman_sonnenaufgang
@@ -139,7 +140,7 @@ sub defaults {
 
 			     ##-- notes, tables, lists, etc.
 			     qw(row|cell),
-			     qw(list|item), ##-- maybe move one or both of these to 'sb_xpaths' ?
+			     qw(list|item|ref), ##-- maybe move one or both of these to 'sb_xpaths' ?
 
 			     ##-- drama-specific
 			     ## + e.g. goethe_iphegenie, schiller_kabale, hauptman_sonnenaufgang
