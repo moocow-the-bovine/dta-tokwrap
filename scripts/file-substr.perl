@@ -12,7 +12,7 @@ Usage(s):
  $prog FILE [=]OFFSET    [END_OFFSET] ##-- not inclusive
 
 Notes:
- + if OFFSET begins with '=', formatting newlines and "---" separator(s) are supporessed.
+ + if OFFSET begins with '=', formatting newlines and "---" separator(s) are suppressed.
 
 EOF
   exit 1;
