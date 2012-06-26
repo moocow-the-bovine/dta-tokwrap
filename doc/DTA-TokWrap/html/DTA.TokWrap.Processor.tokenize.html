@@ -125,11 +125,11 @@ serialized text from the
 <pre>
  txtfile =&gt; $txtfile,  ##-- (input) serialized text file (uses $doc-&gt;{bxdata} if $doc-&gt;{txtfile} is not defined)
  bxdata  =&gt; \@bxdata,  ##-- (input) block data, used to generate $doc-&gt;{txtfile} if not present
- tokdata =&gt; $tokdata,  ##-- (output) tokenizer output data (string)
+ tokdata0 =&gt; $tokdata0,  ##-- (output) tokenizer output data (string)
  ##
  tokenize0_stamp0 =&gt; $f, ##-- (output) timestamp of operation begin
- tokenize_stamp  =&gt; $f, ##-- (output) timestamp of operation end
- tokdata_stamp =&gt; $f,   ##-- (output) timestamp of operation end</pre>
+ tokenize0_stamp  =&gt; $f, ##-- (output) timestamp of operation end
+ tokdata0_stamp =&gt; $f,   ##-- (output) timestamp of operation end</pre>
 <p>may implicitly call $doc-&gt;<code>mkbx()</code> and/or $doc-&gt;<code>saveTxtFile()</code>
 (but shouldn't).</p>
 </dd>
