@@ -22,7 +22,7 @@ use strict;
 ##==============================================================================
 our @ISA = qw(DTA::TokWrap::Processor::tokenize);
 
-our @DEFAULT_CLASSES = qw(tomasotath_04x tomasotath_02x http dummy);
+our @DEFAULT_CLASSES = qw(tomasotath_04x http tomasotath_02x dummy);
 
 ##==============================================================================
 ## Constructors etc.
@@ -48,28 +48,10 @@ sub defaults {
 }
 
 ## $ta = $ta->init()
-sub init {
-  my $ta = shift;
-  return $ta if (defined($ta->{tokz}));
-
-  foreach my $class (@{$ta->{classes}}) {
-    $ta->vlog($ta->{traceLevel},"trying tokenizer subclass '$class'...");
-    my %args = qw();
-    if ($class =~ /^tomasotath/) {
-      next if ( !defined($args{tomata2} = path_prog('dwds_tomasotath', prepend=>($ta->{inplace} ? ['.','../src'] : undef))) );
-      my $vstr = `$args{tomata2} --version 2>&1` or next;
-      $vstr =~ s/^\S+\s+//;
-      chomp($vstr);
-      next if ($class =~ /_04x$/ && $vstr !~ /0\.4\./);
-      next if ($class =~ /_02x$/ && $vstr !~ /0\.2\./);
-    }
-    eval { $ta->{tokz} = "DTA::TokWrap::Processor::tokenize::$class"->new(%$ta,%args); };
-    last if (!$@ && defined($ta->{tokz}));
-  }
-  $ta->vlog($ta->{traceLevel},"using tokenizer subclass = ".(ref($ta->{tokz})||$ta->{tokz}||'-undef-'));
-
-  return $ta;
-}
+#sub init {
+#  my $ta = shift;
+#  return $ta;
+#}
 
 ##==============================================================================
 ## Methods
@@ -88,7 +70,26 @@ sub init {
 sub tokenize {
   my ($ta,$doc) = @_;
   $ta = $ta->new if (!ref($ta));
+
+  if (!defined($ta->{tokz})) {
+    foreach my $class (@{$ta->{classes}}) {
+      $ta->vlog($ta->{traceLevel},"trying tokenizer subclass '$class'...");
+      my %args = qw();
+      if ($class =~ /^tomasotath/) {
+	next if ( !defined($args{tomata2} = path_prog('dwds_tomasotath', prepend=>($ta->{inplace} ? ['.','../src'] : undef))) );
+	my $vstr = `$args{tomata2} --version 2>&1` or next;
+	$vstr =~ s/^\S+\s+//;
+	chomp($vstr);
+	next if ($class =~ /_04x$/ && $vstr !~ /0\.4\./);
+	next if ($class =~ /_02x$/ && $vstr !~ /0\.2\./);
+      }
+      eval { $ta->{tokz} = "DTA::TokWrap::Processor::tokenize::$class"->new(%$ta,%args); };
+      last if (!$@ && defined($ta->{tokz}));
+    }
+  }
+  $ta->vlog($ta->{traceLevel},"using tokenizer subclass = ".(ref($ta->{tokz})||$ta->{tokz}));
   $ta->logconfess("tokenizer subobject {tokz} not defined") if (!defined($ta->{tokz}));
+
   return $ta->{tokz}->tokenize($doc);
 }
 
