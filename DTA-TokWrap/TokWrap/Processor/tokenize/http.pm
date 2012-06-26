@@ -102,7 +102,7 @@ sub tokenize {
   ##-- finalize
   $doc->{tokdata0} = $rsp->content;
   $doc->{ntoks} = $tz->nTokens(\$doc->{tokdata0});
-  $doc->{tokenize0_stamp} = $doc->{tokdata0_stamp} = timestamp(); ##-- stamp
+  $doc->{tokfile0_stamp} = $doc->{tokenize0_stamp} = $doc->{tokdata0_stamp} = timestamp(); ##-- stamp
   return $doc;
 }
 

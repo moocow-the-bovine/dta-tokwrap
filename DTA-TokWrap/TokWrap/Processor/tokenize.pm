@@ -205,11 +205,11 @@ Relevant %$doc keys:
 
  txtfile => $txtfile,  ##-- (input) serialized text file (uses $doc->{bxdata} if $doc->{txtfile} is not defined)
  bxdata  => \@bxdata,  ##-- (input) block data, used to generate $doc->{txtfile} if not present
- tokdata => $tokdata,  ##-- (output) tokenizer output data (string)
+ tokdata0 => $tokdata0,  ##-- (output) tokenizer output data (string)
  ##
  tokenize0_stamp0 => $f, ##-- (output) timestamp of operation begin
- tokenize_stamp  => $f, ##-- (output) timestamp of operation end
- tokdata_stamp => $f,   ##-- (output) timestamp of operation end
+ tokenize0_stamp  => $f, ##-- (output) timestamp of operation end
+ tokdata0_stamp => $f,   ##-- (output) timestamp of operation end
 
 may implicitly call $doc-E<gt>mkbx() and/or $doc-E<gt>saveTxtFile()
 (but shouldn't).

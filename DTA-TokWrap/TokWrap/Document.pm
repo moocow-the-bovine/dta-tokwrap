@@ -360,7 +360,7 @@ sub tempfiles {
   return (
 	  grep { $_ =~ m/^$doc->{tmpdir}\// }
 	  map { $doc->{$_} }
-	  grep { $_ =~ /file$/ && defined($doc->{"${_}_stamp"}) && $doc->{"${_}_stamp"} >= 0 && !exists($notempkeys{$_}) }
+	  grep { m/file[01]?$/ && defined($doc->{"${_}_stamp"}) && $doc->{"${_}_stamp"} >= 0 && !exists($notempkeys{$_}) }
 	  keys(%$doc)
 	 );
 }

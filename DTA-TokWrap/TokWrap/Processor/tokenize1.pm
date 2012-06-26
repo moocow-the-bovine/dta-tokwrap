@@ -59,8 +59,8 @@ sub init {
 ## + %$doc keys:
 ##    tokdata0 => $tokdata0, ##-- (input)  raw tokenizer output (string)
 ##    tokdata1 => $tokdata1, ##-- (output) post-processed tokenizer output (string)
-##    tokenize_stamp1 => $f, ##-- (output) timestamp of operation end
-##    tokdata_stamp1  => $f, ##-- (output) timestamp of operation end
+##    tokenize1_stamp => $f, ##-- (output) timestamp of operation end
+##    tokdata1_stamp  => $f, ##-- (output) timestamp of operation end
 ## + may implicitly call $doc->tokenize()
 sub tokenize1 {
   my ($tp,$doc) = @_;
@@ -261,7 +261,7 @@ sub tokenize1 {
 
   ##-- finalize
   $doc->{ntoks} = $tp->nTokens(\$doc->{tokdata1});
-  $doc->{tokenize_stamp1} = $doc->{tokdata_stamp1} = timestamp(); ##-- stamp
+  $doc->{tokfile1_stamp} = $doc->{tokenize1_stamp} = $doc->{tokdata1_stamp} = timestamp(); ##-- stamp
   return $doc;
 }
 
@@ -374,8 +374,8 @@ Relevant %$doc keys:
 
   tokdata0 => $tokdata0,  ##-- (input)  raw tokenizer output (string)
   tokdata1 => $tokdata1,  ##-- (output) post-processed tokenizer output (string)
-  tokenize_stamp1 => $f,  ##-- (output) timestamp of operation end
-  tokdata_stamp1  => $f,  ##-- (output) timestamp of operation end
+  tokenize1_stamp => $f,  ##-- (output) timestamp of operation end
+  tokdata1_stamp  => $f,  ##-- (output) timestamp of operation end
 
 may implicitly call $doc-E<gt>tokenize()
 (but shouldn't).

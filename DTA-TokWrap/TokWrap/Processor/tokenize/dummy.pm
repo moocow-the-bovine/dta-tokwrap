@@ -96,7 +96,7 @@ sub tokenize {
 
   ##-- finalize
   $doc->{ntoks} = $td->nTokens(\$doc->{tokdata0});
-  $doc->{tokenize0_stamp} = $doc->{tokdata0_stamp} = timestamp(); ##-- stamp
+  $doc->{tokfile0_stamp} = $doc->{tokenize0_stamp} = $doc->{tokdata0_stamp} = timestamp(); ##-- stamp
   return $doc;
 }
 
