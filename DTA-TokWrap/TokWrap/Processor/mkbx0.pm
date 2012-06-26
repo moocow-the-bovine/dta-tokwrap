@@ -177,11 +177,10 @@ sub defaults {
 				 qw(teiHeader),
 				 #qw(formula),
 
-				 ##-- choice elements (<FW, 2012-03: always index 'sic'; TODO: pull corr|reg in at CAB level -- argh!)
-				 qw(choice/corr choice/reg),
-				 ##--
-				 #'choice[./sic and ./corr]/sic',
-				 #'choice[./orig and ./reg]/orig',
+				 ##-- choice stuff
+				 'choice[./sic and ./corr]/sic',
+				 'choice[./orig and ./reg]/orig',
+				 'choice[./abbr and ./expan]/abbr',
 				],
 	  sort_addkey_xpaths => [
 				 #'*[@next and not(@prev)]',
