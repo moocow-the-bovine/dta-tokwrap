@@ -159,10 +159,10 @@ GetOptions(
 	   "traceAll|trace-all!" => sub { setVerboseTrace($_[1],$verbose_max,1); },
 	   "dummy|no-act|n!" => \$docopts{dummy},
 	   "dummy-tokenizer|dummytok|dt!" => sub {
-	     $DTA::TokWrap::Document::TOKENIZE_CLASS = ($_[1] ? 'dummy' : 'tomasotath');
+	     $DTA::TokWrap::Document::TOKENIZE_CLASS = ($_[1] ? 'dummy' : 'auto');
 	   },
 	   "http-tokenizer|httptok|ht!" => sub {
-	     $DTA::TokWrap::Document::TOKENIZE_CLASS = ($_[1] ? 'http' : 'tomasotath');
+	     $DTA::TokWrap::Document::TOKENIZE_CLASS = ($_[1] ? 'http' : 'auto');
 	   },
 
 	   'dump-xsl-stylesheets|dump-xsl:s' => \$dump_xsl_prefix,
@@ -373,6 +373,7 @@ dta-tokwrap.perl - top-level tokenizer wrapper for DTA XML documents
   -dump-xsl PREFIX       # dump generated XSL stylesheets to PREFIX*.xsl and exit
   -dummy , -nodummy      # don't/do actually run any subprocessors (default=do)
   -dummy-tokenizer       # use local dummy tokenizer rather than tomata2
+  -http-tokenizer	 # use remote http tokenizer rather than tomata2 (default=don't)
   -trace , -notrace      # do/don't log trace messages (default: depends on -verbose)
   -traceAll              # enable logging of all possible trace messages
   -notraceAll            # disable logging of all possible trace messages

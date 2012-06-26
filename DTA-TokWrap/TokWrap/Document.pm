@@ -7,13 +7,15 @@
 package DTA::TokWrap::Document;
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Version;
-use DTA::TokWrap::Utils qw(:libxml :files :slurp :time :si);
+use DTA::TokWrap::Utils qw(:libxml :files :progs :slurp :time :si);
 use DTA::TokWrap::Processor::mkindex;
 use DTA::TokWrap::Processor::mkbx0;
 use DTA::TokWrap::Processor::mkbx;
 use DTA::TokWrap::Processor::tokenize;
+use DTA::TokWrap::Processor::tokenize::auto;
 use DTA::TokWrap::Processor::tokenize::http;
 use DTA::TokWrap::Processor::tokenize::tomasotath_04x;
+use DTA::TokWrap::Processor::tokenize::tomasotath_02x;
 use DTA::TokWrap::Processor::tokenize::dummy;
 use DTA::TokWrap::Processor::tokenize1;
 use DTA::TokWrap::Processor::tok2xml;
@@ -32,10 +34,7 @@ our @ISA = ('DTA::TokWrap::Base','Exporter');
 
 ## $TOKENIZE_CLASS
 ##  + default tokenizer subclass
-#our $TOKENIZE_CLASS = 'http';
-our $TOKENIZE_CLASS = 'tomasotath';
-#our $TOKENIZE_CLASS = 'dummy';
-#our $TOKENIZE_CLASS = 'DTA::TokWrap::Processor::tokenize::dummy';
+our $TOKENIZE_CLASS = $DTA::TokWrap::Processor::tokenize::DEFAULT_SUBCLASS;
 
 ## $CX_ID   : {cxdata} index of id field
 ## $CX_XOFF : {cxdata} index of XML byte-offset field
@@ -410,6 +409,16 @@ BEGIN {
      #(map {$_=>[qw(loadXtokFile xtokDoc standoff saveStandoffFiles)]} qw(mkstandoff standoff so mkso)),
      (map {$_=>[qw(loadXtokFile standoff)]} qw(mkstandoff standoff so mkso)),
 
+     'tei2txml' => [qw(mkindex),
+		    qw(mkbx0 saveBx0File),
+		    qw(mkbx saveBxFile saveTxtFile),
+		    qw(tokenize0 saveTokFile0),
+		    qw(tokenize1 saveTokFile1),
+		    #qw(loadCxFile)
+		    qw(tok2xml saveXtokFile),
+		    #qw(standoff),
+		   ],
+
      all => [qw(mkindex),
 	     qw(mkbx0 saveBx0File),
 	     qw(mkbx saveBxFile saveTxtFile),
@@ -506,7 +515,7 @@ sub mkbx {
 ##  + default tokenizer class is given by package-global $TOKENIZE_CLASS
 sub tokenize {
   $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: tokenize()") if ($_[0]{traceProc});
-  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tokenize}) || "DTA::TokWrap::Processor::tokenize::$TOKENIZE_CLASS")->tokenize($_[0]);
+  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tokenize}) || "$TOKENIZE_CLASS")->tokenize($_[0]);
 }
 BEGIN {
   *tokenize0 = \&tokenize;

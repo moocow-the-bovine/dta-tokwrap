@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "DTA-TOKWRAP.PERL 1"
-.TH DTA-TOKWRAP.PERL 1 "2011-07-27" "dta-tokwrap v0.28" "DTA Tokenization Utilities"
+.TH DTA-TOKWRAP.PERL 1 "2012-06-26" "dta-tokwrap v0.29" "DTA Tokenization Utilities"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -179,6 +179,7 @@ dta\-tokwrap.perl \- top\-level tokenizer wrapper for DTA XML documents
 \&  \-dump\-xsl PREFIX       # dump generated XSL stylesheets to PREFIX*.xsl and exit
 \&  \-dummy , \-nodummy      # don\*(Aqt/do actually run any subprocessors (default=do)
 \&  \-dummy\-tokenizer       # use local dummy tokenizer rather than tomata2
+\&  \-http\-tokenizer        # use remote http tokenizer rather than tomata2 (default=don\*(Aqt)
 \&  \-trace , \-notrace      # do/don\*(Aqt log trace messages (default: depends on \-verbose)
 \&  \-traceAll              # enable logging of all possible trace messages
 \&  \-notraceAll            # disable logging of all possible trace messages

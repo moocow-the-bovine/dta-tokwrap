@@ -20,7 +20,12 @@ use strict;
 ##==============================================================================
 our @ISA = qw(DTA::TokWrap::Processor);
 
-our $DEFAULT_SUBCLASS = 'tomasotath'; ##-- default subclass
+#our $DEFAULT_SUBCLASS = 'tomasotath'; ##-- default subclass
+our $DEFAULT_SUBCLASS = 'auto'; ##-- default subclass
+#our $DEFAULT_SUBCLASS = 'auto';
+#our $DEFAULT_SUBCLASS = 'http';
+#our $DEFAULT_SUBCLASS = 'tomasotath';
+#our $DEFAULT_SUBCLASS = 'dummy';
 
 ##==============================================================================
 ## Constructors etc.
