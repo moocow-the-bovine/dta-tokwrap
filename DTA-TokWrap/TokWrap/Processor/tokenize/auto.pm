@@ -53,6 +53,7 @@ sub init {
   return $ta if (defined($ta->{tokz}));
 
   foreach my $class (@{$ta->{classes}}) {
+    $ta->vlog($ta->{traceLevel},"trying tokenizer subclass '$class'...");
     my %args = qw();
     if ($class =~ /^tomasotath/) {
       next if ( !defined($args{tomata2} = path_prog('dwds_tomasotath', prepend=>($ta->{inplace} ? ['.','../src'] : undef))) );
@@ -64,8 +65,8 @@ sub init {
     }
     eval { $ta->{tokz} = "DTA::TokWrap::Processor::tokenize::$class"->new(%$ta,%args); };
     last if (!$@ && defined($ta->{tokz}));
-    $ta->vlog($ta->{traceLevel},"tokenizer class = $class");
   }
+  $ta->vlog($ta->{traceLevel},"using tokenizer subclass = ".(ref($ta->{tokz})||$ta->{tokz}||'-undef-'));
 
   return $ta;
 }
@@ -86,6 +87,8 @@ sub init {
 ## + may implicitly call $doc->mkbx() and/or $doc->saveTxtFile()
 sub tokenize {
   my ($ta,$doc) = @_;
+  $ta = $ta->new if (!ref($ta));
+  $ta->logconfess("tokenizer subobject {tokz} not defined") if (!defined($ta->{tokz}));
   return $ta->{tokz}->tokenize($doc);
 }
 
