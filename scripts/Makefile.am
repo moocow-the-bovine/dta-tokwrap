@@ -55,6 +55,7 @@ bin_SCRIPTS = \
 	dtatw-get-ddc-attrs.perl \
 	dtatw-get-header.perl \
 	dtatw-xml2ddc.perl \
+	dtatw-sanitize-header.perl \
 	dtatw-t-check.perl \
 	dtatw-ls-ids.perl \
 	dtatw-sanitize-prevnext.perl \
