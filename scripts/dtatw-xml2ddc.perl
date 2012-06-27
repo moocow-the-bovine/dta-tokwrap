@@ -145,12 +145,14 @@ if ($headdoc) {
 ##-- header: metadata: dtadir
 if ($add_dtadir) {
   (my $dirname = basename($txmlfile)) =~ s/\..*$//;
-  ensure_xpath($outroot, [qw(teiHeader fileDesc publicationStmt), ['idno',type=>"DTADIR"]], $dirname);
+  ensure_xpath($outroot, [qw(teiHeader fileDesc publicationStmt), ['idno',type=>"DTADIR"]], $dirname); ##-- old (<2012-07)
+  ensure_xpath($outroot, [qw(teiHeader fileDesc publicationStmt), ['idno', type=>"DTADIRNAME"]], $dirname); ##-- new (>=2012-07)
 }
 ##-- header: metadata: date
 if ($add_date) {
   my $date = basename($txmlfile) =~ m/^[^\.]*_([0-9]+)\./ ? $1 : 0;
-  ensure_xpath($outroot, [qw(teiHeader fileDesc), ['sourceDesc',n=>"orig"], qw(biblFull publicationStmt), ['date',type=>"first"]], $date);
+  ensure_xpath($outroot, [qw(teiHeader fileDesc), ['sourceDesc',n=>"orig"], qw(biblFull publicationStmt), ['date',type=>"first"]], $date); ##-- old (<2012-07)
+  ensure_xpath($outroot, [qw(teiHeader fileDesc sourceDesc biblFull publicationStmt date)], $date); ##-- new (>=2012-07)
 }
 
 ##-- populate output document: content
