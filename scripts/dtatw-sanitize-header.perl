@@ -154,7 +154,7 @@ sub ensure_xpath {
   my ($elt,$isnew) = get_xpath($root, $xpspec);
   if ($isnew) {
     $elt->appendText($val) if (defined($val));
-    $elt->appendChild(XML::LibXML::Comment->new("added by $prog"));
+    $elt->parentNode->insertAfter(XML::LibXML::Comment->new("/".$elt->nodeName.": added by $prog"), $elt);
   }
   return $elt;
 }
@@ -178,19 +178,28 @@ my $author_nod = xpgrepnod($hroot,
 			   'fileDesc/sourceDesc/listPerson[@type="searchNames"]/person/persName', ##-- old
 			  );
 my ($author);
+if ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttribute('n')||'') eq 'list') {
+  ##-- parse pre-formatted author node (old, pre-2012-07)
+  $author = $author_nod->textContent;
+}
 if ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttribute('n')||'') ne 'list') {
-  ##-- parse author node
-  my ($nnods,$first,$last,$other,$name);
+  ##-- parse structured author node (new, 2012-07)
+  my ($nnods,$first,$last,@other,$name);
   $author = join('; ',
 		 map {
-		   $last = xpval($_,'surname');
+		   $last  = xpval($_,'surname');
 		   $first = xpval($_,'forename');
-		   $other = join('; ',
-				 ($_->nodeName eq 'name' && $_->hasAttribute('key') ? $_->getAttribute('key') : qw()),
-				 map {$_->textContent}
-				 grep {isa($_,'XML::LibXML::Element') && $_->nodeName !~ /^(?:sur|fore)?name$/}
-				 $_->childNodes);
-		   $name = "$last, $first ($other)";
+		   @other = (
+			     ($_->hasAttribute('key') ? $_->getAttribute('key') : qw()),
+			     map {
+			       ($_->nodeName eq 'name' && $_->hasAttribute('key') ? $_->getAttribute('key')
+				: ($_->nodeName eq 'idno' ? (($_->getAttribute('type')||'idno').":".$_->textContent)
+				   : $_->textContent))
+			     }
+			     grep {$_->nodeName !~ /^(?:sur|fore)name$/}
+			     @{$_->findnodes('*')}
+			    );
+		   $name = "$last, $first (".join('; ', @other).")";
 		   $name =~ s/^, //;
 		   $name =~ s/ \(\)//;
 		   $name
@@ -201,11 +210,15 @@ if ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttribu
 		 }
 		 @{$hroot->findnodes('fileDesc/titleStmt/author')});
 }
-$author = $author_nod ? $author_nod->textContent : ($basename =~ m/^([^_]+)_/ ? $1 : '') if (!defined($author));
+if (!defined($author)) {
+  ##-- guess author from basename
+  $author = ($basename =~ m/^([^_]+)_/ ? $1 : '');
+  $author =~ s/\b([[:lower:]])/\U$1/g; ##-- implicitly upper-case
+}
 ensure_xpath($hroot, 'fileDesc/titleStmt/author[@n="ddc"]', $author);
 
 ##-- meta: title
-my $title = ($basename =~ m/^[^_]+_([^_]+)_/ ? $1 : '');
+my $title = ($basename =~ m/^[^_]+_([^_]+)_/ ? ucfirst($1) : '');
 ensure_xpath($hroot, 'fileDesc/titleStmt/title', $title);
 
 ##-- meta: date
