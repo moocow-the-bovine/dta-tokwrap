@@ -4,6 +4,8 @@ use IO::File;
 use XML::LibXML;
 use Getopt::Long qw(:config no_ignore_case);
 use File::Basename qw(basename);
+use POSIX; ##-- for strftime()
+#use Date::Parse; ##-- for str2time()
 #use Encode qw(encode decode encode_utf8 decode_utf8);
 #use Time::HiRes qw(gettimeofday tv_interval);
 #use Unicruft;
@@ -262,6 +264,21 @@ my @dirname_xpaths = ('fileDesc/publicationStmt/idno[@type="DTADIR"]', ##-- old 
 		     );
 my $dirname = xpgrepval($hroot,@dirname_xpaths) || $basename;
 ensure_xpath($hroot,$_,$dirname) foreach (@dirname_xpaths);
+
+##-- meta: timestamp: ISO
+my $timestamp_xpath = 'fileDesc/publicationStmt/date';
+my $timestamp = xpval($timestamp_xpath);
+if (!$timestamp) {
+  my $time = $infile eq '-' ? time() : (stat($infile))[9];
+  $timestamp = POSIX::strftime("%FT%H:%M:%SZ",gmtime($time));
+  ensure_xpath($hroot,$timestamp_xpath,$timestamp);
+}
+
+##-- meta: timestamp: UNIX
+#my $unix_timestamp_xpath = 'fileDesc/publicationStmt/date[@type="unix"]';
+#my $unix_timestamp = str2time($timestamp||0);
+#ensure_xpath($hroot,$unix_timestamp_xpath,$unix_timestamp);
+
 
 ##-- dump
 ($outfile eq '-' ? $hdoc->toFH(\*STDOUT,$format) : $hdoc->toFile($outfile,$format))
