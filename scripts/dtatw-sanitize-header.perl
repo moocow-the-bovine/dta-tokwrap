@@ -30,7 +30,7 @@ our $format = 1;       ##-- output format level
 ##-- constants: verbosity levels
 our $vl_warn     = 1;
 our $vl_progress = 2;
-our $verbose = $vl_progress;     ##-- print progress messages by default
+our $verbose = $vl_warn;
 
 ##-- globals: XML parser
 our $parser = XML::LibXML->new();
@@ -125,6 +125,17 @@ sub parse_xpath {
 	 ];
 }
 
+## $xpath_str = unparse_xpath(\@xpspec)
+sub unparse_xpath {
+  my ($elt,%attrs);
+  return $_[0] if (!ref($_[0]));
+  return join('/',
+	      map {
+		($elt,%attrs) = UNIVERSAL::isa($_,'ARRAY') ? (@$_) : ($_);
+		"$elt\[".join(' and ', map {"\$_=\"$attrs{$_}\""} sort keys %attrs)."]"
+	      } @{$_[0]});
+}
+
 ## $node          = get_xpath($root,\@xpspec_or_xpath)      ##-- scalar context
 ## ($node,$isnew) = get_xpath($root,\@xpspec_or_xpath)      ##-- array context
 ##  + gets or creates node corresponding to \@xpspec_or_xpath
@@ -151,10 +162,13 @@ sub get_xpath {
 }
 
 ## $nod = ensure_xpath($root,\@xpspec,$default_value)
+## $nod = ensure_xpath($root,\@xpspec,$default_value,$warn_if_missing)
 sub ensure_xpath {
-  my ($root,$xpspec,$val) = @_;
+  my ($root,$xpspec,$val,$warn_if_missing) = @_;
   my ($elt,$isnew) = get_xpath($root, $xpspec);
   if ($isnew) {
+    warn("$prog: $basename: missing XPath ".unparse_xpath($xpspec)." defaults to \"".($val||'')."\"")
+      if ($warn_if_missing && $verbose >= $vl_warn);
     $elt->appendText($val) if (defined($val));
     $elt->parentNode->insertAfter(XML::LibXML::Comment->new("/".$elt->nodeName.": added by $prog"), $elt);
   }
@@ -174,17 +188,20 @@ $basename = basename($infile) if (!defined($basename));
 $basename =~ s/\..*$//;
 
 ##-- meta: author
-my $author_nod = xpgrepnod($hroot,
-			   'fileDesc/titleStmt/author[@n="ddc"]', ##-- new (formatted)
-			   'fileDesc/titleStmt/author', ##-- new (un-formatted)
-			   'fileDesc/sourceDesc/listPerson[@type="searchNames"]/person/persName', ##-- old
-			  );
+my @author_xpaths = (
+		     'fileDesc/titleStmt/author[@n="ddc"]', ##-- new (formatted)
+		     'fileDesc/titleStmt/author', ##-- new (un-formatted)
+		     'fileDesc/sourceDesc/listPerson[@type="searchNames"]/person/persName', ##-- old
+		    );
+my $author_nod = xpgrepnod($hroot,@author_xpaths);
 my ($author);
-if ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttribute('n')||'') eq 'list') {
+if ($author_nod && $author_nod->nodeName eq 'persName') {
   ##-- parse pre-formatted author node (old, pre-2012-07)
   $author = $author_nod->textContent;
+  warn("$prog: $basename: using obsolete author node ", $author_nod->nodePath);
 }
-if ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttribute('n')||'') ne 'list') {
+elsif ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttribute('n')||'') ne 'ddc') {
+  warn("$prog: $basename: formatting author node from ", $author_nod->nodePath) if ($verbose >= $vl_progress);
   ##-- parse structured author node (new, 2012-07)
   my ($nnods,$first,$last,@other,$name);
   $author = join('; ',
@@ -214,6 +231,7 @@ if ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttribu
 }
 if (!defined($author)) {
   ##-- guess author from basename
+  warn("$prog: $basename: missing author XPath(s) ", join('|', @author_xpaths)) if ($verbose >= $vl_warn);
   $author = ($basename =~ m/^([^_]+)_/ ? $1 : '');
   $author =~ s/\b([[:lower:]])/\U$1/g; ##-- implicitly upper-case
 }
@@ -221,26 +239,34 @@ ensure_xpath($hroot, 'fileDesc/titleStmt/author[@n="ddc"]', $author);
 
 ##-- meta: title
 my $title = ($basename =~ m/^[^_]+_([^_]+)_/ ? ucfirst($1) : '');
-ensure_xpath($hroot, 'fileDesc/titleStmt/title', $title);
+ensure_xpath($hroot, 'fileDesc/titleStmt/title', $title, 1);
 
 ##-- meta: date
-my $date = xpgrepval($hroot,
-		     'fileDesc/sourceDesc[@n="orig"]/biblFull/publicationStmt/date', ##-- old:firstDate
-		     'fileDesc/sourceDesc[@n="scan"]/biblFull/publicationStmt/date', ##-- old:publDate
-		     'fileDesc/sourceDesc/biblFull/publicationStmt/date', ##-- new:date
-		    );
-$date = ($basename =~ m/^[^\.]*_([0-9]+)$/ ? $1 : 0) if (!$date);
+my @date_xpaths = (
+		   'fileDesc/sourceDesc[@n="orig"]/biblFull/publicationStmt/date', ##-- old:firstDate
+		   'fileDesc/sourceDesc[@n="scan"]/biblFull/publicationStmt/date', ##-- old:publDate
+		   'fileDesc/sourceDesc/biblFull/publicationStmt/date', ##-- new:date
+		  );
+my $date = xpgrepval($hroot,@date_xpaths);
+if (!$date) {
+  $date = ($basename =~ m/^[^\.]*_([0-9]+)$/ ? $1 : 0);
+  warn("$prog: $basename: missing date XPpath $date_xpaths[$#date_xpaths] defaults to \"$date\"") if ($verbose >= $vl_warn);
+}
 ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="orig"]/biblFull/publicationStmt/date[@type="first"]', $date); ##-- old (<2012-07)
 ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="ddc"]/biblFull/publicationStmt/date', $date);  ##-- new (>=2012-07)
 
 ##-- meta: bibl
-my $bibl = xpgrepval($hroot,
-		     'fileDesc/sourceDesc[@n="ddc"]/bibl', ##-- new:canonical
-		     'fileDesc/sourceDesc[@n="orig"]/bibl', ##-- old:firstBibl
-		     'fileDesc/sourceDesc[@n="scan"]/bibl', ##-- old:publBibl
-		     'fileDesc/sourceDesc/bibl', ##-- new|old:generic
-		    );
-$bibl = "$author: $title. $date" if (!defined($bibl));
+my @bibl_xpaths = (
+		   'fileDesc/sourceDesc[@n="ddc"]/bibl', ##-- new:canonical
+		   'fileDesc/sourceDesc[@n="orig"]/bibl', ##-- old:firstBibl
+		   'fileDesc/sourceDesc[@n="scan"]/bibl', ##-- old:publBibl
+		   'fileDesc/sourceDesc/bibl', ##-- new|old:generic
+		   );
+my $bibl = xpgrepval($hroot,@bibl_xpaths);
+if (!defined($bibl)) {
+  $bibl = "$author: $title. $date";
+  warn("$prog: $basename: missing bibl XPath(s) ".join('|',@bibl_xpaths)) if ($verbose >= $vl_warn);
+}
 ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="orig"]/bibl', $bibl); ##-- old (<2012-07)
 ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="ddc"]/bibl', $bibl); ##-- new (>=2012-07)
 
@@ -249,21 +275,21 @@ my @shelfmark_xpaths = ('fileDesc/sourceDesc/msDesc/msIdentifier/idno[@type="she
 			'fileDesc/sourceDesc/biblFull/notesStmt/note[@type="location"]/ident[@type="shelfmark"]', ##-- old (<2012-07)
 		       );
 my $shelfmark = xpgrepval($hroot,@shelfmark_xpaths);
-ensure_xpath($hroot, $_, $shelfmark) foreach (@shelfmark_xpaths);
+ensure_xpath($hroot, $shelfmark_xpaths[$_], $shelfmark, ($_==0)) foreach (0..$#shelfmark_xpaths);
 
 ##-- meta: library
 my @library_xpaths = ('fileDesc/sourceDesc/msDesc/msIdentifier/repository', ##-- new
 		      'fileDesc/sourceDesc/biblFull/notesStmt/note[@type="location"]/name[@type="repository"]', ##-- old
 		     );
 my $library = xpgrepval($hroot, @library_xpaths);
-ensure_xpath($hroot, $_, $library) foreach (@library_xpaths);
+ensure_xpath($hroot, $library_xpaths[$_], $library, ($_==0)) foreach (0..$#library_xpaths);
 
 ##-- meta: dtadir
 my @dirname_xpaths = ('fileDesc/publicationStmt/idno[@type="DTADIR"]', ##-- old (<2012-07)
 		      'fileDesc/publicationStmt/idno[@type="DTADIRNAME"]', ##-- new (>=2012-07)
 		     );
 my $dirname = xpgrepval($hroot,@dirname_xpaths) || $basename;
-ensure_xpath($hroot,$_,$dirname) foreach (@dirname_xpaths);
+ensure_xpath($hroot,$dirname_xpaths[$_],$dirname,($_==1)) foreach (0..$#dirname_xpaths);
 
 ##-- meta: timestamp: ISO
 my $timestamp_xpath = 'fileDesc/publicationStmt/date';
@@ -271,14 +297,8 @@ my $timestamp = xpval($timestamp_xpath);
 if (!$timestamp) {
   my $time = $infile eq '-' ? time() : (stat($infile))[9];
   $timestamp = POSIX::strftime("%FT%H:%M:%SZ",gmtime($time));
-  ensure_xpath($hroot,$timestamp_xpath,$timestamp);
+  ensure_xpath($hroot,$timestamp_xpath,$timestamp,1);
 }
-
-##-- meta: timestamp: UNIX
-#my $unix_timestamp_xpath = 'fileDesc/publicationStmt/date[@type="unix"]';
-#my $unix_timestamp = str2time($timestamp||0);
-#ensure_xpath($hroot,$unix_timestamp_xpath,$unix_timestamp);
-
 
 ##-- dump
 ($outfile eq '-' ? $hdoc->toFH(\*STDOUT,$format) : $hdoc->toFile($outfile,$format))
