@@ -178,14 +178,17 @@ sub ensure_xpath {
 ##======================================================================
 ## MAIN
 
-##-- grab header file
-my $hdoc = loadxml($infile);
-my $hroot = $hdoc->documentElement;
-$hroot = $hroot->findnodes('(//teiHeader)[1]')->[0] if ($hroot->nodeName ne 'teiHeader');
-
 ##-- default: basename
 $basename = basename($infile) if (!defined($basename));
 $basename =~ s/\..*$//;
+
+##-- grab header file
+my $hdoc = loadxml($infile);
+my $hroot = $hdoc->documentElement;
+if ($hroot->nodeName ne 'teiHeader') {
+  die("$prog: $infile ($basename): no //teiHeader element found")
+    if (!defined($hroot=$hroot->findnodes('(//teiHeader)[1]')->[0]));
+}
 
 ##-- meta: author
 my @author_xpaths = (
