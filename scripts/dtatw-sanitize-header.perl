@@ -253,7 +253,7 @@ my @date_xpaths = (
 my $date = xpgrepval($hroot,@date_xpaths);
 if (!$date) {
   $date = ($basename =~ m/^[^\.]*_([0-9]+)$/ ? $1 : 0);
-  warn("$prog: $basename: missing date XPpath $date_xpaths[$#date_xpaths] defaults to \"$date\"") if ($verbose >= $vl_warn);
+  warn("$prog: $basename: missing date XPath $date_xpaths[$#date_xpaths] defaults to \"$date\"") if ($verbose >= $vl_warn);
 }
 ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="orig"]/biblFull/publicationStmt/date[@type="first"]', $date); ##-- old (<2012-07)
 ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="ddc"]/biblFull/publicationStmt/date', $date);  ##-- new (>=2012-07)
