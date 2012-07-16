@@ -181,7 +181,7 @@ sub ensure_xpath {
 ##-- grab header file
 my $hdoc = loadxml($infile);
 my $hroot = $hdoc->documentElement;
-$hroot = get_xpath($hroot) if ($hroot->nodeName ne 'teiHeader');
+$hroot = $hroot->findnodes('(//teiHeader)[1]')->[0] if ($hroot->nodeName ne 'teiHeader');
 
 ##-- default: basename
 $basename = basename($infile) if (!defined($basename));
