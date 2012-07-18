@@ -189,6 +189,8 @@ sub tokenize1 {
 		    qw( Bar Dan Deut Esra Est Ex Galater Man Hos Ijob Job Jak Col Kor Cor Mal Ri Sir ),
 		    #qw( Mark ), ##-- heuristics too dodgy
 		    qw( Art Bon Kim ),
+		    ##-- more bible books
+		    qw( Es Gall Reg Hose Rom ),
 		   );
     my $nabbr_max_distance = 2; ##-- max number of text bytes between end(w1) and start(w2), including EOS-dot
     @suspects = qw();
