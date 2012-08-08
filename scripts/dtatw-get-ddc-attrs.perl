@@ -471,7 +471,8 @@ sub apply_word {
 
   ##-- compute & assign: rendition (undef -> '-')
   if ($do_rendition) {
-    $wrend = join('|', luniq(map {s/^\#//; $_} map {split(' ',$_->{xr})} @cs)) || '';
+    #$wrend = join('|', luniq(map {s/^\#//; $_} map {split(' ',$_->{xr})} @cs)) || ''; 		##-- MEET ~ UNION
+    $wrend  = join('|', map {s/^\#//; $_} llintersect(map {[split(' ',$_->{xr})]} @cs)) || '';	##-- JOIN ~ INTERSECTION
     $wnod->setAttribute($rendition_attr, $wrend ? "|$wrend|" : '-');
   }
 
@@ -527,7 +528,17 @@ sub apply_word {
 ##======================================================================
 ## Subs: generic
 
+## @common = llintersect(\@list_of_lists)
+##  + common elements from a list-of-lists; aka intersection akak join
+my (%lli_tmp);
+sub llintersect {
+  %lli_tmp = qw();
+  ++$lli_tmp{$_} foreach (map {@$_} @_);
+  return grep {$lli_tmp{$_}==@_} keys %lli_tmp;
+}
+
 ## @uniq = luniq(@list)
+##  + unique elements from a list; aka union aka meet
 my ($lu_tmp);
 sub luniq {
   $lu_tmp=undef;
