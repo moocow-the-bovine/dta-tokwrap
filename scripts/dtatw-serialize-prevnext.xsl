@@ -28,7 +28,7 @@
   </xsl:template>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: NAMED: serialize-next -->
+  <!-- templates: NAMED: chain.next -->
   <xsl:template name="chain.next">
     <xsl:param name="nextid" select="./@next"/>
     <xsl:message>chaining with nextid=<xsl:value-of select="$nextid"/>&#10;</xsl:message>

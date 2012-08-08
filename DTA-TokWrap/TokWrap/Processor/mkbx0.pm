@@ -531,20 +531,34 @@ sub sanitize_chains {
   foreach $nod (@{$xmldoc->findnodes('//*[@prev or @next]')}) {
     $nodid = $nod->getAttribute('id') || $nod->getAttribute('xml:id') || $nod->getAttribute('xml_id');
     if (!defined($nodid)) {
-      $nodid = sprintf("dtatw.mkbx0.%0.4x", ++$id);
+      ##-- add @id
+      $nodid = sprintf("dtatw.mkbx0.chain.%0.4x", ++$id);
+      $mbx0->vlog('warn',"sanitize_chains(): auto-generating node-id $nodid for chain-node ", $nod->nodeName, " at line ", $nod->line_number);
       $nod->setAttribute('xml:id'=>$nodid);
     }
     if (defined($refid = $nod->getAttribute('prev'))) {
+      ##-- sanitize @prev
       $refid  =~ s/^\#//;
       $refnod = $xmldoc->findnodes("id('$refid')")->[0];
-      if ($refnod && !$refnod->getAttribute('next')) {
+      if (!$refnod) {
+	$mbx0->vlog('warn',"sanitize_chains(): pruning dangling \@prev=$refid for chain node ", $nod->nodeName, " at line ", $nod->line_number);
+	$nod->removeAttribute('prev');
+      }
+      elsif (!$refnod->getAttribute('next')) {
+	$mbx0->vlog('warn',"sanitize_chains(): inserting \@next=$nodid for chain node ", $refnod->nodeName, " at line ", $refnod->line_number);
 	$refnod->setAttribute('next'=>$nodid);
       }
     }
     if (defined($refid = $nod->getAttribute('next'))) {
+      ##-- sanitize @next
       $refid  =~ s/^\#//;
       $refnod = $xmldoc->findnodes("id('$refid')")->[0];
-      if ($refnod && !$refnod->getAttribute('prev')) {
+      if (!$refnod) {
+	$mbx0->vlog('warn',"sanitize_chains(): pruning dangling \@next=$refid for chain node ", $nod->nodeName, " at line ", $nod->line_number);
+	$nod->removeAttribute('next');
+      }
+      elsif (!$refnod->getAttribute('prev')) {
+	$mbx0->vlog('warn',"sanitize_chains(): inserting \@prev=$nodid for chain node ", $refnod->nodeName, " at line ", $refnod->line_number);
 	$refnod->setAttribute('prev'=>$nodid);
       }
     }

@@ -1,43 +1,16 @@
 #!/usr/bin/perl -w
 
-use XML::LibXML;
+use lib qw(.);
+use DTA::TokWrap;
+use DTA::TokWrap::Utils ':libxml';
 
 push(@ARGV,'-') if (!@ARGV);
 my $xmlfile = shift;
-my $xmldoc = XML::LibXML->load_xml(location=>$xmlfile) or die("$0: load failed for '$xmlfile': $!");
+my $xmlparser = libxml_parser();
+my $xmldoc    = ($xmlfile eq '-' ? $xmlparser->parse_fh(\*STDIN) : $xmlparser->parse_file($xmlfile));
+die("$0: load failed for XML file '$xmlfile': $!") if (!$xmldoc);
 
-##-- look for nodes with @prev, @next
-my ($nod,$nodid,$refid,$refnod);
-my $id=0;
-foreach $nod (@{$xmldoc->findnodes('//*[@prev or @next]')}) {
-  $nodid = $nod->getAttribute('id') || $nod->getAttribute('xml:id') || $nod->getAttribute('xml_id');
-  if (!defined($nodid)) {
-    ##-- add @id
-    $nodid = sprintf("pnauto.%0.4x", ++$id);
-    $nod->setAttribute('xml:id'=>$nodid);
-  }
-  if (defined($refid = $nod->getAttribute('prev'))) {
-    ##-- sanitize @prev
-    $refid  =~ s/^\#//;
-    $refnod = $xmldoc->findnodes("id('$refid')")->[0];
-    if (!$refnod) {
-      $nod->removeAttribute('prev');
-    }
-    elsif (!$refnod->getAttribute('next')) {
-      $refnod->setAttribute('next'=>$nodid);
-    }
-  }
-  if (defined($refid = $nod->getAttribute('next'))) {
-    ##-- sanitize @next
-    $refid  =~ s/^\#//;
-    $refnod = $xmldoc->findnodes("id('$refid')")->[0];
-    if (!$refnod) {
-      $nod->removeAttribute('next');
-    }
-    elsif (!$refnod->getAttribute('prev')) {
-      $refnod->setAttribute('prev'=>$nodid);
-    }
-  }
-}
-
+DTA::TokWrap::Logger->ensureLog();
+my $mbx0 = DTA::TokWrap::Processor::mkbx0->new();
+$mbx0->sanitize_chains($xmldoc);
 $xmldoc->toFH(\*STDOUT,0);

@@ -21,8 +21,8 @@ BEGIN {
   our $L4P_CONF_DEFAULT = qq{
 ##-- Loggers
 log4perl.oneMessagePerAppender = 1     ##-- suppress duplicate messages to the same appender
-log4perl.rootLogger     = WARN, AppStderr
-log4perl.logger.DTA.TokWrap = __DTA_TOKWRAP_DEFAULT_LOGLEVEL__, AppStderr
+log4perl.rootLogger     = __DTA_TOKWRAP_DEFAULT_LOGLEVEL__, AppStderr
+#log4perl.logger.DTA.TokWrap = __DTA_TOKWRAP_DEFAULT_LOGLEVEL__, AppStderr
 
 ##-- Appenders: Utilities
 log4perl.PatternLayout.cspec.G = sub { return File::Basename::basename("$::0"); }
