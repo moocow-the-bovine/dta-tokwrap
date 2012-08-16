@@ -115,22 +115,22 @@ sub defaults {
 			     ## + e.g. goethe_iphegenie, schiller_kabale, hauptman_sonnenaufgang
 			     #qw(speaker sp stage castList castGroup castItem role roleDesc set),
 			     #qw(speaker sp stage castList castGroup castItem role roleDesc set),
-			     qw(castList|castList/head|castGroup),
+			     qw(castList|castGroup),
 			     'castItem[not(parent::castGroup)]',
 
 			     ##-- verse-specific
 			     qw(lg),
 
 			     ##-- non-sentential stuff
-			     #qw(ref|fw|head), ##-- ... be safe if tokenizing EVERYTHING
-			     qw(ref|fw), ##-- ... be extra-safe if tokenizing EVERYTHING
+			     qw(ref|fw|list|item), ##-- ... be safe if tokenizing EVERYTHING (we should always EOS on head if we add a key for it!)
+			     #qw(ref|fw), ##-- ... be extra-safe if tokenizing EVERYTHING
 			    ],
 	  hint_wb_xpaths => [
 			     ##-- title page
 			     qw(byline titlePart docAuthor docImprint pubPlace publisher docDate),
 
 			     ##-- non-sentential stuff
-			     qw(head|ref|fw), ##-- ... be safe if tokenizing EVERYTHING
+			     qw(ref|fw), ##-- ... be safe if tokenizing EVERYTHING
 
 			     ##-- citations & quotes (TODO: check real examples)
 			     qw(cit|q|quote),
@@ -140,7 +140,6 @@ sub defaults {
 
 			     ##-- notes, tables, lists, etc.
 			     qw(row|cell),
-			     qw(list|item|ref), ##-- maybe move one or both of these to 'sb_xpaths' ?
 
 			     ##-- drama-specific
 			     ## + e.g. goethe_iphegenie, schiller_kabale, hauptman_sonnenaufgang
@@ -188,7 +187,8 @@ sub defaults {
 				 ##--
 				 (map {"$_\[not(parent::seg)\]"} qw(table note argument figure)),
 				 qw(text|front|body|back),
-				 qw(ref|fw|head),  ##-- extract these from running text
+				 qw(ref|fw|list|castList),
+				 'head[not(parent::list or parent::castList)]',  ##-- extract these from running text
 				],
 	  sort_stylestr  => undef,
 	  sort_styleheet => undef,
