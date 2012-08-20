@@ -257,7 +257,7 @@ sub mkbx {
   $doc->{txtdata} = '';
   my $txtbufr = \$doc->{txtdata};
   $$txtbufr .= $_->{otext} foreach (@$blocks);
-  $$txtbufr .= "\n"; ##-- always terminate text file with a newline
+  #$$txtbufr .= "\n"; ##-- always terminate text file with a newline (WARNING: can cause dtatw-tok2xml overflow!)
 
   ##-- hack: txtdata: tokenizer input text buffer
   ##  + workaround for mantis bug #242 (http://odo.dwds.de/mantis/view.php?id=242)
@@ -286,7 +286,7 @@ sub prune_empty_blocks {
 
 ## \@blocks = $mbx->sort_blocks(\@blocks)
 ##  + sorts \@blocks using $mb->{key2i}
-## + \@blocks defaults to $mbx->{blocks}
+##  + \@blocks defaults to $mbx->{blocks}
 sub sort_blocks {
   my ($mbx,$blocks) = @_;
   my $key2i = $mbx->{key2i};
@@ -301,6 +301,7 @@ sub sort_blocks {
 		)
 	      } @$blocks
 	     );
+
   return $blocks;
 }
 
