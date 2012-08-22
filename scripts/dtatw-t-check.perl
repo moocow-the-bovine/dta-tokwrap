@@ -63,6 +63,16 @@ while (<TT>) {
     next;
   }
 
+  ##-- check for suspicious text
+  if ($text =~ /^\$[SW]B\$_?$/) {
+    tokwarn("tokenizer hint appears as token for $toklabel\n");
+    next;
+  }
+  if ($text =~ /_$/ && $rest =~ /\[\$ABBREV\]/) {
+    tokwarn("suspicious final underscore for $toklabel\n");
+    next;
+  }
+
   ##-- parse offset, length
   ($off,$len) = split(' ',$pos,2);
   if ($off+$len > length($txtbuf)) {

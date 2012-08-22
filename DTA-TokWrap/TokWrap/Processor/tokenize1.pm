@@ -97,11 +97,11 @@ sub tokenize1 {
 
 
     ##------------------------------------
-    ## fix: tokenized $WB$, $SB$
+    ## fix: tokenized $WB$, $SB$ (mantis bug #548)
     $tp->vlog($tp->{traceLevel},"autofix: \${WB,SB}\$");
     $nfixed  = 0;
     $nfixed += ($data =~ s/^\$[WS]B\$_?\t.*\n//mg); 								##-- e.g. "$SB\tOFF LEN\t[XY]\t[$ABBREV]\n"
-    $nfixed += ($data =~ s/^([^\t]*)_\t(\d+) (\d+)\t\[XY\]\t\[\$ABBREV\]\n/"$1\t$2 ".($3-1)."\n"/mgx);		##-- e.g. ",_\tOFF LEN+1\t[XY]\t[$ABBREV]\n
+    $nfixed += ($data =~ s/^([^\t]*)_\t(\d+) (\d+)\t\[XY\]\t\[\$ABBREV\]\n/"$1\t$2 ".($3-1)."\n"/mge);		##-- e.g. ",_\tOFF LEN+1\t[XY]\t[$ABBREV]\n
     $tp->vlog($tp->{traceLevel},"autofix: \${WB,SB}\$: $nfixed fix(es)") if ($nfixed);
 
     ##------------------------------------
