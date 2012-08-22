@@ -162,7 +162,7 @@ our $c_pack  = join('',map {$c_packas{$_}} @c_pkeys);
 
 ## $c_packed = c_pack(\%c)
 sub c_pack {
-  no warnings qw(uninitialized numeric);
+  #no warnings qw(uninitialized numeric);
   return undef if (!defined($_[0]));
   return pack($c_pack, @{$_[0]}{@c_pkeys});
 }
@@ -250,7 +250,7 @@ sub cxml_cb_start {
 	   ($do_xcontext  ? (xc=>join(' ', keys %{$edata->{xcontext}})) : qw()),
 	   ($do_xpath     ? (xp=>$xpath) : qw()),
 	  );
-    $_c{$_} = -1 foreach (grep {!defined($_c{$_})} qw(ulx uly lrx lry));
+    $_c{$_} = -1 foreach (grep {!defined($_c{$_}) || $_c{$_} eq ''} qw(pb lb ulx uly lrx lry));
     push(@cn2packed,c_pack(\%_c));
     $cid2cn{$cid} = $cn;
   }
@@ -265,7 +265,7 @@ sub cxml_cb_start {
   }
   elsif ($do_page && $_[1] eq 'pb') {
     ##-- page break
-    ($page=$facs) =~ s/^\#?f?0*// if (defined($facs=$_attrs{'facs'}));
+    ($page=$facs) =~ s/^\#?f?0*(?=.)// if (defined($facs=$_attrs{'facs'}));
     $line = 1;
   }
   elsif ($do_line && $_[1] eq 'lb') {
