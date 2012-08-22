@@ -162,8 +162,9 @@ our $c_pack  = join('',map {$c_packas{$_}} @c_pkeys);
 
 ## $c_packed = c_pack(\%c)
 sub c_pack {
+  no warnings qw(uninitialized numeric);
   return undef if (!defined($_[0]));
-  return pack($c_pack, map {defined($_) ? $_ : ''} @{$_[0]}{@c_pkeys});
+  return pack($c_pack, @{$_[0]}{@c_pkeys});
 }
 
 ## \%c = c_unpack($c_packed)
