@@ -422,10 +422,11 @@ sub apply_word {
     ##-- $wnod without a //c/@id list
     ##   + this happens e.g. for 'FORMEL' inserted via DTA::TokWrap::mkbx0 'hint_replace_xpaths'
     ##   + push these to @wnoc and try to fudge them in a second pass
-    warn("$prog: WARNING: no //c/\@id list for //w at $txmlfile line ", $wnod->line_number, "\n");
+    no warnings 'uninitialized';
+    warn("$prog: WARNING: no //c/\@id list for //w#$wid at $txmlfile line ", $wnod->line_number, "\n");
   }
   elsif (!@cs) {
-    warn("$prog: WARNING: invalid //c/\@id list for //w at $txmlfile line ", $wnod->line_number, "\n")
+    warn("$prog: WARNING: invalid //c/\@id list for //w#$wid at $txmlfile line ", $wnod->line_number, "\n")
       if ($verbose >= $vl_warn);
   }
 

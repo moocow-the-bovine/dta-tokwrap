@@ -90,8 +90,19 @@ sub tokenize1 {
 
     ##------------------------------------
     ## fix: stupid interjections
+    my ($nfixed);
     $tp->vlog($tp->{traceLevel},"autofix: re/ITJ");
-    $data =~ s/^(re\t\d+ \d+)\tITJ$/$1/mg;
+    $nfixed = ($data =~ s/^(re\t\d+ \d+)\tITJ$/$1/mg);
+    $tp->vlog($tp->{traceLevel},"autofix: re/ITJ: $nfixed fix(es)") if ($nfixed);
+
+
+    ##------------------------------------
+    ## fix: tokenized $WB$, $SB$
+    $tp->vlog($tp->{traceLevel},"autofix: \${WB,SB}\$");
+    $nfixed  = 0;
+    $nfixed += ($data =~ s/^\$[WS]B\$_?\t.*\n//mg); 								##-- e.g. "$SB\tOFF LEN\t[XY]\t[$ABBREV]\n"
+    $nfixed += ($data =~ s/^([^\t]*)_\t(\d+) (\d+)\t\[XY\]\t\[\$ABBREV\]\n/"$1\t$2 ".($3-1)."\n"/mgx);		##-- e.g. ",_\tOFF LEN+1\t[XY]\t[$ABBREV]\n
+    $tp->vlog($tp->{traceLevel},"autofix: \${WB,SB}\$: $nfixed fix(es)") if ($nfixed);
 
     ##------------------------------------
     ## fix: line-broken tokens, part 1: get list of suspects
@@ -131,6 +142,7 @@ sub tokenize1 {
     ##------------------------------------
     ## fix: line-broken tokens, part 2: repair
     $tp->vlog($tp->{traceLevel},"autofix: linebreak: check \& apply");
+    $nfixed=0;
     my %nojoin_txt2 = map {($_=>undef)} qw(und oder als wie noch sondern ſondern);
 
     my ($s_str, $txt1,$off1,$len1,$rest1, $txt2,$off2,$len2,$rest2, $repl);
@@ -181,11 +193,16 @@ sub tokenize1 {
       }
 
       ##-- apply actual replacement
-      substr($data,$_->[0],$_->[1]) = $repl if (defined($repl));
+      if (defined($repl)) {
+	substr($data,$_->[0],$_->[1]) = $repl;
+	++$nfixed;
+      }
     }
+    $tp->vlog($tp->{traceLevel},"autofix: linebreak: ", scalar(@suspects), " suspect(s), $nfixed fix(es)") if (@suspects);
 
     ##------------------------------------
     ## fix: pre-numeric abbreviations (e.g. biblical books), part 1: collect suspects
+    $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: find suspects\n");
     my %nabbrs   = (map {($_=>undef)}
 		    qw( Bar Dan Deut Esra Est Ex Galater Man Hos Ijob Job Jak Col Kor Cor Mal Ri Sir ),
 		    #qw( Mark ), ##-- heuristics too dodgy
@@ -209,6 +226,8 @@ sub tokenize1 {
 
     ##------------------------------------
     ## fix: pre-numeric abbreviations (e.g. biblical books), part 2: repair
+    $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: repair\n");
+    $nfixed = 0;
     my ($offd,$lend);
     foreach (reverse @suspects) {
       $s_str = substr($data,$_->[0],$_->[1]);
@@ -251,8 +270,12 @@ sub tokenize1 {
       }
 
       ##-- apply actual replacement
-      substr($data,$_->[0],$_->[1]) = $repl if (defined($repl));
+      if (defined($repl)) {
+	substr($data,$_->[0],$_->[1]) = $repl;
+	++$nfixed;
+      }
     }
+    $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: ", scalar(@suspects), " suspects, $nfixed fix(es)");
 
 
     ##------------------------------------
