@@ -109,7 +109,7 @@ if (!defined($cxmlfile) || $cxmlfile eq '') {
   pod2usage({-exitval=>0,-verbose=>0,-msg=>"$prog: could not guess CHR_XML_FILE for T_XML_FILE=$txmlfile"})
     if ($cxmlfile eq $txmlfile);
 }
-$prog  = "$prog: ".basename($cxmfile);
+$prog  = "$prog: ".basename($cxmlfile);
 
 ##-- sanity checks
 $do_page = 1 if ($do_bbox);
