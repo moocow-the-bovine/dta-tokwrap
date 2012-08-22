@@ -77,25 +77,26 @@ sub init {
 ##    xtokdata_stamp => $f,  ##-- (output) timestamp of operation end
 sub tok2xml {
   my ($t2x,$doc) = @_;
+  $doc->setLogContext();
 
   ##-- log, stamp
-  $t2x->vlog($t2x->{traceLevel},"tok2xml($doc->{xmlbase})");
+  $t2x->vlog($t2x->{traceLevel},"tok2xml()");
   $doc->{tok2xml_stamp0} = timestamp();
 
   ##-- sanity check(s)
   $t2x = $t2x->new() if (!ref($t2x));
   ##
-  $t2x->logconfess("tok2xml($doc->{xmlbase}): no cxfile key defined") if (!$doc->{cxfile});
-  $t2x->logconfess("tok2xml($doc->{xmlbase}): no bxfile key defined") if (!$doc->{bxfile});
-  $t2x->logconfess("tok2xml($doc->{xmlbase}): no tokfile1 key defined") if (!$doc->{tokfile1});
+  $t2x->logconfess("tok2xml(): no cxfile key defined") if (!$doc->{cxfile});
+  $t2x->logconfess("tok2xml(): no bxfile key defined") if (!$doc->{bxfile});
+  $t2x->logconfess("tok2xml(): no tokfile1 key defined") if (!$doc->{tokfile1});
   ##
-  file_try_open($doc->{cxfile}) || $t2x->logconfess("tok2xml($doc->{xmlbase}): could not open .cx file '$doc->{cxfile}': $!");
-  file_try_open($doc->{bxfile}) || $t2x->logconfess("tok2xml($doc->{xmlbase}): could not open .bx file '$doc->{bxfile}': $!");
-  file_try_open($doc->{tokfile1}) || $t2x->logconfess("tok2xml($doc->{xmlbase}): could not open .t1 file '$doc->{tokfile1}': $!");
+  file_try_open($doc->{cxfile}) || $t2x->logconfess("tok2xml(): could not open .cx file '$doc->{cxfile}': $!");
+  file_try_open($doc->{bxfile}) || $t2x->logconfess("tok2xml(): could not open .bx file '$doc->{bxfile}': $!");
+  file_try_open($doc->{tokfile1}) || $t2x->logconfess("tok2xml(): could not open .t1 file '$doc->{tokfile1}': $!");
 
   ##-- run client program
   my $cmdfh = opencmd("'$t2x->{t2x}' '$doc->{tokfile1}' '$doc->{cxfile}' '$doc->{bxfile}' - '$doc->{xmlbase}' |")
-    or $t2x->logconfess("tok2xml($doc->{xmlbase}): open failed for pipe from '$t2x->{t2x}': $!");
+    or $t2x->logconfess("tok2xml(): open failed for pipe from '$t2x->{t2x}': $!");
   $doc->{xtokdata} = undef;
   slurp_fh($cmdfh,\$doc->{xtokdata});
   $cmdfh->close();

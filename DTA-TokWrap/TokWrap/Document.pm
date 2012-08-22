@@ -267,6 +267,16 @@ sub DESTROY {
 }
 
 ##==============================================================================
+## Methods: logging context
+##==============================================================================
+
+sub setLogContext {
+  my ($that,$ctx) = @_;
+  $ctx = $that->{xmlbase} if (!defined($ctx) && ref($that));
+  Log::Log4perl::MDC->put("xmlbase", File::Basename::basename($ctx)) if (defined($ctx));
+}
+
+##==============================================================================
 ## Methods: Pseudo-I/O
 ##==============================================================================
 
@@ -274,11 +284,12 @@ sub DESTROY {
 ##  + wrapper for CLASS_OR_OBJECT->new(), with some additional sanity checks
 sub open {
   my ($doc,$xmlfile,@opts) = @_;
+  $doc->setLogContext($xmlfile);
   $doc->logconfess("open(): no XML source file specified") if (!defined($xmlfile) || $xmlfile eq '');
   $doc->logconfess("open(): cannot use standard input '-' as a source file") if ($xmlfile eq '-');
   $doc->logconfess("open(): could not open XML source file '$xmlfile': $!") if (!file_try_open($xmlfile));
   $doc = $doc->new(xmlfile=>$xmlfile,open_stamp=>timestamp(),@opts);
-  $doc->vlog($doc->{traceOpen},"open($xmlfile)") if ($doc->{traceOpen});
+  $doc->vlog($doc->{traceOpen},"open()") if ($doc->{traceOpen});
   return $doc;
 }
 
@@ -292,7 +303,8 @@ sub open {
 ##    default values (making $doc essentially unuseable)
 sub close {
   my ($doc,$is_destructor) = @_;
-  $doc->vlog($doc->{traceClose},"close($doc->{xmlfile})") if ($doc->{traceClose} && $doc->logInitialized);
+  $doc->setLogContext();
+  $doc->vlog($doc->{traceClose},"close()") if ($doc->{traceClose} && $doc->logInitialized);
   my $rc = 1;
   foreach ($doc->tempfiles()) {
     ##-- unlink temp files
@@ -440,13 +452,14 @@ BEGIN {
 ##  + $key without a value $KEYGEN{$key} triggers an error
 sub genKey {
   my ($doc,$key,$keygen) = @_;
-  $doc->vlog($doc->{traceGen},"$doc->{xmlbase}: genKey($key)") if ($doc->{traceGen});
+  $doc->setLogContext();
+  $doc->vlog($doc->{traceGen},"genKey($key)") if ($doc->{traceGen});
   $keygen = \%KEYGEN if (!$keygen);
   my $gen = exists($keygen->{$key}) ? $keygen->{$key} : $key;
 
   ##-- puke if no generator is defined
   if (!defined($gen)) {
-    $doc->logcarp("$doc->{xmlbase}: genKey($key): no generator defined for key '$key'");
+    $doc->logcarp("genKey($key): no generator defined for key '$key'");
     return undef;
   }
   return $doc->{genDummy} if ($doc->{genDummy});
@@ -463,7 +476,7 @@ sub genKey {
       $rc &&= $sub->($doc);
     }
     else {
-      $doc->logcroak("$doc->{xmlbase}: genKey($key): no method for KEYGEN specification '$spec'");
+      $doc->logcroak("genKey($key): no method for KEYGEN specification '$spec'");
       $rc = 0;
     }
     last if (!$rc);
@@ -476,7 +489,7 @@ sub genKey {
 ##  + see DTA::TokWrap::Document::Maker for a more sophisticated implementation
 sub makeKey {
   my ($doc,$key) = @_;
-  $doc->vlog($doc->{traceMake},"$doc->{xmlbase}: makeKey($key)") if ($doc->{traceMake});
+  $doc->vlog($doc->{traceMake},"makeKey($key)") if ($doc->{traceMake});
   return $doc->genKey($key);
 }
 
@@ -489,7 +502,8 @@ sub makeKey {
 ## $doc_or_undef = $doc->mkindex()
 ##  + see DTA::TokWrap::Processor::mkindex::mkindex()
 sub mkindex {
-  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: mkindex()") if ($_[0]{traceProc});
+  $_[0]->setLogContext();
+  $_[0]->vlog($_[0]{traceProc},"mkindex()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{mkindex}) || 'DTA::TokWrap::Processor::mkindex')->mkindex($_[0]);
 }
 
@@ -497,7 +511,8 @@ sub mkindex {
 ## $doc_or_undef = $doc->mkbx0()
 ##  + see DTA::TokWrap::Processor::mkbx0::mkbx0()
 sub mkbx0 {
-  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: mkbx0()") if ($_[0]{traceProc});
+  $_[0]->setLogContext();
+  $_[0]->vlog($_[0]{traceProc},"mkbx0()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{mkbx0}) || 'DTA::TokWrap::Processor::mkbx0')->mkbx0($_[0]);
 }
 
@@ -505,7 +520,8 @@ sub mkbx0 {
 ## $doc_or_undef = $doc->mkbx()
 ##  + see DTA::TokWrap::Processor::mkbx::mkbx()
 sub mkbx {
-  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: mkbx()") if ($_[0]{traceProc});
+  $_[0]->setLogContext();
+  $_[0]->vlog($_[0]{traceProc},"mkbx()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{mkbx}) || 'DTA::TokWrap::Processor::mkbx')->mkbx($_[0]);
 }
 
@@ -514,7 +530,8 @@ sub mkbx {
 ##  + see DTA::TokWrap::Processor::tokenize::tokenize()
 ##  + default tokenizer class is given by package-global $TOKENIZE_CLASS
 sub tokenize {
-  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: tokenize()") if ($_[0]{traceProc});
+  $_[0]->setLogContext();
+  $_[0]->vlog($_[0]{traceProc},"tokenize()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tokenize}) || "$TOKENIZE_CLASS")->tokenize($_[0]);
 }
 BEGIN {
@@ -525,7 +542,8 @@ BEGIN {
 ## $doc_or_undef = $doc->tokenize1()
 ##  + see DTA::TokWrap::Processor::tokenize1::tokenize1()
 sub tokenize1 {
-  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: tokenize1()") if ($_[0]{traceProc});
+  $_[0]->setLogContext();
+  $_[0]->vlog($_[0]{traceProc},"tokenize1()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tokenize1}) || 'DTA::TokWrap::Processor::tokenize1')->tokenize1($_[0]);
 }
 
@@ -533,7 +551,8 @@ sub tokenize1 {
 ## $doc_or_undef = $doc->tok2xml()
 ##  + see DTA::TokWrap::Processor::tok2xml::tok2xml()
 sub tok2xml {
-  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: tok2xml()") if ($_[0]{traceProc});
+  $_[0]->setLogContext();
+  $_[0]->vlog($_[0]{traceProc},"tok2xml()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tok2xml}) || 'DTA::TokWrap::Processor::tok2xml')->tok2xml($_[0]);
 }
 
@@ -541,7 +560,8 @@ sub tok2xml {
 ## $doc_or_undef = $doc->sosxml()
 ##  + see DTA::TokWrap::Processor::standoff::sosxml()
 sub sosxml {
-  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: sosxml()") if ($_[0]{traceProc});
+  $_[0]->setLogContext();
+  $_[0]->vlog($_[0]{traceProc},"sosxml()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::Processor::standoff')->sosxml($_[0]);
 }
 
@@ -549,7 +569,8 @@ sub sosxml {
 ## $doc_or_undef = $doc->sowxml()
 ##  + see DTA::TokWrap::Processor::standoff::sowxml()
 sub sowxml {
-  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: sowxml()") if ($_[0]{traceProc});
+  $_[0]->setLogContext();
+  $_[0]->vlog($_[0]{traceProc},"sowxml()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::Processor::standoff')->sowxml($_[0]);
 }
 
@@ -557,7 +578,8 @@ sub sowxml {
 ## $doc_or_undef = $doc->soaxml()
 ##  + see DTA::TokWrap::Processor::standoff::soaxml()
 sub soaxml {
-  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: soaxml()") if ($_[0]{traceProc});
+  $_[0]->setLogContext();
+  $_[0]->vlog($_[0]{traceProc},"soaxml()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::Processor::standoff')->soaxml($_[0]);
 }
 
@@ -566,7 +588,8 @@ sub soaxml {
 ##  + wrapper for sosxml(), sowxml(), soaxml()
 ##  + see DTA::TokWrap::Processor::standoff::standoff()
 sub standoff {
-  $_[0]->vlog($_[0]{traceProc},"$_[0]{xmlbase}: standoff()") if ($_[0]{traceProc});
+  $_[0]->setLogContext();
+  $_[0]->vlog($_[0]{traceProc},"standoff()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::Processor::standoff')->standoff($_[0]);
 }
 
@@ -582,11 +605,12 @@ sub standoff {
 ##  + loads $doc->{bx0doc} from $filename_or_fh (default=$doc->{bx0file})
 sub loadBx0File {
   my ($doc,$file) = @_;
+  $doc->setLogContext();
 
   ##-- get file
   $file = $doc->{bx0file} if (!$file);
-  $doc->logconfess("$doc->{xmlbase}: loadBx0File(): no .bx0 file defined") if (!defined($file));
-  $doc->vlog($doc->{traceLoad}, "$doc->{xmlbase}: loadBx0File($file)") if ($doc->{traceLoad});
+  $doc->logconfess("loadBx0File(): no .bx0 file defined") if (!defined($file));
+  $doc->vlog($doc->{traceLoad}, "loadBx0File($file)") if ($doc->{traceLoad});
 
   my $xmlparser = libxml_parser(keep_blanks=>0);
   if (ref($file)) {
@@ -594,7 +618,7 @@ sub loadBx0File {
   } else {
     $doc->{bx0doc} = $xmlparser->parse_file($file);
   }
-  $doc->logconfess("$doc->{xmlbase}: loadBx0File(): could not parse .bx0 file '$file'") if (!$doc->{bx0doc});
+  $doc->logconfess("loadBx0File(): could not parse .bx0 file '$file'") if (!$doc->{bx0doc});
 
   $doc->{bx0doc_stamp} = file_mtime($file);
   return $doc->{bx0doc};
@@ -606,23 +630,24 @@ sub loadBx0File {
 ##  + requires $doc->{txfile}
 sub loadBxFile {
   my ($doc,$bxfile,$txtfile) = @_;
+  $doc->setLogContext();
 
   ##-- get .bx file
   $bxfile  = $doc->{bxfile}  if (!$bxfile);
   $txtfile = $doc->{txtfile} if (!$txtfile);
-  $doc->logconfess("$doc->{xmlbase}: loadBxFile(): no .bx file defined") if (!defined($bxfile));
-  $doc->logconfess("$doc->{xmlbase}: loadBxFile(): no .txt file defined") if (!defined($txtfile));
-  $doc->vlog($doc->{traceLoad}, "$doc->{xmlbase}: loadBxFile($bxfile, $txtfile)") if ($doc->{traceLoad});
+  $doc->logconfess("loadBxFile(): no .bx file defined") if (!defined($bxfile));
+  $doc->logconfess("loadBxFile(): no .txt file defined") if (!defined($txtfile));
+  $doc->vlog($doc->{traceLoad}, "loadBxFile($bxfile, $txtfile)") if ($doc->{traceLoad});
 
   ##-- load .txt file
   my $txtdata = '';
   slurp_file($txtfile, \$txtdata)
-    or $doc->logconfess("$doc->{xmlbase}: slurp_file() failed for .txt file '$txtfile': $!");
+    or $doc->logconfess("slurp_file() failed for .txt file '$txtfile': $!");
 
   ##-- load .bx file
   my $bxdata = $doc->{bxdata} = [];
   my $fh = ref($bxfile) ? $bxfile : IO::File->new("<$bxfile");
-  $doc->logconfess("$doc->{xmlbase}: loadBxFile(): open failed for .bx file '$bxfile': $!") if (!$fh);
+  $doc->logconfess("loadBxFile(): open failed for .bx file '$bxfile': $!") if (!$fh);
   $fh->binmode() if (!ref($bxfile));
   my ($blk);
   while (<$fh>) {
@@ -648,15 +673,16 @@ sub loadBxFile {
 ##    - globals $CX_ID, $CX_XOFF, etc. are indices for $cx arrays
 sub loadCxFile {
   my ($doc,$file) = @_;
+  $doc->setLogContext();
 
   ##-- get file
   $file = $doc->{cxfile} if (!$file);
-  $doc->logconfess("$doc->{xmlbase}: loadCxFile(): no .cx file defined") if (!defined($file));
-  $doc->vlog($doc->{traceLoad}, "$doc->{xmlbase}: loadCxFile($file)") if ($doc->{traceLoad});
+  $doc->logconfess("loadCxFile(): no .cx file defined") if (!defined($file));
+  $doc->vlog($doc->{traceLoad}, "loadCxFile($file)") if ($doc->{traceLoad});
 
   my $cx = $doc->{cxdata} = [];
   my $fh = ref($file) ? $file : IO::File->new("<$file");
-  $doc->logconfess("$doc->{xmlbase}: loadCxFile(): open failed for .cx file '$file': $!") if (!$fh);
+  $doc->logconfess("loadCxFile(): open failed for .cx file '$file': $!") if (!$fh);
   $fh->binmode() if (!ref($file));
   while (<$fh>) {
     chomp;
@@ -674,14 +700,15 @@ sub loadCxFile {
 ##  + loads $doc->{"tokdata${i}"} from $filename_or_fh (default=$doc->{"tokfile${i}"})
 sub loadTokFileN {
   my ($doc,$i,$file) = @_;
+  $doc->setLogContext();
 
   ##-- get file
   $file = $doc->{"tokfile${i}"} if (!$file);
-  $doc->logconfess("$doc->{xmlbase}: loadTokFileN($i): no .t$i file defined") if (!defined($file));
-  $doc->vlog($doc->{traceLoad}, "$doc->{xmlbase}: loadTokFileN($i,$file)") if ($doc->{traceLoad});
+  $doc->logconfess("loadTokFileN($i): no .t$i file defined") if (!defined($file));
+  $doc->vlog($doc->{traceLoad}, "loadTokFileN($i,$file)") if ($doc->{traceLoad});
 
   slurp_file($file,\$doc->{"tokdata${i}"})
-    or $doc->logconfess("$doc->{xmlbase}: slurp_file() failed for token file '$file': $!");
+    or $doc->logconfess("slurp_file() failed for token file '$file': $!");
 
   $doc->{"tokdata${i}_stamp"} = file_mtime($file);
   return \$doc->{"tokdata${i}"};
@@ -709,14 +736,15 @@ sub loadTokFile1 {
 ##  + see also $doc->xtokDoc() [which should be obsolete]
 sub loadXtokFile {
   my ($doc,$file) = @_;
+  $doc->setLogContext();
 
   ##-- get file
   $file = $doc->{xtokfile} if (!$file);
-  $doc->logconfess("$doc->{xmlbase}: loadXtokFile(): no .t.xml file defined") if (!defined($file));
-  $doc->vlog($doc->{traceLoad}, "$doc->{xmlbase}: loadXtokFile($file)") if ($doc->{traceLoad});
+  $doc->logconfess("loadXtokFile(): no .t.xml file defined") if (!defined($file));
+  $doc->vlog($doc->{traceLoad}, "loadXtokFile($file)") if ($doc->{traceLoad});
 
   slurp_file($file,\$doc->{xtokdata})
-    or $doc->logconfess("$doc->{xmlbase}: slurp_file() failed for XML-tokenized file '$file': $!");
+    or $doc->logconfess("slurp_file() failed for XML-tokenized file '$file': $!");
 
   $doc->{xtokdata_stamp} = file_mtime($file);
   return \$doc->{xtokdata};
@@ -728,19 +756,20 @@ sub loadXtokFile {
 ##  + should be obsolete
 sub xtokDoc {
   my ($doc,$xtdatar) = @_;
+  $doc->setLogContext();
 
   ##-- get data
   $xtdatar = \$doc->{xtokdata} if (!$xtdatar);
   if (!$xtdatar || !defined($$xtdatar)) {
     $doc->tok2xml()
-      or $doc->logconfess("$doc->{xmlbase}: xtokDoc(): tok2xml() failed for document '$doc->{xmlfile}': $!");
+      or $doc->logconfess("xtokDoc(): tok2xml() failed for document '$doc->{xmlfile}': $!");
     $xtdatar = \$doc->{xtokdata};
   }
 
   ##-- get xml parser
   my $xmlparser = libxml_parser(keep_blanks=>0);
   my $xtdoc = $doc->{xtokdoc} = $xmlparser->parse_string($$xtdatar)
-    or $doc->logconfess("$doc->{xmlbase}: xtokDoc(): could not parse t.xml data as XML: $!");
+    or $doc->logconfess("xtokDoc(): could not parse t.xml data as XML: $!");
 
   $doc->{xtokdoc_stamp} = timestamp(); ##-- stamp
   return $doc->{xtokdoc};
@@ -760,16 +789,17 @@ sub xtokDoc {
 ##  + sets $doc->{bx0file_stamp}
 sub saveBx0File {
   my ($doc,$file,$bx0doc,%opts) = @_;
+  $doc->setLogContext();
 
   ##-- get bx0doc
   $bx0doc = $doc->{bx0doc} if (!$bx0doc);
-  $doc->logconfess("$doc->{xmlbase}: saveBx0File(): no 'bx0doc' key defined") if (!$bx0doc);
+  $doc->logconfess("saveBx0File(): no 'bx0doc' key defined") if (!$bx0doc);
 
   ##-- get file
   $file = $doc->{bx0file} if (!defined($file));
   $file = "$doc->{outdir}/$doc->{outbase}.bx0" if (!defined($file));
   $doc->{bx0file} = $file if (!ref($file));
-  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveBx0File($file)") if ($doc->{traceSave});
+  $doc->vlog($doc->{traceSave}, "saveBx0File($file)") if ($doc->{traceSave});
 
   ##-- actual save
   my $format = (exists($opts{format}) ? $opts{format} : $doc->{format})||0;
@@ -791,16 +821,17 @@ sub saveBx0File {
 ##  + sets $doc->{bxfile_stamp}
 sub saveBxFile {
   my ($doc,$file,$bxdata) = @_;
+  $doc->setLogContext();
 
   ##-- get bxdata
   $bxdata = $doc->{bxdata} if (!$bxdata);
-  $doc->logconfess("$doc->{xmlbase}: saveBxFile(): no bxdata defined") if (!$bxdata);
+  $doc->logconfess("saveBxFile(): no bxdata defined") if (!$bxdata);
 
   ##-- get file
   $file = $doc->{bxfile} if (!defined($file));
   $file = "$doc->{outdir}/$doc->{outbase}.bx" if (!defined($file));
   $doc->{bxfile} = $file if (!ref($file));
-  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveBxFile($file)") if ($doc->{traceSave});
+  $doc->vlog($doc->{traceSave}, "saveBxFile($file)") if ($doc->{traceSave});
 
   ##-- get filehandle & print
   my $fh = ref($file) ? $file : IO::File->new(">$file");
@@ -828,19 +859,20 @@ sub saveBxFile {
 ##  + sets $doc->{txtfile_stamp}
 sub saveTxtFile {
   my ($doc,$file,$bxdata,%opts) = @_;
+  $doc->setLogContext();
 
   ##-- get options
   my $debug_txt = $opts{debug};
 
   ##-- get bxdata
   $bxdata = $doc->{bxdata} if (!$bxdata);
-  $doc->logconfess("$doc->{xmlbase}: saveBxFile(): no bxdata defined") if (!$bxdata);
+  $doc->logconfess("saveBxFile(): no bxdata defined") if (!$bxdata);
 
   ##-- get file
   $file = $doc->{txtfile} if (!defined($file));
   $file = "$doc->{outdir}/$doc->{outbase}.txt" if (!defined($file));
   $doc->{txtfile} = $file if (!ref($file));
-  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveTxtFile($file)") if ($doc->{traceSave});
+  $doc->vlog($doc->{traceSave}, "saveTxtFile($file)") if ($doc->{traceSave});
 
   ##-- get filehandle & print
   my $fh = ref($file) ? $file : IO::File->new(">$file");
@@ -873,16 +905,17 @@ sub saveTxtFile {
 ##  + sets $doc->{"tokfile_stamp${i}"}
 sub saveTokFileN {
   my ($doc,$i,$file,$tokdatar) = @_;
+  $doc->setLogContext();
 
   ##-- get data
   $tokdatar = \$doc->{"tokdata${i}"} if (!$tokdatar);
-  $doc->logconfess("$doc->{xmlbase}: saveTokFileN($i): no 'tokdata${i}' defined") if (!$tokdatar || !defined($$tokdatar));
+  $doc->logconfess("saveTokFileN($i): no 'tokdata${i}' defined") if (!$tokdatar || !defined($$tokdatar));
 
   ##-- get file
   $file = $doc->{"tokfile${i}"} if (!defined($file));
   $file = "$doc->{outdir}/$doc->{outbase}.t${i}" if (!defined($file));
   $doc->{"tokfile${i}"} = $file if (!ref($file));
-  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveTokFileN($i,$file)") if ($doc->{traceSave});
+  $doc->vlog($doc->{traceSave}, "saveTokFileN($i,$file)") if ($doc->{traceSave});
 
   ##-- get filehandle & print
   my $fh = ref($file) ? $file : IO::File->new(">$file");
@@ -922,16 +955,17 @@ sub saveTokFile1 {
 ##  + sets $doc->{xtokfile_stamp}
 sub saveXtokFile {
   my ($doc,$file,$xtdatar,%opts) = @_;
+  $doc->setLogContext();
 
   ##-- get data
   $xtdatar = \$doc->{xtokdata} if (!$xtdatar);
-  $doc->logconfess("$doc->{xmlbase}: saveXtokFile(): no 'xtokdata' defined") if (!$xtdatar || !defined($$xtdatar));
+  $doc->logconfess("saveXtokFile(): no 'xtokdata' defined") if (!$xtdatar || !defined($$xtdatar));
 
   ##-- get file
   $file = $doc->{xtokfile} if (!defined($file));
   $file = "$doc->{outdir}/$doc->{outbase}.t.xml" if (!defined($file));
   $doc->{xtokfile} = $file if (!ref($file));
-  $doc->vlog($doc->{traceSave}, "$doc->{xmlbase}: saveXtokFile($file)") if ($doc->{traceSave});
+  $doc->vlog($doc->{traceSave}, "saveXtokFile($file)") if ($doc->{traceSave});
 
   ##-- get filehandle & print
   my $fh = ref($file) ? $file : IO::File->new(">$file");

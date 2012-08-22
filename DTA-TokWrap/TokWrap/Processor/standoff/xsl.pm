@@ -308,6 +308,7 @@ BEGIN { *process = \&standoff; }
 ##  + wrapper for sosxml(), sowxml(), soaxml()
 sub standoff {
   my ($so,$doc) = @_;
+  $doc->setLogContext();
   $so = $so->new if (!ref($so));
   return $so->sosxml($doc) && $so->sowxml($doc) && $so->soaxml($doc);
 }
@@ -324,16 +325,17 @@ sub standoff {
 ##    sosdoc_stamp => $f,    ##-- (output) timestamp of operation end
 sub sosxml {
   my ($so,$doc) = @_;
+  $doc->setLogContext();
 
   ##-- log, stamp
-  $so->vlog($so->{traceLevel},"sosxml($doc->{xmlbase})");
+  $so->vlog($so->{traceLevel},"sosxml()");
   $doc->{sosxml_stamp0} = timestamp();
 
   ##-- sanity check(s)
   $so = $so->new() if (!ref($so));
-  $so->logconfess("sosxml($doc->{xmlbase}): could not compile XSL stylesheet(s)")
+  $so->logconfess("sosxml(): could not compile XSL stylesheet(s)")
     if (!$so->ensure_stylesheets());
-  $so->logconfess("sosxml($doc->{xmlbase}): no xtokdoc key defined")
+  $so->logconfess("sosxml(): no xtokdoc key defined")
     if (!$doc->{xtokdoc});
   my $xtdoc = $doc->{xtokdoc};
 
@@ -341,7 +343,7 @@ sub sosxml {
   $doc->{sosdoc} = $so->{t2s_stylesheet}->transform($xtdoc,
 						    xmlbase=>("'".basename($doc->{sowfile})."'"),
 						   )
-    or $so->logconfess("sosxml($doc->{xmlbase}): could not apply t2s_stylesheet: $!");
+    or $so->logconfess("sosxml(): could not apply t2s_stylesheet: $!");
 
   $doc->{sosxml_stamp} = $doc->{sosdoc_stamp} = timestamp(); ##-- stamp
 
@@ -360,16 +362,17 @@ sub sosxml {
 ##    sowdoc_stamp => $f,    ##-- (output) timestamp of operation end
 sub sowxml {
   my ($so,$doc) = @_;
+  $doc->setLogContext();
 
   ##-- log, stamp
-  $so->vlog($so->{traceLevel},"sowxml($doc->{xmlbase})");
+  $so->vlog($so->{traceLevel},"sowxml()");
   $doc->{sowxml_stamp0} = timestamp();
 
   ##-- sanity check(s)
   $so = $so->new() if (!ref($so));
-  $so->logconfess("sowxml($doc->{xmlbase}): could not compile XSL stylesheet(s)")
+  $so->logconfess("sowxml(): could not compile XSL stylesheet(s)")
     if (!$so->ensure_stylesheets());
-  $so->logconfess("sowxml($doc->{xmlbase}): no xtokdoc key defined")
+  $so->logconfess("sowxml(): no xtokdoc key defined")
     if (!$doc->{xtokdoc});
   my $xtdoc = $doc->{xtokdoc};
 
@@ -377,7 +380,7 @@ sub sowxml {
   $doc->{sowdoc} = $so->{t2w_stylesheet}->transform($xtdoc,
 						   xmlbase=>("'".$doc->{xmlbase}."'"),
 						  )
-    or $so->logconfess("sowxml($doc->{xmlbase}): could not apply t2w_stylesheet: $!");
+    or $so->logconfess("sowxml(): could not apply t2w_stylesheet: $!");
 
 
   $doc->{sowxml_stamp} = $doc->{sowdoc_stamp} = timestamp(); ##-- stamp
@@ -397,16 +400,17 @@ sub sowxml {
 ##    soadoc_stamp => $f,    ##-- (output) timestamp of operation end
 sub soaxml {
   my ($so,$doc) = @_;
+  $doc->setLogContext();
 
   ##-- log, stamp
-  $so->vlog($so->{traceLevel},"soaxml($doc->{xmlbase})");
+  $so->vlog($so->{traceLevel},"soaxml()");
   $doc->{soaxml_stamp0} = timestamp();
 
   ##-- sanity check(s)
   $so = $so->new() if (!ref($so));
-  $so->logconfess("soaxml($doc->{xmlbase}): could not compile XSL stylesheet(s)")
+  $so->logconfess("soaxml(): could not compile XSL stylesheet(s)")
     if (!$so->ensure_stylesheets());
-  $so->logconfess("soaxml($doc->{xmlbase}): no xtokdoc key defined")
+  $so->logconfess("soaxml(): no xtokdoc key defined")
     if (!$doc->{xtokdoc});
   my $xtdoc = $doc->{xtokdoc};
 
@@ -414,7 +418,7 @@ sub soaxml {
   $doc->{soadoc} = $so->{t2a_stylesheet}->transform($xtdoc,
 						   xmlbase=>("'".basename($doc->{sowfile})."'"),
 						  )
-    or $so->logconfess("soaxml($doc->{xmlbase}): could not apply t2a_stylesheet: $!");
+    or $so->logconfess("soaxml(): could not apply t2a_stylesheet: $!");
 
   $doc->{soaxml_stamp} = $doc->{soadoc_stamp} = timestamp(); ##-- stamp
 

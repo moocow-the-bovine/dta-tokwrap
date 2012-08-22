@@ -69,6 +69,7 @@ sub defaults {
 ## + may implicitly call $doc->mkbx() and/or $doc->saveTxtFile()
 sub tokenize {
   my ($ta,$doc) = @_;
+  $doc->setLogContext();
   $ta = $ta->new if (!ref($ta));
 
   if (!defined($ta->{tokz})) {

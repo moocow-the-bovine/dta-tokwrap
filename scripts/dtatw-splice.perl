@@ -238,11 +238,11 @@ our $xp_so = XML::Parser->new(
 					   Final => \&so_cb_final,
 					  },
 			     )
-  or die("$prog: couldn't create XML::Parser for standoff file");
+  or die("$prog: ERROR: couldn't create XML::Parser for standoff file");
 
 ##-- initialize output file(s)
 $outfh = IO::File->new(">$outfile")
-  or die("$prog: open failed for output file '$outfile': $!");
+  or die("$prog: ERROR: open failed for output file '$outfile': $!");
 
 ##-- load standoff data
 print STDERR "$prog: parsing standoff file '$sofile'...\n"
@@ -268,7 +268,7 @@ our $xp_base = XML::Parser->new(
 					     #Final   => \&base_cb_final,
 					    },
 			       )
-  or die("$prog: couldn't create XML::Parser for base file '$basefile'");
+  or die("$prog: ERROR: couldn't create XML::Parser for base file '$basefile'");
 
 $xp_base->parsefile($basefile);
 

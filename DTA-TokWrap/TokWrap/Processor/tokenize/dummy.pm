@@ -73,24 +73,25 @@ sub init {
 ## + may implicitly call $doc->mkbx() and/or $doc->saveTxtFile()
 sub tokenize {
   my ($td,$doc) = @_;
+  $doc->setLogContext();
 
   ##-- log, stamp
-  $td->vlog($td->{traceLevel},"tokenize($doc->{xmlbase})");
+  $td->vlog($td->{traceLevel},"tokenize()");
   $doc->{tokenize_stamp0} = timestamp();
 
   ##-- sanity check(s)
   $td = $td->new if (!ref($td));
-  $td->logconfess("tokenize($doc->{xmlbase}): no dtatw-tokenize-dummy program")
+  $td->logconfess("tokenize(): no dtatw-tokenize-dummy program")
     if (!$td->{tokenize});
-  $td->logconfess("tokenize($doc->{xmlbase}): no .txt file defined")
+  $td->logconfess("tokenize(): no .txt file defined")
     if (!defined($doc->{txtfile}));
-  $td->logconfess("tokenize($doc->{xmlbase}): .txt file '$doc->{txtfile}' not readable")
+  $td->logconfess("tokenize(): .txt file '$doc->{txtfile}' not readable")
     if (!-r $doc->{txtfile});
 
   ##-- run program
   $doc->{tokdata0} = '';
   my $cmdfh = opencmd("'$td->{tokenize}' '$doc->{txtfile}'|")
-    or $td->logconfess("tokenize($doc->{xmlbase}): open failed for pipe ('$td->{tokenize}' '$doc->{txtfile}' |): $!");
+    or $td->logconfess("tokenize(): open failed for pipe ('$td->{tokenize}' '$doc->{txtfile}' |): $!");
   slurp_fh($cmdfh, \$doc->{tokdata0});
   $cmdfh->close();
 

@@ -68,7 +68,7 @@ $infile = '-' if (!$infile);
 sub loadxml {
   my $xmlfile = shift;
   my $xdoc = $xmlfile eq '-' ? $parser->parse_fh(\*STDIN) : $parser->parse_file($xmlfile);
-  die("$prog: could not parse XML file '$xmlfile': $!") if (!$xdoc);
+  die("$prog: ERROR: could not parse XML file '$xmlfile': $!") if (!$xdoc);
   return $xdoc;
 }
 
@@ -167,7 +167,7 @@ sub ensure_xpath {
   my ($root,$xpspec,$val,$warn_if_missing) = @_;
   my ($elt,$isnew) = get_xpath($root, $xpspec);
   if ($isnew) {
-    warn("$prog: $basename: missing XPath ".unparse_xpath($xpspec)." defaults to \"".($val||'')."\"")
+    warn("$prog: $basename: WARNING: missing XPath ".unparse_xpath($xpspec)." defaults to \"".($val||'')."\"")
       if ($warn_if_missing && $verbose >= $vl_warn);
     $elt->appendText($val) if (defined($val));
     $elt->parentNode->insertAfter(XML::LibXML::Comment->new("/".$elt->nodeName.": added by $prog"), $elt);
@@ -186,7 +186,7 @@ $basename =~ s/\..*$//;
 my $hdoc = loadxml($infile);
 my $hroot = $hdoc->documentElement;
 if ($hroot->nodeName ne 'teiHeader') {
-  die("$prog: $infile ($basename): no //teiHeader element found")
+  die("$prog: $infile ($basename): ERROR: no //teiHeader element found")
     if (!defined($hroot=$hroot->findnodes('(//teiHeader)[1]')->[0]));
 }
 
@@ -201,10 +201,10 @@ my ($author);
 if ($author_nod && $author_nod->nodeName eq 'persName') {
   ##-- parse pre-formatted author node (old, pre-2012-07)
   $author = $author_nod->textContent;
-  warn("$prog: $basename: using obsolete author node ", $author_nod->nodePath);
+  warn("$prog: $basename: WARNING: using obsolete author node ", $author_nod->nodePath);
 }
 elsif ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttribute('n')||'') ne 'ddc') {
-  warn("$prog: $basename: formatting author node from ", $author_nod->nodePath) if ($verbose >= $vl_progress);
+  warn("$prog: $basename: WARNING: formatting author node from ", $author_nod->nodePath) if ($verbose >= $vl_progress);
   ##-- parse structured author node (new, 2012-07)
   my ($nnods,$first,$last,@other,$name);
   $author = join('; ',
@@ -234,7 +234,7 @@ elsif ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttr
 }
 if (!defined($author)) {
   ##-- guess author from basename
-  warn("$prog: $basename: missing author XPath(s) ", join('|', @author_xpaths)) if ($verbose >= $vl_warn);
+  warn("$prog: $basename: WARNING: missing author XPath(s) ", join('|', @author_xpaths)) if ($verbose >= $vl_warn);
   $author = ($basename =~ m/^([^_]+)_/ ? $1 : '');
   $author =~ s/\b([[:lower:]])/\U$1/g; ##-- implicitly upper-case
 }
@@ -253,7 +253,7 @@ my @date_xpaths = (
 my $date = xpgrepval($hroot,@date_xpaths);
 if (!$date) {
   $date = ($basename =~ m/^[^\.]*_([0-9]+)$/ ? $1 : 0);
-  warn("$prog: $basename: missing date XPath $date_xpaths[$#date_xpaths] defaults to \"$date\"") if ($verbose >= $vl_warn);
+  warn("$prog: $basename: WARNING: missing date XPath $date_xpaths[$#date_xpaths] defaults to \"$date\"") if ($verbose >= $vl_warn);
 }
 ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="orig"]/biblFull/publicationStmt/date[@type="first"]', $date); ##-- old (<2012-07)
 ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="ddc"]/biblFull/publicationStmt/date', $date);  ##-- new (>=2012-07)
@@ -268,7 +268,7 @@ my @bibl_xpaths = (
 my $bibl = xpgrepval($hroot,@bibl_xpaths);
 if (!defined($bibl)) {
   $bibl = "$author: $title. $date";
-  warn("$prog: $basename: missing bibl XPath(s) ".join('|',@bibl_xpaths)) if ($verbose >= $vl_warn);
+  warn("$prog: $basename: WARNING: missing bibl XPath(s) ".join('|',@bibl_xpaths)) if ($verbose >= $vl_warn);
 }
 ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="orig"]/bibl', $bibl); ##-- old (<2012-07)
 ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="ddc"]/bibl', $bibl); ##-- new (>=2012-07)
@@ -305,7 +305,7 @@ if (!$timestamp) {
 
 ##-- dump
 ($outfile eq '-' ? $hdoc->toFH(\*STDOUT,$format) : $hdoc->toFile($outfile,$format))
-  or die("$0: failed to write output file '$outfile': $!");
+  or die("$0: ERROR: failed to write output file '$outfile': $!");
 
 
 __END__

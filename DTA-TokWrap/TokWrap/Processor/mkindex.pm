@@ -73,20 +73,21 @@ sub init {
 ##    txfile_stamp   => $f, ##-- (output) timetamp of operation end
 sub mkindex {
   my ($mi,$doc) = @_;
+  $doc->setLogContext();
 
   ##-- log, stamp
-  $mi->vlog($mi->{traceLevel},"mkindex($doc->{xmlbase})");
+  $mi->vlog($mi->{traceLevel},"mkindex()");
   $doc->{mkindex_stamp0} = timestamp(); ##-- stamp
 
   ##-- sanity check(s)
   $mi = $mi->new if (!ref($mi));
-  $mi->logconfess("mkindex($doc->{xmlbase}): no dtatw-mkindex program") if (!$mi->{mkindex});
-  $mi->logconfess("mkindex($doc->{xmlbase}): XML source file not readable") if (!-r $doc->{xmlfile});
+  $mi->logconfess("mkindex(): no dtatw-mkindex program") if (!$mi->{mkindex});
+  $mi->logconfess("mkindex(): XML source file not readable") if (!-r $doc->{xmlfile});
 
   ##-- run program
   my $rc = runcmd($mi->{mkindex}, @$doc{qw(xmlfile cxfile sxfile txfile)});
-  $mi->logconfess(ref($mi)."::mkindex($doc->{xmlbase}) mkindex program failed: $!") if ($rc!=0);
-  $mi->logconfess(ref($mi)."::mkindex($doc->{xmlbase}) failed to create output file(s)")
+  $mi->logconfess(ref($mi)."::mkindex() mkindex program failed: $!") if ($rc!=0);
+  $mi->logconfess(ref($mi)."::mkindex() failed to create output file(s)")
     if ( ($doc->{cxfile} && !-e $doc->{cxfile})
 	 || ($doc->{sxfile} && !-e $doc->{sxfile})
 	 || ($doc->{txfile} && !-e $doc->{txfile}) );

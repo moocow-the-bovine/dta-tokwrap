@@ -109,6 +109,7 @@ if (!defined($cxmlfile) || $cxmlfile eq '') {
   pod2usage({-exitval=>0,-verbose=>0,-msg=>"$prog: could not guess CHR_XML_FILE for T_XML_FILE=$txmlfile"})
     if ($cxmlfile eq $txmlfile);
 }
+$prog  = "$prog: ".basename($cxmfile);
 
 ##-- sanity checks
 $do_page = 1 if ($do_bbox);
@@ -129,7 +130,7 @@ sub load_txml {
 
   ##-- load xml
   my $xdoc = $xmlfile eq '-' ? $parser->parse_fh(\*STDIN) : $parser->parse_file($xmlfile);
-  die("$prog: could not parse .t.xml file '$xmlfile': $!") if (!$xdoc);
+  die("$prog: ERROR: could not parse .t.xml file '$xmlfile': $!") if (!$xdoc);
 
   ##-- ... and just return here
   return $xdoc;
@@ -364,7 +365,7 @@ sub apply_ddc_attrs {
       $ynext = int($ynext+0.5);
 
       ##-- assign line-based bbox (if available)
-      warn("$0: could not guess bbox for formula <w> with id ", ($wnod->getAttribute('id')||'?'), " at $txmlfile line ", $wnod->line_number, "\n")
+      warn("$prog: WARNING: could not guess bbox for formula <w> with id ", ($wnod->getAttribute('id')||'?'), " at $txmlfile line ", $wnod->line_number, "\n")
 	if ($verbose >= $vl_warn && ($yprev<0 && $ynext<0));
 
       $wnod->setAttribute($bbox_attr, join('|', (-1,$yprev,-1,$ynext)));
@@ -407,7 +408,7 @@ sub apply_word {
     }
     else {
       ##-- complain if no id is present
-      warn("$0: //w node without \@id attribute at $txmlfile line ", $wnod->line_number, "\n")
+      warn("$prog: WARNING: //w node without \@id attribute at $txmlfile line ", $wnod->line_number, "\n")
 	if ($verbose >= $vl_warn);
     }
   }
@@ -420,10 +421,10 @@ sub apply_word {
     ##-- $wnod without a //c/@id list
     ##   + this happens e.g. for 'FORMEL' inserted via DTA::TokWrap::mkbx0 'hint_replace_xpaths'
     ##   + push these to @wnoc and try to fudge them in a second pass
-    warn("$0: no //c/\@id list for //w at $txmlfile line ", $wnod->line_number, "\n");
+    warn("$prog: WARNING: no //c/\@id list for //w at $txmlfile line ", $wnod->line_number, "\n");
   }
   elsif (!@cs) {
-    warn("$0: invalid //c/\@id list for //w at $txmlfile line ", $wnod->line_number, "\n")
+    warn("$prog: WARNING: invalid //c/\@id list for //w at $txmlfile line ", $wnod->line_number, "\n")
       if ($verbose >= $vl_warn);
   }
 
@@ -705,7 +706,7 @@ our $xp_cxml = XML::Parser->new(
 					     #Final   => \&cxml_cb_final,
 					    },
 			       )
-  or die("$prog: couldn't create XML::Parser for chr-xml file '$cxmlfile'");
+  or die("$prog: ERROR: couldn't create XML::Parser for chr-xml file '$cxmlfile'");
 $xp_cxml->parsefile($cxmlfile);
 
 ##-- grab .t.xml file into a libxml doc & pre-index some data
@@ -722,7 +723,7 @@ $xdoc = apply_ddc_attrs($xdoc);
 print STDERR "$prog: dumping output file '$outfile'...\n"
   if ($verbose>=$vl_progress);
 ($outfile eq '-' ? $xdoc->toFH(\*STDOUT,$format) : $xdoc->toFile($outfile,$format))
-  or die("$0: failed to write output file '$outfile': $!");
+  or die("$prog: ERROR: failed to write output file '$outfile': $!");
 
 
 

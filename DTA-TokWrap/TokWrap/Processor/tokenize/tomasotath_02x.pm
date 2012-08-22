@@ -99,19 +99,19 @@ sub tokenize {
 
   ##-- log, stamp
   $tz = $tz->new if (!ref($tz));
-  $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase})");
+  $tz->vlog($tz->{traceLevel},"tokenize()");
   $doc->{tokenize0_stamp0} = timestamp();
 
   ##-- sanity check(s)
-  $tz->logconfess("tokenize($doc->{xmlbase}): no dwds_tomasotath program found")
+  $tz->logconfess("tokenize(): no dwds_tomasotath program found")
     if (!$tz->{tomata2});
-  $tz->logconfess("tokenize($doc->{xmlbase}): no .txt file defined")
+  $tz->logconfess("tokenize(): no .txt file defined")
     if (!defined($doc->{txtfile}));
-  $tz->logconfess("tokenize($doc->{xmlbase}): .txt file '$doc->{txtfile}' not readable")
+  $tz->logconfess("tokenize(): .txt file '$doc->{txtfile}' not readable")
     if (!-r $doc->{txtfile});
 
   ##-- run program
-  $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase}): tomata2stderr=$tz->{tomata2stderr}");
+  $tz->vlog($tz->{traceLevel},"tokenize(): tomata2stderr=$tz->{tomata2stderr}");
   $doc->{tokdata0} = '';
   my $cmd = ("'$tz->{tomata2}'"
 	     .' '.join(' ',map {"'$_'"} @{$tz->{tomata2opts}})
@@ -119,7 +119,7 @@ sub tokenize {
 	     .($tz->{tomata2stderr} ? '' : ' 2>/dev/null')
 	    );
   my $cmdfh = opencmd("$cmd |")
-    or $tz->logconfess("tokenize($doc->{xmlbase}): open failed for pipe ($cmd |): $!");
+    or $tz->logconfess("tokenize(): open failed for pipe ($cmd |): $!");
   slurp_fh($cmdfh, \$doc->{tokdata0});
   $cmdfh->close();
 

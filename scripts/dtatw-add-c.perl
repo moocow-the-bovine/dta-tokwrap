@@ -103,7 +103,7 @@ sub cb_start {
   if ($_[1] eq 'c') {
     ##-- pre-existing <c>: respect it
     if ($c_depth > 0) {
-      $_[0]->xpcroak("$prog: cowardly refusing to process input document with nested <c> elements!\n"
+      $_[0]->xpcroak("$prog: ERROR: cowardly refusing to process input document with nested <c> elements!\n"
 		     ."$prog: in file '$infile'");
     }
     ++$c_depth;
@@ -154,7 +154,7 @@ $xp = XML::Parser->new(
 				    #Final => \&cb_final,
 				   },
 		      )
-  or die("$prog: couldn't create XML::Parser");
+  or die("$prog: ERROR: couldn't create XML::Parser");
 
 ##-- initialize: @ARGV
 push(@ARGV,'-') if (!@ARGV);
@@ -162,7 +162,7 @@ push(@ARGV,'-') if (!@ARGV);
 ##-- initialize output file(s)
 $outfile = '-' if (!defined($outfile));
 $outfh = IO::File->new(">$outfile")
-  or die("$prog: open failed for output file '$outfile': $!");
+  or die("$prog: ERROR: open failed for output file '$outfile': $!");
 
 ##-- initialize: profiling info
 $tv_started = [gettimeofday] if ($profile);
@@ -171,7 +171,7 @@ $tv_started = [gettimeofday] if ($profile);
 foreach $infile (@ARGV) {
   ##-- slurp input file
   local $/=undef;
-  open(XML,"<$infile") or die("$prog: open failed for input file '$infile': $!");
+  open(XML,"<$infile") or die("$prog: ERROR: open failed for input file '$infile': $!");
   $buf = <XML>;
   close XML;
 

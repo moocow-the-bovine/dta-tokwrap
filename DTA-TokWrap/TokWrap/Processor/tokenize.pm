@@ -70,6 +70,7 @@ sub new {
 ## + may implicitly call $doc->mkbx() and/or $doc->saveTxtFile()
 sub tokenize {
   my ($tz,$doc) = @_;
+  $doc->setLogContext();
   $tz->logconfess("tokenize(): abstract method called");
 }
 

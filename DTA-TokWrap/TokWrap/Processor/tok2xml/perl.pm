@@ -91,24 +91,25 @@ BEGIN { *process = \&tok2xml; }
 ## + may implicitly call $doc->mkbx(), $doc->loadCxFile(), $doc->tokenize()
 sub tok2xml {
   my ($t2x,$doc) = @_;
+  $doc->setLogContext();
 
   ##-- log, stamp
-  $t2x->vlog($t2x->{traceLevel},"tok2xml($doc->{xmlbase})");
+  $t2x->vlog($t2x->{traceLevel},"tok2xml()");
   $doc->{tok2xml_stamp0} = timestamp();
 
   ##-- sanity check(s)
   $t2x = $t2x->new() if (!ref($t2x));
   #$doc->mkbx() if (!$doc->{bxdata});
-  $t2x->logconfess("tok2xml($doc->{xmlbase}): no bxdata key defined")
+  $t2x->logconfess("tok2xml(): no bxdata key defined")
     if (!$doc->{bxdata});
   #$doc->loadCxFile() if (!$doc->{cxdata});
-  #$t2x->logconfess("tok2xml($doc->{xmlbase}): failed to load .cx data") if (!$doc->{cxdata});
-  $t2x->logconfess("tok2xml($doc->{xmlbase}): no cxdata key defined")
+  #$t2x->logconfess("tok2xml(): failed to load .cx data") if (!$doc->{cxdata});
+  $t2x->logconfess("tok2xml(): no cxdata key defined")
     if (!$doc->{cxdata});
-  $t2x->logconfess("tok2xml($doc->{xmlbase}): no tokdata key defined")
+  $t2x->logconfess("tok2xml(): no tokdata key defined")
     if (!defined($doc->{tokdata}));
   #$doc->tokenize() if (!defined($doc->{tokdata}));
-  #$t2x->logconfess("tok2xml($doc->{xmlbase}): no tokenizer output data")
+  #$t2x->logconfess("tok2xml(): no tokenizer output data")
 
   ##-- create $tb2ci, $ob2ci index vectors
   $t2x->txbyte_to_ci($doc->{cxdata});

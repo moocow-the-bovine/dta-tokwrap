@@ -120,26 +120,27 @@ sub standoff {
 sub soxml {
   my ($so,$doc,$X,$xmlbase) = @_;
   my $method = "so${X}xml";
+  $doc->setLogContext();
 
   ##-- log, stamp
-  $so->vlog($so->{traceLevel},"$method($doc->{xmlbase})");
+  $so->vlog($so->{traceLevel},"$method()");
   $doc->{"${method}_stamp0"} = timestamp();
 
   ##-- sanity check(s)
   $so = $so->new() if (!ref($so));
-  $so->logconfess("$method($doc->{xmlbase}): no document key 'xtokdata' defined")
+  $so->logconfess("$method(): no document key 'xtokdata' defined")
     if (!$doc->{xtokdata});
   my $t2x = $so->{"t2${X}"};
-  $so->logconfess("$method($doc->{xmlbase}): no processor key 't2${X}' defined!")
+  $so->logconfess("$method(): no processor key 't2${X}' defined!")
     if (!defined($t2x));
   my $sofile = $doc->{"so${X}file"};
-  $so->logconfess("$method($doc->{xmlbase}): no document key 'so${X}file' defined!")
+  $so->logconfess("$method(): no document key 'so${X}file' defined!")
     if (!defined($sofile));
 
   ##-- run command
   $xmlbase = $doc->{xmlbase} if (!defined($xmlbase));
   my $cmdfh = opencmd("| '$t2x' - '$sofile' '$xmlbase'")
-    or $so->logconfess("${method}($doc->{xmlbase}): open failed for pipe to '$t2x': $!");
+    or $so->logconfess("${method}(): open failed for pipe to '$t2x': $!");
   $cmdfh->print($doc->{xtokdata});
   $cmdfh->close();
 

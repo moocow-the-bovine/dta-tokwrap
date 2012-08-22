@@ -65,6 +65,7 @@ pod2usage({-exitval=>0,-verbose=>0}) if ($help);
 ##-- command-line: arguments
 our $txmlfile = shift;
 $txmlfile = '-' if (!$txmlfile);
+$prog = "$prog: ".basename($txmlfile);
 
 @fields = @fields_default if (!@fields);
 
@@ -76,7 +77,7 @@ $txmlfile = '-' if (!$txmlfile);
 sub loadxml {
   my $xmlfile = shift;
   my $xdoc = $xmlfile eq '-' ? $parser->parse_fh(\*STDIN) : $parser->parse_file($xmlfile);
-  die("$prog: could not parse XML file '$xmlfile': $!") if (!$xdoc);
+  die("$prog: ERROR: could not parse XML file '$xmlfile': $!") if (!$xdoc);
   return $xdoc;
 }
 

@@ -31,7 +31,7 @@ log4perl.PatternLayout.cspec.G = sub { return File::Basename::basename("$::0"); 
 log4perl.appender.AppStderr = Log::Log4perl::Appender::Screen
 log4perl.appender.AppStderr.stderr = 1
 log4perl.appender.AppStderr.layout = Log::Log4perl::Layout::PatternLayout
-log4perl.appender.AppStderr.layout.ConversionPattern = %d{yyyy-MM-dd hh:mm:ss} %G[%P] %p: %c: %m%n
+log4perl.appender.AppStderr.layout.ConversionPattern = %d{yyyy-MM-dd hh:mm:ss} %G[%P]: %X{xmlbase}: %p: %c: %m%n
   };
 
   ##-- default logging level

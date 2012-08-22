@@ -605,23 +605,24 @@ sub dump_sort_stylesheet {
 ##    bx0doc_stamp => $f,  ##-- (output) timestamp of operation end
 sub mkbx0 {
   my ($mbx0,$doc) = @_;
+  $doc->setLogContext();
 
   ##-- log, stamp
-  $mbx0->vlog($mbx0->{traceLevel},"mkbx0($doc->{xmlbase})");
+  $mbx0->vlog($mbx0->{traceLevel},"mkbx0()");
   $doc->{mkbx0_stamp0} = timestamp();
 
   ##-- sanity check(s): basic
   $mbx0 = $mbx0->new() if (!ref($mbx0));
-  $mbx0->logconfess("mkbx0($doc->{xmlbase}): no dtatw-rm-namespaces program")
+  $mbx0->logconfess("mkbx0(): no dtatw-rm-namespaces program")
     if (!$mbx0->{rmns});
-  $mbx0->logconfess("mbx0($doc->{xmlbase}): no .sx file defined")
+  $mbx0->logconfess("mbx0(): no .sx file defined")
     if (!$doc->{sxfile});
-  $mbx0->logconfess("mbx0($doc->{xmlbase}): .sx file unreadable: $!")
+  $mbx0->logconfess("mbx0(): .sx file unreadable: $!")
     if (!-r $doc->{sxfile});
 
   ##-- buffer sx file
   my $cmdfh = IO::File->new("'$mbx0->{rmns}' '$doc->{sxfile}'|")
-    or $mbx0->logconfess("mkbx0($doc->{xmlbase}): open failed for pipe from '$mbx0->{rmns}': $!");
+    or $mbx0->logconfess("mkbx0(): open failed for pipe from '$mbx0->{rmns}': $!");
   my $sxbuf = '';
   slurp_fh($cmdfh, \$sxbuf);
   $cmdfh->close();
@@ -629,14 +630,14 @@ sub mkbx0 {
   ##-- parse sx buffer
   my $xmlparser = libxml_parser(keep_blanks=>0);
   my $sxdoc = $xmlparser->parse_string($sxbuf)
-    or $mbx0->logconfess("mkbx0($doc->{xmlbase}): could not parse namespace-hacked .sx document '$doc->{sxfile}': $!");
+    or $mbx0->logconfess("mkbx0(): could not parse namespace-hacked .sx document '$doc->{sxfile}': $!");
 
   ##-- autotune?
   if ($mbx0->{hint_autotune}) {
     ##-- sanity checks: .tx
-    $mbx0->logconfess("mbx0($doc->{xmlbase}): no .tx file defined")
+    $mbx0->logconfess("mbx0(): no .tx file defined")
       if (!$doc->{txfile});
-    $mbx0->logconfess("mbx0($doc->{xmlbase}): .tx file unreadable: $!")
+    $mbx0->logconfess("mbx0(): .tx file unreadable: $!")
       if (!-r $doc->{txfile});
 
     $mbx0->hint_autotune(\$sxbuf,$doc->{txfile});
@@ -646,12 +647,12 @@ sub mkbx0 {
   $mbx0->sanitize_chains($sxdoc) if ($mbx0->{auto_prevnext});
 
   ##-- apply XSL stylesheets
-  $mbx0->logconfess("mkbx0($doc->{xmlbase}): could not compile XSL stylesheets")
+  $mbx0->logconfess("mkbx0(): could not compile XSL stylesheets")
     if (!$mbx0->ensure_stylesheets);
   $sxdoc = $mbx0->{hint_stylesheet}->transform($sxdoc)
-    or $mbx0->logconfess("mkbx0($doc->{xmlbase}): could not apply hint stylesheet to .sx document '$doc->{sxfile}': $!");
+    or $mbx0->logconfess("mkbx0(): could not apply hint stylesheet to .sx document '$doc->{sxfile}': $!");
   $sxdoc = $mbx0->{sort_stylesheet}->transform($sxdoc)
-    or $mbx0->logconfess("mkbx0($doc->{xmlfile}): could not apply sortkey stylesheet to .sx document '$doc->{sxfile}': $!");
+    or $mbx0->logconfess("mkbx0(): could not apply sortkey stylesheet to .sx document '$doc->{sxfile}': $!");
 
   ##-- adjust $doc
   $doc->{bx0doc} = $sxdoc;

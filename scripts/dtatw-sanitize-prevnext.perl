@@ -11,6 +11,8 @@ my $xmldoc    = ($xmlfile eq '-' ? $xmlparser->parse_fh(\*STDIN) : $xmlparser->p
 die("$0: load failed for XML file '$xmlfile': $!") if (!$xmldoc);
 
 DTA::TokWrap::Logger->ensureLog();
+Log::Log4perl::MDC->put('xmlbase'=>File::Basename::basename($xmlfile));
+
 my $mbx0 = DTA::TokWrap::Processor::mkbx0->new();
 $mbx0->sanitize_chains($xmldoc);
 $xmldoc->toFH(\*STDOUT,0);

@@ -72,31 +72,32 @@ sub init {
 ## + may implicitly call $doc->mkbx() and/or $doc->saveTxtFile()
 sub tokenize {
   my ($tz,$doc) = @_;
+  $doc->setLogContext();
 
   ##-- log, stamp
   $tz = $tz->new if (!ref($tz));
-  $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase})");
+  $tz->vlog($tz->{traceLevel},"tokenize()");
   $doc->{tokenize0_stamp0} = timestamp();
 
   ##-- sanity check(s)
-  $tz->logconfess("tokenize($doc->{xmlbase}): no LWP::UserAgent (ua) defined")
+  $tz->logconfess("tokenize(): no LWP::UserAgent (ua) defined")
     if (!$tz->{ua});
-  $tz->logconfess("tokenize($doc->{xmlbase}): no URL (serverurl) defined")
+  $tz->logconfess("tokenize(): no URL (serverurl) defined")
     if (!$tz->{serverurl});
-  $tz->logconfess("tokenize($doc->{xmlbase}): no query paramater (txtparm) defined")
+  $tz->logconfess("tokenize(): no query paramater (txtparm) defined")
     if (!$tz->{txtparam});
-  $tz->logconfess("tokenize($doc->{xmlbase}): no .txt file defined")
+  $tz->logconfess("tokenize(): no .txt file defined")
     if (!defined($doc->{txtfile}));
-  $tz->logconfess("tokenize($doc->{xmlbase}): .txt file '$doc->{txtfile}' not readable")
+  $tz->logconfess("tokenize(): .txt file '$doc->{txtfile}' not readable")
     if (!-r $doc->{txtfile});
 
   ##-- post the tokenization request
-  $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase}): url=$tz->{serverurl}?$tz->{txtparam}=...");
+  $tz->vlog($tz->{traceLevel},"tokenize(): url=$tz->{serverurl}?$tz->{txtparam}=...");
   $doc->{tokdata0} = '';
   slurp_file($doc->{txtfile},\$doc->{txtdata}) if (!defined($doc->{txtdata}));
   my $rsp = $tz->{ua}->post($tz->{serverurl}, { $tz->{txtparam}=>$doc->{txtdata} });
-  $tz->vlog($tz->{traceLevel},"tokenize($doc->{xmlbase}): response: ", $rsp ? $rsp->status_line : '(no response)');
-  $tz->logconfess("tokenize($doc->{xmlbase}): error from server $tz->{serverurl}: ", ($rsp ? $rsp->as_string : '(no response)'))
+  $tz->vlog($tz->{traceLevel},"tokenize(): response: ", $rsp ? $rsp->status_line : '(no response)');
+  $tz->logconfess("tokenize(): error from server $tz->{serverurl}: ", ($rsp ? $rsp->as_string : '(no response)'))
     if (!$rsp || !$rsp->is_success);
 
   ##-- finalize

@@ -217,20 +217,21 @@ sub initXmlParser {
 ##   )
 sub mkbx {
   my ($mbx,$doc) = @_;
+  $doc->setLogContext(),
 
   ##-- log, stamp
-  $mbx->vlog($mbx->{traceLevel},"mkbx($doc->{xmlfile})");
+  $mbx->vlog($mbx->{traceLevel},"mkbx()");
   $doc->{mkbx_stamp0} = timestamp();
 
   ##-- sanity check(s)
   $mbx = $mbx->new() if (!ref($mbx));
   #$doc->mkbx0() if (!$doc->{bx0doc});
-  $mbx->logconfess("mkbx($doc->{xmlbase}): no bx0doc key defined")
+  $mbx->logconfess("mkbx(): no bx0doc key defined")
     if (!$doc->{bx0doc});
-  $mbx->logconfess("mkbx($doc->{xmlbase}): no .tx file defined")
+  $mbx->logconfess("mkbx(): no .tx file defined")
     if (!$doc->{txfile});
   #$doc->mkindex() if (!-r $doc->{txfile});
-  confess(ref($mbx), "::mkbx0($doc->{xmlfile}): .tx file '$doc->{txfile}' not readable")
+  confess(ref($mbx), "::mkbx0(): .tx file '$doc->{txfile}' not readable")
     if (!-r $doc->{txfile});
 
   ##-- parse bx0doc

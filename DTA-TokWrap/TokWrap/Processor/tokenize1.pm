@@ -64,10 +64,11 @@ sub init {
 ## + may implicitly call $doc->tokenize()
 sub tokenize1 {
   my ($tp,$doc) = @_;
+  $doc->setLogContext();
 
   ##-- log, stamp
   $tp = $tp->new if (!ref($tp));
-  $tp->vlog($tp->{traceLevel},"tokenize1($doc->{xmlbase}): fixtok=".($tp->{fixtok} ? 1 : 0));
+  $tp->vlog($tp->{traceLevel},"tokenize1(): fixtok=".($tp->{fixtok} ? 1 : 0));
   $doc->{tokenize1_stamp0} = timestamp();
 
   ##-- sanity check(s)
@@ -77,7 +78,7 @@ sub tokenize1 {
   my $tdata0r = \$doc->{tokdata0};
   if (!defined($$tdata0r)) {
     $tdata0r = $doc->loadTokFile0()
-      or $tp->logconfess("tokenize1($doc->{xmlbase}: could not load raw tokenizer data (*.t0)");
+      or $tp->logconfess("tokenize1(): could not load raw tokenizer data (*.t0)");
   }
 
   ##-- auto-fix?

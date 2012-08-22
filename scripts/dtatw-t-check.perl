@@ -2,8 +2,10 @@
 
 use bytes;
 use Getopt::Long ':config'=>'no_ignore_case';
+use File::Basename qw(basename);
 
 our ($help);
+our $prog = basename($0);
 our $verbose = 1;
 our $max_warnings = 10;
 GetOptions(
@@ -15,7 +17,7 @@ GetOptions(
 if (!@ARGV || $help) {
   print STDERR
     ("\n",
-     "Usage: $0 [OPTION(s)...] TT_FILE [TXT_FILE]\n",
+     "Usage: $prog \[OPTION(s)...] TT_FILE [TXT_FILE]\n",
      "\n",
      "Options:\n",
      "  -help         ##-- this help message\n",
@@ -25,17 +27,18 @@ if (!@ARGV || $help) {
     );
   exit 1;
 }
-$ttfile = shift;
-$txtfile = shift;
+our $ttfile = shift;
+our $txtfile = shift;
 if (!$txtfile) {
   ($txtfile=$ttfile)=~s/\.t[t0-9]*$//;
   $txtfile .= '.txt';
 }
+our $ttbase = File::Basename::basename($ttfile);
 
 ##-- buffer txtfile
 {
   local $/=undef;
-  open(TXT,"<$txtfile") or die("$0: open failed for '$txtfile': $!");
+  open(TXT,"<$txtfile") or die("$prog: $ttfile: ERROR: open failed for '$txtfile': $!");
   binmode(TXT);
   $txtbuf = <TXT>;
   close(TXT);
@@ -43,12 +46,12 @@ if (!$txtfile) {
 
 my $warned=0;
 sub tokwarn {
-  warn(@_);
+  warn("$prog: $ttbase: ", @_);
   ++$warned;
 }
 
 ##-- process .t file
-open(TT,"<$ttfile") or die("$0: open failed for '$ttfile': $!");
+open(TT,"<$ttfile") or die("$0: $ttfile: ERROR: open failed for '$ttfile': $!");
 my ($text,$pos,$rest, $off,$len, $buftext);
 while (<TT>) {
   chomp;
@@ -56,14 +59,14 @@ while (<TT>) {
   ($text,$pos,$rest)=split(/\t/,$_,3);
   $toklabel = "token '$text\t$pos".($rest ? "\t$rest" : '')."' at $ttfile line $.";
   if (!defined($pos)) {
-    tokwarn("$0: no position defined for $toklabel\n");
+    tokwarn("no position defined for $toklabel\n");
     next;
   }
 
   ##-- parse offset, length
   ($off,$len) = split(' ',$pos,2);
   if ($off+$len > length($txtbuf)) {
-    tokwarn("$0: token offset+length=", ($off+$len), " > buffer length=", length($txtbuf), " for $toklabel\n");
+    tokwarn("token offset+length=", ($off+$len), " > buffer length=", length($txtbuf), " for $toklabel\n");
     next;
   }
 
@@ -71,18 +74,18 @@ while (<TT>) {
   $buftext = substr($txtbuf, $off,$len);
   $tokre   = join('', map {($_ eq '_' ? '[_\s]' : "\Q$_\E")."(?:(?:[ \n\r\t\-]|(?:¬)|(?:—)|(?:–))*)"} split(//,$text));
   if ($buftext !~ $tokre) {
-    tokwarn("$0: buffer text='$buftext' doesn't match token text for $toklabel\n");
+    tokwarn("buffer text='$buftext' doesn't match token text for $toklabel\n");
   }
 
   ##-- check max warnings?
   if ($warned >= $max_warnings) {
-    warn("$0: waximum number of warnings ($max_warnings) emitted -- bailing out");
+    warn("$prog: WARNING: waximum number of warnings ($max_warnings) emitted -- bailing out");
     last;
   }
 }
 
 ##-- final report & exit
 if ($warned || $verbose >= 1) {
-  print "$0: $ttfile -> $txtfile : ", ($warned ? "NOT ok ($warned warnings)" : "ok"), "\n";
+  print "$prog: $ttfile -> $txtfile : ", ($warned ? "NOT ok ($warned warnings)" : "ok"), "\n";
 }
 exit $warned;

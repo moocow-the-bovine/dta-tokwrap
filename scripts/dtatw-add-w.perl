@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/bin/perl -w
 
 use IO::File;
 use XML::Parser;
@@ -60,6 +60,7 @@ our ($srcfile, $sofile) = @ARGV;
 if (!defined($sofile)) {
   ($sofile = $srcfile) =~ s/\.xml$/${soInfix}.xml/i;
 }
+our $base = File::Basename::basename($srcfile);
 
 ##======================================================================
 ## Subs: source xml file: .char.xml
@@ -74,7 +75,7 @@ sub bufferSrcFile {
     $bufr = \$buf;
   }
   open(SRC,"<$file")
-    or die("$prog: open failed for source file '$file': $!");
+    or die("$prog: $base: ERROR: open failed for source file '$file': $!");
   binmode(SRC);
   local $/=undef;
   $$bufr = <SRC>;
@@ -242,15 +243,12 @@ $xp_so = XML::Parser->new(
 					 #Final => \&so_cb_final,
 					},
 			   )
-  or die("$prog: couldn't create XML::Parser for standoff .w.xml file");
-
-##-- initialize: @ARGV
-push(@ARGV,'-') if (!@ARGV);
+  or die("$prog: $base: ERROR: couldn't create XML::Parser for standoff .w.xml file");
 
 ##-- initialize output file(s)
 $outfile = '-' if (!defined($outfile));
 our $outfh = IO::File->new(">$outfile")
-  or die("$prog: open failed for output file '$outfile': $!");
+  or die("$prog: $base: ERROR: open failed for output file '$outfile': $!");
 
 ##-- load standoff (.w.xml) records: @w_ids, %cid2wid
 print STDERR "$prog: parsing standoff ${soInfix}.xml file '$sofile'...\n"
@@ -283,7 +281,7 @@ $xp_src2segs = XML::Parser->new(
 					   Final   => \&src2segs_cb_final,
 					  },
 			     )
-  or die("$prog: couldn't create XML::Parser for ${srcInfix}.xml <w>-segmentation");
+  or die("$prog: $base: ERROR: couldn't create XML::Parser for ${srcInfix}.xml <w>-segmentation");
 $xp_src2segs->parse($srcbuf);
 print STDERR ("$prog: found ", scalar(@w_segs0), " preliminary segments for ", scalar(@w_ids), " tokens\n")
   if ($verbose>=$vl_progress);
