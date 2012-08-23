@@ -240,6 +240,7 @@ install_cab_misc = yes
 ## DDC_ATTRS
 ##  + command-line options for dtatw-get-ddc-attrs.perl
 #DDC_ATTRS ?= -formula-text='[Formel]'
+DDC_ATTRS ?= -formula-text="[Formel]" -nokeep-c -nokeep-b -v=1
 
 
 ##======================================================================

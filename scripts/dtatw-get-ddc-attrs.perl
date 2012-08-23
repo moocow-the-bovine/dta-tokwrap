@@ -69,6 +69,8 @@ our $verbose = $vl_progress;     ##-- print progress messages by default
 
 ##-- warnings: specific options
 our $warn_on_empty_cids = 1;     ##-- warn on empty //w/@c id-list attribute in txmlfile?
+our $warn_on_bad_page   = 1;     ##-- warn on bad //w/@pb attribute?
+our %n_warnings = qw();
 
 ##------------------------------------------------------------------------------
 ## Command-line
@@ -213,7 +215,7 @@ sub cxml_cb_init {
 
 our (%_attrs,%_c);
 our ($facs,$rendition,$xcontext);
-our ($cid,$cn);
+our ($cid,$cn,$pn);
 
 our %xcontext_elts = (map {($_=>$_)}
 		      qw(text front body back head left foot end argument hi cit fw lg stage speaker formula table)
@@ -265,7 +267,18 @@ sub cxml_cb_start {
   }
   elsif ($do_page && $_[1] eq 'pb') {
     ##-- page break
-    ($page=$facs) =~ s/^\#?f?0*(?=.)// if (defined($facs=$_attrs{'facs'}));
+    ++$pn;
+    if (defined($facs=$_attrs{'facs'})) {
+      no warnings 'numeric';
+      ($page=$facs) =~ s/^\#?f?0*(?=.)//;
+      if (($page+0) ne $page) {
+	warn("$prog: WARNING: invalid \@facs=\"$facs\" in <pb> at $cxmlfile line ", $_[0]->current_line, ", column ", $_[0]->current_column);
+	$page = $page+0;
+      }
+    } else {
+      warn("$prog: WARNING: no \@facs attribute for ${pn}-th <pb> at $cxmlfile line ", $_[0]->current_line, ", column ", $_[0]->current_column);
+      $page = $pn;
+    }
     $line = 1;
   }
   elsif ($do_line && $_[1] eq 'lb') {
@@ -418,7 +431,7 @@ sub apply_word {
   $cids = $wnod->getAttribute('c') || $wnod->getAttribute('cs') || '' if (!defined($cids));
   @cids = ref($cids) ? @$cids : cidlist($cids);
   @cs   = map {c_unpack($_)} @cn2packed[grep {defined($_)} @cid2cn{@cids}];
-  if (!@cids && $warn_on_empty_cids && $verbose >= $vl_warn) {
+  if (!@cids && $warn_on_empty_cids && $verbose >= $vl_warn && ++$n_warnings{empty_cids}<=10) {
     ##-- $wnod without a //c/@id list
     ##   + this happens e.g. for 'FORMEL' inserted via DTA::TokWrap::mkbx0 'hint_replace_xpaths'
     ##   + push these to @wnoc and try to fudge them in a second pass
@@ -499,6 +512,8 @@ sub apply_word {
     $wpage = @cs ? $cs[0]{pb} : undef;
     $wpage = -1 if (!defined($wpage) || $wpage eq '');
     $wnod->setAttribute($page_attr, $wpage);
+    warn("$prog: WARNING: invalid \@pb=-1 for //w#$wid at $txmlfile line ", $wnod->line_number, "\n")
+      if ($wpage==-1 && $verbose >= $vl_warn && $warn_on_bad_page && ++$n_warnings{page}<=10);
   }
 
   ##-- compute & assign: line (undef -> -1; non-empty @cids only)
