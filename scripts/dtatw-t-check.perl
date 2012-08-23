@@ -84,12 +84,14 @@ while (<TT>) {
   $buftext = substr($txtbuf, $off,$len);
   $tokre   = join('', map {($_ eq '_' ? '[_\s]' : "\Q$_\E")."(?:(?:[ \n\r\t\-]|(?:¬)|(?:—)|(?:–))*)"} split(//,$text));
   if ($buftext !~ $tokre) {
-    tokwarn("buffer text='$buftext' doesn't match token text for $toklabel\n");
+    $buftext =~ s/\n/\\n/g;
+    $buftext =~ s/\r/\\r/g;
+    tokwarn("buffer text=\"$buftext\" doesn't match token text for $toklabel\n");
   }
 
   ##-- check max warnings?
   if ($warned >= $max_warnings) {
-    warn("$prog: WARNING: waximum number of warnings ($max_warnings) emitted -- bailing out");
+    warn("$prog: $ttbase: WARNING: waximum number of warnings ($max_warnings) emitted -- bailing out");
     last;
   }
 }
