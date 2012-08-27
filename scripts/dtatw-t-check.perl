@@ -91,7 +91,7 @@ while (<TT>) {
 
   ##-- check max warnings?
   if ($warned >= $max_warnings) {
-    warn("$prog: $ttbase: WARNING: waximum number of warnings ($max_warnings) emitted -- bailing out");
+    warn("$prog: $ttbase: WARNING: maximum number of warnings ($max_warnings) emitted -- bailing out");
     last;
   }
 }
