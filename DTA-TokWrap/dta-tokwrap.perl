@@ -279,6 +279,7 @@ our $tw = DTA::TokWrap->new(%twopts)
 
 ##-- debug: dump XSL?
 if (defined($dump_xsl_prefix)) {
+  $tw->{mkbx0}->dump_chain_stylesheet($dump_xsl_prefix."mkbx0_chain.xsl");
   $tw->{mkbx0}->dump_hint_stylesheet($dump_xsl_prefix."mkbx0_hint.xsl");
   $tw->{mkbx0}->dump_sort_stylesheet($dump_xsl_prefix."mkbx0_sort.xsl");
   $tw->{standoff}->dump_t2s_stylesheet($dump_xsl_prefix."standoff_t2s.xsl");

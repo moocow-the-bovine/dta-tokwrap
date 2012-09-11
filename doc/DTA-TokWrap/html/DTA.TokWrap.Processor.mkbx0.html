@@ -59,6 +59,7 @@
  
  ##-- debugging
  $mbx0_or_undef = $mbx0-&gt;ensure_stylesheets();
+ $mbx0-&gt;dump_chain_stylesheet($filename_or_fh);
  $mbx0-&gt;dump_hint_stylesheet($filename_or_fh);
  $mbx0-&gt;dump_sort_stylesheet($filename_or_fh);</pre>
 <p>
@@ -101,6 +102,12 @@ inherits from
  ##-- Programs
  rmns    =&gt; $path_to_xml_rm_namespaces, ##-- default: search
  inplace =&gt; $bool,                      ##-- prefer in-place programs for search?
+ auto_xmlid =&gt; $bool,                   ##-- if true (default), @id attributes will be mapped to @xml:id
+ auto_prevnext =&gt; $bool,                ##-- if true (default), @prev|@next chains will be auto-sanitized
+ ##
+ ##-- Styleheet: chain-serialization
+ chain_stylestr  =&gt; $stylestr,          ##-- xsl stylesheet string for chain-serialization
+ chain_styleheet =&gt; $stylesheet,        ##-- compiled xsl stylesheet for chain-serialization
  ##
  ##-- Styleheet: insert-hints (&lt;seg&gt; elements and their children are handled implicitly)
  hint_sb_xpaths =&gt; \@xpaths,            ##-- add sentence-break hint (&lt;s/&gt;) for @xpath element open &amp; close
@@ -160,6 +167,13 @@ into the input *.sx document.</p>
 <p>Returns XSL stylesheet string for the 'generate-sort-keys' transformation,
 which is responsible for inserting top-level serialization-segment keys
 into the input *.sx document.</p>
+</dd>
+<dt><strong><a name="dump_chain_stylesheet" class="item">dump_chain_stylesheet</a></strong></dt>
+
+<dd>
+<pre>
+ $mbx0-&gt;dump_chain_stylesheet($filename_or_fh);</pre>
+<p>Dumps the generated 'serialize-chains' stylesheet to $filename_or_fh.</p>
 </dd>
 <dt><strong><a name="dump_hint_stylesheet" class="item">dump_hint_stylesheet</a></strong></dt>
 

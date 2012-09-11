@@ -66,7 +66,12 @@ our $AUTOTUNE_MAX_SP_PER_P = 0.5; ##-- 50%
 ##     ##-- Programs
 ##     rmns    => $path_to_xml_rm_namespaces, ##-- default: search
 ##     inplace => $bool,                      ##-- prefer in-place programs for search?
+##     auto_xmlid => $bool,                   ##-- if true (default), @id attributes will be mapped to @xml:id
 ##     auto_prevnext => $bool,                ##-- if true (default), @prev|@next chains will be auto-sanitized
+##     ##
+##     ##-- Styleheet: chain-serialization
+##     chain_stylestr  => $stylestr,          ##-- xsl stylesheet string for chain-serialization
+##     chain_styleheet => $stylesheet,        ##-- compiled xsl stylesheet for chain-serialization
 ##     ##
 ##     ##-- Styleheet: insert-hints (<seg> elements and their children are handled implicitly)
 ##     hint_autotune  => $bool,               ##-- use empirical heuristics to hack hint xpaths? (default=true)
@@ -94,7 +99,12 @@ sub defaults {
 	  ##-- programs
 	  rmns   =>undef,
 	  inplace=>1,
+	  auto_xmlid => 1,
 	  auto_prevnext => 1,
+
+	  ##-- stylesheet: chain-serialization
+	  chain_stylestr=>undef,
+	  chain_stylesheet=>undef,
 
 	  ##-- stylesheet: insert-hints
 	  hint_autotune  => 1,
@@ -207,13 +217,10 @@ sub init {
 			   );
   }
 
-  ##-- create stylesheet strings
+  ##-- create stylesheet strings (see method ensure_stylesheets() for compilation)
+  $mbx0->{chain_stylestr}  = $mbx0->chain_stylestr() if (!$mbx0->{chain_stylestr});
   $mbx0->{hint_stylestr}   = $mbx0->hint_stylestr() if (!$mbx0->{hint_stylestr});
   $mbx0->{sort_stylestr}   = $mbx0->sort_stylestr() if (!$mbx0->{sort_stylestr});
-
-  ##-- compile stylesheets
-  #$mbx0->{hint_stylesheet} = xsl_stylesheet(string=>$mbx0->{hint_stylestr}) if (!$mbx0->{hint_stylesheet});
-  #$mbx0->{sort_stylesheet} = xsl_stylesheet(string=>$mbx0->{sort_stylestr}) if (!$mbx0->{sort_stylesheet});
 
   return $mbx0;
 }
@@ -229,9 +236,71 @@ sub init {
 ## $mbx0_or_undef = $mbx0->ensure_stylesheets()
 sub ensure_stylesheets {
   my $mbx0 = shift;
-  $mbx0->{hint_stylesheet} = xsl_stylesheet(string=>$mbx0->{hint_stylestr}) if (!$mbx0->{hint_stylesheet});
-  $mbx0->{sort_stylesheet} = xsl_stylesheet(string=>$mbx0->{sort_stylestr}) if (!$mbx0->{sort_stylesheet});
+  $mbx0->{chain_stylesheet} = xsl_stylesheet(string=>$mbx0->{chain_stylestr}) if (!$mbx0->{chain_stylesheet});
+  $mbx0->{hint_stylesheet}  = xsl_stylesheet(string=>$mbx0->{hint_stylestr})  if (!$mbx0->{hint_stylesheet});
+  $mbx0->{sort_stylesheet}  = xsl_stylesheet(string=>$mbx0->{sort_stylestr})  if (!$mbx0->{sort_stylesheet});
   return $mbx0;
+}
+
+##--------------------------------------------------------------
+## Methods: XSL stylesheets: serialize-chains
+sub chain_stylestr {
+  my $mbx0 = shift;
+  return '<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+  <xsl:output method="xml" version="1.0" indent="no" encoding="UTF-8"/>
+
+  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+  <!-- template: root: traverse -->
+  <xsl:template match="/*" priority="100">
+    <xsl:copy>
+      <xsl:apply-templates select="*|@*|comment()|processing-instruction()"/>
+    </xsl:copy>
+  </xsl:template>
+
+  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+  <!-- templates: chains: @prev|@next (priority=20) -->
+
+  <xsl:template match="*[@next and not(@prev)]" priority="20">
+    <xsl:copy>
+      <xsl:apply-templates select="*|@*|comment()|processing-instruction()"/>
+      <xsl:call-template name="chain.next">
+	<xsl:with-param name="nextid" select="@next"/>
+      </xsl:call-template>
+    </xsl:copy>
+  </xsl:template>
+
+  <xsl:template match="*[@prev]" priority="20">
+    <!-- content of these elements should get pulled in by named template "chain.next" -->
+    <xsl:comment><xsl:value-of select="local-name()"/>#<xsl:value-of select="@xml:id"/> content serialized with #<xsl:value-of select="@prev"/></xsl:comment>
+  </xsl:template>
+
+  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+  <!-- templates: NAMED: chain.next -->
+
+  <xsl:template name="chain.next">
+    <xsl:param name="nextid" select="./@next"/>
+    <xsl:if test="$nextid">
+      <xsl:variable name="nextnod" select="id($nextid)"/>
+      <lb/>
+      <xsl:apply-templates select="$nextnod/*"/>
+      <xsl:call-template name="chain.next">
+	<xsl:with-param name="nextid" select="$nextnod/@next"/>
+      </xsl:call-template>
+    </xsl:if>
+  </xsl:template>
+
+  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+  <!-- templates: DEFAULT: copy -->
+  <xsl:template match="*|@*|comment()|processing-instruction()" priority="-1">
+    <xsl:copy>
+      <xsl:apply-templates select="*|@*|comment()|processing-instruction()"/>
+    </xsl:copy>
+  </xsl:template>
+
+</xsl:stylesheet>
+';
 }
 
 ##--------------------------------------------------------------
@@ -247,7 +316,7 @@ sub hint_stylestr {
   <!-- template: root: traverse -->
   <xsl:template match="/*" priority="100">
     <xsl:copy>
-      <xsl:apply-templates select="*|@*"/>
+      <xsl:apply-templates select="*|@*|comment()|processing-instruction()"/>
     </xsl:copy>
   </xsl:template>
 
@@ -270,9 +339,9 @@ sub hint_stylestr {
     <ws/>
     <xsl:copy>
       <xsl:apply-templates select=\"@*\"/>
-      <xsl:if test=\"not(./\@prev)\"><s/></xsl:if>
-      <xsl:apply-templates select=\"*\"/>
-      <xsl:if test=\"not(./\@next)\"><s/></xsl:if>
+      <s/>
+      <xsl:apply-templates select=\"*|comment()|processing-instruction()\"/>
+      <s/>
     </xsl:copy>
   </xsl:template>\n"
 							 } @{$mbx0->{hint_sb_xpaths}}).'
@@ -285,7 +354,7 @@ sub hint_stylestr {
     <xsl:copy>
       <xsl:apply-templates select=\"@*\"/>
       <w/>
-      <xsl:apply-templates select=\"*\"/>
+      <xsl:apply-templates select=\"*|comment()|processing-instruction()\"/>
       <w/>
     </xsl:copy>
   </xsl:template>\n"
@@ -297,71 +366,27 @@ sub hint_stylestr {
   <xsl:template match=\"$_\">
     <ws/>
     <xsl:copy>
-      <xsl:apply-templates select=\"@*|*\"/>
+      <xsl:apply-templates select=\"@*|*|comment()|processing-instruction()\"/>
       <lb/>
     </xsl:copy>
   </xsl:template>\n"
 							 } @{$mbx0->{hint_lb_xpaths}}).'
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: OTHER: @prev|@next (priority=20) -->
-
-  <xsl:template match="*[@next and not(@prev)]" priority="20">
-    <xsl:copy>
-      <xsl:apply-templates select="*|@*"/>
-      <xsl:call-template name="chain.next">
-	<xsl:with-param name="nextid" select="@next"/>
-      </xsl:call-template>
-    </xsl:copy>
-  </xsl:template>
-
-  <xsl:template match="*[@prev]" priority="20">
-    <!-- ignore by default: these should get pulled in by named template "chain.next" -->
-  </xsl:template>
-
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: NAMED: chain.next -->
-
-  <xsl:template name="chain.next">
-    <xsl:param name="nextid" select="./@next"/>
-    <xsl:if test="$nextid">
-      <xsl:variable name="nextnod" select="id($nextid)"/>
-      <ws/>
-      <xsl:apply-templates select="$nextnod/*"/>
-      <xsl:call-template name="chain.next">
-	<xsl:with-param name="nextid" select="$nextnod/@next"/>
-      </xsl:call-template>
-    </xsl:if>
-  </xsl:template>
-
-  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: OTHER: seg (priority=10) -->
+  <!-- templates: explicitly segmented material (should be encoded as @prev|@next chains) -->
   <xsl:template match="seg[@part=\'I\']" priority="10">
     <ws/>
     <xsl:copy>
       <xsl:apply-templates select="@*"/>
       <s/>
-      <xsl:apply-templates select="*"/>
-      <lb/>
-    </xsl:copy>
-  </xsl:template>
-
-  <!-- seg[@part=\'M\'] is handled by defaults -->
-
-  <xsl:template match="seg[@part=\'F\']" priority="10">
-    <ws/>
-    <xsl:copy>
-      <xsl:apply-templates select="*|@*"/>
+      <xsl:apply-templates select="*|comment()|processing-instruction()"/>
       <s/>
-      <lb/>
     </xsl:copy>
   </xsl:template>
 
-  <!-- avoid implicit breaks for explicitly segmented material -->
-  <xsl:template match="seg/*|seg/@*" priority="10">
+  <xsl:template match="*[parent::seg]" priority="10">
     <xsl:copy>
-      <xsl:apply-templates select="*|@*"/>
+      <xsl:apply-templates select="@*|*|comment()|processing-instruction()"/>
     </xsl:copy>
   </xsl:template>
 
@@ -381,9 +406,9 @@ sub hint_stylestr {
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- templates: DEFAULT: copy -->
-  <xsl:template match="*|@*" priority="-1">
+  <xsl:template match="*|@*|comment()|processing-instruction()" priority="-1">
     <xsl:copy>
-      <xsl:apply-templates select="*|@*"/>
+      <xsl:apply-templates select="*|@*|comment()|processing-instruction()"/>
     </xsl:copy>
   </xsl:template>
 
@@ -407,7 +432,7 @@ sub sort_stylestr {
   <xsl:template match="/*">
     <xsl:copy>
       <xsl:attribute name="'.$keyName.'"><xsl:call-template name="generate-key"/></xsl:attribute>
-      <xsl:apply-templates select="*|@*"/>
+      <xsl:apply-templates select="*|@*|comment()|processing-instruction()"/>
     </xsl:copy>
   </xsl:template>
 
@@ -418,12 +443,12 @@ sub sort_stylestr {
 	 (map {"<xsl:template match=\"$_\" priority=\"100\"/>"} @{$mbx0->{sort_ignore_xpaths}})).'
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-  <!-- templates: seg (priority=10) -->
+  <!-- templates: seg (priority=10) [should be obsolete] -->
 
   <xsl:template match="seg[@part=\'I\']" priority="10">
     <xsl:copy>
       <xsl:attribute name="'.$keyName.'"><xsl:call-template name="generate-key"/></xsl:attribute>
-      <xsl:apply-templates select="*|@*"/>
+      <xsl:apply-templates select="*|@*|comment()|processing-instruction()"/>
     </xsl:copy>
   </xsl:template>
 
@@ -431,7 +456,7 @@ sub sort_stylestr {
     <xsl:variable name="keyNode" select="preceding::seg[@part=\'I\'][1]"/>
     <xsl:copy>
       <xsl:attribute name="'.$keyName.'"><xsl:call-template name="generate-key"><xsl:with-param name="node" select="$keyNode"/></xsl:call-template></xsl:attribute>
-      <xsl:apply-templates select="*|@*"/>
+      <xsl:apply-templates select="*|@*|comment()|processing-instruction()"/>
     </xsl:copy>
   </xsl:template>
 
@@ -442,7 +467,7 @@ sub sort_stylestr {
   <xsl:template match=\"$_\">
     <xsl:copy>
       <xsl:attribute name=\"$keyName\"><xsl:call-template name=\"generate-key\"/></xsl:attribute>
-      <xsl:apply-templates select=\"*|@*\"/>
+      <xsl:apply-templates select=\"*|@*|comment()|processing-instruction()\"/>
     </xsl:copy>
   </xsl:template>\n"
 						  } @{$mbx0->{sort_addkey_xpaths}}).'
@@ -450,9 +475,9 @@ sub sort_stylestr {
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <!-- template: DEFAULT: copy -->
 
-  <xsl:template match="*|@*" priority="-1">
+  <xsl:template match="*|@*|comment()|processing-instruction()" priority="-1">
     <xsl:copy>
-      <xsl:apply-templates select="*|@*"/>
+      <xsl:apply-templates select="*|@*|comment()|processing-instruction()"/>
     </xsl:copy>
   </xsl:template>
 
@@ -519,21 +544,40 @@ sub hint_autotune {
 }
 
 ##--------------------------------------------------------------
-## Methods: XSL stylesheets: prev|next-chain sanitization
+## Methods: XML sanitization: xml:id sanitization
+
+## $sxdoc = $mbx0->sanitize_xmlid($sxdoc)
+##  + maps @id attributes to @xml:id if not already present
+##  + required in order for XML::LibXML XPath id() function to work properly (also for XML::LibXSLT)
+sub sanitize_xmlid {
+  my ($mbx0,$xmldoc) = @_;
+
+  ##-- sanitize: map 'id' -> 'xml:id'
+  foreach (@{$xmldoc->findnodes('//*[@id and not(@xml:id)]')}) {
+    $_->setAttribute('xml:id',$_->getAttribute('id'));
+    $_->removeAttribute('id');
+  }
+
+  return $xmldoc;
+}
+
+##--------------------------------------------------------------
+## Methods: XML sanitization: @prev|@next-chain sanitization
 
 ## $sxdoc = $mbx0->sanitize_chains($sxdoc)
 ##  + sanitizes @prev|@next chains in-place in $sxdoc (an XML::LibXML::Document) for $mbx0->{auto_prevnext} flag
+##  + requires a working XML::LibXML XPath id() function (see method sanitize_xmlid())
 sub sanitize_chains {
   my ($mbx0,$xmldoc) = @_;
 
   my ($nod,$nodid,$refid,$refnod);
   my $id=0;
   foreach $nod (@{$xmldoc->findnodes('//*[@prev or @next]')}) {
-    $nodid = $nod->getAttribute('id') || $nod->getAttribute('xml:id') || $nod->getAttribute('xml_id');
+    $nodid = $nod->getAttribute('xml:id');
     if (!defined($nodid)) {
       ##-- add @id
       $nodid = sprintf("dtatw.mkbx0.chain.%0.4x", ++$id);
-      $mbx0->vlog('warn',"sanitize_chains(): auto-generating node-id $nodid for chain-node ", $nod->nodeName, " at line ", $nod->line_number);
+      $mbx0->vlog('warn',"sanitize_chains(): auto-generating node-id for chain-node ", $nod->nodeName, "#$nodid at line ", $nod->line_number);
       $nod->setAttribute('xml:id'=>$nodid);
     }
     if (defined($refid = $nod->getAttribute('prev'))) {
@@ -541,11 +585,11 @@ sub sanitize_chains {
       $refid  =~ s/^\#//;
       $refnod = $xmldoc->findnodes("id('$refid')")->[0];
       if (!$refnod) {
-	$mbx0->vlog('warn',"sanitize_chains(): pruning dangling \@prev=$refid for chain node ", $nod->nodeName, " at line ", $nod->line_number);
+	$mbx0->vlog('warn',"sanitize_chains(): pruning dangling \@prev=$refid for chain node ", $nod->nodeName, "#$nodid at line ", $nod->line_number);
 	$nod->removeAttribute('prev');
       }
       elsif (!$refnod->getAttribute('next')) {
-	$mbx0->vlog('warn',"sanitize_chains(): inserting \@next=$nodid for chain node ", $refnod->nodeName, " at line ", $refnod->line_number);
+	$mbx0->vlog('warn',"sanitize_chains(): inserting \@next=$nodid for chain node ", $refnod->nodeName, "#$refid at line ", $refnod->line_number);
 	$refnod->setAttribute('next'=>$nodid);
       }
     }
@@ -554,13 +598,75 @@ sub sanitize_chains {
       $refid  =~ s/^\#//;
       $refnod = $xmldoc->findnodes("id('$refid')")->[0];
       if (!$refnod) {
-	$mbx0->vlog('warn',"sanitize_chains(): pruning dangling \@next=$refid for chain node ", $nod->nodeName, " at line ", $nod->line_number);
+	$mbx0->vlog('warn',"sanitize_chains(): pruning dangling \@next=$refid for chain node ", $nod->nodeName, "#$nodid at line ", $nod->line_number);
 	$nod->removeAttribute('next');
       }
       elsif (!$refnod->getAttribute('prev')) {
-	$mbx0->vlog('warn',"sanitize_chains(): inserting \@prev=$nodid for chain node ", $refnod->nodeName, " at line ", $refnod->line_number);
+	$mbx0->vlog('warn',"sanitize_chains(): inserting \@prev=$nodid for chain node ", $refnod->nodeName, "#$refid at line ", $refnod->line_number);
 	$refnod->setAttribute('prev'=>$nodid);
       }
+    }
+  }
+
+  return $xmldoc;
+}
+
+##--------------------------------------------------------------
+## Methods: XML sanitization: //seg-chain sanitization
+
+## $sxdoc = $mbx0->sanitize_segs($sxdoc)
+##  + sanitizes //seg chains in-place in $sxdoc (an XML::LibXML::Document) for $mbx0->{auto_prevnext} flag
+##  + requires a working XML::LibXML XPath id() function (see method sanitize_xmlid())
+##  + converts //seg coding to @prev|@next
+sub sanitize_segs {
+  my ($mbx0,$xmldoc) = @_;
+
+  my ($nod,$nodid,$part,$refid,$refnod);
+  my $id=0;
+  my $segs = $xmldoc->findnodes('//seg');
+  my $id2segs = {};
+  foreach $nod (@$segs) {
+    $part  = $nod->getAttribute('part') || '';
+    $nodid = $nod->getAttribute('xml:id');
+    if ($part !~ /^[IMF]$/) {
+      $mbx0->vlog('warn',"sanitize_segs(): invalid //seg/\@part=\"$part\" defaults to \"I\" at line ", $nod->line_number);
+      $nod->setAttribute('part' => ($part='I'));
+    }
+    if ($part eq 'I') {
+      if (defined($nodid)) {
+	$id2segs->{$nodid} = [$nod];
+      }
+      else {
+	##-- add id
+	$nod->setAttribute('xml:id' => ($nodid=sprintf("dtatw.mkbx0.seg.%0.4x", ++$id)));
+	$mbx0->vlog('warn',"sanitize_segs(): auto-generating node-id for seg[part=\"I\"]#$nodid at line ", $nod->line_number);
+      }
+    }
+    elsif (defined($refid = $nod->getAttribute('ref'))) {
+      ##-- $part ne 'I' && defined($refid)
+      $refid =~ s/^\#//;
+      if (!defined($refnod=$xmldoc->findnodes("id('$refid')")->[0])) {
+	$mbx0->vlog('warn',"sanitize_segs(): mapping dangling \@ref=$refid to \@xml:id for //seg[part=\"$part\"] at line ", $nod->line_number);
+	$nod->removeAttribute('ref');
+	$nod->setAttribute('xml:id' => ($nodid=$refid));
+      }
+      push(@{$id2segs->{$refid}},$nod);
+    }
+    else {
+      ##-- $part ne 'I' && !defined($refid)
+      $mbx0->vlog('warn',"sanitize_segs(): no \@ref attribute for //seg[part=\"$part\"] at line ", $nod->line_number);
+    }
+    $nod->setAttribute('xml:id' => ($nodid=sprintf("dtatw.mkbx0.seg.%0.4x", ++$id))) if (!defined($nodid));
+  }
+
+  ##-- now encode as @prev|@next
+  my ($slist);
+  foreach $slist (values %$id2segs) {
+    $slist->[0]->setAttribute('part'=>'I');
+    foreach (1..$#$slist) {
+      $slist->[$_]->setAttribute('part' => ($_ == $#$slist ? 'F' : 'M'));
+      $slist->[$_]->setAttribute('prev'=>$slist->[$_-1]->getAttribute('xml:id'));
+      $slist->[$_-1]->setAttribute('next'=>$slist->[$_]->getAttribute('xml:id'));
     }
   }
 
@@ -577,6 +683,11 @@ sub dump_string {
   my $fh = ref($file) ? $file : IO::File->new(">$file");
   $fh->print($str);
   $fh->close() if (!ref($file));
+}
+
+## undef = $mbx0->dump_chain_stylesheet($filename_or_fh)
+sub dump_chain_stylesheet {
+  $_[0]->dump_string($_[0]{chain_stylestr}, $_[1]);
 }
 
 ## undef = $mbx0->dump_hint_stylesheet($filename_or_fh)
@@ -643,12 +754,16 @@ sub mkbx0 {
     $mbx0->hint_autotune(\$sxbuf,$doc->{txfile});
   }
 
-  ##-- auto-sanitize (prev|next)-chains
+  ##-- auto-sanitize @xml:id, (prev|next)-chains
+  $mbx0->sanitize_xmlid($sxdoc) if ($mbx0->{auto_xmlid});
+  $mbx0->sanitize_segs($sxdoc) if ($mbx0->{auto_prevnext});
   $mbx0->sanitize_chains($sxdoc) if ($mbx0->{auto_prevnext});
 
   ##-- apply XSL stylesheets
   $mbx0->logconfess("mkbx0(): could not compile XSL stylesheets")
     if (!$mbx0->ensure_stylesheets);
+  $sxdoc = $mbx0->{chain_stylesheet}->transform($sxdoc)
+    or $mbx0->logconfess("mkbx0(): could not apply chain stylesheet to .sx document '$doc->{sxfile}': $!");
   $sxdoc = $mbx0->{hint_stylesheet}->transform($sxdoc)
     or $mbx0->logconfess("mkbx0(): could not apply hint stylesheet to .sx document '$doc->{sxfile}': $!");
   $sxdoc = $mbx0->{sort_stylesheet}->transform($sxdoc)
@@ -690,6 +805,7 @@ DTA::TokWrap::Processor::mkbx0 - DTA tokenizer wrappers: sxfile -> bx0doc
  
  ##-- debugging
  $mbx0_or_undef = $mbx0->ensure_stylesheets();
+ $mbx0->dump_chain_stylesheet($filename_or_fh);
  $mbx0->dump_hint_stylesheet($filename_or_fh);
  $mbx0->dump_sort_stylesheet($filename_or_fh);
 
@@ -750,6 +866,12 @@ Constructor.
  ##-- Programs
  rmns    => $path_to_xml_rm_namespaces, ##-- default: search
  inplace => $bool,                      ##-- prefer in-place programs for search?
+ auto_xmlid => $bool,                   ##-- if true (default), @id attributes will be mapped to @xml:id
+ auto_prevnext => $bool,                ##-- if true (default), @prev|@next chains will be auto-sanitized
+ ##
+ ##-- Styleheet: chain-serialization
+ chain_stylestr  => $stylestr,          ##-- xsl stylesheet string for chain-serialization
+ chain_styleheet => $stylesheet,        ##-- compiled xsl stylesheet for chain-serialization
  ##
  ##-- Styleheet: insert-hints (<seg> elements and their children are handled implicitly)
  hint_sb_xpaths => \@xpaths,            ##-- add sentence-break hint (<s/>) for @xpath element open & close
@@ -811,6 +933,12 @@ into the input *.sx document.
 Returns XSL stylesheet string for the 'generate-sort-keys' transformation,
 which is responsible for inserting top-level serialization-segment keys
 into the input *.sx document.
+
+=item dump_chain_stylesheet
+
+ $mbx0->dump_chain_stylesheet($filename_or_fh);
+
+Dumps the generated 'serialize-chains' stylesheet to $filename_or_fh.
 
 =item dump_hint_stylesheet
 
