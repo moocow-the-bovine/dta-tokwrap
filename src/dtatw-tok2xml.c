@@ -36,7 +36,8 @@ const char *docElt = "sentences";  //-- output document element
 const char *sElt   = "s";          //-- output sentence element
 const char *wElt   = "w";          //-- output token element
 const char *aElt   = "a";          //-- output token-analysis element
-const char *posAttr = "b";         //-- output byte-position attribute
+const char *txtPosAttr = "b";      //-- output .txt byte-position attribute (b="OFFSET LEN")
+const char *xmlPosAttr = "xb";     //-- output .xml byte-position attribute (xb="OFFSET_0+LEN_0... OFFSET_N+LEN_N")
 const char *olAttr  = "overlap";   //-- output overlap-properties attribute
 const char *textAttr = "t";        //-- output token-text attribute
 const char *cAttr    = "c";        //-- output token-chars attribute (space-separated (xml:)?ids from .cx file)
@@ -101,6 +102,11 @@ typedef struct {
 
 unsigned int s_id_ctr = 0;  //-- counter for generated //s/@(xml:)?id
 unsigned int w_id_ctr = 0;  //-- counter for generated //w/@(xml:)?id
+
+//--------------------------------------------------------------
+// global temps for output construction
+#define WORD_XMLPOS_LEN 8192
+char w_xmlpos[WORD_XMLPOS_LEN];
 
 //--------------------------------------------------------------
 /* tt_next_word(f_out, w0, w1, &s_open)
@@ -178,10 +184,6 @@ static void tt_next_word(FILE *f_out, ttWordBuffer *w0, ttWordBuffer *w1, int *s
     //-- output: w0: begin: open <w ...>
     fprintf(f_out, "%s<%s %s=\"w%lu\"", indent_w, wElt, xmlid_name, ++w_id_ctr);
 
-    //-- output: w0: location
-    if (posAttr)
-      fprintf(f_out, " %s=\"%lu %lu\"", posAttr, w0->w_off, w0->w_len);
-
     //-- output: w0: text
     if (textAttr) {
       fprintf(f_out, " %s=\"", textAttr);
@@ -189,17 +191,27 @@ static void tt_next_word(FILE *f_out, ttWordBuffer *w0, ttWordBuffer *w1, int *s
       fputc('"', f_out);
     }
 
+    //-- output: w0: location: .txt
+    if (txtPosAttr)
+      fprintf(f_out, " %s=\"%lu %lu\"", txtPosAttr, w0->w_off, w0->w_len);
+
     //-- output: w0: c-ids
     if (cAttr) {
       int i,j,len;
       cxRecord *icx_prev = NULL; //-- previous cx record whose ID we've output, or NULL on first <c>
       cxRecord *jcx_prev = NULL; //-- ... for compressed c id lists
+      char     *xmlpos   = w_xmlpos;
+      ByteOffset xmloff  = (ByteOffset)-1;
+      ByteOffset xmlend  = (ByteOffset)-1;
       fprintf(f_out, " %s=\"", cAttr);
+      *xmlpos = '\0';
       for (i=0; i < w0->w_len; i++) {
 	cxRecord *icx = txtb2cx.data[w0->w_off+i];
 	if (!cx_id_ok(icx) || icx==icx_prev) continue;  //-- ignore pseudo-ids and duplicates
-	if (icx_prev) fputc(' ',f_out);
+	if (icx_prev) { fputc(' ',f_out); *xmlpos++=' '; *xmlpos='\0'; }
 	if (icx->id)  put_escaped_str(f_out, icx->id, -1);
+	xmloff = icx->xoff;
+	xmlend = xmloff + icx->xlen;
 #ifdef COMPRESS_CIDS
 	//-- compressed //c id-list output: get adjacent run length
 	jcx_prev = icx;
@@ -209,14 +221,17 @@ static void tt_next_word(FILE *f_out, ttWordBuffer *w0, ttWordBuffer *w1, int *s
 	  if (!cx_id_ok(jcx) || !cid_is_adjacent(jcx_prev->id,jcx->id)) break;
 	  jcx_prev = jcx;
 	  len++;
+	  xmlend = jcx->xoff+jcx->xlen;
 	}
 	if (len > 1) fprintf(f_out, "+%d", len);
 	i=j-1;
 	icx = jcx_prev;
 #endif /* COMPRESS_CIDS */
 	icx_prev = icx;
+	xmlpos += sprintf(xmlpos, "%lu+%lu", xmloff, (xmlend-xmloff));
       }
       fputc('"', f_out);
+      if (xmlPosAttr) fprintf(f_out, " %s=\"%s\"", xmlPosAttr, w_xmlpos);
     }
 
     //-- output: w0: flags: overlap

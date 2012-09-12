@@ -63,7 +63,7 @@ if (!defined($sofile)) {
 our $base = File::Basename::basename($srcfile);
 
 ##======================================================================
-## Subs: source xml file: .char.xml
+## Subs: source xml file: .chr.xml
 
 ## \$str = bufferSrcFile($filename)
 ## \$str = bufferSrcFile($filename,\$str)
@@ -137,7 +137,7 @@ sub so_cb_end {
 
 
 ##======================================================================
-## Subs: source-file stuff (.char.xml)
+## Subs: source-file stuff (.chr.xml)
 
 ##--------------------------------------------------------------
 ## XML::Parser handlers: src2segs: ($srcfile -> @w_segs0)
@@ -184,7 +184,7 @@ sub src2segs_cb_start {
   ##--------------------------
   if ($_[1] eq 'c') {
     %_attrs = @_[2..$#_];
-    $cid = $_attrs{'id'} || $_attrs{'xml:id'};
+    $cid = $_attrs{'xml:id'} || $_attrs{'id'};
     $wid = $cid2wid{$cid||''} || '';
     if ($w_xref ne $wid) {
       ##-- flush current segment & start a new one
@@ -257,7 +257,7 @@ $xp_so->parsefile($sofile);
 print STDERR "$prog: parsed ", scalar(keys(%cid2wid)), " <c>-references in ", scalar(@w_ids), " <w>-records from '$sofile'\n"
   if ($verbose>=$vl_progress);
 
-##-- load source xml (.char.xml) buffer
+##-- load source xml (.chr.xml) buffer
 our $srcbuf = '';
 bufferSrcFile($srcfile,\$srcbuf);
 print STDERR "$prog: buffered ", length($srcbuf), " XML bytes from '$srcfile'\n"
@@ -386,7 +386,7 @@ __END__
 
 =head1 NAME
 
-dtatw-add-w.perl - splice standoff <w>-records into original .char.xml files
+dtatw-add-w.perl - splice standoff <w>-records into original .chr.xml files
 
 =head1 SYNOPSIS
 
@@ -420,7 +420,7 @@ Not yet written.
 
 =head1 DESCRIPTION
 
-Splice standoff <w>-records into original .char.xml files, producing .cw.xml files.
+Splice standoff <w>-records into original .chr.xml files, producing .cw.xml files.
 
 =cut
 

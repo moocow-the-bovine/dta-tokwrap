@@ -34,6 +34,7 @@ xmldir = ./xmlsrc
 xml =
 #xml += $(wildcard $(xmldir)/ex1a.xml)
 #xml += $(wildcard $(xmldir)/*.xml)
+xml += $(filter-out %/kurz.xml,$(wildcard $(xmldir)/*.xml))
 #xml += $(wildcard $(xmldir)/*.chr.xml)
 #xml += $(xmldir)/test-raw.xml
 #xml += $(xmldir)/ex2a.xml
@@ -57,7 +58,7 @@ xml =
 #xml  +=  $(xmldir)/wrangel.xml
 #xml  +=  $(xmldir)/kant-a.xml
 #xml += $(xmldir)/paul390.xml
-xml += $(xmldir)/paul139.xml
+#xml += $(xmldir)/paul139.xml
 
 #xmldir = ../examples
 #xml    = $(xmldir)/kant_aufklaerung_1784.converted.chr.xml
