@@ -22,11 +22,11 @@ our $DEBUG = 0;
 our $outfile = "-";   ##-- default: stdout
 
 ##-- vars: xml structure
-our $w_refAttr = 'n';      ##-- attribute in which to place id-reference for non-initial <w>-segments
+#our $w_refAttr = 'n';      ##-- attribute in which to place id-reference for non-initial <w>-segments
 our $w_idAttr  = 'id';     ##-- attribute in which to place literal id for initial <w>-segments
 
 ##-- vars: default filename infixes
-our $srcInfix = '.char';
+our $srcInfix = '.chr';
 our $soInfix  = '.t';
 
 ##-- constants: verbosity levels
@@ -88,60 +88,15 @@ sub bufferSrcFile {
 ## Subs: standoff-xml (.w.xml)
 
 ##--------------------------------------------------------------
-## XML::Parser handlers (for standoff .w.xml file)
+## XML::Parser handlers (for standoff .w.xml file WITH //w/@xb attribute)
 
 our ($_xp, $_elt, %_attrs);
 
 our ($wid);      ##-- id of currently open <w>, or undef
-our ($cid);      ##-- id of currently open <c>, or undef
-our (@w_ids);     ##-- $wid = $w_ids[$wix];           # <w> id-strings in .t.xml doc-order (serialized order)
-our (%cid2wid);  ##-- $wid = $cid2wid{$cid}         # <w> id-strings from <c> id-strings
+#our ($cid);      ##-- id of currently open <c>, or undef
+our (@w_ids);    ##-- $wid = $w_ids[$wix];           # <w> id-strings in .t.xml doc-order (serialized order)
+#our (%cid2wid);  ##-- $wid = $cid2wid{$cid}         # <w> id-strings from <c> id-strings
 
-our $cRefAttr = 'ref'; ##-- <c> attribute carrying id-reference for .w.xml file
-
-## undef = cb_init($expat)
-sub so_cb_init {
-  #($_xp) = @_;
-  $wid     = undef;
-  @w_ids   = qw();
-  %cid2wid = qw();
-}
-
-## undef = cb_start($expat, $elt,%attrs)
-our ($cs,@cids,$cp,$ci0,$cin);
-sub so_cb_start {
-  #($_xp,$_elt,%_attrs) = @_;
-  %_attrs = @_[2..$#_];
-  if ($_[1] eq 'w') {
-    $wid = $_attrs{'id'} || $_attrs{'xml:id'};
-    push(@w_ids,$wid);
-    if (defined($cs=$_attrs{'cs'}) || defined($cs=$_attrs{'c'})) {
-      ##-- .t.xml or .u.xml format: id-list in @cs or @c attribute
-      @cids = map {
-	(m/^(.*)c([0-9]+)\+([0-9]+)$/ ? (map {$1.'c'.$_} ($2..($2+$3-1))) : $_)
-      } split(' ',$cs);
-      $cid2wid{$_} = $wid foreach (@cids);
-    }
-  }
-  elsif ($_[1] eq 'c' && defined($cid=$_attrs{$cRefAttr})) {
-    ##-- .w.xml format (big & ugly)
-    $cid =~ s/^\#//;
-    $cid2wid{$cid} = $wid;
-  }
-}
-
-## undef = cb_end($expat,$elt)
-sub so_cb_end {
-  $wid=undef if ($_[1] eq 'w');
-}
-
-
-##======================================================================
-## Subs: source-file stuff (.chr.xml)
-
-##--------------------------------------------------------------
-## XML::Parser handlers: src2segs: ($srcfile -> @w_segs0)
-##
 ## @w_segs0 = ( $w1seg1, ..., $wIseg1, ..., $wIseg2, ..., $wNsegN )
 ## + where:
 ##   $wXsegX = [$xref,$xoff,$xlen], ##-- later, [$xref,$xoff,$xlen, $segi]
@@ -149,82 +104,46 @@ sub so_cb_end {
 ##   $xoff   = $int, ##-- byte offset in $srcbuf of this <w>-segment's contents
 ##   $xlen   = $int, ##-- byte length in $srcbuf of this <w>-segment's contents
 ##   $segi   = $int, ##-- segment index (+1): 1 <= $segi <= $wid2nsegs{$xref}
-
 our (@w_segs0);
-our ($total_depth,$text_depth);
-our ($w_xref,$w_xoff,$w_xend);
+our ($x_xref,$w_xoff,$w_xend);
 
 ## undef = cb_init($expat)
-sub src2segs_cb_init {
+sub so_cb_init {
   #($_xp) = @_;
-  ($w_xref,$w_xoff,$w_xend) = ('',0,0);
-  $total_depth = $text_depth = 0;
+  $wid     = undef;
+  @w_ids   = qw();
   @w_segs0 = qw();
 }
 
-## undef = src2segs_flush_segment()
-##  + flushes current <w> segment, if any
-sub src2segs_flush_segment {
-  $w_xlen  = $w_xend-$w_xoff;
-  return if (!$w_xref || !$w_xlen);
-  push(@w_segs0, [$w_xref,$w_xoff,$w_xlen]);
-  ($w_xref,$w_xoff,$w_xend)=('',0,0);
-}
-
-## undef = cb_final($expat)
-sub src2segs_cb_final {
-  src2segs_flush_segment();
-  return \@w_segs0;
-}
-
 ## undef = cb_start($expat, $elt,%attrs)
-sub src2segs_cb_start {
+our ($xb,$xbi);
+sub so_cb_start {
   #($_xp,$_elt,%_attrs) = @_;
-  ++$total_depth;
-  ##--------------------------
-  if ($_[1] eq 'c') {
-    %_attrs = @_[2..$#_];
-    $cid = $_attrs{'xml:id'} || $_attrs{'id'};
-    $wid = $cid2wid{$cid||''} || '';
-    if ($w_xref ne $wid) {
-      ##-- flush current segment & start a new one
-      src2segs_flush_segment();
-      $w_xref = $wid;
-      $w_xoff = $w_xend = $_[0]->current_byte();
-    } else {
-      $w_xend = $_[0]->current_byte();
+  %_attrs = @_[2..$#_];
+  if ($_[1] eq 'w') {
+    $wid = $_attrs{'id'} || $_attrs{'xml:id'};
+    push(@w_ids,$wid);
+    if (defined($xb=$_attrs{'xb'})) {
+      ##-- v0.34-1 .t.xml format: xml-bytes in //w/@xb
+      $xbi = 0;
+      foreach (split(/\s+/,$xb)) {
+	if (/^([0-9]+)\+([0-9]+)/) {
+	  push(@w_segs0,[$wid,$1,$2,++$xbi]);
+	} else {
+	  $_[0]->xpcroak("$prog: $base: could not parse //w/\@xb attribute");
+	}
+      }
     }
-    return;
+    else {
+      $_[0]->xpcroak("$prog: $base: no //w/\@xb attribute defined (you need DTA::TokWrap >= v0.34-1!)");
+    }
   }
-  ##--------------------------
-  elsif ($_[1] eq 'text') {
-    ++$text_depth;
-  }
-  src2segs_flush_segment();
 }
 
-## undef = cb_end($expat, $elt)
-sub src2segs_cb_end {
-  #($_xp,$_elt) = @_;
-  if ($_[1] eq 'c') {
-    $w_xend = $_[0]->current_byte() + length($_[0]->original_string());
-  } else {
-    src2segs_flush_segment();
-  }
-  --$total_depth;
+## undef = cb_end($expat,$elt)
+sub so_cb_end {
+  $wid=undef if ($_[1] eq 'w');
 }
-
-## undef = cb_char($expat,$string)
-sub src2segs_cb_char {
-  #src2segs_flush_segment();
-  $w_xend = $_[0]->current_byte() + length($_[0]->original_string());
-}
-
-## undef = cb_default($expat, $str)
-sub src2segs_cb_default {
-  src2segs_flush_segment();
-}
-
 
 ##======================================================================
 ## MAIN
@@ -254,37 +173,12 @@ our $outfh = IO::File->new(">$outfile")
 print STDERR "$prog: parsing standoff ${soInfix}.xml file '$sofile'...\n"
   if ($verbose>=$vl_progress);
 $xp_so->parsefile($sofile);
-print STDERR "$prog: parsed ", scalar(keys(%cid2wid)), " <c>-references in ", scalar(@w_ids), " <w>-records from '$sofile'\n"
+print STDERR "$prog: parsed ", scalar(@w_segs0), " segments for ", scalar(@w_ids), " tokens from '$sofile'\n"
   if ($verbose>=$vl_progress);
 
 ##-- load source xml (.chr.xml) buffer
 our $srcbuf = '';
 bufferSrcFile($srcfile,\$srcbuf);
-print STDERR "$prog: buffered ", length($srcbuf), " XML bytes from '$srcfile'\n"
-  if ($verbose>=$vl_progress);
-
-##-- find all potential standoff item-segments (@w_segs0)
-print STDERR "$prog: scanning for potential <w>-segment boundaries in '$srcfile'...\n"
-  if ($verbose>=$vl_progress);
-$xp_src2segs = XML::Parser->new(
-			      ErrorContext => 1,
-			      ProtocolEncoding => 'UTF-8',
-			      #ParseParamEnt => '???',
-			      Handlers => {
-
-					   Init   => \&src2segs_cb_init,
-					   #XmlDecl => \&src2segs_cb_xmldecl,
-					   #Char  => \&src2segs_cb_char,
-					   Start  => \&src2segs_cb_start,
-					   End    => \&src2segs_cb_end,
-					   #Default => \&src2segs_cb_default,
-					   Final   => \&src2segs_cb_final,
-					  },
-			     )
-  or die("$prog: $base: ERROR: couldn't create XML::Parser for ${srcInfix}.xml <w>-segmentation");
-$xp_src2segs->parse($srcbuf);
-print STDERR ("$prog: found ", scalar(@w_segs0), " preliminary segments for ", scalar(@w_ids), " tokens\n")
-  if ($verbose>=$vl_progress);
 
 ##-- check for bogus discontinutities
 print STDERR "$prog: merging \"adjacent\" segments...\n"
