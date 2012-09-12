@@ -202,7 +202,7 @@ sub tokenize1 {
 
     ##------------------------------------
     ## fix: pre-numeric abbreviations (e.g. biblical books), part 1: collect suspects
-    $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: find suspects\n");
+    $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: find suspects");
     my %nabbrs   = (map {($_=>undef)}
 		    qw( Bar Dan Deut Esra Est Ex Galater Man Hos Ijob Job Jak Col Kor Cor Mal Ri Sir ),
 		    #qw( Mark ), ##-- heuristics too dodgy
@@ -226,7 +226,7 @@ sub tokenize1 {
 
     ##------------------------------------
     ## fix: pre-numeric abbreviations (e.g. biblical books), part 2: repair
-    $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: repair\n");
+    $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: repair");
     $nfixed = 0;
     my ($offd,$lend);
     foreach (reverse @suspects) {
