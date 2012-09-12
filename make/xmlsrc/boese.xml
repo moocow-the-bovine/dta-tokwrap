@@ -1,0 +1,28 @@
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+<text>
+<body>
+<pb facs="#f0001"/>
+<div n="1">
+<p>
+<choice>
+<sic>
+<c xml:id="c1">B</c>
+<c xml:id="c2">ö</c>
+<c xml:id="c3">f</c>
+<c xml:id="c4">e</c>
+<c xml:id="c5">s</c>
+</sic>
+<corr>
+<c xml:id="c1a">B</c>
+<c xml:id="c2a">ö</c>
+<c xml:id="c3a">ſ</c>
+<c xml:id="c4a">e</c>
+<c xml:id="c5a">s</c>
+</corr>
+</choice>
+<c xml:id="c6"> </c>
+<c xml:id="c7">K</c>
+<c xml:id="c8">i</c>
+<c xml:id="c9">n</c>
+<c xml:id="c10">d</c>
+</p></div></body></text></TEI>
