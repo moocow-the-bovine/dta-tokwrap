@@ -198,6 +198,9 @@ size_t file_slurp(FILE *f, char **bufp, size_t buflen);
 // CX_WANT_TEXT : whether to include (and parse) 'text' field in cxRecord
 #define CX_WANT_TEXT 1
 
+// CX_WANT_BXP : whether to include .bx block-pointers in cxRecord struct
+#define CX_WANT_BXP 1
+
 // cxRecord : struct for character-index records as loaded from .cx file
 typedef struct {
   char        *id;      //-- (xml:)?id of source <c>
@@ -210,6 +213,9 @@ typedef struct {
 #endif
 #ifdef CX_WANT_TEXT
   char      *text;      //-- output text (un-escaped)
+#endif
+#ifdef CX_WANT_BXP
+  struct bxRecord *bxp; //-- pointer to .bx-record (block) containing this <c>, if available
 #endif
 } cxRecord;
 
@@ -278,9 +284,10 @@ Offset2CxIndex  *tx2cxIndex(Offset2CxIndex *txo2cx,  cxData *cxd);
 // txt2cxIndex(): init/alloc: cxRecord *cx = txto2cx->data[txt_byte_index]
 Offset2CxIndex *txt2cxIndex(Offset2CxIndex *txto2cx, bxData *bxd, Offset2CxIndex *txb2cx);
 
-// cx2bxIndex(): init/alloc: bxRecord *bx = cx2bx[cx_index]
+// cx2bxIndex(): init/alloc: bxRecord *bx = cx2bx[cx_index]  :: UNUSED (?!)
 bxRecord **cx2bxIndex(cxData *cxd, bxData *bxd, Offset2CxIndex *tx2cx);
 
+#if 0
 // parse_cid(): parses //c/@id values into prefix && numeric counter (integer parsed following final 'c')
 //  + returns integer value of numeric counter (0 on error)
 //  + if prefix_len is non-null, it will hold the length of the prefix on return
@@ -288,5 +295,9 @@ int parse_cid(const char *idstr, int *prefix_len);
 
 // cid_is_adjacent(): check whether cid2 immediately follows cid1 (uses parse_cid())
 int cid_is_adjacent(const char *cid1, const char *cid2);
+#endif
+
+// cx_is_adjacent(): check whether cx1 immediately follows cx2
+int cx_is_adjacent(const cxRecord *cx1, const cxRecord *cx2);
 
 #endif /* DTATW_COMMON_H */

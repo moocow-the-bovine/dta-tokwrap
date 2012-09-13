@@ -150,6 +150,14 @@ profile = no
 #twopts=
 #twopts = -traceAll -po tomata2stderr=0
 
+## addwopts=OPTIONS
+##  + additional options and/or overrides for dtatw-add-w.perl
+addwopts=-v=255
+
+## addsopts=USER_DTATW_ADD_S_OPTIONS
+##  + additional options and/or overrides for dtatw-add-s.perl
+#addsopts=-v=255
+
 ##======================================================================
 ## Variables: in-place execution (use local development code, or don't)
 

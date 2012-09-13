@@ -586,7 +586,7 @@ cw-noc-xml: $(XML:.xml=.cw.noc.xml)
 ##-- splice: (.char.xml + .t.xml) --> .cw.xml
 cw-xml: $(XML:.xml=.cw.xml)
 %.cw.xml: $(xmldir)/%.xml %.t.xml scripts
-	$(SCRIPT_DIR)dtatw-add-w.perl -q -o=$@ $< $*.t.xml 
+	$(SCRIPT_DIR)dtatw-add-w.perl -q $(addwopts) -o=$@ $< $*.t.xml 
 
 no-cw-xml: ; rm -r *.cw.xml
 CLEAN_FILES += *.cw.xml
@@ -594,7 +594,7 @@ CLEAN_FILES += *.cw.xml
 ##-- splice: (.cw.xml + .t.xml) --> .cws.xml
 cws-xml: $(XML:.xml=.cws.xml)
 %.cws.xml: %.cw.xml %.t.xml scripts
-	$(SCRIPT_DIR)dtatw-add-s.perl -q -o=$@ $< $*.t.xml  
+	$(SCRIPT_DIR)dtatw-add-s.perl -q $(addsopts) -o=$@ $< $*.t.xml  
 
 no-cws-xml: ; rm -r *.cws.xml
 CLEAN_FILES += *.cws.xml

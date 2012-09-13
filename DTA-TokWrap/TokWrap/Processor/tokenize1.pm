@@ -90,6 +90,8 @@ sub tokenize1 {
 
     ##------------------------------------
     ## fix: stupid interjections
+    my @suspects = qw();
+    my ($s_str, $s_txt,$s_off,$s_len,$s_rest);
     my ($nfixed);
     $tp->vlog($tp->{traceLevel},"autofix: re/ITJ");
     $nfixed = ($data =~ s/^(re\t\d+ \d+)\tITJ$/$1/mg);
@@ -101,8 +103,37 @@ sub tokenize1 {
     $tp->vlog($tp->{traceLevel},"autofix: \${WB,SB}\$");
     $nfixed  = 0;
     $nfixed += ($data =~ s/^\$[WS]B\$_?\t.*\n//mg); 								##-- e.g. "$SB\tOFF LEN\t[XY]\t[$ABBREV]\n"
-    $nfixed += ($data =~ s/^([^\t]*)_\t(\d+) (\d+)\t\[XY\]\t\[\$ABBREV\]\n/"$1\t$2 ".($3-1)."\n"/mge);		##-- e.g. ",_\tOFF LEN+1\t[XY]\t[$ABBREV]\n
     $tp->vlog($tp->{traceLevel},"autofix: \${WB,SB}\$: $nfixed fix(es)") if ($nfixed);
+
+    ##------------------------------------
+    ## fix: bogus trailing underscore (also in mantis bug #548)
+    $tp->vlog($tp->{traceLevel},"autofix: *_/\$ABBREV: find suspects");
+    @suspects = qw();
+    while (
+	   #$data =~ /^[^\t\n]*_\t[0-9]+ [0-9]+\t\[XY\]\t\[\$ABBREV\]\n/mg
+	   #$data =~ /^[^\t\n]*_\t.*\n/mg
+	   $data =~ /^[^\t\n]*_\t.*\n/mg
+	  )
+      {
+	push(@suspects, [$-[0], $+[0]-$-[0]]);
+      }
+
+    $tp->vlog($tp->{traceLevel},"autofix: *_/\$ABBREV: check & apply");
+    $nfixed = 0;
+    foreach (reverse @suspects) {
+      $s_str = substr($data,$_->[0],$_->[1]);
+      if ($s_str =~ /^([^\t]*)\t([0-9]+) ([0-9]+)(\t.*)?$/) {
+	($s_txt,$s_off,$s_len,$s_rest) = ($1,$2,$3,$4);
+	if ($s_rest =~ /(?:\t\[(?:XY|\$ABBREV)\]){2,}/) {
+	  substr($data,$_->[0],$_->[1]) = substr($s_txt,0,-1)."\t$s_off ".($s_len-1)."\n";
+	  ++$nfixed;
+	}
+      } else {
+	$tp->logwarn("tokenize1(): couldn't parse *_/\$ABBREV suspect line at t0-file offset $_->[0], length $_->[1] - skipping");
+	next;
+      }
+    }
+    $tp->vlog($tp->{traceLevel},"autofix: *_/\$ABBREV: ", scalar(@suspects), " suspect(s), $nfixed fix(es)") if (@suspects);
 
     ##------------------------------------
     ## fix: line-broken tokens, part 1: get list of suspects
@@ -122,7 +153,7 @@ sub tokenize1 {
     ##   U+2014     8212      3       [?] \xe2\x80\x94        General Punctuation     EM DASH
     ##    -- this is not really a connector, but it might be used somewhere!
     $tp->vlog($tp->{traceLevel},"autofix: linebreak: find suspects");
-    my @suspects = qw();
+    @suspects = qw();
     while (
 	   $data =~ /^
 		      [[:alpha:]\'\-\x{ac}]*                        ##-- w1.text [modulo final "-"]
@@ -145,7 +176,7 @@ sub tokenize1 {
     $nfixed=0;
     my %nojoin_txt2 = map {($_=>undef)} qw(und oder als wie noch sondern ſondern);
 
-    my ($s_str, $txt1,$off1,$len1,$rest1, $txt2,$off2,$len2,$rest2, $repl);
+    my ($txt1,$off1,$len1,$rest1, $txt2,$off2,$len2,$rest2, $repl);
     foreach (reverse @suspects) {
       $s_str = substr($data,$_->[0],$_->[1]);
       $repl  = undef;
@@ -275,7 +306,7 @@ sub tokenize1 {
 	++$nfixed;
       }
     }
-    $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: ", scalar(@suspects), " suspects, $nfixed fix(es)");
+    $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: ", scalar(@suspects), " suspect(s), $nfixed fix(es)");
 
 
     ##------------------------------------

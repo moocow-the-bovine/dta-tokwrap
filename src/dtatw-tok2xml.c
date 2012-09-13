@@ -59,8 +59,7 @@ Offset2CxIndex txtb2cx = {NULL,0};  //-- cxRecord *cx = txtb2cx->data[txt_byte_i
 
 //--------------------------------------------------------------
 /* bool = cx_id_ok(cx)
- *  + returns true iff cx is a "real" character record with
- *    a valid id, etc.
+ *  + returns true iff cx is a "real" character record with a valid id, etc.
  *  + ignores ids: NULL, "", CX_NIL_ID, CX_LB_ID (see dtatwCommon.h for the latter)
  */
 static inline int cx_id_ok(const cxRecord *cx)
@@ -69,7 +68,7 @@ static inline int cx_id_ok(const cxRecord *cx)
 	  && cx->id
 	  && cx->id[0]
 	  && strcmp(cx->id,CX_NIL_ID)!=0
-	  && strcmp(cx->id,CX_LB_ID) !=0
+	  //&& strcmp(cx->id,CX_LB_ID) !=0
 	  );
 }
 
@@ -218,7 +217,7 @@ static void tt_next_word(FILE *f_out, ttWordBuffer *w0, ttWordBuffer *w1, int *s
 	for (len=1, j=(i+1); j < w0->w_len; j++) {
 	  cxRecord *jcx = txtb2cx.data[w0->w_off+j];
 	  if (jcx==jcx_prev) continue;  //-- ignore duplicates
-	  if (!cx_id_ok(jcx) || !cid_is_adjacent(jcx_prev->id,jcx->id)) break;
+	  if (!cx_id_ok(jcx) || !cx_is_adjacent(jcx_prev,jcx)) break;
 	  jcx_prev = jcx;
 	  len++;
 	  xmlend = jcx->xoff+jcx->xlen;
