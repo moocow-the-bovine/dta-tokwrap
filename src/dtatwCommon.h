@@ -36,7 +36,8 @@ extern char *CX_LB_ID; //-- default: "$LB$"
 extern char *CX_PB_ID; //-- default: "$PB$"
 
 //-- CX_FORMULA_ID : pseudo-ID format for <formula/> records (given original byte offset)
-extern char *CX_FORMULA_ID; //-- default: "$FORMULA:%lu$"
+#define CX_FORMULA_PREFIX "$FORMULA:"
+extern char *CX_FORMULA_ID; //-- default: CX_FORMULA_PREFIX ":%lu$"
 
 //-- CX_FORMULA_TEXT : text inserted for <formula/> records
 extern char *CX_FORMULA_TEXT; //-- default: " FORMULA "
@@ -215,7 +216,7 @@ typedef struct {
   char      *text;      //-- output text (un-escaped)
 #endif
 #ifdef CX_WANT_BXP
-  struct bxRecord *bxp; //-- pointer to .bx-record (block) containing this <c>, if available
+  struct bxRecord_t *bxp; //-- pointer to .bx-record (block) containing this <c>, if available
 #endif
 } cxRecord;
 
@@ -241,7 +242,7 @@ char *cx_text_string(char *src, int src_len);       //-- un-escapes cx-file "tex
  */
 
 // bxRecord : struct for block-index records as loaded from .bx file
-typedef struct {
+typedef struct bxRecord_t {
   char *key;        //-- sort key
   char *elt;        //-- element name
   ByteOffset xoff;  //-- xml byte offset

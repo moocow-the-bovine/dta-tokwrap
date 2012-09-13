@@ -60,14 +60,17 @@ Offset2CxIndex txtb2cx = {NULL,0};  //-- cxRecord *cx = txtb2cx->data[txt_byte_i
 //--------------------------------------------------------------
 /* bool = cx_id_ok(cx)
  *  + returns true iff cx is a "real" character record with a valid id, etc.
- *  + ignores ids: NULL, "", CX_NIL_ID, CX_LB_ID (see dtatwCommon.h for the latter)
+ *  + ignores ids: NULL, "", CX_NIL_ID
+ *  + does NOT ignore: CX_LB_ID, CX_PB_ID, CX_FORMULA_ID
+ *  + see dtatwCommon.h for id constants
  */
 static inline int cx_id_ok(const cxRecord *cx)
 {
   return (cx
 	  && cx->id
 	  && cx->id[0]
-	  && strcmp(cx->id,CX_NIL_ID)!=0
+	  && strcmp(cx->id,CX_NIL_ID) !=0
+	  && strncmp(cx->id,CX_FORMULA_PREFIX,strlen(CX_FORMULA_PREFIX)) !=0
 	  //&& strcmp(cx->id,CX_LB_ID) !=0
 	  );
 }
