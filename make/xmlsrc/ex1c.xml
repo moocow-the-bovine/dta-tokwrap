@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI><text><body>
+<p id="p1b" prev="p1a">
+  <hi rendition="#g">
+    <c id="c16714">f</c>
+    <c id="c16715">&#xE4;</c>
+    <c id="c16716">h</c>
+    <c id="c16717">i</c>
+    <c id="c16718">g</c>
+    <c id="c16719">k</c>
+    <c id="c16720">e</c>
+    <c id="c16721">i</c>
+    <c id="c16722">t</c>
+  </hi>
+  <c id="c16723">&#x201C;</c>
+</p>
+<p id="p1a" next="p1b">
+  <c id="c16704">&#x201E;</c>
+  <c id="c16705">L</c>
+  <c id="c16706">e</c>
+  <c id="c16707">i</c>
+  <c id="c16708">s</c>
+  <c id="c16709">t</c>
+  <c id="c16710">u</c>
+  <c id="c16711">n</c>
+  <c id="c16712">g</c>
+  <c id="c16713">s</c>
+  <c id="c16713b">¬</c>
+</p>
+</body></text></TEI>

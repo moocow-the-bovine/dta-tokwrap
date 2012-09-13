@@ -33,8 +33,8 @@
 xmldir = ./xmlsrc
 xml =
 #xml += $(wildcard $(xmldir)/ex1a.xml)
-#xml += $(wildcard $(xmldir)/*.xml)
-xml += $(filter-out %/kurz.xml,$(wildcard $(xmldir)/*.xml))
+xml += $(wildcard $(xmldir)/*.xml)
+#xml += $(filter-out %/kurz.xml,$(wildcard $(xmldir)/*.xml))
 #xml += $(wildcard $(xmldir)/*.chr.xml)
 #xml += $(xmldir)/test-raw.xml
 #xml += $(xmldir)/ex2a.xml
@@ -152,7 +152,7 @@ profile = no
 
 ## addwopts=OPTIONS
 ##  + additional options and/or overrides for dtatw-add-w.perl
-addwopts=-v=255
+#addwopts=-v=255
 
 ## addsopts=USER_DTATW_ADD_S_OPTIONS
 ##  + additional options and/or overrides for dtatw-add-s.perl
