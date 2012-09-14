@@ -1,4 +1,4 @@
-## -*- Mode: CPerl -*-
+## -*- Mode: CPerl; coding: utf-8; -*-
 
 ## File: DTA::TokWrap::Processor::tok2xml.pm
 ## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
@@ -14,6 +14,7 @@ use DTA::TokWrap::Processor;
 use IO::File;
 use Carp;
 use strict;
+use utf8;
 
 ##==============================================================================
 ## Constants
@@ -29,6 +30,7 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##  + static class-dependent defaults
 ##  + %args, %defaults, %$t2x:
 ##    (
+##    txmlsort => $bool,	     ##-- if true (default), sort output .t.xml data as close to input document-order as sentence boundaries will allow
 ##    t2x => $path_to_dtatw_tok2xml, ##-- default: search
 ##    inplace => $bool,              ##-- prefer in-place programs for search?
 ##    )
@@ -37,6 +39,9 @@ sub defaults {
   return (
 	  ##-- inherited
 	  $that->SUPER::defaults(),
+
+	  ##-- sorting?
+	  txmlsort => 1,
 
 	  ##-- programs
 	  t2x => undef,
@@ -59,7 +64,6 @@ sub init {
 
   return $t2x;
 }
-
 
 ##==============================================================================
 ## Methods: Document Processing
@@ -95,11 +99,29 @@ sub tok2xml {
   file_try_open($doc->{tokfile1}) || $t2x->logconfess("tok2xml(): could not open .t1 file '$doc->{tokfile1}': $!");
 
   ##-- run client program
+  $t2x->vlog($t2x->{traceLevel},"command: $t2x->{t2x}");
   my $cmdfh = opencmd("'$t2x->{t2x}' '$doc->{tokfile1}' '$doc->{cxfile}' '$doc->{bxfile}' - '$doc->{xmlbase}' |")
     or $t2x->logconfess("tok2xml(): open failed for pipe from '$t2x->{t2x}': $!");
   $doc->{xtokdata} = undef;
   slurp_fh($cmdfh,\$doc->{xtokdata});
   $cmdfh->close();
+
+  ##-- re-sort?
+  if ($t2x->{txmlsort}) {
+    $t2x->vlog($t2x->{traceLevel},"sort (native)");
+    my $data = \$doc->{xtokdata};
+    my ($off,$len,$xb);
+    my @s = qw();
+    while ($$data =~ m{<s[^>]*>.*?</s>\s*}sg) {
+      ($off,$len) = ($-[0],$+[0]-$-[0]);
+      $xb = substr($$data, $off,$len) =~ m{<w[^>]*\bxb="([0-9]+)}s ? $1 : 1e38;
+      push(@s,[$xb,$off,$len]);
+    }
+    my $prefix = substr($$data,0,$s[0][1]);
+    my $suffix = substr($$data,$s[$#s][1]+$s[$#s][2]);
+    my $sorted = $prefix.join('',map {substr($$data,$_->[1],$_->[2])} sort {$a->[0]<=>$b->[0]} @s).$suffix;
+    $$data = $sorted;
+  }
 
   ##-- finalize
   $doc->{tok2xml_stamp} = $doc->{xtokdata_stamp} = timestamp(); ##-- stamp

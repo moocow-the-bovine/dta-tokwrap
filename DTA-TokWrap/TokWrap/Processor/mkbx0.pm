@@ -10,9 +10,6 @@ use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Utils qw(:progs :libxml :libxslt :slurp :time);
 use DTA::TokWrap::Processor;
-
-use XML::LibXML;
-use XML::LibXSLT;
 use IO::File;
 
 use Carp;
@@ -132,7 +129,7 @@ sub defaults {
 			     qw(lg),
 
 			     ##-- non-sentential stuff
-			     qw(ref|fw|list|item), ##-- ... be safe if tokenizing EVERYTHING (we should always EOS on head if we add a key for it!)
+			     qw(ref|fw|list|item|head), ##-- ... be safe if tokenizing EVERYTHING (we should always EOS on head if we add a key for it!)
 			     #qw(ref|fw), ##-- ... be extra-safe if tokenizing EVERYTHING
 			    ],
 	  hint_wb_xpaths => [
@@ -570,26 +567,30 @@ sub sanitize_xmlid {
 sub sanitize_chains {
   my ($mbx0,$xmldoc) = @_;
 
-  my ($nod,$nodid,$refid,$refnod);
+  my ($nod,$nodid,$refid,$refnod,$nodlabel);
   my $id=0;
   foreach $nod (@{$xmldoc->findnodes('//*[@prev or @next]')}) {
     $nodid = $nod->getAttribute('xml:id');
+    $nodlabel = $nod->nodeName();
     if (!defined($nodid)) {
       ##-- add @id
+      $nodlabel .= '['.join(' ', map {'@'.$_->name.'="'.$_->value.'"'} $nod->attributes).']';
       $nodid = sprintf("dtatw.mkbx0.chain.%0.4x", ++$id);
-      $mbx0->vlog('warn',"sanitize_chains(): auto-generating node-id for chain-node ", $nod->nodeName, "#$nodid at line ", $nod->line_number);
+      $mbx0->vlog('warn',"sanitize_chains(): auto-generating node-id = $nodid for chain-node $nodlabel");
       $nod->setAttribute('xml:id'=>$nodid);
     }
+    $nodlabel .= "#$nodid";
+
     if (defined($refid = $nod->getAttribute('prev'))) {
       ##-- sanitize @prev
       $refid  =~ s/^\#//;
       $refnod = $xmldoc->findnodes("id('$refid')")->[0];
       if (!$refnod) {
-	$mbx0->vlog('warn',"sanitize_chains(): pruning dangling \@prev=$refid for chain node ", $nod->nodeName, "#$nodid at line ", $nod->line_number);
+	$mbx0->vlog('warn',"sanitize_chains(): pruning dangling \@prev=$refid for chain node $nodlabel");
 	$nod->removeAttribute('prev');
       }
       elsif (!$refnod->getAttribute('next')) {
-	$mbx0->vlog('warn',"sanitize_chains(): inserting \@next=$nodid for chain node ", $refnod->nodeName, "#$refid at line ", $refnod->line_number);
+	$mbx0->vlog('warn',"sanitize_chains(): inserting \@next=$nodid for chain node ", $refnod->nodeName, "#$refid");
 	$refnod->setAttribute('next'=>$nodid);
       }
     }
@@ -598,11 +599,11 @@ sub sanitize_chains {
       $refid  =~ s/^\#//;
       $refnod = $xmldoc->findnodes("id('$refid')")->[0];
       if (!$refnod) {
-	$mbx0->vlog('warn',"sanitize_chains(): pruning dangling \@next=$refid for chain node ", $nod->nodeName, "#$nodid at line ", $nod->line_number);
+	$mbx0->vlog('warn',"sanitize_chains(): pruning dangling \@next=$refid for chain node $nodlabel");
 	$nod->removeAttribute('next');
       }
       elsif (!$refnod->getAttribute('prev')) {
-	$mbx0->vlog('warn',"sanitize_chains(): inserting \@prev=$nodid for chain node ", $refnod->nodeName, "#$refid at line ", $refnod->line_number);
+	$mbx0->vlog('warn',"sanitize_chains(): inserting \@prev=$nodid for chain node ", $refnod->nodeName, "#$refid");
 	$refnod->setAttribute('prev'=>$nodid);
       }
     }
@@ -621,42 +622,54 @@ sub sanitize_chains {
 sub sanitize_segs {
   my ($mbx0,$xmldoc) = @_;
 
-  my ($nod,$nodid,$part,$refid,$refnod);
+  my ($nod,$nodid,$part,$refid,$refnod, $nodlabel);
   my $id=0;
   my $segs = $xmldoc->findnodes('//seg');
   my $id2segs = {};
+  my $lastref = undef; ##-- track most recently referenced //seg/@id, for fallbacks
   foreach $nod (@$segs) {
     $part  = $nod->getAttribute('part') || '';
     $nodid = $nod->getAttribute('xml:id');
+    $nodlabel = 'seg'.($nodid ? "#$nodid" : ('['.join(' ', map {'@'.$_->name.'="'.$_->value.'"'} $nod->attributes).']'));
     if ($part !~ /^[IMF]$/) {
-      $mbx0->vlog('warn',"sanitize_segs(): invalid //seg/\@part=\"$part\" defaults to \"I\" at line ", $nod->line_number);
+      $mbx0->vlog('warn',"sanitize_segs(): invalid //seg/\@part defaults to \"I\" for $nodlabel");
       $nod->setAttribute('part' => ($part='I'));
     }
+
+    ##-- always ensure @id
+    if (!defined($nodid)) {
+      ##-- insert nodid
+      $nod->setAttribute('xml:id' => ($nodid=sprintf("dtatw.mkbx0.seg.%0.4x", ++$id)));
+      $mbx0->vlog('warn',"sanitize_segs(): auto-generating \@id=$nodid for $nodlabel");
+      $nodlabel .= "#$nodid";
+    }
+
     if ($part eq 'I') {
+      ##-- initial segment
       if (defined($nodid)) {
 	$id2segs->{$nodid} = [$nod];
       }
-      else {
-	##-- add id
-	$nod->setAttribute('xml:id' => ($nodid=sprintf("dtatw.mkbx0.seg.%0.4x", ++$id)));
-	$mbx0->vlog('warn',"sanitize_segs(): auto-generating node-id for seg[part=\"I\"]#$nodid at line ", $nod->line_number);
-      }
+      $lastref = $nodid;
     }
     elsif (defined($refid = $nod->getAttribute('ref'))) {
       ##-- $part ne 'I' && defined($refid)
       $refid =~ s/^\#//;
       if (!defined($refnod=$xmldoc->findnodes("id('$refid')")->[0])) {
-	$mbx0->vlog('warn',"sanitize_segs(): mapping dangling \@ref=$refid to \@xml:id for //seg[part=\"$part\"] at line ", $nod->line_number);
+	##-- dangling @ref
+	$mbx0->vlog('warn',"sanitize_segs(): pruning dangling \@ref=$refid for $nodlabel");
 	$nod->removeAttribute('ref');
-	$nod->setAttribute('xml:id' => ($nodid=$refid));
       }
       push(@{$id2segs->{$refid}},$nod);
+      $lastref = $refid;
     }
-    else {
-      ##-- $part ne 'I' && !defined($refid)
-      $mbx0->vlog('warn',"sanitize_segs(): no \@ref attribute for //seg[part=\"$part\"] at line ", $nod->line_number);
+    elsif (defined($lastref)) {
+      ##-- $part ne 'I' && !defined($refid) && defined($lastref) : fallback: assume @ref=$lastref
+      $mbx0->vlog('warn',"sanitize_segs(): missing \@ref attribute for $nodlabel, assuming \@ref='$lastref'");
+      push(@{$id2segs->{$lastref}},$nod);
+    } else {
+      ##-- $part ne 'I' && !defined($refid) && !defined($lastref) : no joy
+      $mbx0->vlog('warn',"sanitize_segs(): missing \@ref attribute for $nodlabel, no fallback available: ignoring");
     }
-    $nod->setAttribute('xml:id' => ($nodid=sprintf("dtatw.mkbx0.seg.%0.4x", ++$id))) if (!defined($nodid));
   }
 
   ##-- now encode as @prev|@next

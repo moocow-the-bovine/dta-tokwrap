@@ -483,12 +483,16 @@ MISC_FILES += $(XML:.xml=.t)
 
 t-xml: $(XML:.xml=.t.xml)
 
+
 %.t.xml: %.t %.cx %.bx tokwrap
-ifeq "$(TOKWRAP_ALL)" "yes"
+#	##-- always use dta-tokwrap.perl for tok2xml, since it also sorts back into pseudo-source-order using fast regexes
 	$(TOKWRAP) -t tok2xml $(xmldir)/$*.xml
-else
-	$(PROG_DIR)dtatw-tok2xml $< $*.cx $*.bx $@ $*.xml
-endif
+
+#ifeq "$(TOKWRAP_ALL)" "yes"
+#	$(TOKWRAP) -t tok2xml $(xmldir)/$*.xml
+#else
+#	$(PROG_DIR)dtatw-tok2xml $< $*.cx $*.bx - $*.xml | xsltproc $(SCRIPT_DIR)dtatw-txmlsort.xsl -o "$@" -
+#endif
 
 no-t-xml: ; rm -f *.t.xml
 CLEAN_FILES += *.t.xml
@@ -581,37 +585,34 @@ CLEAN_FILES += *.a.xml
 ##======================================================================
 ## Rules: source+standoff integration ("splicing")
 
-splice: cw-xml cws-xml
+splice: cws-xml
 splice-noc: cws-noc-fmt-xml
+
 cws-noc-fmt-xml: $(XML:.xml=.cws.noc.fmt.xml)
 cws-noc-xml: $(XML:.xml=.cws.noc.xml)
-cw-noc-xml: $(XML:.xml=.cw.noc.xml)
+ws-fmt-xml: $(XML:.xml=.ws.xml)
+ws-xml: $(XML:.xml=.ws.xml)
 
-##-- splice: (.char.xml + .t.xml) --> .cw.xml
-cw-xml: $(XML:.xml=.cw.xml)
-%.cw.xml: $(xmldir)/%.xml %.t.xml scripts
-	$(SCRIPT_DIR)dtatw-add-w.perl $(addwopts) -o=$@ $< $*.t.xml 
 
-no-cw-xml: ; rm -r *.cw.xml
-CLEAN_FILES += *.cw.xml
-
-##-- splice: (.cw.xml + .t.xml) --> .cws.xml
+##-- splice: (.char.xml + .t.xml) --> .cws.xml
+cw-xml: cws-xml
 cws-xml: $(XML:.xml=.cws.xml)
-%.cws.xml: %.cw.xml %.t.xml scripts
-	$(SCRIPT_DIR)dtatw-add-s.perl $(addsopts) -o=$@ $< $*.t.xml  
+%.cws.xml: $(xmldir)/%.xml %.t.xml scripts
+	$(SCRIPT_DIR)dtatw-add-ws.perl $(addwsopts) -o=$@ $< $*.t.xml 
 
+no-cw-xml: no-cws.xml
 no-cws-xml: ; rm -r *.cws.xml
 CLEAN_FILES += *.cws.xml
 
-##-- splice: (.cw.noc.xml + .t.xml) --> .ws.xml
+##-- splice: .cws.xml --> .ws.xml (aka .cws.noc.xml)
 ws-xml: $(XML:.xml=.ws.xml)
-%.ws.xml: %.cw.noc.xml %.t.xml scripts
-	$(SCRIPT_DIR)dtatw-add-s.perl -q -o=$@ $< $*.t.xml  
+%.ws.xml: %.cws.xml scripts
+	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@
 
 no-ws-xml: ; rm -r *.ws.xml
 CLEAN_FILES += *.ws.xml
 
-CWS_XML_FILES = $(XML:.xml=.cws.xml) $(XML:.xml=.cws.noc.xml) $(XML:.cw.noc.xml) $(XML:.xml=.cw.xml)
+CWS_XML_FILES = $(XML:.xml=.cws.xml) $(XML:.ws.xml)
 
 ##======================================================================
 ## Rules: DTA::CAB analysis: direct: (v1): .t.xml -> .dta-cab.xml.bytok

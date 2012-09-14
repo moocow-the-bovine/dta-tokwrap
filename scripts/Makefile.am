@@ -36,7 +36,8 @@ pkgxsl_DATA = \
 	dtatw-rm-c.xsl \
 	dtatw-rm-lb.xsl \
 	dtatw-txml2tt.xsl \
-	dtatw-serialize-prevnext.xsl
+	dtatw-serialize-prevnext.xsl \
+	dtatw-txmlsort.xsl
 
 bin_SCRIPTS = \
 	dtatw-add-c.perl \
