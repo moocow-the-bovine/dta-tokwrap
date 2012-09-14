@@ -43,15 +43,15 @@ see L</TOOLS> for an overview of the individual tools included in this distribut
 
 =item expat
 
-tested version(s): 1.95.8
+tested version(s): 1.95.8, 2.0.1
 
 =item libxml2
 
-tested version(s): 2.7.3
+tested version(s): 2.7.3, 2.7.8
 
 =item libxslt
 
-tested version(s): 1.1.24
+tested version(s): 1.1.24, 1.1.26
 
 =back
 
@@ -76,23 +76,23 @@ perl modules.
 
 =item C compiler
 
-tested version(s): gcc v4.3.3 / linux
+tested version(s): gcc / linux: v4.3.3, 4.4.6
 
 =item GNU flex (development only)
 
-tested version(s): 2.5.33
+tested version(s): 2.5.33, 2.5.35
 
 Only needed if you plan on making changes to the lexer sources.
 
 =item GNU autoconf (SVN only)
 
-tested version(s): 2.61
+tested version(s): 2.61, 2.67
 
 Required for building from SVN sources.
 
 =item GNU automake (SVN only)
 
-tested version(s): 1.9.6
+tested version(s): 1.9.6, 1.11.1
 
 Required for building from SVN sources.
 
@@ -303,26 +303,23 @@ See L<"the dtatw-add-c.perl manpage"|dtatw-add-c.perl> for more details.
 =item dtatw-cids2local.perl
 
 Script to convert C<//c/@xml:id> attributes to page-local encoding.
+Never really used.
 
 See L<"the dtatw-cids2local.perl manpage"|dtatw-cids2local.perl> for more details.
 
-=item dtatw-add-w.perl
+=item dtatw-add-ws.perl
 
-Script to splice C<E<lt>wE<gt>> elements encoded from a stand-off (.t.xml, .u.xml, or .w.xml) XML file
-into a compatible (but not necessarily the I<original>) "base-format" (.char.xml) file.
-Rather slow, and a tad too generous with partial word segments, due to
-strict adjacency and boundary criteria.
+Script to splice C<E<lt>sE<gt>> and C<E<lt>wE<gt>> elements encoded from a standoff (.t.xml or .u.xml) XML file
+into the I<original> "base-format" (.chr.xml) file, producing a .cws.xml file.
+A tad too generous with partial word segments, due to strict adjacency and boundary criteria.
 
-See L<"the dtatw-add-w.perl manpage"|dtatw-add-w.perl> for more details.
+In earlier versions of dta-tokwrap, this functionality was split between the scripts
+C<dtatw-add-w.perl> and C<dtatw-add-s.perl>, which required only an I<id-compatible>
+base-format (.chr.xml) file as the splice target.  As of dta-tokwrap v0.35, the splice target
+base-format file must be I<original> source file itself, since the current implementation
+uses byte offsets to perform the splice.
 
-=item dtatw-add-s.perl
-
-Script to splice C<E<lt>sE<gt>> elements encoded from a stand-off (.t.xml, .u.xml, or .s.xml) XML file
-into a compatible word-spliced (.cw.xml) file as output by the L</dtatw-add-w.perl> script.
-Rather slow, and a tad too generous with partial sentence segments, due to
-strict adjacency and boundary criteria.
-
-See L<"the dtatw-add-s.perl manpage"|dtatw-add-s.perl> for more details.
+See L<"the dtatw-add-ws.perl manpage"|dtatw-add-ws.perl> for more details.
 
 =item dtatw-splice.perl
 

@@ -220,7 +220,7 @@ Make a pagebreak index for a DTA source XML file.
 
 L<dtatw-add-c.perl(1)|dtatw-add-c.perl>,
 L<dta-tokwrap.perl(1)|dta-tokwrap.perl>,
-L<dtatw-add-s.perl(1)|dtatw-add-s.perl>,
+L<dtatw-add-ws.perl(1)|dtatw-add-ws.perl>,
 L<dtatw-rm-c.perl(1)|dtatw-rm-c.perl>,
 ...
 

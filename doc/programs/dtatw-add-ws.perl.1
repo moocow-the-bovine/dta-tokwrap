@@ -123,18 +123,18 @@
 .rm #[ #] #H #V #F C
 .\" ========================================================================
 .\"
-.IX Title "DTATW-ADD-W.PERL 1"
-.TH DTATW-ADD-W.PERL 1 "2012-09-14" "dta-tokwrap v0.35" "DTA Tokenization Utilities"
+.IX Title "DTATW-ADD-WS.PERL 1"
+.TH DTATW-ADD-WS.PERL 1 "2012-09-14" "dta-tokwrap v0.35" "DTA Tokenization Utilities"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
-dtatw\-add\-w.perl \- splice standoff <w>\-records into original .chr.xml files
+dtatw\-add\-ws.perl \- splice standoff //s and //w records from .t.xml into original TEI .chr.xml files
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
 .Vb 1
-\& dtatw\-add\-w.perl [OPTIONS] CHAR_XML_FILE (W|T|U)_XML_FILE
+\& dtatw\-add\-ws.perl [OPTIONS] CHR_XML_FILE T_XML_FILE
 \&
 \& General Options:
 \&  \-help                  # this help message
@@ -149,12 +149,11 @@ dtatw\-add\-w.perl \- splice standoff <w>\-records into original .chr.xml files
 Not yet written.
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-Splice standoff <w>\-records into original .chr.xml files, producing .cw.xml files.
+Splice standoff //s and //w records into original \s-1TEI\s0 .chr.xml files, producing .cws.xml files.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIdtatw\-add\-c.perl\fR\|(1),
 \&\fIdta\-tokwrap.perl\fR\|(1),
-\&\fIdtatw\-add\-s.perl\fR\|(1),
 \&\fIdtatw\-rm\-c.perl\fR\|(1),
 \&...
 .SH "AUTHOR"

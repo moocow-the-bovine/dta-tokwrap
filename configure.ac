@@ -146,8 +146,8 @@ pkgdocdotdir="\${docdir}/\${PACKAGE}/dot"
 AC_SUBST(pkgdocdotdir)
 AC_CONFIG_LINKS([doc/programs/dta-tokwrap.perl.pod:DTA-TokWrap/dta-tokwrap.perl])
 AC_CONFIG_LINKS([doc/programs/dtatw-add-c.perl.pod:scripts/dtatw-add-c.perl])
-AC_CONFIG_LINKS([doc/programs/dtatw-add-w.perl.pod:scripts/dtatw-add-w.perl])
-AC_CONFIG_LINKS([doc/programs/dtatw-add-s.perl.pod:scripts/dtatw-add-s.perl])
+AC_CONFIG_LINKS([doc/programs/dtatw-add-ws.perl.pod:scripts/dtatw-add-ws.perl])
+dnl AC_CONFIG_LINKS([doc/programs/dtatw-add-s.perl.pod:scripts/dtatw-add-s.perl])
 ##
 dnl AC_CONFIG_LINKS([doc/programs/dtatw-rm-c.perl.pod:scripts/dtatw-rm-c.perl])   ##-- no pod docs (yet)
 dnl AC_CONFIG_LINKS([doc/programs/dtatw-rm-lb.perl.pod:scripts/dtatw-rm-lb.perl])   ##-- no pod docs (yet)

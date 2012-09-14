@@ -13,33 +13,33 @@ INSTALLATION
   Requirements
    C Libraries
     expat
-        tested version(s): 1.95.8
+        tested version(s): 1.95.8, 2.0.1
 
     libxml2
-        tested version(s): 2.7.3
+        tested version(s): 2.7.3, 2.7.8
 
     libxslt
-        tested version(s): 1.1.24
+        tested version(s): 1.1.24, 1.1.26
 
    Perl Modules
     See DTA-TokWrap/README.txt for a full list of required perl modules.
 
    Development Tools
     C compiler
-        tested version(s): gcc v4.3.3 / linux
+        tested version(s): gcc / linux: v4.3.3, 4.4.6
 
     GNU flex (development only)
-        tested version(s): 2.5.33
+        tested version(s): 2.5.33, 2.5.35
 
         Only needed if you plan on making changes to the lexer sources.
 
     GNU autoconf (SVN only)
-        tested version(s): 2.61
+        tested version(s): 2.61, 2.67
 
         Required for building from SVN sources.
 
     GNU automake (SVN only)
-        tested version(s): 1.9.6
+        tested version(s): 1.9.6, 1.11.1
 
         Required for building from SVN sources.
 
@@ -173,26 +173,25 @@ TOOLS
 
     dtatw-cids2local.perl
         Script to convert "//c/@xml:id" attributes to page-local encoding.
+        Never really used.
 
         See "the dtatw-cids2local.perl manpage" for more details.
 
-    dtatw-add-w.perl
-        Script to splice "<w>" elements encoded from a stand-off (.t.xml,
-        .u.xml, or .w.xml) XML file into a compatible (but not necessarily
-        the *original*) "base-format" (.char.xml) file. Rather slow, and a
-        tad too generous with partial word segments, due to strict adjacency
-        and boundary criteria.
+    dtatw-add-ws.perl
+        Script to splice "<s>" and "<w>" elements encoded from a standoff
+        (.t.xml or .u.xml) XML file into the *original* "base-format"
+        (.chr.xml) file, producing a .cws.xml file. A tad too generous with
+        partial word segments, due to strict adjacency and boundary
+        criteria.
 
-        See "the dtatw-add-w.perl manpage" for more details.
+        In earlier versions of dta-tokwrap, this functionality was split
+        between the scripts "dtatw-add-w.perl" and "dtatw-add-s.perl", which
+        required only an *id-compatible* base-format (.chr.xml) file as the
+        splice target. As of dta-tokwrap v0.35, the splice target
+        base-format file must be *original* source file itself, since the
+        current implementation uses byte offsets to perform the splice.
 
-    dtatw-add-s.perl
-        Script to splice "<s>" elements encoded from a stand-off (.t.xml,
-        .u.xml, or .s.xml) XML file into a compatible word-spliced (.cw.xml)
-        file as output by the "dtatw-add-w.perl" script. Rather slow, and a
-        tad too generous with partial sentence segments, due to strict
-        adjacency and boundary criteria.
-
-        See "the dtatw-add-s.perl manpage" for more details.
+        See "the dtatw-add-ws.perl manpage" for more details.
 
     dtatw-splice.perl
         Script to splice generic standoff attributes and/or content into a

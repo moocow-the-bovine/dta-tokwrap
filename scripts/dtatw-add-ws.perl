@@ -383,11 +383,11 @@ __END__
 
 =head1 NAME
 
-dtatw-add-w.perl - splice standoff <w>-records into original .chr.xml files
+dtatw-add-ws.perl - splice standoff //s and //w records from .t.xml into original TEI .chr.xml files
 
 =head1 SYNOPSIS
 
- dtatw-add-w.perl [OPTIONS] CHAR_XML_FILE (W|T|U)_XML_FILE
+ dtatw-add-ws.perl [OPTIONS] CHR_XML_FILE T_XML_FILE
 
  General Options:
   -help                  # this help message
@@ -417,7 +417,7 @@ Not yet written.
 
 =head1 DESCRIPTION
 
-Splice standoff <w>-records into original .chr.xml files, producing .cw.xml files.
+Splice standoff //s and //w records into original TEI .chr.xml files, producing .cws.xml files.
 
 =cut
 
@@ -430,7 +430,6 @@ Splice standoff <w>-records into original .chr.xml files, producing .cw.xml file
 
 L<dtatw-add-c.perl(1)|dtatw-add-c.perl>,
 L<dta-tokwrap.perl(1)|dta-tokwrap.perl>,
-L<dtatw-add-s.perl(1)|dtatw-add-s.perl>,
 L<dtatw-rm-c.perl(1)|dtatw-rm-c.perl>,
 ...
 

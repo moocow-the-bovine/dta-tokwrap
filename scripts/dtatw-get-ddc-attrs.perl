@@ -822,8 +822,7 @@ Splice DDC-relevant attributes from DTA *.chr.xml files into DTA::TokWrap *.t.xm
 
 L<dtatw-add-c.perl(1)|dtatw-add-c.perl>,
 L<dta-tokwrap.perl(1)|dta-tokwrap.perl>,
-L<dtatw-add-w.perl(1)|dtatw-add-w.perl>,
-L<dtatw-add-s.perl(1)|dtatw-add-s.perl>,
+L<dtatw-add-ws.perl(1)|dtatw-add-w.perl>,
 L<dtatw-splice.perl(1)|dtatw-splice.perl>,
 L<dtatw-rm-c.perl(1)|dtatw-rm-c.perl>,
 ...

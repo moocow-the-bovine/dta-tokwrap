@@ -20,7 +20,7 @@ POD2MAN_RELEASE_STR ="dta-tokwrap v$(VERSION)"
 #DYNAMIC_MAN1_PODS =$(DOC_MAN1_GOGS:.gog=.pod) $(DOC_PROG_INDEX_SKEL:.skel=.pod)
 #DYNAMIC_MAN5_PODS =
 STATIC_MAN1_PODS  = \
-	dta-tokwrap.perl.pod dtatw-add-c.perl.pod dtatw-add-w.perl.pod dtatw-add-s.perl.pod \
+	dta-tokwrap.perl.pod dtatw-add-c.perl.pod dtatw-add-ws.perl.pod \
 	dtatw-cids2local.perl.pod dtatw-txml2uxml.perl.pod dtatw-mkpx.perl.pod \
 	dtatw-splice.perl.pod \
 	dtatw-get-ddc-attrs.perl.pod dtatw-get-header.perl.pod dtatw-xml2ddc.perl.pod
