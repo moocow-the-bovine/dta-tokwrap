@@ -325,7 +325,11 @@ REALCLEAN_DEPS += no-xml
 	xmllint --format -o $@ $<
 %.fmt.xml: %.xml
 	xmllint --format -o $@ $<
-CLEAN_FILES += *.fmt *.fmt.xml
+%.fo: %
+	xmlstarlet fo -n $< > $@
+%.fo.xml: %.xml
+	xmlstarlet fo -n $< > $@
+CLEAN_FILES += *.fmt *.fmt.xml *.fo.xml *.fo
 
 ##-- namespace removal: *.nons[.xml]
 %.nons: % programs
@@ -586,7 +590,7 @@ cw-noc-xml: $(XML:.xml=.cw.noc.xml)
 ##-- splice: (.char.xml + .t.xml) --> .cw.xml
 cw-xml: $(XML:.xml=.cw.xml)
 %.cw.xml: $(xmldir)/%.xml %.t.xml scripts
-	$(SCRIPT_DIR)dtatw-add-w.perl -q $(addwopts) -o=$@ $< $*.t.xml 
+	$(SCRIPT_DIR)dtatw-add-w.perl $(addwopts) -o=$@ $< $*.t.xml 
 
 no-cw-xml: ; rm -r *.cw.xml
 CLEAN_FILES += *.cw.xml
@@ -594,7 +598,7 @@ CLEAN_FILES += *.cw.xml
 ##-- splice: (.cw.xml + .t.xml) --> .cws.xml
 cws-xml: $(XML:.xml=.cws.xml)
 %.cws.xml: %.cw.xml %.t.xml scripts
-	$(SCRIPT_DIR)dtatw-add-s.perl -q $(addsopts) -o=$@ $< $*.t.xml  
+	$(SCRIPT_DIR)dtatw-add-s.perl $(addsopts) -o=$@ $< $*.t.xml  
 
 no-cws-xml: ; rm -r *.cws.xml
 CLEAN_FILES += *.cws.xml

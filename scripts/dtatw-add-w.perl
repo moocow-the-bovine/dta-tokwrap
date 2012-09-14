@@ -30,7 +30,9 @@ our $srcInfix = '.chr';
 our $soInfix  = '.t';
 
 ##-- constants: verbosity levels
-our $vl_progress = 1;
+our $vl_silent   = 0;
+our $vl_info     = 1;
+our $vl_progress = 2;
 
 ##------------------------------------------------------------------------------
 ## Command-line
@@ -38,7 +40,7 @@ our $vl_progress = 1;
 GetOptions(##-- General
 	   'help|h' => \$help,
 	   'verbose|v=i' => \$verbose,
-	   'quiet|q' => sub { $verbose=!$_[1]; },
+	   'quiet|q' => sub { $verbose=0; },
 
 	   ##-- I/O
 	   'output|out|o=s' => \$outfile,
@@ -354,17 +356,19 @@ find_s_segments();
 print STDERR " done.\n" if ($verbose>=$vl_progress);
 
 ##-- report final assignment
-if ($verbose>=$vl_progress) {
+if ($verbose>=$vl_info) {
   my $nseg_w = scalar(@w_segs);
   my $ndis_w = scalar(grep {$_>1} values %wid2nsegs);
-  my $pdis_w = ($nw==0 ? 'NaN' : sprintf("%.1f", 100*$ndis_w/$nw));
+  my $pdis_w = ($nw==0 ? 'NaN' : 100*$ndis_w/$nw);
   ##
   my $nseg_s = 0; $nseg_s += $_ foreach (values %sid2nsegs);
   my $ndis_s = scalar(grep {$_>1} values %sid2nsegs);
-  my $pdis_s = ($ns==0 ? 'NaN' : sprintf("%.1f", 100*$ndis_s/$ns));
+  my $pdis_s = ($ns==0 ? 'NaN' : 100*$ndis_s/$ns);
+  ##
+  my $dfmt = "%".length($nw)."d";
   print STDERR
-    ("$prog: assigned $nseg_w segment(s) to $nw token(s); $ndis_w discontinuous ($pdis_w%)\n",
-     "$prog: assigned $nseg_s segment(s) to $ns sentence(s); $ndis_s discontinuous ($pdis_s%)\n",
+    (sprintf("$prog: INFO: $dfmt token(s)    in $dfmt segment(s): $dfmt discontinuous (%5.1f%%)\n", $nw, $nseg_w, $ndis_w, $pdis_w),
+     sprintf("$prog: INFO: $dfmt sentence(s) in $dfmt segment(s): $dfmt discontinuous (%5.1f%%)\n", $ns, $nseg_s, $ndis_s, $pdis_s),
     );
 }
 

@@ -168,7 +168,8 @@ void put_record_pb(TokWrapData *data)
 void put_record_formula(TokWrapData *data)
 {
   ByteOffset my_xoff = XML_GetCurrentByteIndex(data->xp);
-  ByteOffset my_xlen = XML_GetCurrentByteCount(data->xp);
+  //ByteOffset my_xlen = XML_GetCurrentByteCount(data->xp);
+  ByteOffset my_xlen = 0;
   int my_tlen = strlen(CX_FORMULA_TEXT);
   char formula_id[CIDBUFSIZE];
   snprintf(formula_id, CIDBUFSIZE, CX_FORMULA_ID, my_xoff);

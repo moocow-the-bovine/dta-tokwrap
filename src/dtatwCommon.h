@@ -288,16 +288,6 @@ Offset2CxIndex *txt2cxIndex(Offset2CxIndex *txto2cx, bxData *bxd, Offset2CxIndex
 // cx2bxIndex(): init/alloc: bxRecord *bx = cx2bx[cx_index]  :: UNUSED (?!)
 bxRecord **cx2bxIndex(cxData *cxd, bxData *bxd, Offset2CxIndex *tx2cx);
 
-#if 0
-// parse_cid(): parses //c/@id values into prefix && numeric counter (integer parsed following final 'c')
-//  + returns integer value of numeric counter (0 on error)
-//  + if prefix_len is non-null, it will hold the length of the prefix on return
-int parse_cid(const char *idstr, int *prefix_len);
-
-// cid_is_adjacent(): check whether cid2 immediately follows cid1 (uses parse_cid())
-int cid_is_adjacent(const char *cid1, const char *cid2);
-#endif
-
 // cx_is_adjacent(): check whether cx1 immediately follows cx2
 int cx_is_adjacent(const cxRecord *cx1, const cxRecord *cx2);
 

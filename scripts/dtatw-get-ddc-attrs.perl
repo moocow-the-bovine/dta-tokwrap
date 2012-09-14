@@ -42,8 +42,9 @@ our $do_xpath = 1;
 our $do_bbox = 1;
 our $do_unicruft = 1;
 
-our $do_keep_c = 1;
-our $do_keep_b = 1;
+our $do_keep_c  = 1;
+our $do_keep_b  = 1;
+our $do_keep_xb = 1;
 
 our $do_cofflen = 0;
 our $do_bofflen = 0;
@@ -98,7 +99,8 @@ GetOptions(##-- General
 	   'byte-offsets|b-offsets|boff|bo!' => \$do_bofflen,
 	   'keep-c|keepc|kc!' => \$do_keep_c,
 	   'keep-b|keepb|kb!' => \$do_keep_b,
-	   'formula-text|ft:s' => \$formula_text,
+	   'keep-xb|keepxb|kxb!' => \$do_keep_xb,
+	   'formula-text|ft=s' => \$formula_text,
 	  );
 
 pod2usage({-exitval=>0,-verbose=>0}) if ($help);
@@ -387,7 +389,7 @@ sub apply_ddc_attrs {
   }
 
   ##--------------------------------------
-  ## apply: pass=3: remove 'c','b' attributes
+  ## apply: pass=3: remove 'c','b','xb' attributes if requested
   if (!$do_keep_c) {
     foreach (@$wnods) {
       $_->removeAttribute('c');
@@ -397,6 +399,11 @@ sub apply_ddc_attrs {
   if (!$do_keep_b) {
     foreach (@$wnods) {
       $_->removeAttribute('b');
+    }
+  }
+  if (!$do_keep_xb) {
+    foreach (@$wnods) {
+      $_->removeAttribute('xb');
     }
   }
 
@@ -439,7 +446,7 @@ sub apply_word {
     warn("$prog: WARNING: no //c/\@id list for //w#$wid at $txmlfile line ", $wnod->line_number, "\n");
   }
   elsif (!@cs) {
-    warn("$prog: WARNING: invalid //c/\@id list for //w#$wid at $txmlfile line ", $wnod->line_number, "\n")
+    warn("$prog: WARNING: invalid //c/\@id list =(", join(',',@cids), ") for //w#$wid at $txmlfile line ", $wnod->line_number, "\n")
       if ($verbose >= $vl_warn);
   }
 
@@ -778,6 +785,7 @@ dtatw-get-ddc-attrs.perl - get DDC-relevant attributes from DTA::TokWrap files
   -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in T_XML_FILE file (default=don't)
   -keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=keep)
   -keep-b , -nokeep-b    # do/don't keep existing //w/@b attributes (default=keep)
+  -keep-xb, -nokeep-xb   # do/don't keep existing //w/@xb attributes (default=keep)
   -formula-text TEXT     # output text for //formula elements (default='' (no change))
   -output FILE           # specify output file (default='-' (STDOUT))
 

@@ -152,7 +152,7 @@ sub initXmlParser {
       $bx0off = $xp->current_byte();
       push(@$blocks, $blk={ key=>$key, elt=>$eltname, bx0off=>$bx0off, xoff=>$xoff,xlen=>$xlen, toff=>$toff,tlen=>$tlen });
       if (defined($attrs{text})) {
-	##-- literal replacement text
+	##-- literal replacement text (old 'formula' hack)
 	#pop(@$blocks); ##-- DEBUG: ignore
 	$blk->{text} = $attrs{text};
 	@$blk{qw(xoff toff)} = @$blocks ? @{$blocks->[$#$blocks]}{qw(xoff toff)} : (0,0);

@@ -152,10 +152,12 @@ profile = no
 
 ## addwopts=OPTIONS
 ##  + additional options and/or overrides for dtatw-add-w.perl
+#addwopts=-q
 #addwopts=-v=255
 
 ## addsopts=USER_DTATW_ADD_S_OPTIONS
 ##  + additional options and/or overrides for dtatw-add-s.perl
+#addsopts=-q
 #addsopts=-v=255
 
 ##======================================================================

@@ -70,8 +70,9 @@ static inline int cx_id_ok(const cxRecord *cx)
 	  && cx->id
 	  && cx->id[0]
 	  && strcmp(cx->id,CX_NIL_ID) !=0
-	  && strncmp(cx->id,CX_FORMULA_PREFIX,strlen(CX_FORMULA_PREFIX)) !=0
+	  //&& strncmp(cx->id,CX_FORMULA_PREFIX,strlen(CX_FORMULA_PREFIX)) !=0
 	  //&& strcmp(cx->id,CX_LB_ID) !=0
+	  //&& strcmp(cx->id,CX_PB_ID) !=0
 	  );
 }
 
