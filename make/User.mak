@@ -33,7 +33,7 @@
 xmldir = ./xmlsrc
 xml =
 #xml += $(wildcard $(xmldir)/ex1a.xml)
-xml += $(wildcard $(xmldir)/*.xml)
+#xml += $(wildcard $(xmldir)/*.xml)
 #xml += $(filter-out %/kurz.xml,$(wildcard $(xmldir)/*.xml))
 #xml += $(wildcard $(xmldir)/*.chr.xml)
 #xml += $(xmldir)/test-raw.xml
@@ -62,6 +62,9 @@ xml += $(wildcard $(xmldir)/*.xml)
 
 #xmldir = ../examples
 #xml    = $(xmldir)/kant_aufklaerung_1784.converted.chr.xml
+
+xmldir = ./cab-unana
+xml    = $(wildcard $(xmldir)/*.chr.xml)
 
 ##-- others
 #xmldir = ./xmlsrc

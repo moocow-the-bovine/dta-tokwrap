@@ -112,7 +112,7 @@ sub tok2xml {
     my $data = \$doc->{xtokdata};
     my ($off,$len,$xb);
     my @s = qw();
-    while ($$data =~ m{<s[^>]*>.*?</s>\s*}sg) {
+    while ($$data =~ m{<s\b[^>]*>.*?</s>\s*}sg) {
       ($off,$len) = ($-[0],$+[0]-$-[0]);
       $xb = substr($$data, $off,$len) =~ m{<w[^>]*\bxb="([0-9]+)}s ? $1 : 1e38;
       push(@s,[$xb,$off,$len]);
