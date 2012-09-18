@@ -47,8 +47,7 @@ bin_SCRIPTS = \
 	dtatw-add-ws.perl \
 	dtatw-rm-lb.perl \
 	dtatw-rm-c.perl \
-	dtatw-rm-w.perl \
-	dtatw-rm-s.perl \
+	dtatw-rm-ws.perl \
 	dtatw-tt-dictapply.perl \
 	dtatw-cabtt2xml.perl \
 	dtatw-txml2uxml.perl \
