@@ -232,7 +232,7 @@ sub find_s_segments {
 ##======================================================================
 ## Subs: splice segments into base document
 
-## undef = write_spliced_fh($outfh)
+## undef = splice_segments($outfh)
 ##  + splices final segments from @w_segs into $srcbuf; dumping output to $outfh
 ##  + sorts @w_segs on xml offset ($SEG_OFF)
 sub splice_segments {

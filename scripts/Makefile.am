@@ -43,6 +43,7 @@ bin_SCRIPTS = \
 	dtatw-add-c.perl \
 	dtatw-cids2local.perl \
 	dtatw-mkpx.perl \
+	dtatw-format.perl \
 	dtatw-add-ws.perl \
 	dtatw-rm-lb.perl \
 	dtatw-rm-c.perl \
