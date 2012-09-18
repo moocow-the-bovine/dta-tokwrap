@@ -28,8 +28,10 @@ GetOptions(##-- General
 	   'N|L' => sub {$lb_newlines=!$_[1]},
 
 	   'xml|x!' => \$use_libxml,
-	   'blanks|b!' => \$keep_blanks,
 	   'X' => sub {$use_libxml=!$_[1]},
+
+	   'blanks|b!' => \$keep_blanks,
+	   'B' => sub {$keep_blanks=!$_[1]},
 
 	   'output|out|o=s' => \$outfile,
 	  );
@@ -64,7 +66,8 @@ if ($use_libxml) {
 else {
   ##-- just buffer source file
   local $/=undef;
-  open(XML,"<:raw",$infile) or die("$prog: open failed for '$infile': $!");
+  open(XML,$infile) or die("$prog: open failed for '$infile': $!");
+  binmode(XML,':raw');
   $buf = <XML>;
   close(XML) or die("$prog: close failed for $infile: $!");
 }
