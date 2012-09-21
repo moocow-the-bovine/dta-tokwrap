@@ -72,7 +72,7 @@ sub cb_init {
 }
 
 ## undef = cb_char($expat,$string)
-our ($c_block,$c_char);
+our ($c_block,$c_char,$c_eol);
 sub cb_char {
   if ($text_depth <= 0 || $c_depth > 0) {
     $outfh->print($_[0]->original_string());
@@ -91,9 +91,10 @@ sub cb_char {
       #	 $outfh->print($c_char);
       #	 next;
       # }
+      $c_eol  = ($c_char =~ m/\n/s);
       $c_char = ' '; ##-- bash multiple spaces to single spaces
     }
-    $outfh->print("<c ${xmlns}id=\"c", ++$cnum, "\">", encode('UTF-8',$c_char), "</c>", ($c_char =~ /\n/s ? "\n" : qw()));
+    $outfh->print(($c_eol ? "\n" : qw()), "<c ${xmlns}id=\"c", ++$cnum, "\">", encode('UTF-8',$c_char), "</c>");
   }
 }
 
