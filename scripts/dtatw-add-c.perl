@@ -93,7 +93,7 @@ sub cb_char {
       # }
       $c_char = ' '; ##-- bash multiple spaces to single spaces
     }
-    $outfh->print("<c ${xmlns}id=\"c", ++$cnum, "\">", encode('UTF-8',$c_char), "</c>");
+    $outfh->print("<c ${xmlns}id=\"c", ++$cnum, "\">", encode('UTF-8',$c_char), "</c>", ($c_char =~ /\n/s ? "\n" : qw()));
   }
 }
 
