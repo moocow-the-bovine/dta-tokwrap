@@ -569,17 +569,21 @@ sub sanitize_chains {
 
   my ($nod,$nodid,$refid,$refnod,$nodlabel);
   my $id=0;
+  my (@nodids);
+  my %id2prev = qw();
+  my %id2next = qw();
   foreach $nod (@{$xmldoc->findnodes('//*[@prev or @next]')}) {
     $nodid = $nod->getAttribute('xml:id');
     $nodlabel = $nod->nodeName();
     if (!defined($nodid)) {
       ##-- add @id
       $nodlabel .= '['.join(' ', map {'@'.$_->name.'="'.$_->value.'"'} $nod->attributes).']';
-      $nodid = sprintf("dtatw.mkbx0.chain.%0.4x", ++$id);
+      $nodid = sprintf("dtatw_chain_%0.4x", ++$id);
       $mbx0->vlog('warn',"sanitize_chains(): auto-generating node-id = $nodid for chain-node $nodlabel");
       $nod->setAttribute('xml:id'=>$nodid);
     }
     $nodlabel .= "#$nodid";
+    push(@nodids,$nodid);
 
     if (defined($refid = $nod->getAttribute('prev'))) {
       ##-- sanitize @prev
@@ -591,8 +595,9 @@ sub sanitize_chains {
       }
       elsif (!$refnod->getAttribute('next')) {
 	$mbx0->vlog('warn',"sanitize_chains(): inserting \@next=$nodid for chain node ", $refnod->nodeName, "#$refid");
-	$refnod->setAttribute('next'=>$nodid);
+	$refnod->setAttribute('next'=>($id2next{$refid}=$nodid));
       }
+      $id2prev{$nodid} = $refid;
     }
     if (defined($refid = $nod->getAttribute('next'))) {
       ##-- sanitize @next
@@ -604,8 +609,28 @@ sub sanitize_chains {
       }
       elsif (!$refnod->getAttribute('prev')) {
 	$mbx0->vlog('warn',"sanitize_chains(): inserting \@prev=$nodid for chain node ", $refnod->nodeName, "#$refid");
-	$refnod->setAttribute('prev'=>$nodid);
+	$refnod->setAttribute('prev'=>($id2prev{$refid}=$nodid));
       }
+      $id2next{$nodid} = $refid;
+    }
+  }
+
+  ##-- check for & automatically break cycles
+  my (%checked,%chainids,$id_first,$id_cur,$id_nxt);
+  foreach $id_first (@nodids) {
+    next if (exists $checked{$id_first});
+    %chainids = (($id_cur=$id_first)=>undef);
+    while (defined($id_nxt=$id2next{$id_cur})) {
+      if (exists($chainids{$id_nxt})) {
+	$mbx0->vlog('warn',"sanitize_chains(): cycle detected in transition #$id_cur -> #$id_nxt for chain beginning at #$id_first : breaking cycle");
+	$xmldoc->findnodes("id('$id_cur')")->[0]->removeAttribute('next');
+	$xmldoc->findnodes("id('$id_nxt')")->[0]->removeAttribute('prev');
+	delete $id2next{$id_cur};
+	delete $id2prev{$id_nxt};
+	%chainids = qw();
+      }
+      $checked{$id_cur}=undef;
+      $chainids{$id_cur=$id_nxt}=undef;
     }
   }
 
@@ -639,7 +664,7 @@ sub sanitize_segs {
     ##-- always ensure @id
     if (!defined($nodid)) {
       ##-- insert nodid
-      $nod->setAttribute('xml:id' => ($nodid=sprintf("dtatw.mkbx0.seg.%0.4x", ++$id)));
+      $nod->setAttribute('xml:id' => ($nodid=sprintf("dtatw_seg_%0.4x", ++$id)));
       $mbx0->vlog('warn',"sanitize_segs(): auto-generating \@id=$nodid for $nodlabel");
       $nodlabel .= "#$nodid";
     }
