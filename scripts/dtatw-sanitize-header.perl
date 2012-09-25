@@ -221,13 +221,13 @@ elsif ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttr
 			     grep {$_->nodeName !~ /^(?:sur|fore)name$/}
 			     @{$_->findnodes('*')}
 			    );
-		   $name = "$last, $first (".join('; ', @other).")";
+		   $name = ($last||'').", ".($first||'').' ('.join('; ', @other).')';
 		   $name =~ s/^, //;
 		   $name =~ s/ \(\)//;
 		   $name
 		 }
 		 map {
-		   $nnods = $_->findnodes('name');
+		   $nnods = $_->findnodes('name|persName');
 		   ($nnods && @$nnods ? @$nnods : $_)
 		 }
 		 @{$hroot->findnodes('fileDesc/titleStmt/author')});
@@ -288,11 +288,12 @@ my $library = xpgrepval($hroot, @library_xpaths);
 ensure_xpath($hroot, $library_xpaths[$_], $library, ($_==0)) foreach (0..$#library_xpaths);
 
 ##-- meta: dtadir
-my @dirname_xpaths = ('fileDesc/publicationStmt/idno[@type="DTADIR"]', ##-- old (<2012-07)
-		      'fileDesc/publicationStmt/idno[@type="DTADIRNAME"]', ##-- new (>=2012-07)
+my @dirname_xpaths = ('fileDesc/publicationStmt/idno[@type="DTADIRNAME"]', ##-- new (>=2012-07)
+		      'fileDesc/publicationStmt/idno[@type="DTADirName"]', ##-- newer(?) (>=2012-09)
+		      'fileDesc/publicationStmt/idno[@type="DTADIR"]',     ##-- old (<2012-07)
 		     );
 my $dirname = xpgrepval($hroot,@dirname_xpaths) || $basename;
-ensure_xpath($hroot,$dirname_xpaths[$_],$dirname,($_==1)) foreach (0..$#dirname_xpaths);
+ensure_xpath($hroot,$dirname_xpaths[$_],$dirname,($_==0)) foreach (0..$#dirname_xpaths);
 
 ##-- meta: timestamp: ISO
 my $timestamp_xpath = 'fileDesc/publicationStmt/date';
