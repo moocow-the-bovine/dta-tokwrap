@@ -70,6 +70,7 @@ our $dump_xsl_prefix = undef;
 our $traceLevel = 'trace'; ##-- trace level for '-trace' options
 our @traceOptions = (
 		     {opt=>'traceOpen',ref=>\$docopts{traceOpen},vlevel=>1},
+		     {opt=>'traceFrag',ref=>\$twopts{procOpts}{addwsInfo},vlevel=>2},
 		     {opt=>'traceClose',ref=>\$docopts{traceClose},vlevel=>3},
 		     {opt=>'traceProc',ref=>\$docopts{traceProc},vlevel=>2},
 		     {opt=>'traceLoad',ref=>\$docopts{traceLoad},vlevel=>3},
@@ -139,7 +140,7 @@ GetOptions(
 	   'log-level|loglevel|ll=s' => sub { $DTA::TokWrap::Logger::DEFAULT_LOGLEVEL=uc($_[1]); },
 	   'log-file|logfile|lf=s' => \$logFile,
 	   'log-stderr|stderr|le!' => \$logToStderr,
-	   'log-profile|profile|p!' => sub { $logProfile = $twopts{procOpts}{addwsInfoLevel} = $_[1] ? 'info' : undef; },
+	   'log-profile|profile|p!' => sub { $logProfile = $_[1] ? 'info' : undef; },
 	   'silent|quiet|q' => sub {
 	     $verbose=0;
 	     setVerboseTrace(0,$verbose_max,1);

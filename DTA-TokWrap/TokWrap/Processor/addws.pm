@@ -47,7 +47,7 @@ our $SEG_SEND  = 8;
 ##     ##-- configuration options
 ##     wIdAttr => $attr,	##-- attribute in which to place literal id for <w>-fragments
 ##     sIdAttr => $attr,	##-- attribute in which to place literal id for <s>-fragments
-##     addwsInfoLevel => $level, ##-- info level for summary (default='info')
+##     addwsInfo => $level, 	##-- log-level for summary (default='debug')
 ##
 ##     ##-- low-level data
 ##     xprs => $xprs,		##-- low-level XML::Parser object
@@ -76,7 +76,7 @@ sub defaults {
 	  ##-- user attributes
 	  sIdAttr => 'id',
 	  wIdAttr => 'id',
-	  addwsInfoLevel => 'debug',
+	  addwsInfo => 'debug',
 
 	  ##-- low-level
 	 );
@@ -372,7 +372,7 @@ sub addws {
   $po->find_s_segments();
 
   ##-- report final assignment
-  if (defined($po->{addwsInfoLevel})) {
+  if (defined($po->{addwsInfo})) {
     my $nseg_w = scalar(@{$po->{w_segs}});
     my $ndis_w = scalar(grep {$_>1} values %{$po->{wid2nsegs}});
     my $pdis_w = ($po->{nw}==0 ? 'NaN' : 100*$ndis_w/$po->{nw});
@@ -382,8 +382,8 @@ sub addws {
     my $pdis_s = ($po->{ns}==0 ? 'NaN' : 100*$ndis_s/$po->{ns});
     ##
     my $dfmt = "%".length($po->{nw})."d";
-    $po->vlog($po->{addwsInfoLevel}, sprintf("$dfmt token(s)    in $dfmt segment(s): $dfmt discontinuous (%5.1f%%)", $po->{nw}, $nseg_w, $ndis_w, $pdis_w));
-    $po->vlog($po->{addwsInfoLevel}, sprintf("$dfmt sentence(s) in $dfmt segment(s): $dfmt discontinuous (%5.1f%%)", $po->{ns}, $nseg_s, $ndis_s, $pdis_s));
+    $po->vlog($po->{addwsInfo}, sprintf("$dfmt token(s)    in $dfmt segment(s): $dfmt discontinuous (%5.1f%%)", $po->{nw}, $nseg_w, $ndis_w, $pdis_w));
+    $po->vlog($po->{addwsInfo}, sprintf("$dfmt sentence(s) in $dfmt segment(s): $dfmt discontinuous (%5.1f%%)", $po->{ns}, $nseg_s, $ndis_s, $pdis_s));
   }
 
   ##-- output: splice in <w> and <s> segments
