@@ -59,6 +59,7 @@ bin_SCRIPTS = \
 	dtatw-t-check.perl \
 	dtatw-ls-ids.perl \
 	dtatw-sanitize-prevnext.perl \
+	dtatw-restore-namespaces.perl \
 	file-substr.perl
 
 #	dtatw-txml2cspan.perl
