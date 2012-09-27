@@ -322,9 +322,11 @@ REALCLEAN_DEPS += no-xml
 
 ##-- pretty-printing: *.fmt[.xml]
 %.fmt: %
-	xmllint --format -o $@ $<
+#	xmllint --format -o $@ $<
+	$(SCRIPT_DIR)dtatw-format.perl -o=$@ $<
 %.fmt.xml: %.xml
-	xmllint --format -o $@ $<
+#	xmllint --format -o $@ $<
+	$(SCRIPT_DIR)dtatw-format.perl -o=$@ $<
 %.fo: %
 	xmlstarlet fo -n $< > $@
 %.fo.xml: %.xml
@@ -584,9 +586,10 @@ CLEAN_FILES += *.a.xml
 
 ##======================================================================
 ## Rules: source+standoff integration ("splicing")
+##  + doesn't splice any attributes
 
-splice: cws-xml
-splice-noc: cws-noc-fmt-xml
+splice: wst-xml
+splice-noc: wst-fmt-xml
 
 cws-noc-fmt-xml: $(XML:.xml=.cws.noc.fmt.xml)
 cws-noc-xml: $(XML:.xml=.cws.noc.xml)
@@ -598,7 +601,11 @@ ws-xml: $(XML:.xml=.ws.xml)
 cw-xml: cws-xml
 cws-xml: $(XML:.xml=.cws.xml)
 %.cws.xml: $(xmldir)/%.xml %.t.xml scripts
+ifeq "1" "0"
 	$(SCRIPT_DIR)dtatw-add-ws.perl $(addwsopts) -o=$@ $< $*.t.xml 
+else
+	$(TOKWRAP) -t addws $(xmldir)/$*.xml
+endif
 
 no-cw-xml: no-cws.xml
 no-cws-xml: ; rm -r *.cws.xml
@@ -609,10 +616,21 @@ ws-xml: $(XML:.xml=.ws.xml)
 %.ws.xml: %.cws.xml scripts
 	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@
 
-no-ws-xml: ; rm -r *.ws.xml
+no-ws-xml: ; rm -f *.ws.xml
 CLEAN_FILES += *.ws.xml
 
-CWS_XML_FILES = $(XML:.xml=.cws.xml) $(XML:.ws.xml)
+##-- splice: .ws.xml + .t.xml -> .wst.xml
+wst-xml: $(XML:.xml=.wst.xml)
+%.wst.xml: %.ws.xml %.t.xml scripts
+	$(SCRIPT_DIR)dtatw-splice.perl -blanks -notext $*.ws.xml $*.t.xml -o=$@
+
+no-wst-xml: ; rm -f *.wst.xml
+CLEAN_FILES += *.wst.xml
+
+##-- splice: vars
+#CWS_XML_FILES = $(XML:.xml=.cws.xml) $(XML:.ws.xml)
+CWS_XML_FILES = $(XML:.xml=.cws.xml) $(XML:.wst.xml)
+
 
 ##======================================================================
 ## Rules: DTA::CAB analysis: direct: (v1): .t.xml -> .dta-cab.xml.bytok

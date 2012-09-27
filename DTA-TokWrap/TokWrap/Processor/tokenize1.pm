@@ -174,7 +174,7 @@ sub tokenize1 {
     ## fix: line-broken tokens, part 2: repair
     $tp->vlog($tp->{traceLevel},"autofix: linebreak: check \& apply");
     $nfixed=0;
-    my %nojoin_txt2 = map {($_=>undef)} qw(und oder als wie noch sondern ſondern);
+    my %nojoin_txt2 = map {($_=>undef)} qw(und oder als wie noch sondern ſondern u. o.);
 
     my ($txt1,$off1,$len1,$rest1, $txt2,$off2,$len2,$rest2, $repl);
     foreach (reverse @suspects) {

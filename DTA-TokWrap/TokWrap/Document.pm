@@ -21,6 +21,7 @@ use DTA::TokWrap::Processor::tokenize1;
 use DTA::TokWrap::Processor::tok2xml;
 use DTA::TokWrap::Processor::standoff;
 #use DTA::TokWrap::Processor::standoff::xsl;
+use DTA::TokWrap::Processor::addws;
 
 use File::Basename qw(basename dirname);
 use IO::File;
@@ -65,6 +66,7 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    ##-- Source data
 ##    xmlfile => $xmlfile,  ##-- source filename
 ##    xmlbase => $xmlbase,  ##-- xml:base for generated files (default=basename($xmlfile))
+##    xmldata => $xmldata,  ##-- source buffer (for addws)
 ##
 ##    ##-- pseudo-make options
 ##    traceMake => $level,  ##-- log-level for makeKey() trace (e.g. 'debug'; default=undef (none))
@@ -114,7 +116,11 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    xtokfile => $xtokfile,  ##-- XML-ified tokenizer output file (default="$outdir/$outbase.t.xml")
 ##    #xtokdoc  => $xtokdoc,   ##-- XML::LibXML::Document for $xtokdata (parsed from string)
 ##
-##    ##-- standoff xml data (see DTA::TokWrap::Processor::standoff)
+##    ##-- back-splice (see DTA::TokWrap::Processor::addws)
+##    cwsdata => $wsdata,     ##-- back-spliced output data (xmlfile with <s> and <w> elements)
+##    cwsfile => $wsfile,     ##-- back-spliced output file (default="$outdir/$outbase.cws.xml")
+##
+##    ##-- standoff xml data (see DTA::TokWrap::Processor::standoff -- OBSOLETE)
 ##    sosfile => $sosfile,   ##-- sentence standoff file (default="$outdir/$outbase.s.xml")
 ##    sowfile => $sowfile,   ##-- token standoff file (default="$outdir/$outbase.w.xml")
 ##    soafile => $soafile,   ##-- token-analysis standoff file (default="$outdir/$outbase.a.xml")
@@ -188,6 +194,10 @@ sub defaults {
 	  xtokdata => undef,
 	  xtokfile => undef,
 
+	  ##-- back-splice data
+	  cwsdata => undef,
+	  cwsfile => undef,
+
 	  ##-- standoff data
 	  #sosdoc => undef,
 	  #sowdoc => undef,
@@ -246,6 +256,9 @@ sub init {
   #$doc->{xtokdata}  = undef;
   #$doc->{xtokfile}  = $doc->{tmpdir}.'/'.$doc->{outbase}.".t.xml" if (!$doc->{xtokfile});
   $doc->{xtokfile}  = $doc->{outdir}.'/'.$doc->{outbase}.".t.xml" if (!$doc->{xtokfile});
+
+  ##-- defaults: back-spliced data (addws)
+  $doc->{cwsfile} = $doc->{outdir}.'/'.$doc->{outbase}.".cws.xml" if (!$doc->{cwsfile});
 
   ##-- defaults: standoff data (standoff)
   #$doc->{sosdoc} = undef;
@@ -407,18 +420,15 @@ BEGIN {
      (map {$_=>[qw(tokenize1 saveTokFile1)]} qw(mktok1 tokenize1 tok1 t1 tt1)),
      (map {$_=>[qw(tokenize saveTokFile0 tokenize1 saveTokFile1)]} qw(mktok tokenize tok t tt)),
 
-     (map {
-       #$_=>[qw(loadTokFile1 loadBxFile loadCxFile tok2xml saveXtokFile)]
-       $_=>[qw(loadTokFile1 tok2xml saveXtokFile)]
-     } qw(mktxml tok2xml xtok txml ttxml tokxml)),
+     (map {$_=>[qw(loadTokFile1 tok2xml saveXtokFile)]} qw(mktxml tok2xml xtok txml ttxml tokxml)),
+
+     (map {$_=>[qw(addws)]} qw(addws mkcws cwsxml cws)),
 
      (map {
-       #$spec = ["loadXtokFile","xtokDoc","so${_}xml","saveSo${_}File"];
        $spec = ["loadXtokFile","so${_}xml"];
        map {$_=>$spec} ("mk${_}xml", "mkso${_}", "so${_}xml","so${_}file","${_}xml")
      } ('s','w','a')),
 
-     #(map {$_=>[qw(loadXtokFile xtokDoc standoff saveStandoffFiles)]} qw(mkstandoff standoff so mkso)),
      (map {$_=>[qw(loadXtokFile standoff)]} qw(mkstandoff standoff so mkso)),
 
      'tei2txml' => [qw(mkindex),
@@ -438,6 +448,7 @@ BEGIN {
 	     qw(tokenize1 saveTokFile1),
 	     #qw(loadCxFile)
 	     qw(tok2xml saveXtokFile),
+	     qw(addws),
 	     qw(standoff),
 	    ],
     );
@@ -554,6 +565,15 @@ sub tok2xml {
   $_[0]->setLogContext();
   $_[0]->vlog($_[0]{traceProc},"tok2xml()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tok2xml}) || 'DTA::TokWrap::Processor::tok2xml')->tok2xml($_[0]);
+}
+
+## $doc_or_undef = $doc->addws($addws)
+## $doc_or_undef = $doc->addws()
+##  + see DTA::TokWrap::Processor::addws::addws()
+sub addws {
+  $_[0]->setLogContext();
+  $_[0]->vlog($_[0]{traceProc},"addws()") if ($_[0]{traceProc});
+  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{addws}) || 'DTA::TokWrap::Processor::addws')->addws($_[0]);
 }
 
 ## $doc_or_undef = $doc->sosxml($so)
@@ -774,6 +794,26 @@ sub xtokDoc {
   $doc->{xtokdoc_stamp} = timestamp(); ##-- stamp
   return $doc->{xtokdoc};
 }
+
+## \$xmlbuf_or_undef = $doc->loadXtokFile($filename_or_fh)
+## \$xmlbuf_or_undef = $doc->loadXtokFile()
+##  + loads $doc->{xmldata} from $filename_or_fh (default=$doc->{xmlfile})
+sub loadXmlData {
+  my ($doc,$file) = @_;
+  $doc->setLogContext();
+
+  ##-- get file
+  $file = $doc->{xmlfile} if (!$file);
+  $doc->logconfess("loadXmlData(): no source XML file defined") if (!defined($file));
+  $doc->vlog($doc->{traceLoad}, "loadXmlData($file)") if ($doc->{traceLoad});
+
+  slurp_file($file,\$doc->{xmldata})
+    or $doc->logconfess("slurp_file() failed for XML source file '$file': $!");
+
+  $doc->{xmldata_stamp} = file_mtime($file);
+  return \$doc->{xmldata};
+}
+
 
 ##----------------------------------------------------------------------
 ## Methods: Member I/O: output
