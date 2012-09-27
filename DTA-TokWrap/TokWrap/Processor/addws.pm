@@ -47,6 +47,7 @@ our $SEG_SEND  = 8;
 ##     ##-- configuration options
 ##     wIdAttr => $attr,	##-- attribute in which to place literal id for <w>-fragments
 ##     sIdAttr => $attr,	##-- attribute in which to place literal id for <s>-fragments
+##     addwsInfoLevel => $level, ##-- info level for summary (default='info')
 ##
 ##     ##-- low-level data
 ##     xprs => $xprs,		##-- low-level XML::Parser object
@@ -75,6 +76,7 @@ sub defaults {
 	  ##-- user attributes
 	  sIdAttr => 'id',
 	  wIdAttr => 'id',
+	  addwsInfoLevel => 'debug',
 
 	  ##-- low-level
 	 );
@@ -241,11 +243,13 @@ sub find_s_segments {
 ##----------------------------------------------------------------------
 ## Subs: splice segments into base document
 
-## undef = splice_segments($outfh)
+## undef = splice_segments(\$outbufr)
 ##  + splices final segments from @w_segs=@{$po->{w_segs}} into $srcbuf; dumping output to $outfh
 ##  + sorts @w_segs on xml offset ($SEG_OFF)
 sub splice_segments {
-  my ($po,$outfh) = @_;
+  my ($po,$outbufr) = @_;
+  $outbufr  = \(my $outbuf='') if (!defined($outbufr));
+  $$outbufr = '';
   my ($xref_this,$xref_prev,$xref_next);
   my ($xref,$xoff,$xlen,$segi, $sid,$sbegi,$sprvi,$snxti,$send);
   my ($nwsegs,$nssegs);
@@ -260,13 +264,13 @@ sub splice_segments {
     $nwsegs  = $wid2nsegs->{$xref};
 
     ##-- splice in prefix
-    $outfh->print(substr($$srcbufr, $off, ($xoff-$off)));
+    $$outbufr .= substr($$srcbufr, $off, ($xoff-$off));
 
     ##-- maybe splice in <s>-start-tag
     if ($sbegi) {
       if (!$sprvi && !$snxti) {
 	##-- //s-start-tag: single-element item
-	$outfh->print("<s $sIdAttr=\"$sid\">");
+	$$outbufr .= "<s $sIdAttr=\"$sid\">";
       } else {
 	##-- //s-start-tag: multi-segment item
 	$xref_this = "${sid}".($sprvi ? "_$sbegi" : '');
@@ -275,13 +279,13 @@ sub splice_segments {
 
 	if (!$sprvi) {
 	  ##-- //s-start-tag: multi-segment item: initial segment
-	  $outfh->print("<s part=\"I\" $sIdAttr=\"$xref_this\" next=\"$xref_next\">");
+	  $$outbufr .= "<s part=\"I\" $sIdAttr=\"$xref_this\" next=\"$xref_next\">";
 	} elsif (!$snxti) {
 	  ##-- //s-start-tag: multi-segment item: final segment
-	  $outfh->print("<s part=\"F\" $sIdAttr=\"$xref_this\" prev=\"$xref_prev\">"); #." $s_refAttr=\"#$xref\""
+	  $$outbufr .= "<s part=\"F\" $sIdAttr=\"$xref_this\" prev=\"$xref_prev\">"; #." $s_refAttr=\"#$xref\""
 	} else {
 	  ##-- //s-start-tag: multi-segment item: middle segment
-	  $outfh->print("<s part=\"M\" $sIdAttr=\"$xref_this\" prev=\"$xref_prev\" next=\"$xref_next\">"); #." $s_refAttr=\"#$xref\""
+	  $$outbufr .= "<s part=\"M\" $sIdAttr=\"$xref_this\" prev=\"$xref_prev\" next=\"$xref_next\">"; #." $s_refAttr=\"#$xref\""
 	}
       }
     }
@@ -292,7 +296,7 @@ sub splice_segments {
     ##    - keep old @part attributes for compatibility (but throw out $w_refAttr ("n"))
     if ($nwsegs==1) {
       ##-- //w-start-tag: single-segment item
-      $outfh->print("<w $wIdAttr=\"$xref\">");
+      $$outbufr .= "<w $wIdAttr=\"$xref\">";
     } else {
       ##-- //w-start-tag: multi-segment item
       $xref_this = "${xref}".($segi>1 ? ("_".($segi-1)) : '');
@@ -301,27 +305,27 @@ sub splice_segments {
 
       if ($segi==1) {
 	##-- //w-start-tag: multi-segment item: initial segment
-	$outfh->print("<w part=\"I\" $wIdAttr=\"$xref_this\" next=\"$xref_next\">");
+	$$outbufr .= "<w part=\"I\" $wIdAttr=\"$xref_this\" next=\"$xref_next\">";
       } elsif ($segi==$nwsegs) {
 	##-- //w-start-tag: multi-segment item: final segment
-	$outfh->print("<w part=\"F\" $wIdAttr=\"$xref_this\" prev=\"$xref_prev\">"); #." $w_refAttr=\"#$xref\""
+	$$outbufr .= "<w part=\"F\" $wIdAttr=\"$xref_this\" prev=\"$xref_prev\">"; #." $w_refAttr=\"#$xref\""
       } else {
 	##-- //w-start-tag: multi-segment item: middle segment
-	$outfh->print("<w part=\"M\" $wIdAttr=\"$xref_this\" prev=\"$xref_prev\" next=\"$xref_next\">"); #." $w_refAttr=\"#$xref\""
+	$$outbufr .= "<w part=\"M\" $wIdAttr=\"$xref_this\" prev=\"$xref_prev\" next=\"$xref_next\">"; #." $w_refAttr=\"#$xref\""
       }
     }
 
     ##-- //w-segment: splice in content and end-tag(s)
-    $outfh->print(substr($$srcbufr,$xoff,$xlen),
-		  "</w>",
-		  ($send ? "</s>" : qw()));
+    $$outbufr .= (substr($$srcbufr,$xoff,$xlen)
+		  ."</w>"
+		  .($send ? "</s>" : ''));
 
     ##-- update offset
     $off = $xoff+$xlen;
   }
 
   ##-- splice in post-token material
-  $outfh->print(substr($$srcbufr, $off,length($$srcbufr)-$off));
+  $$outbufr .= substr($$srcbufr, $off,length($$srcbufr)-$off);
 }
 
 
@@ -335,9 +339,10 @@ sub splice_segments {
 ##    xmldata => $xmldata,   ##-- (input) source xml file
 ##    xtokdata => $xtokdata, ##-- (input) standoff xml-ified tokenizer output: data
 ##    xtokfile => $xtokfile, ##-- (input) standoff xml-ified tokenizer output: file (only if $xtokdata is missing)
-##    wsdata  => $wsdata,    ##-- (output) back-spliced xml data
-##    addws_stamp0 => $f,  ##-- (output) timestamp of operation begin
-##    addws_stamp  => $f,  ##-- (output) timestamp of operation end
+##    cwsdata  => $cwsdata,  ##-- (output) back-spliced xml data
+##    addws_stamp0 => $f,    ##-- (output) timestamp of operation begin
+##    addws_stamp  => $f,    ##-- (output) timestamp of operation end
+##    cwsdata_stamp => $f,   ##-- (output) timestamp of operation end
 sub addws {
   my ($po,$doc) = @_;
   $doc->setLogContext();
@@ -367,7 +372,7 @@ sub addws {
   $po->find_s_segments();
 
   ##-- report final assignment
-  if (defined($po->{traceLevel})) {
+  if (defined($po->{addwsInfoLevel})) {
     my $nseg_w = scalar(@{$po->{w_segs}});
     my $ndis_w = scalar(grep {$_>1} values %{$po->{wid2nsegs}});
     my $pdis_w = ($po->{nw}==0 ? 'NaN' : 100*$ndis_w/$po->{nw});
@@ -377,14 +382,14 @@ sub addws {
     my $pdis_s = ($po->{ns}==0 ? 'NaN' : 100*$ndis_s/$po->{ns});
     ##
     my $dfmt = "%".length($po->{nw})."d";
-    $po->vlog($po->{traceLevel}, sprintf("$dfmt token(s)    in $dfmt segment(s): $dfmt discontinuous (%5.1f%%)", $po->{nw}, $nseg_w, $ndis_w, $pdis_w));
-    $po->vlog($po->{traceLevel}, sprintf("$dfmt sentence(s) in $dfmt segment(s): $dfmt discontinuous (%5.1f%%)", $po->{ns}, $nseg_s, $ndis_s, $pdis_s));
+    $po->vlog($po->{addwsInfoLevel}, sprintf("$dfmt token(s)    in $dfmt segment(s): $dfmt discontinuous (%5.1f%%)", $po->{nw}, $nseg_w, $ndis_w, $pdis_w));
+    $po->vlog($po->{addwsInfoLevel}, sprintf("$dfmt sentence(s) in $dfmt segment(s): $dfmt discontinuous (%5.1f%%)", $po->{ns}, $nseg_s, $ndis_s, $pdis_s));
   }
 
-  ##-- output: splice in <w>-segments
-  $po->vlog($po->{traceLevel},"addws(): writing output file $doc->{cwsfile}");
-  my $outfh = IO::File->new(">$doc->{cwsfile}") || $po->logconfess("open failed for splice-back file $doc->{cwsfile}: $!");
-  $po->splice_segments($outfh);
+  ##-- output: splice in <w> and <s> segments
+  $po->vlog($po->{traceLevel},"addws(): creating $doc->{cwsfile}");
+  $po->splice_segments(\$doc->{cwsdata});
+  ref2file(\$doc->{cwsdata},$doc->{cwsfile},{binmode=>(utf8::is_utf8($doc->{cwsdata}) ? ':utf8' : ':raw')});
 
   ##-- finalize
   $doc->{addws_stamp} = timestamp(); ##-- stamp

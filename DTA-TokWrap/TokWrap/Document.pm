@@ -117,8 +117,8 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    #xtokdoc  => $xtokdoc,   ##-- XML::LibXML::Document for $xtokdata (parsed from string)
 ##
 ##    ##-- back-splice (see DTA::TokWrap::Processor::addws)
-##    cwsdata => $wsdata,     ##-- back-spliced output data (xmlfile with <s> and <w> elements)
-##    cwsfile => $wsfile,     ##-- back-spliced output file (default="$outdir/$outbase.cws.xml")
+##    cwsdata => $cwsdata,    ##-- back-spliced output data (xmlfile with <s> and <w> elements)
+##    cwsfile => $cwsfile,    ##-- back-spliced output file (default="$outdir/$outbase.cws.xml")
 ##
 ##    ##-- standoff xml data (see DTA::TokWrap::Processor::standoff -- OBSOLETE)
 ##    sosfile => $sosfile,   ##-- sentence standoff file (default="$outdir/$outbase.s.xml")
@@ -812,6 +812,25 @@ sub loadXmlData {
 
   $doc->{xmldata_stamp} = file_mtime($file);
   return \$doc->{xmldata};
+}
+
+## \$xmlbuf_or_undef = $doc->loadCwsData($filename_or_fh)
+## \$xmlbuf_or_undef = $doc->LoadCwsData()
+##  + loads $doc->{cwsdata} from $filename_or_fh (default=$doc->{cwsfile})
+sub loadCwsData {
+  my ($doc,$file) = @_;
+  $doc->setLogContext();
+
+  ##-- get file
+  $file = $doc->{cwsfile} if (!$file);
+  $doc->logconfess("loadCwsData(): no back-spliced cws-XML file defined") if (!defined($file));
+  $doc->vlog($doc->{traceLoad}, "loadCwsData($file)") if ($doc->{traceLoad});
+
+  slurp_file($file,\$doc->{cwsdata})
+    or $doc->logconfess("slurp_file() failed for cws-XML file '$file': $!");
+
+  $doc->{cwsdata_stamp} = file_mtime($file);
+  return \$doc->{cwsdata};
 }
 
 

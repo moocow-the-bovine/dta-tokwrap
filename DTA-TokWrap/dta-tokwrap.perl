@@ -136,10 +136,10 @@ GetOptions(
 
 	   ##-- Log options
 	   'log-config|logconfig|logconf|log-rc|logrc|lc=s' => \$logConfFile,
-	   'log-level|loglevel|ll=s' => \$DTA::TokWrap::Logger::DEFAULT_LOGLEVEL,
+	   'log-level|loglevel|ll=s' => sub { $DTA::TokWrap::Logger::DEFAULT_LOGLEVEL=uc($_[1]); },
 	   'log-file|logfile|lf=s' => \$logFile,
 	   'log-stderr|stderr|le!' => \$logToStderr,
-	   'log-profile|profile|p!' => sub { $logProfile=$_[1] ? 'info' : undef; },
+	   'log-profile|profile|p!' => sub { $logProfile = $twopts{procOpts}{addwsInfoLevel} = $_[1] ? 'info' : undef; },
 	   'silent|quiet|q' => sub {
 	     $verbose=0;
 	     setVerboseTrace(0,$verbose_max,1);
