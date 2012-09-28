@@ -23,9 +23,6 @@ our $basefile = "-";   ##-- default: stdin
 our $sofile   = undef; ##-- required
 our $outfile  = "-";   ##-- default: stdout
 
-##-- init
-DTA::TokWrap::Logger->ensureLog();
-
 our %popts = (
 	      soIgnoreAttrs=>'',
 	      soIgnoreElts=>'',
@@ -54,6 +51,10 @@ GetOptions(##-- General
 pod2usage({-exitval=>0,-verbose=>0}) if ($help);
 pod2usage({-message=>"Not enough arguments given!",-exitval=>0,-verbose=>0}) if (@ARGV < 2);
 
+##-- log init
+##-- init
+DTA::TokWrap::Logger->ensureLog();
+
 ##-- command-line: arguments
 ($basefile, $sofile) = @ARGV;
 
@@ -65,8 +66,8 @@ my $p = DTA::TokWrap::Processor::idsplice->new(%popts)
   or die("$prog: ERROR: could not create DTA::TokWrap::Processor::idsplice object");
 
 ##-- guts
-$p->splice_files($basefile,$sofile,$outfile)
-  or die("$prog: ERROR: splice_files() failed");
+$p->splice_so(base=>$basefile,so=>$sofile,out=>$outfile,basename=>File::Basename::basename($basefile))
+  or die("$prog: ERROR: splice_so() failed");
 
 __END__
 

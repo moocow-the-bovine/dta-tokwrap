@@ -109,7 +109,7 @@ sub xmlParsers {
   return @$p{qw(xp_so xp_base)} if (ref($p) && defined($p->{xp_so}) && defined($p->{xp_base}));
 
   ##-- labels
-  my $prog = ref($p).": ".Log::Log4perl::MDC->get('xmlbase');
+  my $prog = ref($p).": ".(Log::Log4perl::MDC->get('xmlbase')||'');
 
   ##--------------------------------------------------------------
   ## closure variables
@@ -316,45 +316,59 @@ sub xmlParsers {
 ##==============================================================================
 ## Methods: Simple OO interface
 
-## \$outbuf = $p->splice_buffers(\$baseBuf,\$soBuf)
-## \$outbuf = $p->splice_buffers(\$baseBuf,\$soBuf,$basename)
-sub splice_buffers {
-  my ($p,$basebufr,$sobufr,$basename) = @_;
-  Log::Log4perl::MDC->put("xmlbase", $basename) if (defined($basename));
+## \$outbuf = $p->splice_so(%opts)
+##  + %opts:
+##     base => $filename_or_fh_or_scalar_ref,
+##     so   => $filename_or_fh_or_scalar_ref,
+##     out  => $filename_or_fh_or_scalar_ref, ##-- optional
+##     basename => $basename,
+sub splice_so {
+  my ($p,%opts) = @_;
 
+  ##-- sanity check(s)
+  Log::Log4perl::MDC->put("xmlbase", $opts{basename}) if (defined($opts{basename}) && !Log::Log4perl::MDC->get('xmlbase'));
+  $p->logconfess("splice_so(): no 'base' key defined!") if (!defined($opts{base}));
+  $p->logconfess("splice_so(): no 'so' key defined!") if (!defined($opts{so}));
+
+  ##-- get parsers
   my ($xp_so,$xp_base) = $p->xmlParsers();
 
-  $p->vlog($p->{traceLevel}, "splice_buffers(): parse standoff buffer");
-  $xp_so->parse($$sobufr);
+  ##-- setup output
+  $p->{outbufr} = $opts{out} if (ref($opts{out}) && UNIVERSAL::isa($opts{out},'SCALAR'));
 
-  $p->vlog($p->{traceLevel}, "splice_buffers(): parse base buffer");
-  $xp_base->parse($$basebufr);
-
-  $p->vlog($p->{spliceInfo}, $_) foreach ($p->summary($basename));
-  return $p->{outbufr};
-}
-
-## \$outbuf = $p->splice_files($baseFile,$soFile)
-## \$outbuf = $p->splice_files($baseFile,$soFile,$outFile)
-sub splice_files {
-  my ($p,$basefile,$sofile,$outfile) = @_;
-  Log::Log4perl::MDC->put("xmlbase", File::Basename::basename($basefile)) if (defined($basefile));
-
-  my ($xp_so,$xp_base) = $p->xmlParsers();
-
-  $p->vlog($p->{traceLevel}, "splice_files(): parse standoff file '$sofile'");
-  $xp_so->parsefile($sofile);
-
-  $p->vlog($p->{traceLevel}, "splice_files(): parse base file '$basefile'");
-  $xp_base->parsefile($basefile);
-
-  if ($outfile) {
-    $p->vlog($p->{traceLevel}, "splice_files(): dump to output file '$outfile'");
-    ref2file($p->{outbufr}, $outfile, {binmode=>(utf8::is_utf8(${$p->{outbufr}}) ? ':utf8' : ':raw')})
-      or $p->logconfess("could not save output file '$outfile': $!");
+  ##-- parse standoff
+  if (!ref($opts{so})) {
+    $p->vlog($p->{traceLevel}, "splice_so(): parse standoff file $opts{so}");
+    $xp_so->parsefile($opts{so});
+  } elsif (UNIVERSAL::isa($opts{so},'SCALAR')) {
+    $p->vlog($p->{traceLevel}, "splice_so(): parse standoff buffer");
+    $xp_so->parse(${$opts{so}});
+  } else {
+    $p->vlog($p->{traceLevel}, "splice_so(): parse standoff filehandle");
+    $xp_so->parse($opts{so});
   }
 
-  $p->vlog($p->{spliceInfo}, $_) foreach ($p->summary($basefile,$sofile));
+  ##-- parse source
+  if (!ref($opts{base})) {
+    $p->vlog($p->{traceLevel}, "splice_so(): parse base file $opts{base}");
+    $xp_base->parsefile($opts{base});
+  } elsif (UNIVERSAL::isa($opts{base},'SCALAR')) {
+    $p->vlog($p->{traceLevel}, "splice_so(): parse base buffer");
+    $xp_base->parse(${$opts{base}});
+  } else {
+    $p->vlog($p->{traceLevel}, "splice_so(): parse base filehandle");
+    $xp_base->parse($opts{base});
+  }
+
+  ##-- dump output (if requested)
+  if (defined($opts{out}) && $opts{out} ne $p->{outbufr}) {
+    $p->vlog($p->{traceLevel}, "splice_so(): write '$opts{out}'");
+    ref2file($p->{outbufr}, $opts{out}, {binmode=>(utf8::is_utf8(${$p->{outbufr}}) ? ':utf8' : ':raw')})
+      or $p->logconfess("could not write output file '$opts{out}': $!");
+  }
+
+  $p->vlog($p->{spliceInfo}, $_) foreach ($p->summary((!ref($opts{base}) ? $opts{base} : undef),
+						      (!ref($opts{so})   ? $opts{so}   : undef)));
   return $p->{outbufr};
 }
 
@@ -378,66 +392,36 @@ sub summary {
 ## Methods: Document Processing
 ##==============================================================================
 
-## $doc_or_undef = $CLASS_OR_OBJECT->addws($doc)
+## $doc_or_undef = $CLASS_OR_OBJECT->idsplice($doc)
 ## + $doc is a DTA::TokWrap::Document object
 ## + %$doc keys:
-##    xmldata => $xmldata,   ##-- (input) source xml file
-##    xtokdata => $xtokdata, ##-- (input) standoff xml-ified tokenizer output: data
-##    xtokfile => $xtokfile, ##-- (input) standoff xml-ified tokenizer output: file (only if $xtokdata is missing)
-##    cwsdata  => $cwsdata,  ##-- (output) back-spliced xml data
-##    addws_stamp0 => $f,    ##-- (output) timestamp of operation begin
-##    addws_stamp  => $f,    ##-- (output) timestamp of operation end
-##    cwsdata_stamp => $f,   ##-- (output) timestamp of operation end
-sub addws {
+##    cwstbasebufr => \$data,	##-- (input) preferred: base data-ref (default=\$doc->{cwsdata})
+##    cwstbasefile => $file,	##-- (input) fallback : base file (default=$doc->{cwsfile})
+##    cwstsobufr   => \$data,	##-- (input) preferred: standoff data-ref (default=\$doc->{xtokdata})
+##    cwstsofile   => $file,	##-- (input) fallback : standoff file (default=$doc->{xtokfile})
+##    idsplice_stamp0 => $f,    ##-- (output) timestamp of operation begin
+##    idsplice_stamp  => $f,    ##-- (output) timestamp of operation end
+sub idsplice {
   my ($p,$doc) = @_;
   $doc->setLogContext();
 
   ##-- log, stamp
-  $p->vlog($p->{traceLevel},"addws()");
-  $doc->{addws_stamp0} = timestamp();
+  $p->vlog($p->{traceLevel},"idsplice()");
+  $doc->{idsplice_stamp0} = timestamp();
 
   ##-- sanity check(s)
   $p = $p->new() if (!ref($p));
-  ##
-  $doc->loadXmlData() if (!$doc->{xmldata}); ##-- slurp source buffer
-  $p->logconfess("addws(): no xmldata key defined") if (!$doc->{xmldata});
-  my $xprs = $p->xmlParser() or $p->logconfes("addws(): could not get XML parser");
+  $doc->{cwstbasebufr} = \$doc->{cwsdata}  if (!exists($doc->{cwstbasebufr}) && defined($doc->{cwsdata}));
+  $doc->{cwstsobufr}   = \$doc->{xtokdata} if (!exists($doc->{cwstsobufr}) && defined($doc->{xtokdata}));
+  $p->{outbufr}        = $doc->{cwstbufr}  if (ref($doc->{cwstbufr}));
 
-  ##-- splice: parse standoff
-  $p->vlog($p->{traceLevel},"addws(): parse standoff xml");
-  if (defined($doc->{xtokdata})) {
-    $xprs->parse($doc->{xtokdata});
-  } else {
-    $xprs->parsefile($doc->{xtokfile});
-  }
-
-  ##-- compute //s segments
-  $p->vlog($p->{traceLevel},"addws(): search for //s segments");
-  $p->{srcbufr} = \$doc->{xmldata};
-  $p->find_s_segments();
-
-  ##-- report final assignment
-  if (defined($p->{addwsInfo})) {
-    my $nseg_w = scalar(@{$p->{w_segs}});
-    my $ndis_w = scalar(grep {$_>1} values %{$p->{wid2nsegs}});
-    my $pdis_w = ($p->{nw}==0 ? 'NaN' : 100*$ndis_w/$p->{nw});
-    ##
-    my $nseg_s = 0; $nseg_s += $_ foreach (values %{$p->{sid2nsegs}});
-    my $ndis_s = scalar(grep {$_>1} values %{$p->{sid2nsegs}});
-    my $pdis_s = ($p->{ns}==0 ? 'NaN' : 100*$ndis_s/$p->{ns});
-    ##
-    my $dfmt = "%".length($p->{nw})."d";
-    $p->vlog($p->{addwsInfo}, sprintf("$dfmt token(s)    in $dfmt segment(s): $dfmt discontinuous (%5.1f%%)", $p->{nw}, $nseg_w, $ndis_w, $pdis_w));
-    $p->vlog($p->{addwsInfo}, sprintf("$dfmt sentence(s) in $dfmt segment(s): $dfmt discontinuous (%5.1f%%)", $p->{ns}, $nseg_s, $ndis_s, $pdis_s));
-  }
-
-  ##-- output: splice in <w> and <s> segments
-  $p->vlog($p->{traceLevel},"addws(): creating $doc->{cwsfile}");
-  $p->splice_segments(\$doc->{cwsdata});
-  ref2file(\$doc->{cwsdata},$doc->{cwsfile},{binmode=>(utf8::is_utf8($doc->{cwsdata}) ? ':utf8' : ':raw')});
-
+  ##-- splice: underlying call
+  $p->splice_so(base=>($doc->{cwstbasebufr}||$doc->{cwstbasefile}),
+		so  =>($doc->{cwstsobufr}||$doc->{cwstsofile}),
+		out =>$doc->{cwstfile});
   ##-- finalize
-  $doc->{addws_stamp} = timestamp(); ##-- stamp
+  $doc->{cwstbufr}       = $p->{outbufr};
+  $doc->{idsplice_stamp} = timestamp(); ##-- stamp
   return $doc;
 }
 

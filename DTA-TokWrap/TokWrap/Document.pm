@@ -117,13 +117,17 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    xtokfile => $xtokfile,  ##-- XML-ified tokenizer output file (default="$outdir/$outbase.t.xml")
 ##    #xtokdoc  => $xtokdoc,   ##-- XML::LibXML::Document for $xtokdata (parsed from string)
 ##
-##    ##-- back-splice (see DTA::TokWrap::Processor::addws)
-##    cwsdata => $cwsdata,    ##-- back-spliced output data (xmlfile with <s> and <w> elements)
-##    cwsfile => $cwsfile,    ##-- back-spliced output file (default="$outdir/$outbase.cws.xml")
+##    ##-- ws-splice (see DTA::TokWrap::Processor::addws)
+##    cwsdata => $cwsdata,    ##-- ws-spliced output data (xmlfile with <s> and <w> elements)
+##    cwsfile => $cwsfile,    ##-- ws-spliced output file (default="$outdir/$outbase.cws.xml")
 ##
-##    ##-- attribute-splice (see DTA::TokWrap::Processor::idspliace)
-##    idsplicein => $bdata,  	##-- back-spliced output data (xmlfile with <s> and <w> elements)
-##    idspliceout => $cwsfile,  ##-- back-spliced output file (default="$outdir/$outbase.cws.xml")
+##    ##-- property-splice (see DTA::TokWrap::Processor::idsplice)
+##    cwstbasebufr => \$bdata,  ##-- base data-ref for idsplice (xml with //*/@id) [default=\$cwsdata]
+##    cwstbasefile => $bfile,   ##-- source file for $bdata [default=$cwsfile]
+##    cwstsobufr   => \$sodata, ##-- standoff data-ref for idsplice (xml with //*/@id, additional attributes and content) [default=\$xtokdata]
+##    cwstsofile   => $sofile,  ##-- source file for $sodata [default=$xtokfile]
+##    cwstbufr     => $wstbufr, ##-- idsplice output buffer (base + id-spliced attributes, content)
+##    cwstfile     => $wstfile, ##-- idsplice output file [default="$outdir/$outbase.cwst.xml"]
 ##
 ##    ##-- standoff xml data (see DTA::TokWrap::Processor::standoff -- OBSOLETE)
 ##    sosfile => $sosfile,   ##-- sentence standoff file (default="$outdir/$outbase.s.xml")
@@ -199,9 +203,13 @@ sub defaults {
 	  xtokdata => undef,
 	  xtokfile => undef,
 
-	  ##-- back-splice data
+	  ##-- ws-splice data
 	  cwsdata => undef,
 	  cwsfile => undef,
+
+	  ##-- wst-splice data
+	  cwstdata => undef,
+	  cwstfile => undef,
 
 	  ##-- standoff data
 	  #sosdoc => undef,
@@ -262,8 +270,16 @@ sub init {
   #$doc->{xtokfile}  = $doc->{tmpdir}.'/'.$doc->{outbase}.".t.xml" if (!$doc->{xtokfile});
   $doc->{xtokfile}  = $doc->{outdir}.'/'.$doc->{outbase}.".t.xml" if (!$doc->{xtokfile});
 
-  ##-- defaults: back-spliced data (addws)
+  ##-- defaults: ws-splice (addws)
   $doc->{cwsfile} = $doc->{outdir}.'/'.$doc->{outbase}.".cws.xml" if (!$doc->{cwsfile});
+
+  ##-- defaults: cwst-splice (idsplice)
+  #$doc->{cwstbasebufr} = \$doc->{cwsdata} if (!$doc->{cwstbasebufr}); ##-- see Processor::idsplice::idsplice()
+  #$doc->{cwstsobufr}  = \$doc->{xtokdata} if (!$doc->{cwstsobufr});   ##-- see Processor::idsplice::idsplice()
+  $doc->{cwstbasefile} = $doc->{cwsfile} if (!$doc->{cwstbasefile});
+  $doc->{cwstsofile} = $doc->{xtokfile} if (!$doc->{cwstsofile});
+  $doc->{cwstfile} = $doc->{outdir}.'/'.$doc->{outbase}.".cwst.xml" if (!$doc->{cwstfile});
+
 
   ##-- defaults: standoff data (standoff)
   #$doc->{sosdoc} = undef;
@@ -277,6 +293,7 @@ sub init {
   ##-- return
   return $doc;
 }
+
 
 ## undef = $doc->DESTROY()
 ##  + destructor; implicit close()
@@ -429,6 +446,8 @@ BEGIN {
 
      (map {$_=>[qw(addws)]} qw(addws mkcws cwsxml cws)),
 
+     (map {$_=>[qw(idsplice)]} qw(idsplice splice mkcwst cwstxml cwst mkwst wstxml wst)),
+
      (map {
        $spec = ["loadXtokFile","so${_}xml"];
        map {$_=>$spec} ("mk${_}xml", "mkso${_}", "so${_}xml","so${_}file","${_}xml")
@@ -454,7 +473,8 @@ BEGIN {
 	     #qw(loadCxFile)
 	     qw(tok2xml saveXtokFile),
 	     qw(addws),
-	     qw(standoff),
+	     #qw(standoff),
+	     qw(idsplice),
 	    ],
     );
 }
@@ -579,6 +599,15 @@ sub addws {
   $_[0]->setLogContext();
   $_[0]->vlog($_[0]{traceProc},"addws()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{addws}) || 'DTA::TokWrap::Processor::addws')->addws($_[0]);
+}
+
+## $doc_or_undef = $doc->idsplice($idsplice)
+## $doc_or_undef = $doc->idsplice()
+##  + see DTA::TokWrap::Processor::idsplice::idsplice()
+sub idsplice {
+  $_[0]->setLogContext();
+  $_[0]->vlog($_[0]{traceProc},"idsplice()") if ($_[0]{traceProc});
+  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{idsplice}) || 'DTA::TokWrap::Processor::idsplice')->idsplice($_[0]);
 }
 
 ## $doc_or_undef = $doc->sosxml($so)
