@@ -553,7 +553,6 @@ CLEAN_FILES += *.a.xml
 
 ##======================================================================
 ## Rules: source+standoff integration ("splicing")
-##  + doesn't splice any attributes
 
 splice: cwst-xml
 splice-noc: wst-fmt-xml
