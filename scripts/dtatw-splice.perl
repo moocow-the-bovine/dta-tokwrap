@@ -26,7 +26,7 @@ our $outfile  = "-";   ##-- default: stdout
 our %popts = (
 	      soIgnoreAttrs=>'',
 	      soIgnoreElts=>'',
-	      soKeepText=>0,
+	      soKeepText=>1,
 	      soKeepBlanks=>0,
 	      wrapOldContent=>undef,
 	     );
