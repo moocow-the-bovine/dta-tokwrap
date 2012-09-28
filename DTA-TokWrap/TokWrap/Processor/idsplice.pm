@@ -13,6 +13,7 @@ use DTA::TokWrap::Base;
 use DTA::TokWrap::Utils qw(:progs :files :slurp :time :xmlutils :numeric);
 use DTA::TokWrap::Processor;
 
+use IO::Handle;
 use IO::File;
 use XML::Parser;
 use Carp;
@@ -41,12 +42,12 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##     soKeepText    => $keepText,	##-- retain standoff text content? (default:true)
 ##     soKeepBlanks  => $keepBlanks,	##-- retain standoff whitespace? (default:false)
 ##     wrapOldContent => $elt,		##-- element in which to wrap old base content (default:undef:none)
-##     outbufr => \$buf,		##-- output (string) buffer
 ##     spliceInfo => $level, 		##-- log-level for summary (default='debug')
 ##
 ##     ##-- low-level data
 ##     xp_so   => $xp_so,	##-- XML::Parser object for standoff file
 ##     xp_base => $xp_base,	##-- XML::Parser object for base file
+##     outfh => $fh,		##-- output handle
 ##    )
 sub defaults {
   my $that = shift;
@@ -216,7 +217,7 @@ sub xmlParsers {
   ## XML::Parser: base
 
   my ($n_merged_attrs,$n_merged_content,$old_content_elt,@wrapstack);
-  my ($outbufr);
+  my ($outfh);
 
   ##----------------------------
   ## undef = cb_init($expat)
@@ -226,10 +227,7 @@ sub xmlParsers {
     $n_merged_content = 0;
     $old_content_elt = $p->{wrapOldContent};
     @wrapstack = qw();
-
-    $outbufr = $p->{outbufr};
-    $outbufr = $p->{outbufr} = \(my $buf) if (!defined($outbufr));
-    $$outbufr = '';
+    $outfh     = $p->{outfh};
 
     ##-- debug
     $p->{wrapstack} = \@wrapstack;
@@ -258,20 +256,20 @@ sub xmlParsers {
       %_attrs = (%_attrs, %$so_attrs);
       $n_merged_attrs++;
     }
-    $$outbufr .= join(' ',"<$_[1]", map {"$_=\"".xmlesc($_attrs{$_}).'"'} keys %_attrs);
+    $outfh->print(join(' ',"<$_[1]", map {"$_=\"".xmlesc($_attrs{$_}).'"'} keys %_attrs)) if ($outfh);
 
     ##-- merge in standoff content if available (prepend)
     $is_empty = ($_[0]->original_string =~ m|/>$|);
     $wrapstack[$#wrapstack] = $old_content_elt if (!$is_empty);
     if (defined($content=$so_content{$id})) {
-      $$outbufr .= ">" . $content . ($is_empty ? "</$_[1]>" : ($old_content_elt ? "<$old_content_elt>" : ''));
+      $outfh->print(">", $content, ($is_empty ? "</$_[1]>" : ($old_content_elt ? "<$old_content_elt>" : qw()))) if ($outfh);
       $n_merged_content++;
     }
-    elsif ($is_empty) {
-      $$outbufr .= "/>";
+    elsif ($is_empty && $outfh) {
+      $outfh->print("/>");
     }
-    else {
-      $$outbufr .= ">" . ($old_content_elt ? "<$old_content_elt>" : '');
+    elsif ($outfh) {
+      $outfh->print(">", ($old_content_elt ? "<$old_content_elt>" : qw()));
     }
   };
 
@@ -281,14 +279,14 @@ sub xmlParsers {
   my $base_cb_end = sub {
     #($_xp,$_elt) = @_;
     $wrap = pop(@wrapstack);
-    $$outbufr .= "</$wrap>" if ($wrap);
+    $outfh->print("</$wrap>") if ($wrap && $outfh);
     $_[0]->default_current;
   };
 
   ##----------------------------
   ## undef = cb_default($expat, $str)
   my $base_cb_default = sub {
-    $$outbufr .= $_[0]->original_string;
+    $outfh->print($_[0]->original_string) if ($outfh);
   };
 
   ##----------------------------
@@ -316,7 +314,7 @@ sub xmlParsers {
 ##==============================================================================
 ## Methods: Simple OO interface
 
-## \$outbuf = $p->splice_so(%opts)
+## $p = $p->splice_so(%opts)
 ##  + %opts:
 ##     base => $filename_or_fh_or_scalar_ref,
 ##     so   => $filename_or_fh_or_scalar_ref,
@@ -333,8 +331,17 @@ sub splice_so {
   ##-- get parsers
   my ($xp_so,$xp_base) = $p->xmlParsers();
 
-  ##-- setup output
-  $p->{outbufr} = $opts{out} if (ref($opts{out}) && UNIVERSAL::isa($opts{out},'SCALAR'));
+  ##-- setup $p->{outfh}
+  if (ref($opts{out}) && UNIVERSAL::isa($opts{out},'SCALAR')) {
+    $p->{outfh} = IO::Handle->new();
+    CORE::open($p->{outfh},">",$opts{out})
+	or $p->logconfess("could not open buffer as string: $!");
+  } elsif (ref($opts{out})) {
+    $p->{outfh} = $opts{out};
+  } else {
+    $p->{outfh} = IO::File->new(">$opts{out}")
+      or $p->logconfess("could not open output file '$opts{out}': $!");
+  }
 
   ##-- parse standoff
   if (!ref($opts{so})) {
@@ -360,16 +367,11 @@ sub splice_so {
     $xp_base->parse($opts{base});
   }
 
-  ##-- dump output (if requested)
-  if (defined($opts{out}) && $opts{out} ne $p->{outbufr}) {
-    $p->vlog($p->{traceLevel}, "splice_so(): write '$opts{out}'");
-    ref2file($p->{outbufr}, $opts{out}, {binmode=>(utf8::is_utf8(${$p->{outbufr}}) ? ':utf8' : ':raw')})
-      or $p->logconfess("could not write output file '$opts{out}': $!");
-  }
-
+  ##-- close up
+  delete($p->{outfh});
   $p->vlog($p->{spliceInfo}, $_) foreach ($p->summary((!ref($opts{base}) ? $opts{base} : undef),
 						      (!ref($opts{so})   ? $opts{so}   : undef)));
-  return $p->{outbufr};
+  return $p;
 }
 
 
@@ -399,7 +401,8 @@ sub summary {
 ##    cwstbasefile => $file,	##-- (input) fallback : base file (default=$doc->{cwsfile})
 ##    cwstsobufr   => \$data,	##-- (input) preferred: standoff data-ref (default=\$doc->{xtokdata})
 ##    cwstsofile   => $file,	##-- (input) fallback : standoff file (default=$doc->{xtokfile})
-##    cwstbufr	   => \$data,   ##-- (input|output) output buffer
+##    cwstbufr	   => \$data,   ##-- (output) preferred: output buffer
+##    cwstfile	   => $filee,   ##-- (output) fallback: output filename
 ##    idsplice_stamp0 => $f,    ##-- (output) timestamp of operation begin
 ##    idsplice_stamp  => $f,    ##-- (output) timestamp of operation end
 sub idsplice {
@@ -414,14 +417,14 @@ sub idsplice {
   $p = $p->new() if (!ref($p));
   $doc->{cwstbasebufr} = \$doc->{cwsdata}  if (!exists($doc->{cwstbasebufr}) && defined($doc->{cwsdata}));
   $doc->{cwstsobufr}   = \$doc->{xtokdata} if (!exists($doc->{cwstsobufr}) && defined($doc->{xtokdata}));
-  $p->{outbufr}        = $doc->{cwstbufr}  if (ref($doc->{cwstbufr}));
 
   ##-- splice: underlying call
   $p->splice_so(base=>($doc->{cwstbasebufr}||$doc->{cwstbasefile}),
 		so  =>($doc->{cwstsobufr}||$doc->{cwstsofile}),
-		out =>$doc->{cwstfile});
+		out =>($doc->{cwstbufr}||$doc->{cwstfile}),
+	       );
+
   ##-- finalize
-  $doc->{cwstbufr}       = $p->{outbufr};
   $doc->{idsplice_stamp} = timestamp(); ##-- stamp
   return $doc;
 }

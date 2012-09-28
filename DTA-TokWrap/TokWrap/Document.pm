@@ -126,7 +126,7 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    cwstbasefile => $bfile,   ##-- source file for $bdata [default=$cwsfile]
 ##    cwstsobufr   => \$sodata, ##-- standoff data-ref for idsplice (xml with //*/@id, additional attributes and content) [default=\$xtokdata]
 ##    cwstsofile   => $sofile,  ##-- source file for $sodata [default=$xtokfile]
-##    cwstbufr     => $wstbufr, ##-- idsplice output buffer (base + id-spliced attributes, content)
+##    cwstbufr     => $wstbufr, ##-- idsplice output buffer (base + id-spliced attributes, content) -- available for override, not used by default
 ##    cwstfile     => $wstfile, ##-- idsplice output file [default="$outdir/$outbase.cwst.xml"]
 ##
 ##    ##-- standoff xml data (see DTA::TokWrap::Processor::standoff -- OBSOLETE)
@@ -208,7 +208,6 @@ sub defaults {
 	  cwsfile => undef,
 
 	  ##-- wst-splice data
-	  cwstdata => undef,
 	  cwstfile => undef,
 
 	  ##-- standoff data
