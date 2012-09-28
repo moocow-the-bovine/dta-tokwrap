@@ -1,7 +1,7 @@
 ## -*- Mode: CPerl -*-
 
 ## File: DTA::TokWrap::Processor
-## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
+## Author: Bryan Jurish <jurish@bbaw.de>
 ## Description: DTA tokenizer wrappers: base class for processor modules
 
 package DTA::TokWrap::Processor;

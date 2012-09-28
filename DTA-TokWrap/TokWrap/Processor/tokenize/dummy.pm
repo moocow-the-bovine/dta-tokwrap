@@ -1,7 +1,7 @@
 ## -*- Mode: CPerl -*-
 
 ## File: DTA::TokWrap::Processor::tokenize::dummy.pm
-## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
+## Author: Bryan Jurish <jurish@bbaw.de>
 ## Descript: DTA tokenizer wrappers: dtatw-tokenize-dummy
 
 package DTA::TokWrap::Processor::tokenize::dummy;

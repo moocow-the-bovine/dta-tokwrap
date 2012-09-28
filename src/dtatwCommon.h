@@ -1,6 +1,6 @@
 /*
  * File: dtatwCommon.h
- * Author: Bryan Jurish <jurish@bbaw.de>
+ * Author: Bryan Jurish <configure.ac>
  * Description: DTA tokenizer wrappers: C utilities: common definitions: headers
  */
 

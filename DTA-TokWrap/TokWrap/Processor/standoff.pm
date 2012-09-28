@@ -1,7 +1,7 @@
 ## -*- Mode: CPerl -*-
 
 ## File: DTA::TokWrap::Processor::standoff
-## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
+## Author: Bryan Jurish <jurish@bbaw.de>
 ## Description: DTA tokenizer wrappers: t.xml -> (s.xml, w.xml, a.xml) via dtatw-txml2[swa]xml
 
 package DTA::TokWrap::Processor::standoff;

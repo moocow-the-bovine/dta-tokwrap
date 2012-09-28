@@ -1,7 +1,7 @@
 ## -*- Mode: CPerl -*-
 ##
 ## File: DTA::TokWrap::Logger.pm
-## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
+## Author: Bryan Jurish <jurish@bbaw.de>
 ## Description: DTA::Tokwrap logging (using Log::Log4perl)
 
 package DTA::TokWrap::Logger;

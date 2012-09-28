@@ -1,7 +1,7 @@
 ## -*- Mode: CPerl -*-
 
 ## File: DTA::TokWrap::Processor::tokenize::http.pm
-## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
+## Author: Bryan Jurish <jurish@bbaw.de>
 ## Description: DTA tokenizer wrappers: tokenizer: external server via http
 
 package DTA::TokWrap::Processor::tokenize::http;

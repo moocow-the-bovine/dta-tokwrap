@@ -1,7 +1,7 @@
 ## -*- Mode: CPerl -*-
 
 ## File: DTA::TokWrap::Processor::tokenize::auto.pm
-## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
+## Author: Bryan Jurish <jurish@bbaw.de>
 ## Descript: DTA tokenizer wrappers: auto-resolving tomasotath wrapper
 
 package DTA::TokWrap::Processor::tokenize::auto;

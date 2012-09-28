@@ -1,7 +1,7 @@
 ## -*- Mode: CPerl -*-
 
 ## File: DTA::TokWrap::Processor::tokenize::tomasotath_02x.pm
-## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
+## Author: Bryan Jurish <jurish@bbaw.de>
 ## Description: DTA tokenizer wrappers: tokenizer: tomasoblabla (v0.2.x) via command-line
 
 package DTA::TokWrap::Processor::tokenize::tomasotath_02x;

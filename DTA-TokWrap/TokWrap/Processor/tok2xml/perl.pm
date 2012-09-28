@@ -1,7 +1,7 @@
 ## -*- Mode: CPerl -*-
 
 ## File: DTA::TokWrap::Processor::tok2xml::perl.pm
-## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
+## Author: Bryan Jurish <jurish@bbaw.de>
 ## Descript: DTA tokenizer wrappers: t -> t.xml (pure-perl implementation; obsolete)
 
 package DTA::TokWrap::Processor::tok2xml::perl;

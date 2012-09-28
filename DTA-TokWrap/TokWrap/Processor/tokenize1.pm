@@ -1,7 +1,7 @@
 ## -*- Mode: CPerl; coding: utf-8 -*-
 
 ## File: DTA::TokWrap::Processor::tokenize1.pm
-## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
+## Author: Bryan Jurish <jurish@bbaw.de>
 ## Description: DTA tokenizer wrappers: tokenizer: post-processing hacks
 
 package DTA::TokWrap::Processor::tokenize1;
