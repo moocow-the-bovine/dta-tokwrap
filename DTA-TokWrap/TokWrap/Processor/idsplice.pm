@@ -38,7 +38,7 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##     ##-- configuration options
 ##     soIgnoreAttrs => \@attrs,	##-- standoff attributes to ignore (default:none)
 ##     soIgnoreElts  => \%elts,		##-- standoff elements to ignore (default:none)
-##     soKeepText    => $keepText,	##-- retain standoff text content? (default:false)
+##     soKeepText    => $keepText,	##-- retain standoff text content? (default:true)
 ##     soKeepBlanks  => $keepBlanks,	##-- retain standoff whitespace? (default:false)
 ##     wrapOldContent => $elt,		##-- element in which to wrap old base content (default:undef:none)
 ##     outbufr => \$buf,		##-- output (string) buffer
@@ -57,7 +57,7 @@ sub defaults {
 	  ##-- user attributes
 	  soIgnoreAttrs => [],
 	  soIgnoreElts  => {},
-	  soKeepText    => 0,
+	  soKeepText    => 1,
 	  soKeepBlanks  => 0,
 	  wrapOldContent => undef,
 	  spliceInfo => 'debug',
@@ -399,6 +399,7 @@ sub summary {
 ##    cwstbasefile => $file,	##-- (input) fallback : base file (default=$doc->{cwsfile})
 ##    cwstsobufr   => \$data,	##-- (input) preferred: standoff data-ref (default=\$doc->{xtokdata})
 ##    cwstsofile   => $file,	##-- (input) fallback : standoff file (default=$doc->{xtokfile})
+##    cwstbufr	   => \$data,   ##-- (input|output) output buffer
 ##    idsplice_stamp0 => $f,    ##-- (output) timestamp of operation begin
 ##    idsplice_stamp  => $f,    ##-- (output) timestamp of operation end
 sub idsplice {
