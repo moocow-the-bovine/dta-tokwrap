@@ -318,38 +318,6 @@ no-xml:
 REALCLEAN_DEPS += no-xml
 
 ##======================================================================
-## Rules: generic XML stuff
-
-##-- pretty-printing: *.fmt[.xml]
-%.fmt: %
-#	xmllint --format -o $@ $<
-	$(SCRIPT_DIR)dtatw-format.perl -o=$@ $<
-%.fmt.xml: %.xml
-#	xmllint --format -o $@ $<
-	$(SCRIPT_DIR)dtatw-format.perl -o=$@ $<
-%.fo: %
-	xmlstarlet fo -n $< > $@
-%.fo.xml: %.xml
-	xmlstarlet fo -n $< > $@
-CLEAN_FILES += *.fmt *.fmt.xml *.fo.xml *.fo
-
-##-- namespace removal: *.nons[.xml]
-%.nons: % programs
-	$(PROG_DIR)dtatw-rm-namespaces $< $@
-%.nons.xml: %.xml $(RMNS)
-	$(PROG_DIR)dtatw-rm-namespaces $< $@
-CLEAN_FILES += *.nons *.nons.xml
-
-##-- character removal *.noc[.xml]
-%.noc: % scripts
-	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@ 
-%.noc.xml: %.xml scripts
-	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@ 
-%.noc.xml: $(xmldir)/%.xml scripts
-	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@ 
-CLEAN_FILES += *.noc *.noc.xml
-
-##======================================================================
 ## Rules: mkindex: xml -> xx=(cx,sx,tx)
 
 xx: cx sx tx
@@ -611,13 +579,16 @@ ws-xml: $(XML:.xml=.ws.xml)
 %.ws.xml: %.cws.xml scripts
 	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@
 
-no-ws-xml: ; rm -f *.ws.xml
+%.ws.fmt.xml: %.ws.xml scripts
+	$(SCRIPT_DIR)dtatw-format.perl -b -o=$@ $<
+
+no-ws-xml: ; rm -f *.ws.xml *.ws.fmt.xml
 CLEAN_FILES += *.ws.xml
 
 ##-- splice: .cws.xml + .t.xml -> .cwst.xml
 cwst-xml: $(XML:.xml=.cwst.xml)
 %.cwst.xml: %.cws.xml %.t.xml tokwrap
-	$(TOKWRAP) -t=cwstxml -do cwstbasefile=$< -do cwstsofile=$(word 2,$^) -do cwstfile=$@ $(xmldir)/$*.xml
+	$(TOKWRAP) -t=cwstxml -po soIgnoreAttrs="c,xb" -do cwstbasefile=$< -do cwstsofile=$(word 2,$^) -do cwstfile=$@ $(xmldir)/$*.xml
 
 no-cwst-xml: ; rm -f *.cwst.xml
 CLEAN_FILES += *.cwst.xml
@@ -625,9 +596,12 @@ CLEAN_FILES += *.cwst.xml
 ##-- splice: .ws.xml + .t.xml -> .wst.xml
 wst-xml: $(XML:.xml=.wst.xml)
 %.wst.xml: %.ws.xml %.t.xml tokwrap
-	$(TOKWRAP) -t=cwstxml -do cwstbasefile=$< -do cwstsofile=$(word 2,$^) -do cwstfile=$@ $(xmldir)/$*.xml
+	$(TOKWRAP) -t=cwstxml -po soIgnoreAttrs="c,xb" -do cwstbasefile=$< -do cwstsofile=$(word 2,$^) -do cwstfile=$@ $(xmldir)/$*.xml
 
-no-wst-xml: ; rm -f *.wst.xml
+%.wst.fmt.xml: %.wst.xml scripts
+	$(SCRIPT_DIR)dtatw-format.perl -b -o=$@ $<
+
+no-wst-xml: ; rm -f *.wst.xml *.wst.fmt.xml
 CLEAN_FILES += *.wst.xml
 
 ##-- splice: vars
@@ -1128,6 +1102,38 @@ pm:
 
 endif
 ##-- ifeq "$(inplace)" "yes": endif
+
+##======================================================================
+## Rules: generic XML stuff
+
+##-- pretty-printing: *.fmt[.xml]
+%.fmt: %
+#	xmllint --format -o $@ $<
+	$(SCRIPT_DIR)dtatw-format.perl -o=$@ $<
+%.fmt.xml: %.xml
+#	xmllint --format -o $@ $<
+	$(SCRIPT_DIR)dtatw-format.perl -o=$@ $<
+%.fo: %
+	xmlstarlet fo -n $< > $@
+%.fo.xml: %.xml
+	xmlstarlet fo -n $< > $@
+CLEAN_FILES += *.fmt *.fmt.xml *.fo.xml *.fo
+
+##-- namespace removal: *.nons[.xml]
+%.nons: % programs
+	$(PROG_DIR)dtatw-rm-namespaces $< $@
+%.nons.xml: %.xml $(RMNS)
+	$(PROG_DIR)dtatw-rm-namespaces $< $@
+CLEAN_FILES += *.nons *.nons.xml
+
+##-- character removal *.noc[.xml]
+%.noc: % scripts
+	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@ 
+%.noc.xml: %.xml scripts
+	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@ 
+%.noc.xml: $(xmldir)/%.xml scripts
+	$(SCRIPT_DIR)dtatw-rm-c.perl $< > $@ 
+CLEAN_FILES += *.noc *.noc.xml
 
 
 ##======================================================================
