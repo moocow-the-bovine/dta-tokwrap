@@ -619,10 +619,18 @@ ws-xml: $(XML:.xml=.ws.xml)
 no-ws-xml: ; rm -f *.ws.xml
 CLEAN_FILES += *.ws.xml
 
+##-- splice: .cws.xml + .t.xml -> .cwst.xml
+cwst-xml: $(XML:.xml=.cwst.xml)
+%.cwst.xml: %.cws.xml %.t.xml tokwrap
+	$(TOKWRAP) -t=cwstxml -do cwstbasefile=$< -do cwstsofile=$(word 2,$^) -do cwstfile=$@ $(xmldir)/$*.xml
+
+no-cwst-xml: ; rm -f *.cwst.xml
+CLEAN_FILES += *.cwst.xml
+
 ##-- splice: .ws.xml + .t.xml -> .wst.xml
 wst-xml: $(XML:.xml=.wst.xml)
-%.wst.xml: %.ws.xml %.t.xml scripts
-	$(SCRIPT_DIR)dtatw-splice.perl -blanks -notext $*.ws.xml $*.t.xml -o=$@
+%.wst.xml: %.ws.xml %.t.xml tokwrap
+	$(TOKWRAP) -t=cwstxml -do cwstbasefile=$< -do cwstsofile=$(word 2,$^) -do cwstfile=$@ $(xmldir)/$*.xml
 
 no-wst-xml: ; rm -f *.wst.xml
 CLEAN_FILES += *.wst.xml
