@@ -39,10 +39,10 @@ our $SEG_SEND  = 8;
 ## Constructors etc.
 ##==============================================================================
 
-## $t2x = CLASS_OR_OBJ->new(%args)
+## $p = CLASS_OR_OBJ->new(%args)
 ## %defaults = CLASS->defaults()
 ##  + static class-dependent defaults
-##  + %args, %defaults, %$t2x:
+##  + %args, %defaults, %$p:
 ##    (
 ##     ##-- configuration options
 ##     wIdAttr => $attr,	##-- attribute in which to place literal id for <w>-fragments
@@ -82,27 +82,26 @@ sub defaults {
 	 );
 }
 
-## $po = $po->init()
+## $p = $p->init()
 ##  compute dynamic object-dependent defaults
-sub init {
-  my $po = shift;
-
-  return $po;
-}
+#sub init {
+#  my $p = shift;
+#  return $p;
+#}
 
 ##==============================================================================
 ## Methods: Utils
 ##==============================================================================
 
 ##----------------------------------------------------------------------
-## $po = $po->xmlParser()
-##   + returns cached $po->{xprs} if available, otherwise creates new one
+## $xp = $p->xmlParser()
+##   + returns cached $p->{xprs} if available, otherwise creates new one
 sub xmlParser {
-  my $po = shift;
-  return $po->{xprs} if (ref($po) && defined($po->{xprs}));
+  my $p = shift;
+  return $p->{xprs} if (ref($p) && defined($p->{xprs}));
 
   ##-- labels
-  my $prog = ref($po).": ".Log::Log4perl::MDC->get('xmlbase');
+  my $prog = ref($p).": ".Log::Log4perl::MDC->get('xmlbase');
 
   ##--------------------------------------------------------------
   ## XML::Parser handlers (for standoff .t.xml file WITH //w/@xb attribute)
@@ -110,7 +109,7 @@ sub xmlParser {
   my ($wid,$sid);  ##-- id of currently open <w> (rsp. <s>), or undef
   my ($nw);	   ##-- number of tokens (//w elements) parsed
   my ($ns);	   ##-- number of sentences (//s elements) parsed
-  my ($w_segs,$wid2nsegs,$sid2nsegs) = @$po{qw(w_segs wid2nsegs sid2nsegs)} = ([],{},{});
+  my ($w_segs,$wid2nsegs,$sid2nsegs) = @$p{qw(w_segs wid2nsegs sid2nsegs)} = ([],{},{});
 
   ##----------------------------
   ## undef = cb_init($expat)
@@ -165,12 +164,12 @@ sub xmlParser {
   ## undef = cb_final($expat)
   my $cb_final = sub {
     #@w_segs = sort {$a->[$SEG_XOFF] <=> $b->[$SEG_XOFF]} @w_segs; ##-- NOT HERE
-    @$po{qw(ns nw w_segs wid2nsegs sid2nsegs)} = ($ns,$nw,$w_segs,$wid2nsegs,$sid2nsegs);
+    @$p{qw(ns nw w_segs wid2nsegs sid2nsegs)} = ($ns,$nw,$w_segs,$wid2nsegs,$sid2nsegs);
   };
 
   ##----------------------------
   ##-- initialize XML::Parser (for .t.xml file)
-  $po->{xprs} = XML::Parser->new(
+  $p->{xprs} = XML::Parser->new(
 				 ErrorContext => 1,
 				 ProtocolEncoding => 'UTF-8',
 				 #ParseParamEnt => '???',
@@ -181,28 +180,28 @@ sub xmlParser {
 					      Final => $cb_final,
 					     },
 			   )
-    or $po->logconfess("couldn't create XML::Parser for standoff file");
+    or $p->logconfess("couldn't create XML::Parser for standoff file");
 
-  return $po->{xprs};
+  return $p->{xprs};
 }
 
 ##----------------------------------------------------------------------
-## Subs: compute //s segment attributes in @{$po->{w_segs}}
+## Subs: compute //s segment attributes in @{$p->{w_segs}}
 
-## undef = $po->find_s_segments()
-##  + populates @$seg[$SEG_SXLEN,$SEG_SSEGI] for segments in @w_segs=@{$po->{w_segs}}
+## undef = $p->find_s_segments()
+##  + ppulates @$seg[$SEG_SXLEN,$SEG_SSEGI] for segments in @w_segs=@{$p->{w_segs}}
 ##  + assumes @w_segs is sorted on serialized (text) document order
 sub find_s_segments {
-  my $po = shift;
+  my $p = shift;
   my $pseg = undef;
   my $off  = 0;
   my ($wxref,$wxoff,$wxlen,$wsegi, $sid);
   my ($ssegi);
   my $sid2cur = {}; ##-- $sid => [$seg_open,$seg_close]
-  my $sid2nsegs = $po->{sid2nsegs};
+  my $sid2nsegs = $p->{sid2nsegs};
   %$sid2nsegs = qw();
-  my $srcbufr = $po->{srcbufr};
-  foreach (@{$po->{w_segs}}) {
+  my $srcbufr = $p->{srcbufr};
+  foreach (@{$p->{w_segs}}) {
     ($wxref,$wxoff,$wxlen,$wsegi, $sid) = @$_;
 
     if ($sid && ($pseg=$sid2cur->{$sid})
@@ -244,18 +243,18 @@ sub find_s_segments {
 ## Subs: splice segments into base document
 
 ## undef = splice_segments(\$outbufr)
-##  + splices final segments from @w_segs=@{$po->{w_segs}} into $srcbuf; dumping output to $outfh
+##  + splices final segments from @w_segs=@{$p->{w_segs}} into $srcbuf; dumping output to $outfh
 ##  + sorts @w_segs on xml offset ($SEG_OFF)
 sub splice_segments {
-  my ($po,$outbufr) = @_;
+  my ($p,$outbufr) = @_;
   $outbufr  = \(my $outbuf='') if (!defined($outbufr));
   $$outbufr = '';
   my ($xref_this,$xref_prev,$xref_next);
   my ($xref,$xoff,$xlen,$segi, $sid,$sbegi,$sprvi,$snxti,$send);
   my ($nwsegs,$nssegs);
   my $off = 0;
-  my ($wIdAttr,$sIdAttr)  = @$po{qw(wIdAttr sIdAttr)};
-  my ($w_segs,$wid2nsegs,$srcbufr) = @$po{qw(w_segs wid2nsegs srcbufr)};
+  my ($wIdAttr,$sIdAttr)  = @$p{qw(wIdAttr sIdAttr)};
+  my ($w_segs,$wid2nsegs,$srcbufr) = @$p{qw(w_segs wid2nsegs srcbufr)};
 
   @$w_segs = sort {$a->[$SEG_XOFF] <=> $b->[$SEG_XOFF]} @$w_segs; ##-- sort in source-document order
   foreach (@$w_segs) {
@@ -344,22 +343,22 @@ sub splice_segments {
 ##    addws_stamp  => $f,    ##-- (output) timestamp of operation end
 ##    cwsdata_stamp => $f,   ##-- (output) timestamp of operation end
 sub addws {
-  my ($po,$doc) = @_;
+  my ($p,$doc) = @_;
   $doc->setLogContext();
 
   ##-- log, stamp
-  $po->vlog($po->{traceLevel},"addws()");
+  $p->vlog($p->{traceLevel},"addws()");
   $doc->{addws_stamp0} = timestamp();
 
   ##-- sanity check(s)
-  $po = $po->new() if (!ref($po));
+  $p = $p->new() if (!ref($p));
   ##
   $doc->loadXmlData() if (!$doc->{xmldata}); ##-- slurp source buffer
-  $po->logconfess("addws(): no xmldata key defined") if (!$doc->{xmldata});
-  my $xprs = $po->xmlParser() or $po->logconfes("addws(): could not get XML parser");
+  $p->logconfess("addws(): no xmldata key defined") if (!$doc->{xmldata});
+  my $xprs = $p->xmlParser() or $p->logconfes("addws(): could not get XML parser");
 
   ##-- splice: parse standoff
-  $po->vlog($po->{traceLevel},"addws(): parse standoff xml");
+  $p->vlog($p->{traceLevel},"addws(): parse standoff xml");
   if (defined($doc->{xtokdata})) {
     $xprs->parse($doc->{xtokdata});
   } else {
@@ -367,28 +366,28 @@ sub addws {
   }
 
   ##-- compute //s segments
-  $po->vlog($po->{traceLevel},"addws(): search for //s segments");
-  $po->{srcbufr} = \$doc->{xmldata};
-  $po->find_s_segments();
+  $p->vlog($p->{traceLevel},"addws(): search for //s segments");
+  $p->{srcbufr} = \$doc->{xmldata};
+  $p->find_s_segments();
 
-  ##-- report final assignment
-  if (defined($po->{addwsInfo})) {
-    my $nseg_w = scalar(@{$po->{w_segs}});
-    my $ndis_w = scalar(grep {$_>1} values %{$po->{wid2nsegs}});
-    my $pdis_w = ($po->{nw}==0 ? 'NaN' : 100*$ndis_w/$po->{nw});
+  ##-- reprt final assignment
+  if (defined($p->{addwsInfo})) {
+    my $nseg_w = scalar(@{$p->{w_segs}});
+    my $ndis_w = scalar(grep {$_>1} values %{$p->{wid2nsegs}});
+    my $pdis_w = ($p->{nw}==0 ? 'NaN' : 100*$ndis_w/$p->{nw});
     ##
-    my $nseg_s = 0; $nseg_s += $_ foreach (values %{$po->{sid2nsegs}});
-    my $ndis_s = scalar(grep {$_>1} values %{$po->{sid2nsegs}});
-    my $pdis_s = ($po->{ns}==0 ? 'NaN' : 100*$ndis_s/$po->{ns});
+    my $nseg_s = 0; $nseg_s += $_ foreach (values %{$p->{sid2nsegs}});
+    my $ndis_s = scalar(grep {$_>1} values %{$p->{sid2nsegs}});
+    my $pdis_s = ($p->{ns}==0 ? 'NaN' : 100*$ndis_s/$p->{ns});
     ##
-    my $dfmt = "%".length($po->{nw})."d";
-    $po->vlog($po->{addwsInfo}, sprintf("$dfmt token(s)    in $dfmt segment(s): $dfmt discontinuous (%5.1f%%)", $po->{nw}, $nseg_w, $ndis_w, $pdis_w));
-    $po->vlog($po->{addwsInfo}, sprintf("$dfmt sentence(s) in $dfmt segment(s): $dfmt discontinuous (%5.1f%%)", $po->{ns}, $nseg_s, $ndis_s, $pdis_s));
+    my $dfmt = "%".length($p->{nw})."d";
+    $p->vlog($p->{addwsInfo}, sprintf("$dfmt token(s)    in $dfmt segment(s): $dfmt discontinuous (%5.1f%%)", $p->{nw}, $nseg_w, $ndis_w, $pdis_w));
+    $p->vlog($p->{addwsInfo}, sprintf("$dfmt sentence(s) in $dfmt segment(s): $dfmt discontinuous (%5.1f%%)", $p->{ns}, $nseg_s, $ndis_s, $pdis_s));
   }
 
   ##-- output: splice in <w> and <s> segments
-  $po->vlog($po->{traceLevel},"addws(): creating $doc->{cwsfile}");
-  $po->splice_segments(\$doc->{cwsdata});
+  $p->vlog($p->{traceLevel},"addws(): creating $doc->{cwsfile}");
+  $p->splice_segments(\$doc->{cwsdata});
   ref2file(\$doc->{cwsdata},$doc->{cwsfile},{binmode=>(utf8::is_utf8($doc->{cwsdata}) ? ':utf8' : ':raw')});
 
   ##-- finalize

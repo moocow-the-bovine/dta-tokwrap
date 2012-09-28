@@ -49,6 +49,7 @@ our $VERSION = $DTA::TokWrap::Version::VERSION;
 ##     tok2xml  => $tok2xml,   ##-- DTA::TokWrap::Processor::tok2xml object, or option-hash
 ##     standoff => $standoff,  ##-- DTA::TokWrap::Processor::standoff object, or option-hash [OBSOLETE]
 ##     addws => $addws,	       ##-- DTA::TokWrap::Processor::addws object, or option-hash
+##     idsplice => $idsplace,  ##-- DTA::TokWrap::Processor::idsplice object, or option-hash
 ##     ##
 ##     ##-- Profiling information (set on $doc->close())
 ##     ##   + pseudo-processor '' represents all processor for TokWrap object
@@ -84,6 +85,7 @@ sub defaults {
 	  tokenize1 => undef,
 	  tok2xml => undef,
 	  addws => undef,
+	  idsplice => undef,
 	  standoff => undef,
 	 );
 }
@@ -104,7 +106,7 @@ sub init {
 		  ALL => ($tw->{procOpts}||{}),
 		 );
   my ($class,%newopts);
-  foreach (qw(mkindex mkbx0 mkbx tokenize tokenize1 tok2xml addws standoff)) {
+  foreach (qw(mkindex mkbx0 mkbx tokenize tokenize1 tok2xml addws idsplice standoff)) {
     next if (UNIVERSAL::isa($tw->{$_},"DTA::TokWrap::Processor::$_"));
     $class   = $_ eq 'tokenize' ? "DTA::TokWrap::Processor::tokenize::${DTA::TokWrap::Document::TOKENIZE_CLASS}" : "DTA::TokWrap::Processor::$_";
     %newopts = (%{$key2opts{ALL}}, ($key2opts{$_} ? %{$key2opts{$_}} : qw()));

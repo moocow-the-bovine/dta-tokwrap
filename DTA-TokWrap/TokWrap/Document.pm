@@ -22,6 +22,7 @@ use DTA::TokWrap::Processor::tok2xml;
 use DTA::TokWrap::Processor::standoff;
 #use DTA::TokWrap::Processor::standoff::xsl;
 use DTA::TokWrap::Processor::addws;
+use DTA::TokWrap::Processor::idsplice;
 
 use File::Basename qw(basename dirname);
 use IO::File;
@@ -119,6 +120,10 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    ##-- back-splice (see DTA::TokWrap::Processor::addws)
 ##    cwsdata => $cwsdata,    ##-- back-spliced output data (xmlfile with <s> and <w> elements)
 ##    cwsfile => $cwsfile,    ##-- back-spliced output file (default="$outdir/$outbase.cws.xml")
+##
+##    ##-- attribute-splice (see DTA::TokWrap::Processor::idspliace)
+##    idsplicein => $bdata,  	##-- back-spliced output data (xmlfile with <s> and <w> elements)
+##    idspliceout => $cwsfile,  ##-- back-spliced output file (default="$outdir/$outbase.cws.xml")
 ##
 ##    ##-- standoff xml data (see DTA::TokWrap::Processor::standoff -- OBSOLETE)
 ##    sosfile => $sosfile,   ##-- sentence standoff file (default="$outdir/$outbase.s.xml")

@@ -29,9 +29,11 @@ our %EXPORT_TAGS = (
 		    slurp => [qw(slurp_file slurp_fh)],
 		    progs => ['path_prog','runcmd','opencmd','$TRACE_RUNCMD'],
 		    libxml => [qw(libxml_parser)],
+		    xmlutils => [qw(xmlesc xmlesc_bytes)],
 		    libxslt => [qw(xsl_stylesheet)],
 		    time => [qw(timestamp)],
 		    si => [qw(sistr)],
+		    numeric => [qw(sistr pctstr)],
 		   );
 $EXPORT_TAGS{all} = [map {@$_} values(%EXPORT_TAGS)];
 our @EXPORT_OK = @{$EXPORT_TAGS{all}};
@@ -170,6 +172,37 @@ sub xsl_stylesheet {
 }
 
 ##==============================================================================
+## Utils: xml (misc)
+##==============================================================================
+
+## $escaped_utf8 = xmlesc($str_utf8)
+##  + both $str_utf8 and output $escaped_utf8 should have the utf8 flag set
+sub xmlesc {
+  my $esc = $_[0];
+  $esc =~ s|\&|\&amp;|sg;
+  $esc =~ s|\"|\&quot;|sg;
+  $esc =~ s|\'|\&apos;|sg;
+  $esc =~ s|\<|\&lt;|sg;
+  $esc =~ s|\>|\&gt;|sg;
+  $esc =~ s|([\x{0}-\x{1f}])|'&#'.ord($1).';'|sge;
+  return $esc;
+}
+
+## $escaped_bytes = xmlesc_bytes($str)
+##  + output $escaped_bytes will be utf8-encoded bytes
+sub xmlesc_bytes {
+  my $esc = $_[0];
+  $esc =~ s|\&|\&amp;|sg;
+  $esc =~ s|\"|\&quot;|sg;
+  $esc =~ s|\'|\&apos;|sg;
+  $esc =~ s|\<|\&lt;|sg;
+  $esc =~ s|\>|\&gt;|sg;
+  $esc =~ s|([\x{0}-\x{1f}])|'&#'.ord($1).';'|sge;
+  utf8::encode($esc) if (utf8::is_utf8($esc));
+  return $esc;
+}
+
+##==============================================================================
 ## Utils: I/O: slurp
 ##==============================================================================
 
@@ -267,7 +300,7 @@ sub timestamp { return Time::HiRes::time(); }
 #BEGIN { *timestamp = \&Time::HiRes::time; }
 
 ##==============================================================================
-## Utils: SI
+## Utils: SI + numeric
 ##==============================================================================
 
 ## $si_str = sistr($val, $printfFormatChar, $printfFormatPrecision)
@@ -284,6 +317,13 @@ sub sistr {
   return sprintf("$fmt m", $x*10**3)  if ($x >= 10**-3);
   return sprintf("$fmt u", $x*10**6)  if ($x >= 10**-6);
   return sprintf("$fmt  ", $x); ##-- default
+}
+
+## $str = pctstr($n,$total,$label);
+sub pctstr {
+  my ($n,$total,$label) = @_;
+  $label = '' if (!defined($label));
+  return sprintf("%d %s (%.2f%%)", $n, $label, ($total==0 ? 'nan' : (100.0*$n/$total)));
 }
 
 

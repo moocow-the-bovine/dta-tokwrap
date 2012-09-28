@@ -66,7 +66,7 @@ dtatw-add-ws.perl - splice standoff //s and //w records from .t.xml into origina
 
  General Options:
   -help                  # this help message
-  -verbose LEVEL         # set verbosity level (FATAL, ERROR, WARN, INFO, DEBUG, or TRACE)
+  -verbose LEVEL         # set verbosity level (FATAL,ERROR,WARN,INFO,DEBUG,TRACE); default=INFO
   -quiet                 # be silent
 
  I/O Options:
