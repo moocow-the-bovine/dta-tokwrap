@@ -485,9 +485,8 @@ MISC_FILES += $(XML:.xml=.t)
 
 t-xml: $(XML:.xml=.t.xml)
 
-
+##-- always use dta-tokwrap.perl for tok2xml, since it also sorts back into pseudo-source-order using fast regexes
 %.t.xml: %.t %.cx %.bx tokwrap
-#	##-- always use dta-tokwrap.perl for tok2xml, since it also sorts back into pseudo-source-order using fast regexes
 	$(TOKWRAP) -t tok2xml $(xmldir)/$*.xml
 
 #ifeq "$(TOKWRAP_ALL)" "yes"
@@ -588,24 +587,20 @@ CLEAN_FILES += *.a.xml
 ## Rules: source+standoff integration ("splicing")
 ##  + doesn't splice any attributes
 
-splice: wst-xml
+splice: cwst-xml
 splice-noc: wst-fmt-xml
 
 cws-noc-fmt-xml: $(XML:.xml=.cws.noc.fmt.xml)
 cws-noc-xml: $(XML:.xml=.cws.noc.xml)
-ws-fmt-xml: $(XML:.xml=.ws.xml)
+ws-fmt-xml: $(XML:.xml=.ws.fmt.xml)
 ws-xml: $(XML:.xml=.ws.xml)
 
 
 ##-- splice: (.char.xml + .t.xml) --> .cws.xml
 cw-xml: cws-xml
 cws-xml: $(XML:.xml=.cws.xml)
-%.cws.xml: $(xmldir)/%.xml %.t.xml scripts
-ifeq "1" "0"
-	$(SCRIPT_DIR)dtatw-add-ws.perl $(addwsopts) -o=$@ $< $*.t.xml 
-else
+%.cws.xml: $(xmldir)/%.xml %.t.xml tokwrap
 	$(TOKWRAP) -t addws $(xmldir)/$*.xml
-endif
 
 no-cw-xml: no-cws.xml
 no-cws-xml: ; rm -r *.cws.xml
