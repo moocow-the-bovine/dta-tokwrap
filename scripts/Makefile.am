@@ -62,6 +62,7 @@ bin_SCRIPTS = \
 	dtatw-restore-namespaces.perl \
 	dtatw-nsdefault-encode.perl \
 	dtatw-nsdefault-decode.perl \
+	dtatw-seg2prevnext.perl \
 	file-substr.perl
 
 #	dtatw-txml2cspan.perl
