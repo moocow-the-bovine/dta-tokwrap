@@ -288,8 +288,8 @@ my $library = xpgrepval($hroot, @library_xpaths);
 ensure_xpath($hroot, $library_xpaths[$_], $library, ($_==0)) foreach (0..$#library_xpaths);
 
 ##-- meta: dtadir
-my @dirname_xpaths = ('fileDesc/publicationStmt/idno[@type="DTADIRNAME"]', ##-- new (>=2012-07)
-		      'fileDesc/publicationStmt/idno[@type="DTADirName"]', ##-- newer(?) (>=2012-09)
+my @dirname_xpaths = ('fileDesc/publicationStmt/idno[@type="DTADirName"]', ##-- newer(?) (>=2012-09)
+		      'fileDesc/publicationStmt/idno[@type="DTADIRNAME"]', ##-- new (>=2012-07)
 		      'fileDesc/publicationStmt/idno[@type="DTADIR"]',     ##-- old (<2012-07)
 		     );
 my $dirname = xpgrepval($hroot,@dirname_xpaths) || $basename;
