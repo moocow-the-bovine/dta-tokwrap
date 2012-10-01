@@ -562,10 +562,15 @@ sub sanitize_xmlid {
 ## Methods: XML sanitization: @prev|@next-chain sanitization
 
 ## $sxdoc = $mbx0->sanitize_chains($sxdoc)
+## $sxdoc = $mbx0->sanitize_chains($sxdoc, $pass)
 ##  + sanitizes @prev|@next chains in-place in $sxdoc (an XML::LibXML::Document) for $mbx0->{auto_prevnext} flag
 ##  + requires a working XML::LibXML XPath id() function (see method sanitize_xmlid())
 sub sanitize_chains {
-  my ($mbx0,$xmldoc) = @_;
+  my ($mbx0,$xmldoc,$pass) = @_;
+
+  $pass ||= 1;
+  my $flabel  = "sanitize_chains(pass=$pass)";
+  my $changed = 0;
 
   my ($nod,$nodid,$refid,$refnod,$nodlabel);
   my $id=0;
@@ -579,8 +584,9 @@ sub sanitize_chains {
       ##-- add @id
       $nodlabel .= '['.join(' ', map {'@'.$_->name.'="'.$_->value.'"'} $nod->attributes).']';
       $nodid = sprintf("dtatw_chain_%0.4x", ++$id);
-      $mbx0->vlog('warn',"sanitize_chains(): auto-generating node-id = $nodid for chain-node $nodlabel");
+      $mbx0->vlog('warn',"$flabel: auto-generating node-id = $nodid for chain-node $nodlabel");
       $nod->setAttribute('xml:id'=>$nodid);
+      $changed = 1;
     }
     $nodlabel .= "#$nodid";
     push(@nodids,$nodid);
@@ -590,12 +596,14 @@ sub sanitize_chains {
       $refid  =~ s/^\#//;
       $refnod = $xmldoc->findnodes("id('$refid')")->[0];
       if (!$refnod) {
-	$mbx0->vlog('warn',"sanitize_chains(): pruning dangling \@prev=$refid for chain node $nodlabel");
+	$mbx0->vlog('warn',"$flabel: pruning dangling \@prev=$refid for chain node $nodlabel");
 	$nod->removeAttribute('prev');
+	$changed = 1;
       }
       elsif (!$refnod->getAttribute('next')) {
-	$mbx0->vlog('warn',"sanitize_chains(): inserting \@next=$nodid for chain node ", $refnod->nodeName, "#$refid");
+	$mbx0->vlog('warn',"$flabel: inserting \@next=$nodid for chain node ", $refnod->nodeName, "#$refid");
 	$refnod->setAttribute('next'=>($id2next{$refid}=$nodid));
+	$changed = 1;
       }
       $id2prev{$nodid} = $refid;
     }
@@ -604,12 +612,14 @@ sub sanitize_chains {
       $refid  =~ s/^\#//;
       $refnod = $xmldoc->findnodes("id('$refid')")->[0];
       if (!$refnod) {
-	$mbx0->vlog('warn',"sanitize_chains(): pruning dangling \@next=$refid for chain node $nodlabel");
+	$mbx0->vlog('warn',"$flabel: pruning dangling \@next=$refid for chain node $nodlabel");
 	$nod->removeAttribute('next');
+	$changed = 1;
       }
       elsif (!$refnod->getAttribute('prev')) {
-	$mbx0->vlog('warn',"sanitize_chains(): inserting \@prev=$nodid for chain node ", $refnod->nodeName, "#$refid");
+	$mbx0->vlog('warn',"$flabel: inserting \@prev=$nodid for chain node ", $refnod->nodeName, "#$refid");
 	$refnod->setAttribute('prev'=>($id2prev{$refid}=$nodid));
+	$changed = 1;
       }
       $id2next{$nodid} = $refid;
     }
@@ -622,16 +632,21 @@ sub sanitize_chains {
     %chainids = (($id_cur=$id_first)=>undef);
     while (defined($id_nxt=$id2next{$id_cur})) {
       if (exists($chainids{$id_nxt})) {
-	$mbx0->vlog('warn',"sanitize_chains(): cycle detected in transition #$id_cur -> #$id_nxt for chain beginning at #$id_first : breaking cycle");
+	$mbx0->vlog('warn',"$flabel: cycle detected in transition #$id_cur -> #$id_nxt for chain beginning at #$id_first : breaking cycle");
 	$xmldoc->findnodes("id('$id_cur')")->[0]->removeAttribute('next');
 	$xmldoc->findnodes("id('$id_nxt')")->[0]->removeAttribute('prev');
 	delete $id2next{$id_cur};
 	delete $id2prev{$id_nxt};
 	%chainids = qw();
+	$changed = 1;
       }
       $checked{$id_cur}=undef;
       $chainids{$id_cur=$id_nxt}=undef;
     }
+  }
+
+  if (($pass<2) && $changed) {
+    return $mbx0->sanitize_chains($xmldoc,++$pass); ##-- second pass
   }
 
   return $xmldoc;
