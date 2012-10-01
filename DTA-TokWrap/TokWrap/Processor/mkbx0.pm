@@ -645,6 +645,27 @@ sub sanitize_chains {
     }
   }
 
+  ##-- count number of @next|@prev links per node
+  my %next2ids = qw(); ##-- $nextid => \@ids
+  my %prev2ids = qw(); ##-- $previd => \@ids
+  push(@{$next2ids{$refid}},$nodid) while (($nodid,$refid)=each(%id2next));
+  push(@{$prev2ids{$refid}},$nodid) while (($nodid,$refid)=each(%id2prev));
+  foreach $refid (grep {scalar(@{$next2ids{$_}}) > 1} sort keys %next2ids) {
+    $mbx0->vlog('warn',"$flabel: multiple \@next links (".join('|',@{$next2ids{$refid}}).") -> #$refid not allowed: removing all but #$refid/\@prev=#$id2prev{$refid}");
+    foreach $nodid (grep {$_ ne $id2prev{$refid}} @{$next2ids{$refid}}) {
+      $xmldoc->findnodes("id('$nodid')")->[0]->removeAttribute('next');
+    }
+    $changed=1;
+  }
+  foreach $refid (grep {scalar(@{$prev2ids{$_}}) > 1} sort keys %prev2ids) {
+    $mbx0->vlog('warn',"$flabel: multiple \@prev links (".join('|',@{$prev2ids{$refid}}).") -> #$refid not allowed: removing all but #$refid/\@next=#$id2next{$refid}");
+    foreach $nodid (grep {$_ ne $id2next{$refid}} @{$prev2ids{$refid}}) {
+      $xmldoc->findnodes("id('$nodid')")->[0]->removeAttribute('prev');
+    }
+    $changed=1;
+  }
+
+
   if (($pass<2) && $changed) {
     return $mbx0->sanitize_chains($xmldoc,++$pass); ##-- second pass
   }
