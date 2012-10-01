@@ -3,7 +3,7 @@
 use IO::File;
 use XML::Parser;
 use Getopt::Long qw(:config no_ignore_case);
-use Encode qw(encode decode);
+use Encode qw(encode_utf8 decode_utf8);
 use File::Basename qw(basename);
 use Time::HiRes qw(gettimeofday tv_interval);
 use Pod::Usage;
@@ -72,29 +72,29 @@ sub cb_init {
 }
 
 ## undef = cb_char($expat,$string)
-our ($c_block,$c_char,$c_eol);
+our ($c_block,$c_char,$c_rest);
 sub cb_char {
   if ($text_depth <= 0 || $c_depth > 0) {
     $outfh->print($_[0]->original_string());
     return;
   }
-  $c_block = decode('UTF-8',$_[0]->original_string());
-  while ($c_block =~ m/((?:\&[^\;]*\;)|(?: +)|(?:\X))/sg) {
+  $c_block = decode_utf8( $_[0]->original_string() );
+  while ($c_block =~ m/((?:\&[^\;]*\;)|(?:\s+)|(?:\X))/sg) {
     $c_char = $1;
-    $c_eol  = ($c_char =~ m/\n/s);
-    $c_char = ' ' if ($c_char =~ m/^\s+$/s); ##-- bash whitespace substrings to a single space
-    ##-- BUG Wed, 13 Apr 2011 16:04:21 +0200: bad handling of newlines in e.g.
+    ##-- tricks for handling whitespace and newlines e.g. in:
     ##     http://kaskade.dwds.de/dtae/book/view/brandes_naturlehre02_1831?p=70
-    ## + why is this code so complex anyways?
-    #if ($c_char =~ /^\s+$/s) {
-    # if ($c_char =~ m/^ /) {
-    #	 $c_char = ' '; ##-- bash multiple spaces to single spaces
-    # } else {
-    #	 $outfh->print($c_char);
-    #	 next;
-    # }
-    #}
-    $outfh->print(($c_eol ? "\n" : qw()), "<c ${xmlns}id=\"c", ++$cnum, "\">", encode('UTF-8',$c_char), "</c>");
+    if ($c_char =~ m/^\s+$/s) {
+      ##-- whitespace (including newlines)
+      $c_rest = $c_char;
+      $c_char = ' ';
+    } else {
+      $c_rest = '';
+    }
+    $outfh->print("<c", ($c_rest ? ' type="dtatw:ws"' : qw()), " ${xmlns}id=\"c", ++$cnum, "\">",
+		  encode_utf8($c_char),
+		  "</c>",
+		  $c_rest,
+		 );
   }
 }
 
