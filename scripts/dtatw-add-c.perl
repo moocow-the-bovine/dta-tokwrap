@@ -19,7 +19,7 @@ our $DEBUG = 0;
 
 ##-- vars: I/O
 our $idns       = ''; #'xmlns:';  ##-- 'xml:' namespace prefix+colon for output id attributes (empty for none)
-our $keep_defaultns = 0;	  ##-- false causes default namespaces (xmlns="...") to be encoded as XMLNS="..."
+our $rmns	= 1;	  	  ##-- true causes default namespaces (xmlns="...") to be encoded as XMLNS="..."
 our $outfile    = "-";            ##-- default: stdout
 
 
@@ -50,7 +50,10 @@ GetOptions(##-- General
 	   ##-- I/O
 	   'id-namespace|idns|id|xmlns=s' => sub { $xmlns=$_[1] ? "xml:" : ''; }, ##-- bad name 'xmlns'
 	   'no-idns|noxmlns' => sub { $xmlns=''; },
-	   'keep-default-namespaces|keep-defaultns|defaultns|nsdefault|ns!' => \$keep_defaultns,
+
+	   'rm-default-namespaces|rm-default-ns|rm-ns|rmns!' => \$rmns,
+	   'keep-default-namespaces|keep-defaultns|keep-ns|keepns|ns!' => sub {$rmns=!$_[1]},
+
 	   'guess|g!' => sub { $guess_thresh=($_[1] ? $guess_default : 0); },
 	   'guess-min|gm=f' => \$guess_thresh,
 	   'output|out|o=s' => \$outfile,
@@ -190,7 +193,7 @@ foreach $infile (@ARGV) {
   close XML;
 
   ##-- encode default namespaces if requested
-  $buf =~ s|(<[^>]*\s)xmlns=|${1}XMLNS=|g if (!$keep_defaultns);
+  $buf =~ s|(<[^>]*\s)xmlns=|${1}XMLNS=|g if ($rmns);
 
   ##-- optionally guess whether we need to add //c elements at all
   if ($guess_thresh > 0) {
@@ -271,7 +274,7 @@ dtatw-add-c.perl - add <c> elements to DTA XML documents
  I/O Options:
   -output FILE           # specify output file (default='-' (STDOUT))
   -idns=NAMESPACE        # namespace prefix for id attributes, e.g. "xml:" (default=none)
-  -ns     , -nons        # do/don't encode default namespaces as for dtatw-nsdefault-encode.perl (default=do)
+  -rmns   , -keepns      # do/don't encode default namespaces as for dtatw-nsdefault-encode.perl (default=do)
   -guess-min PERCENT     # in -guess mode, minimum percentage of data in <c> elements which is 'enough' (default=50)
   -guess  , -noguess     # do/don't attempt to guess whether 'enough' <c> elements are already present (default='-guess')
   -profile, -noprofile   # output profiling information? (default=no)
