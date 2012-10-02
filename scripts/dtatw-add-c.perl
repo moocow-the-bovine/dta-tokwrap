@@ -15,7 +15,7 @@ use Pod::Usage;
 our $prog = basename($0);
 
 ##-- debugging
-our $DEBUG = 1;
+our $DEBUG = 0;
 
 ##-- vars: I/O
 our $idns       = ''; #'xmlns:';  ##-- 'xml:' namespace prefix+colon for output id attributes (empty for none)
@@ -50,7 +50,7 @@ GetOptions(##-- General
 	   ##-- I/O
 	   'id-namespace|idns|id|xmlns=s' => sub { $xmlns=$_[1] ? "xml:" : ''; }, ##-- bad name 'xmlns'
 	   'no-idns|noxmlns' => sub { $xmlns=''; },
-	   'keep-default-namespaces|keep-defaultns|nsdefault|ns!' => \$keep_defaultns,
+	   'keep-default-namespaces|keep-defaultns|defaultns|nsdefault|ns!' => \$keep_defaultns,
 	   'guess|g!' => sub { $guess_thresh=($_[1] ? $guess_default : 0); },
 	   'guess-min|gm=f' => \$guess_thresh,
 	   'output|out|o=s' => \$outfile,
