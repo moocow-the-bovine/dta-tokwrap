@@ -15,11 +15,12 @@ use Pod::Usage;
 our $prog = basename($0);
 
 ##-- debugging
-our $DEBUG = 0;
+our $DEBUG = 1;
 
 ##-- vars: I/O
-our $xmlns = ''; #'xmlns:';  ##-- 'xml:' namespace prefix+colon for output id attributes (empty for none)
-our $outfile = "-";          ##-- default: stdout
+our $idns       = ''; #'xmlns:';  ##-- 'xml:' namespace prefix+colon for output id attributes (empty for none)
+our $keep_defaultns = 0;	  ##-- false causes default namespaces (xmlns="...") to be encoded as XMLNS="..."
+our $outfile    = "-";            ##-- default: stdout
 
 
 ##-- profiling
@@ -47,7 +48,9 @@ GetOptions(##-- General
 	   'help|h' => \$help,
 
 	   ##-- I/O
-	   'id-namespace|xmlns|idns|ns!' => sub { $xmlns=$_[1] ? "xml:" : ''; },
+	   'id-namespace|idns|id|xmlns=s' => sub { $xmlns=$_[1] ? "xml:" : ''; }, ##-- bad name 'xmlns'
+	   'no-idns|noxmlns' => sub { $xmlns=''; },
+	   'keep-default-namespaces|keep-defaultns|nsdefault|ns!' => \$keep_defaultns,
 	   'guess|g!' => sub { $guess_thresh=($_[1] ? $guess_default : 0); },
 	   'guess-min|gm=f' => \$guess_thresh,
 	   'output|out|o=s' => \$outfile,
@@ -60,6 +63,14 @@ $guess_thresh = $guess_default if (!defined($guess_thresh));
 
 ##======================================================================
 ## Subs
+
+##--------------------------------------------------------------
+## debugging
+
+sub debugmsg {
+  return if (!$DEBUG);
+  print STDERR "$prog: DEBUG: ", @_, "\n";
+}
 
 ##--------------------------------------------------------------
 ## XML::Parser handlers
@@ -90,7 +101,7 @@ sub cb_char {
     } else {
       $c_rest = '';
     }
-    $outfh->print("<c", ($c_rest ? ' type="dtatw:ws"' : qw()), " ${xmlns}id=\"c", ++$cnum, "\">",
+    $outfh->print("<c", ($c_rest ? ' type="dtatw:ws"' : qw()), " ${idns}id=\"c", ++$cnum, "\">",
 		  encode_utf8($c_char),
 		  "</c>",
 		  $c_rest,
@@ -112,7 +123,7 @@ sub cb_start {
     if ($cs !~ m/\s(?:xml\:)?id=\"[^\"]+\"/io) {
       ##-- pre-existing <c> WITHOUT xml:id attribute: assign one
       ++$cnum;
-      $cs =~ s|(/?>)$| ${xmlns}id="c$cnum"$1|o;
+      $cs =~ s|(/?>)$| ${idns}id="c$cnum"$1|o;
     }
     ##-- ... and print
     $outfh->print($cs);
@@ -170,11 +181,16 @@ $tv_started = [gettimeofday] if ($profile);
 
 ##-- parse file(s)
 foreach $infile (@ARGV) {
+  $prog = basename($0).": $infile";
+
   ##-- slurp input file
   local $/=undef;
   open(XML,"<$infile") or die("$prog: ERROR: open failed for input file '$infile': $!");
   $buf = <XML>;
   close XML;
+
+  ##-- encode default namespaces if requested
+  $buf =~ s|(<[^>]*\s)xmlns=|${1}XMLNS=|g if (!$keep_defaultns);
 
   ##-- optionally guess whether we need to add //c elements at all
   if ($guess_thresh > 0) {
@@ -182,21 +198,22 @@ foreach $infile (@ARGV) {
     my $inbytes = length($buf);
     my $cbytes  = 0;
     my $nc = 0;
-    while ($buf =~ m|<c\b[^>]*>(?:[^<]{0,8})</c>|isgp) {
-      $cbytes += length(${^MATCH});
+    while ($buf =~ m|<c\b[^>]*>(?:[^<]{0,8})</c>|isg) {
+      $cbytes += ($+[0] - $-[0]);
       ++$nc;
     }
     my $cpct = $inbytes ? (100*$cbytes/$inbytes) : 'nan';
-    #printf STDERR "$prog: found $cbytes bytes for <c> elements in $inbytes total bytes (%.1f%%)\n", $cpct;
+    debugmsg(sprintf("found $cbytes bytes for <c> elements in $inbytes total bytes (%.1f%%)", $cpct)) if ($DEBUG);
 
     if ($cpct >= $guess_thresh) {
       ##-- enough <c>s already: just dump the buffer
-      #printf STDERR "$prog: $infile contains %.1f%% //c data > threshhold=%s%% : dumping as-is\n", $cpct, $guess_thresh;
+      debugmsg(sprintf("found %.1f%% //c data >= threshhold=%s%% : dumping as-is\n", $cpct, $guess_thresh)) if ($DEBUG);
       $outfh->print($buf);
       $nxbytes += length($buf);
       $nchrs   += $nc;
       next;
     }
+    debugmsg(sprintf("found %.1f%% //c data < threshhold=%s%% : generating //c elements", $cpct, $guess_thresh)) if ($DEBUG);
   }
 
   ##-- initialize $cnum counter by checking any pre-assigned //c/@id values (fast regex hack)
@@ -204,7 +221,7 @@ foreach $infile (@ARGV) {
   while ($buf =~ m/\<c\b[^\>]*\s(?:xml\:)?id=\"c([0-9]+)\"/isg) {
     $cnum = $1 if ($1 > $cnum);
   }
-  #print STDERR "$prog: initialized \$cnum=$cnum\n"; ##-- DEBUG
+  debugmsg("initialized \$cnum=$cnum") if ($DEBUG);
 
   ##-- assign new //c/@ids
   $xp->parse($buf);
@@ -253,10 +270,11 @@ dtatw-add-c.perl - add <c> elements to DTA XML documents
 
  I/O Options:
   -output FILE           # specify output file (default='-' (STDOUT))
+  -idns=NAMESPACE        # namespace prefix for id attributes, e.g. "xml:" (default=none)
+  -ns     , -nons        # do/don't encode default namespaces as for dtatw-nsdefault-encode.perl (default=do)
   -guess-min PERCENT     # in -guess mode, minimum percentage of data in <c> elements which is 'enough' (default=50)
   -guess  , -noguess     # do/don't attempt to guess whether 'enough' <c> elements are already present (default='-guess')
   -profile, -noprofile   # output profiling information? (default=no)
-  -xmlns  , -noxmlns     # do/don't use 'xml:' namespace prefix on id attributes (default=don't)
 
 =cut
 
