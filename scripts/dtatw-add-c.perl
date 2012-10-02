@@ -104,11 +104,7 @@ sub cb_char {
     } else {
       $c_rest = '';
     }
-    $outfh->print("<c", ($c_rest ? ' type="dtatw:ws"' : qw()), " ${idns}id=\"c", ++$cnum, "\">",
-		  encode_utf8($c_char),
-		  "</c>",
-		  $c_rest,
-		 );
+    $outfh->print("<c ${idns}id=\"c", ++$cnum, "\">", encode_utf8($c_char), "</c>", $c_rest);
   }
 }
 
@@ -118,8 +114,7 @@ sub cb_start {
   if ($_[1] eq 'c') {
     ##-- pre-existing <c>: respect it
     if ($c_depth > 0) {
-      $_[0]->xpcroak("$prog: ERROR: cowardly refusing to process input document with nested <c> elements!\n"
-		     ."$prog: in file '$infile'");
+      $_[0]->xpcroak("$prog: ERROR: cowardly refusing to process input document with nested <c> elements!");
     }
     ++$c_depth;
     $cs = $_[0]->original_string();
@@ -132,7 +127,9 @@ sub cb_start {
     $outfh->print($cs);
     return;
   }
-  ++$text_depth if ($_[1] eq 'text');
+  elsif ($_[1] eq 'text') {
+    ++$text_depth;
+  }
   $outfh->print($_[0]->original_string);
 }
 
