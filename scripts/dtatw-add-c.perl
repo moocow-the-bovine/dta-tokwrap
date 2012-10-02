@@ -85,7 +85,7 @@ sub cb_char {
     ##     http://kaskade.dwds.de/dtae/book/view/brandes_naturlehre02_1831?p=70
     if ($c_char =~ m/^\s+$/s) {
       ##-- whitespace (including newlines)
-      $c_rest = $c_char;
+      $c_rest = encode_utf8($c_char);
       $c_char = ' ';
     } else {
       $c_rest = '';

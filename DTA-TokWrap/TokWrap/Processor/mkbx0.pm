@@ -666,8 +666,12 @@ sub sanitize_chains {
   }
 
 
-  if (($pass<2) && $changed) {
-    return $mbx0->sanitize_chains($xmldoc,++$pass); ##-- second pass
+  if ($changed) {
+    if ($pass<2) {
+      $mbx0->vlog('warn',"$flabel: some changes were made; initiating 2nd pass");
+      return $mbx0->sanitize_chains($xmldoc,++$pass); ##-- second pass
+    }
+    $mbx0->vlog('warn',"$flabel: changes made on non-initial pass: cross your fingers");
   }
 
   return $xmldoc;
