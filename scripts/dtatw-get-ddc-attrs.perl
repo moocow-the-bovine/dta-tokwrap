@@ -41,6 +41,7 @@ our $do_xcontext = 1;
 our $do_xpath = 1;
 our $do_bbox = 1;
 our $do_unicruft = 1;
+our $do_wsep = 1;
 
 our $do_keep_c  = 1;
 our $do_keep_b  = 1;
@@ -61,6 +62,7 @@ our $coff_attr      = 'coff';
 our $clen_attr      = 'clen';
 our $boff_attr      = 'boff';
 our $blen_attr      = 'blen';
+our $wsep_attr	    = 'ws';
 our $formula_text   = ''; ##-- output text for //formula elements (undef: no change)
 
 ##-- constants: verbosity levels
@@ -95,6 +97,7 @@ GetOptions(##-- General
 	   'xpath|path|xp!' => \$do_xpath,
 	   'coordinates|coords|coord|c|bboxes|bbox|bb|b!' => \$do_bbox,
 	   'unicruft|cruft|u|transliterate|xlit|xl!' => \$do_unicruft,
+	   'word-separation|word-sep|wsep|sep!' => \$do_wsep,
 	   'char-offsets|c-offsets|coff|co!' => \$do_cofflen,
 	   'byte-offsets|b-offsets|boff|bo!' => \$do_bofflen,
 	   'keep-c|keepc|kc!' => \$do_keep_c,
@@ -416,6 +419,7 @@ sub apply_ddc_attrs {
 ##  + populates globals: ($wnod,$wid,$cids,@cids,$wpage,$wrend,$wcon,$wxpath,@wbboxes)
 my ($wi,$wnod,$wid,$cids,@cids,@cs,$off,$len,$wpage,$wline,$wrend,$wcon,$wxpath,$bbsingle);
 my ($wcs,@wbboxes,@cbboxes,$cbbox,$wbbox,$wtxt,$utxt,$w_is_formula);
+my ($poff,$plen);
 my (@cn2wnod);
 sub apply_word {
   ($wi,$cids,$bbsingle) = @_;
@@ -458,10 +462,18 @@ sub apply_word {
   }
 
   ##-- compute & assign: byte offset-length split (default: off=-1, len=1)
-  if ($do_bofflen) {
+  if ($do_bofflen || $do_wsep) {
     ($off,$len) = split(' ', ($wnod->getAttribute('b')||''), 2);
-    $wnod->setAttribute($boff_attr, ($off||'-1'));
-    $wnod->setAttribute($blen_attr, (defined($len) && $len ne '' ? $len : 1));
+    $off = 0 if (!defined($off) || $off eq '');
+    $len = 1 if (!defined($len) || $len eq '');
+    if ($do_wsep) {
+      ($poff,$plen) = $wi>0 && $wnods->[$wi-1] ? split(' ', ($wnods->[$wi-1]->getAttribute('b')||''), 2) : (0,0);
+      $wnod->setAttribute($wsep_attr, ($off == ($poff||0)+($plen||0) ? 0 : 1));
+    }
+    if ($do_bofflen) {
+      $wnod->setAttribute($boff_attr, $off);
+      $wnod->setAttribute($blen_attr, $len);
+    }
   }
 
   ##-- detect: formula
@@ -780,6 +792,7 @@ dtatw-get-ddc-attrs.perl - get DDC-relevant attributes from DTA::TokWrap files
   -xpath  , -noxpath     # do/don't extract //w/@xp (xpath; default=do)
   -bbox   , -nobbox      # do/don't extract //w/@bb (bbox; default=do)
   -xlit   , -noxlit      # do/don't extract //w/@u  (unicruft transliteration; default=do)
+  -wsep   , -nowsep	 # do/don't extract //w/@ws (boolean space-separation; default=do)
   -coff   , -nocoff      # do/don't extract //w/(@coff|@clen) from //w/@c or //w/@cs (default=don't)
   -boff   , -noboff      # do/don't extract //w/(@boff|@blen) from //w/@b (default=don't)
   -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in T_XML_FILE file (default=don't)
