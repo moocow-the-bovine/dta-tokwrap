@@ -96,12 +96,41 @@ sub tokenize1 {
     utf8::decode($data) if (!utf8::is_utf8($data));
     my @lines = split(/\n/,$data);
     my ($fh,$off);
+    my ($s_str, $s_txt,$s_off,$s_len,$s_rest);
+    my ($ol_off,$ol_len);
+    my ($nsusp,$nfixed, $i,$j);
+
+    ##------------------------------------
+    ## fix: overlap
+    $tp->vlog($tp->{traceLevel},"autofix: token overlap");
+    $nsusp = $nfixed = $off = 0;
+    my $ndel = 0;
+    foreach (@lines) {
+      if (/^([^\t]*)\t([0-9]+) ([0-9]+)(.*)$/) {
+	($s_txt,$s_off,$s_len,$s_rest) = ($1,$2,$3,$4);
+	if ($s_off < $off) {
+	  ($ol_off,$ol_len) = ($s_off,$s_len);
+	  $s_len = $ol_off+$ol_len - $off;
+	  $s_off = $off;
+	  print STDERR "  - OVERLAP[off=$off]: ($s_txt \@$ol_off.$ol_len :$s_rest) --> ", ($s_len <= 0 ? 'DELETE' : "TRUNCATE"), "\n";
+	  if ($s_len <= 0) {
+	    ++$ndel;
+	    $_ = undef;
+	  } else {
+	    ++$nfixed;
+	    $_ = "$s_txt\t$s_off $s_len$s_rest";
+	  }
+	}
+	$off = $s_off+$s_len;
+      }
+    }
+    @lines = grep {defined($_)} @lines if ($ndel);
+    $tp->vlog($tp->{traceLevel},"autofix: token overlap: $nfixed truncation(s), $ndel deletion(s)");
 
     ##------------------------------------
     ## fix: stupid interjections
-    my ($s_str, $s_txt,$s_off,$s_len,$s_rest);
-    my ($nsusp,$nfixed)=(0,0);
     $tp->vlog($tp->{traceLevel},"autofix: re/ITJ");
+    $nsusp = $nfixed = 0;
     foreach (@lines) {
       ++$nfixed if (s/^(re\t\d+ \d+)\tITJ$/$1/);
     }
@@ -155,7 +184,6 @@ sub tokenize1 {
     $tp->vlog($tp->{traceLevel},"autofix: linebreak: scan");
     my ($txt1,$off1,$len1,$rest1, $txt2,$off2,$len2,$rest2, @repl);
     my %nojoin_txt2 = map {($_=>undef)} qw(und oder als wie noch sondern ſondern u. o. bis);
-    my ($i,$j);
     $nsusp=$nfixed=0;
     for ($i=0; $i < $#lines; ++$i) {
       if ($lines[$i] =~ /^
