@@ -99,6 +99,7 @@ digraph dataflow_perl_dockeys {
   */
   
 
+  /*
   //-- standoff via C progs
   standoff [label="standoff",fillcolor=PaleGreen,fontname="Courier-Bold"];
   xtokdata -> standoff;
@@ -109,6 +110,7 @@ digraph dataflow_perl_dockeys {
   //-- standoff: xsl stylesheets (now obsolete)
   standoff_xsl [label="t2s.xsl\nt2w.xsl\nt2a.xsl",fillcolor=grey80];
   standoff -> standoff_xsl;
+  */
 
   //-- standoff via xsl
   /*

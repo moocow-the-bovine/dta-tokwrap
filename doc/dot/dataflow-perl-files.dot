@@ -53,6 +53,7 @@ digraph dataflow_perl_files {
   tokfile -> tok2xml;
   tok2xml -> xtokfile;
 
+  /*
   //-- standoff via C progs (basically obsolete)
   standoff [label="standoff",shape=diamond,fillcolor=PaleGreen,style=dotted,fontname="Courier-Bold"];
   xtokfile -> standoff;
@@ -64,31 +65,26 @@ digraph dataflow_perl_files {
   standoff -> sowfile;
   standoff -> soafile;
   { rank=same; sosfile sowfile soafile; }
+  */
 
-  //-- splice-in: w,s: external scripts
-  add_w  [label="dtatw-add-w.perl",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
-  xtokfile /*sowfile*/ -> add_w;
-  xmlfile -> add_w;
-  add_w  -> cwfile;
-  cwfile [label="-cwfile: *.cw.xml",fillcolor=yellow];
+  //-- splice-in: w,s: addws module
+  add_ws  [label="addws",shape=diamond,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  xtokfile -> add_ws;
+  xmlfile  -> add_ws;
+  add_ws   -> cwsfile;
+  cwsfile [label="cwsfile: *.cws.xml",fillcolor=PowderBlue];
 
-  add_s  [label="dtatw-add-s.perl",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
-  xtokfile /*sosfile*/ -> add_s;
-  cwfile -> add_s;
-  add_s  -> cwsfile;
-  cwsfile [label="-cwsfile: *.cws.xml",fillcolor=yellow];
-
-  //-- splice-in: generic (e.g. cab)
+  //-- splice-in: generic id-based splice (e.g. cab)
   cab [label="dta-cab",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
   xtokfile -> cab;
 
   cabfile [label="-cabfile: *.cab.xml",fillcolor=yellow];
   cab -> cabfile;
 
-  twsplice [label="dtatw-splice.perl",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
-  cabfile -> twsplice;
-  cwsfile -> twsplice;
+  idsplice [label="idsplice",shape=diamond,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  cabfile -> idsplice;
+  cwsfile -> idsplice;
 
-  cwscabfile [label="-teicabfile: *.cws.tei.xml",fillcolor=yellow];
-  twsplice -> cwscabfile;
+  cwstfile [label="cwstfile: *.cwst.xml",fillcolor=PowderBlue];
+  idsplice -> cwstfile;
 }

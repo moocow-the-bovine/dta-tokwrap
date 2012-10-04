@@ -42,6 +42,7 @@ digraph dataflow {
   cx -> t2xml;
   t2xml -> t_xml;
 
+  /*
   w_xml [label="x.w.xml"];
   txml2wxml [label="dtatw-txml2wxml.xsl",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
   t_xml -> txml2wxml;
@@ -59,17 +60,17 @@ digraph dataflow {
   t_xml -> txml2axml;
   txml2axml -> a_xml;
   //a_xml -> w_xml [label="xml:base",style=dotted];
+  */
 
   //-- splicing
-  add_w  [label="dtatw-add-w.perl",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
-  w_xml -> add_w;
-  xml   -> add_w;
-  add_w -> cw_xml;
-  cw_xml [label="x.cw.xml"];
-
-  add_s [label="dtatw-add-s.perl",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
-  s_xml  -> add_s;
-  cw_xml -> add_s;
-  add_s -> cws_xml;
+  add_ws  [label="dtatw-add-ws.perl",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  t_xml -> add_ws;
+  xml   -> add_ws;
+  add_ws -> cws_xml;
   cws_xml [label="x.cws.xml"];
+
+  splice [label="dtatw-splice.perl",shape=rectangle,style=filled,fillcolor=PaleGreen,fontname="Courier-Bold"];
+  cws_xml -> splice;
+  splice -> cwst_xml;
+  cwst_xml [label="x.cwst.xml"];
 }
