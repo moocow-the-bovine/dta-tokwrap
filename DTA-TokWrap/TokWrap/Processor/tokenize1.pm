@@ -16,6 +16,7 @@ use Encode qw(encode decode);
 use Carp;
 use strict;
 
+no bytes;
 use utf8;
 
 ##==============================================================================
@@ -49,6 +50,11 @@ sub init {
 
   return $tp;
 }
+
+##==============================================================================
+## Utilities
+##==============================================================================
+
 
 ##==============================================================================
 ## Methods
@@ -86,54 +92,48 @@ sub tokenize1 {
     $doc->{tokdata1} = $$tdata0r; ##-- just copy
   }
   else {
-    my $data = decode('utf8',$$tdata0r);
+    my $data = $$tdata0r;
+    utf8::decode($data) if (!utf8::is_utf8($data));
+    my @lines = split(/\n/,$data);
+    my ($fh,$off);
 
     ##------------------------------------
     ## fix: stupid interjections
-    my @suspects = qw();
     my ($s_str, $s_txt,$s_off,$s_len,$s_rest);
-    my ($nfixed);
+    my ($nsusp,$nfixed)=(0,0);
     $tp->vlog($tp->{traceLevel},"autofix: re/ITJ");
-    $nfixed = ($data =~ s/^(re\t\d+ \d+)\tITJ$/$1/mg);
-    $tp->vlog($tp->{traceLevel},"autofix: re/ITJ: $nfixed fix(es)") if ($nfixed);
+    foreach (@lines) {
+      ++$nfixed if (s/^(re\t\d+ \d+)\tITJ$/$1/);
+    }
+    $tp->vlog($tp->{traceLevel},"autofix: re/ITJ: ", ($nfixed+0), " fix(es)");
 
 
     ##------------------------------------
     ## fix: tokenized $WB$, $SB$ (mantis bug #548)
     $tp->vlog($tp->{traceLevel},"autofix: \${WB,SB}\$");
-    $nfixed  = 0;
-    $nfixed += ($data =~ s/^\$[WS]B\$_?\t.*\n//mg); 								##-- e.g. "$SB\tOFF LEN\t[XY]\t[$ABBREV]\n"
-    $tp->vlog($tp->{traceLevel},"autofix: \${WB,SB}\$: $nfixed fix(es)") if ($nfixed);
+    $nfixed = 0;
+    foreach (@lines) {
+      ++$nfixed if (s/^\$[WS]B\$_?\t.*$//);	##-- e.g. "$SB\tOFF LEN\t[XY]\t[$ABBREV]\n
+    }
+    $tp->vlog($tp->{traceLevel},"autofix: \${WB,SB}\$: ", ($nfixed+0), " fix(es)");
 
     ##------------------------------------
     ## fix: bogus trailing underscore (also in mantis bug #548)
-    $tp->vlog($tp->{traceLevel},"autofix: *_/\$ABBREV: find suspects");
-    @suspects = qw();
-    while (
-	   #$data =~ /^[^\t\n]*_\t[0-9]+ [0-9]+\t\[XY\]\t\[\$ABBREV\]\n/mg
-	   #$data =~ /^[^\t\n]*_\t.*\n/mg
-	   $data =~ /^[^\t\n]*_\t.*\n/mg
-	  )
-      {
-	push(@suspects, [$-[0], $+[0]-$-[0]]);
-      }
-
-    $tp->vlog($tp->{traceLevel},"autofix: *_/\$ABBREV: check & apply");
-    $nfixed = 0;
-    foreach (reverse @suspects) {
-      $s_str = substr($data,$_->[0],$_->[1]);
-      if ($s_str =~ /^([^\t]*)\t([0-9]+) ([0-9]+)(\t.*)?$/) {
+    ##  + Thu, 04 Oct 2012 11:09:29 +0200: read line-wise from temporary fh to avoid
+    ##    weird perfomance hit from simple regex ($data=~/^[^\t\n_]_\t.*\n/mg)
+    $tp->vlog($tp->{traceLevel},"autofix: *_/\$ABBREV");
+    $nsusp = $nfixed = 0;
+    foreach (@lines) {
+      if (m/^([^\t]*)_\t([0-9]+) ([0-9]+)(\t.*)?$/) {
 	($s_txt,$s_off,$s_len,$s_rest) = ($1,$2,$3,$4);
+	++$nsusp;
 	if ($s_rest =~ /(?:\t\[(?:XY|\$ABBREV)\]){2,}/) {
-	  substr($data,$_->[0],$_->[1]) = substr($s_txt,0,-1)."\t$s_off ".($s_len-1)."\n";
+	  $_ = "$s_txt\t$s_off ".($s_len-1)."\n";
 	  ++$nfixed;
 	}
-      } else {
-	$tp->logwarn("tokenize1(): couldn't parse *_/\$ABBREV suspect line at t0-file offset $_->[0], length $_->[1] - skipping");
-	next;
       }
     }
-    $tp->vlog($tp->{traceLevel},"autofix: *_/\$ABBREV: ", scalar(@suspects), " suspect(s), $nfixed fix(es)") if (@suspects);
+    $tp->vlog($tp->{traceLevel},"autofix: *_/\$ABBREV: $nsusp suspect(s), $nfixed fix(es)");
 
     ##------------------------------------
     ## fix: line-broken tokens, part 1: get list of suspects
@@ -152,88 +152,83 @@ sub tokenize1 {
     ##   U+00AC      172      2        ¬      \xc2\xac        Latin-1 Supplement      NOT SIGN
     ##   U+2014     8212      3       [?] \xe2\x80\x94        General Punctuation     EM DASH
     ##    -- this is not really a connector, but it might be used somewhere!
-    $tp->vlog($tp->{traceLevel},"autofix: linebreak: find suspects");
-    @suspects = qw();
-    while (
-	   $data =~ /^
-		      [[:alpha:]\'\-\x{ac}]*                        ##-- w1.text [modulo final "-"]
-		      [\-\x{ac}]                                    ##--   : w1.final "-"
-		      \t.*                                          ##--   : w1.rest
-		      \n+                                           ##--   : EOT (EOS?) (w1 . w2)
-		      [[:alpha:]\'\-\x{ac}]*                        ##-- w2.text [modulo final "."]
-		      \.?                                           ##--   : w2.text: final "." (optional)
-		      \t.*                                          ##--   : w2.rest
-		      \n                                            ##--   : EOT (w1 w2 .)
-		    /mxg
-	  )
-      {
-	push(@suspects, [$-[0], $+[0]-$-[0]]);
-      }
+    $tp->vlog($tp->{traceLevel},"autofix: linebreak: scan");
+    my ($txt1,$off1,$len1,$rest1, $txt2,$off2,$len2,$rest2, @repl);
+    my %nojoin_txt2 = map {($_=>undef)} qw(und oder als wie noch sondern ſondern u. o. bis);
+    my ($i,$j);
+    $nsusp=$nfixed=0;
+    for ($i=0; $i < $#lines; ++$i) {
+      if ($lines[$i] =~ /^
+			 [[:alpha:]\'\-\x{ac}]*		##-- w1.text [modulo final "-"]
+			 [\-\x{ac}]			##--   : w1.final "-"
+			 \t.*				##--   : w1.rest
+			 $				##--   : EOT (w1 . EOS? w2)
+			/x
 
-    ##------------------------------------
-    ## fix: line-broken tokens, part 2: repair
-    $tp->vlog($tp->{traceLevel},"autofix: linebreak: check \& apply");
-    $nfixed=0;
-    my %nojoin_txt2 = map {($_=>undef)} qw(und oder als wie noch sondern ſondern u. o.);
+	  && defined($j=$i+($lines[$i+1] =~ /^$/
+			    ? 2				##--  EOS (w1 EOS . w2)
+			    : 1))			##-- !EOS (w2     . w2)
+	  && $j <= $#lines
 
-    my ($txt1,$off1,$len1,$rest1, $txt2,$off2,$len2,$rest2, $repl);
-    foreach (reverse @suspects) {
-      $s_str = substr($data,$_->[0],$_->[1]);
-      $repl  = undef;
-
-      if (
-	  $s_str =~ m/^([^\t\n]*)            ##-- $1: w1.txt
-		      \t(\d+)\ (\d+)         ##-- ($2,$3): (w1.off, w1.len)
-		      ([^\n]*)               ##-- $4: w1.rest
-		      \n+                    ##-- w1.EOT (EOS?)
-		      ([^\t\n]*)             ##-- $5: w2.txt
-		      \t(\d+)\ (\d+)         ##-- ($6,$7): (w2.off, w2.len)
-		      ([^\n]*)               ##-- $8: w2.rest
-		      \n+$                   ##-- w2.EOT
-		     /sx
+	  && $lines[$j] =~ /^
+			    [[:alpha:]\'\-\x{ac}]*	##-- w2.text [modulo final "."]
+			    \.?				##--   : w2.text: final "." (optional)
+			    \t.*			##--   : w2.rest
+			    $				##--   : EOT (w1 EOS? w2 .)
+			   /x
 	 ) {
-	($txt1,$off1,$len1,$rest1, $txt2,$off2,$len2,$rest2) = ($1,$2,$3,$4, $5,$6,$7,$8);
+	++$nsusp;
+
+	##-- parse: w1
+	next if ($lines[$i] !~ m/^([^\t\n]*)		##-- $1: w1.txt
+				 \t([0-9]+)\ ([0-9]+)	##-- ($2,$3): (w1.off, w1.len)
+				 (.*)$			##-- $4: w1.rest
+				/x);
+	($txt1,$off1,$len1,$rest1)=($1,$2,$3,$4);
+
+	##-- parse: w2
+	next if ($lines[$j] !~ m/^([^\t\n]*)		##-- $1: w2.txt
+				 \t([0-9]+)\ ([0-9]+)	##-- ($2,$3): (w2.off, w2.len)
+				 (.*)$			##-- $4: w2.rest
+				/x);
+	($txt2,$off2,$len2,$rest2) = ($1,$2,$3,$4);
 
 	##-- skip vowel-less w1
 	next if ($txt1 !~ /[aeiouäöüy]/);
 
 	##-- skip common conjunctions as w2
-	next if (exists($nojoin_txt2{$txt2}));
+	next if (exists($nojoin_txt2{$txt2})); # || $txt2 =~ /\.$/
 
 	##-- skip upper-case and vowel-less w2
 	next if ($txt2 =~ /[[:upper:]]/ || $txt2 !~ /[aeiouäöüy]/);
 
 	##-- check for abbrevs
+	@repl = qw();
 	if ($txt2 =~ /\.$/ && $rest2 =~ /\bXY\b/) {
-	  $repl = (
-		   substr($txt1,0,-1).substr($txt2,0,-1)."\t$off1 ".(($off2+$len2)-$off1-1)."\n"
-		   .".\t".($off2+$len2-1)." 1\t\$.\n"
-		   ."\n"
+	  @repl = (
+		   (substr($txt1,0,-1).substr($txt2,0,-1)."\t$off1 ".(($off2+$len2)-$off1-1)),
+		   (".\t".($off2+$len2-1)." 1\t\$."),
 		  );
-	} elsif ($rest2 =~ /^(?:\tTRUNC)?$/) {
-	  $repl = (
-		   substr($txt1,0,-1).$txt2."\t$off1 ".(($off2+$len2)-$off1)."$rest2\n"
+	}
+	elsif ($rest2 =~ /^(?:\tTRUNC)?$/) {
+	  @repl = (
+		   substr($txt1,0,-1).$txt2."\t$off1 ".(($off2+$len2)-$off1)."$rest2"
 		  );
 	}
 
 	##-- DEBUG
-	#print STDERR "  - SUSPECT: ($txt1 \@$off1.$len1 :$rest1)  +  ($txt2 \@$off2.$len2 :$rest2)  -->  ".(defined($repl) ? $repl : "IGNORE\n");
-      } else {
-	$tp->logwarn("tokenize1(): couldn't parse line-broken suspect line at t0-file offset $_->[0], length $_->[1] - skipping");
-	next;
-      }
-
-      ##-- apply actual replacement
-      if (defined($repl)) {
-	substr($data,$_->[0],$_->[1]) = $repl;
-	++$nfixed;
+	#print STDERR "  - SUSPECT: ($txt1 \@$off1.$len1 :$rest1)  +  ($txt2 \@$off2.$len2 :$rest2)  -->  ".(@repl ? join(" + ",map {"($_)"} @repl)."\n" : "IGNORE\n");
+	if (@repl) {
+	  splice(@lines, $i, (1+$j-$i), @repl);
+	  ++$nfixed;
+	}
       }
     }
-    $tp->vlog($tp->{traceLevel},"autofix: linebreak: ", scalar(@suspects), " suspect(s), $nfixed fix(es)") if (@suspects);
+    $tp->vlog($tp->{traceLevel},"autofix: linebreak: $nsusp suspect(s), $nfixed fix(es)");
 
     ##------------------------------------
     ## fix: pre-numeric abbreviations (e.g. biblical books), part 1: collect suspects
-    $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: find suspects");
+    $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: scan");
     my %nabbrs   = (map {($_=>undef)}
 		    qw( Bar Dan Deut Esra Est Ex Galater Man Hos Ijob Job Jak Col Kor Cor Mal Ri Sir ),
 		    #qw( Mark ), ##-- heuristics too dodgy
@@ -241,78 +236,63 @@ sub tokenize1 {
 		    ##-- more bible books
 		    qw( Es Gall Reg Hose Rom ),
 		   );
-    my $nabbr_max_distance = 2; ##-- max number of text bytes between end(w1) and start(w2), including EOS-dot
-    @suspects = qw();
-    while (
-	   $data =~ /^
-		     [[:alpha:]]+\t.*\n		##-- w1
-		     \.\t.*\n			##-- "." [as punct]
-		     \n+		    	##-- EOS
-		     [0-9]+[^\n]*\n		##-- w2 (arabic number)
-		    /mxg
-	  )
-      {
-	push(@suspects, [$-[0], $+[0]-$-[0]]);
-      }
-
-    ##------------------------------------
-    ## fix: pre-numeric abbreviations (e.g. biblical books), part 2: repair
-    $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: repair");
-    $nfixed = 0;
     my ($offd,$lend);
-    foreach (reverse @suspects) {
-      $s_str = substr($data,$_->[0],$_->[1]);
-      $repl  = undef;
-
+    my $nabbr_max_distance = 2; ##-- max number of text bytes between end(w1) and start(w2), including EOS-dot
+    $nsusp=$nfixed=0;
+    for ($i=0; $i <= ($#lines-3); ++$i) {
       if (
-	  $s_str =~ m/^([^\t\n]*)            ##-- $1: w1.txt
-		      \t(\d+)\ (\d+)         ##-- ($2,$3): (w1.off, w1.len)
-		      ([^\n]*)               ##-- $4: w1.rest
-		      \n                     ##-- w1.EOT
-		      ##
-		      \.		     ##-- dot:"."
-		      \t(\d+)\ (\d+)	     ##-- ($5,$6): (dot.off, dot.len)
-		      ([^\n]*)		     ##-- $7: dot.rest
-		      \n		     ##-- dot.EOT
-		      ##
-		      \n+		     ##-- EOS
-		      ##
-		      ([^\t\n]*)             ##-- $8: w2.txt
-		      \t(\d+)\ (\d+)         ##-- ($9,$10): (w2.off, w2.len)
-		      ([^\n]*)               ##-- $11: w2.rest
-		      \n+$                   ##-- w2.EOT
-		     /sx
+	  ##-- parse: w1
+	  $lines[$i] =~ m/^([^\t]*)			##-- $1: w1.txt
+			  \t([0-9]+)\ ([0-9]+)		##-- ($2,$3): (w1.off, w1.len)
+			  (.*)				##-- $4: w1.rest
+			  $				##-- w1.EOT
+			 /x
+	  && (($txt1,$off1,$len1,$rest1)=($1,$2,$3,$4))
+
+	  ##-- parse: dot
+	  && $lines[$i+1] =~ m/^\.			##-- dot:"."
+			       \t([0-9]+)\ ([0-9]+)	##-- ($1,$2): (dot.off, dot.len)
+			       (?:.*)			##-- (-): dot.rest
+			       $			##-- dot.EOT
+			      /x
+	  && (($offd,$lend)=($1,$2))
+
+	  ##-- parse: EOS
+	  && $lines[$i+2] =~ m/^$/			##-- EOS
+
+	  ##-- parse: w2
+	  && $lines[$i+3] =~ m/^([0-9][^\t]*)		##-- $1: w2.txt (beginning with arabic numeral)
+			       \t([0-9]+)\ ([0-9]+)	##-- ($2,$3): (w2.off, w2.len)
+			       (.*)			##-- $4: w2.rest
+			       $			##-- w2.EOT
+			      /x
+	  && (($txt2,$off2,$len2,$rest2)=($1,$2,$3,$4))
 	 ) {
-	($txt1,$off1,$len1,$rest1, $offd,$lend, $txt2,$off2,$len2,$rest2) = ($1,$2,$3,$4, $5,$6, $8,$9,$10,$11);
+	++$nsusp;
 
 	##-- check for known pre-numeric abbrevs
+	@repl = qw();
 	if (exists($nabbrs{$txt1}) && ($off2-($off1+$len1)) <= $nabbr_max_distance) {
-	  $repl = (
-		   "$txt1.\t$off1 ".(($offd+$lend)-$off1)."\tXY\t\$ABBREV\n"
-		   ."$txt2\t$off2 $len2$rest2\n"
-		  );
+	  ++$nfixed;
+	  splice(@lines, $i, 4,
+		 @repl = (
+			  ("$txt1.\t$off1 ".(($offd+$lend)-$off1)."\tXY\t\$ABBREV"),
+			  ("$txt2\t$off2 $len2$rest2"),
+			 ));
 	}
 
 	##-- DEBUG
-	#print STDERR "  - NABBR: ($txt1 \@$off1.$len1 :$rest1)  +  ($txt2 \@$off2.$len2 :$rest2)  -->  ".(defined($repl) ? $repl : "IGNORE\n");
-      } else {
-	$tp->logwarn("tokenize1(): couldn't parse pre-numeric suspect line at t0-file offset $_->[0], length $_->[1] - skipping");
-	next;
-      }
-
-      ##-- apply actual replacement
-      if (defined($repl)) {
-	substr($data,$_->[0],$_->[1]) = $repl;
-	++$nfixed;
+	#print STDERR "  - NABBR: ($txt1 \@$off1.$len1 :$rest1) + . + EOS +  ($txt2 \@$off2.$len2 :$rest2)  -->  ".(@repl ? join(" + ", map {"($_)"} @repl) : "IGNORE")."\n" if (@repl);
       }
     }
-    $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: ", scalar(@suspects), " suspect(s), $nfixed fix(es)");
+    $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: $nsusp suspect(s), $nfixed fix(es)");
 
 
     ##------------------------------------
     ## finalize: write data back to doc (encoded)
     $tp->vlog($tp->{traceLevel},"autofix: recode");
-    $doc->{tokdata1} = encode('utf8',$data);
+    $doc->{tokdata1} = join("\n", @lines)."\n\n";
+    utf8::encode($doc->{tokdata1}) if (utf8::is_utf8($doc->{tokdata1}));
   }
   ##-- /ifelse:fixtok
 
