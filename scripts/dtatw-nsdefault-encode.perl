@@ -4,7 +4,7 @@ my $outfile = @ARGV > 1 ? pop(@ARGV) : '-';
 open(OUT, ">$outfile") or die("$0: open failed for output file '$outfile': $!");
 select(OUT);
 
-local $/=undef;
-$_=<>;
-s|(<[^>]*\s)xmlns=|${1}XMLNS=|g;  ##-- remove default namespaces
-print;
+while (<>) {
+  s|(<[^>]*\s)xmlns=|${1}XMLNS=|g;  ##-- remove default namespaces
+  print;
+}

@@ -584,7 +584,7 @@ ws-xml: $(XML:.xml=.ws.xml)
 no-ws-xml: ; rm -f *.ws.xml *.ws.fmt.xml
 CLEAN_FILES += *.ws.xml
 
-##-- splice: .cws.xml + .t.xml -> .cwst.xml
+##-- splice: .cws.xml + .t.xml -> .cwst.xml  : should be OBSOLETE! (Thu, 04 Oct 2012 15:11:31 +0200)
 cwst-xml: $(XML:.xml=.cwst.xml)
 %.cwst.xml: %.cws.xml %.t.xml tokwrap
 	$(TOKWRAP) -t=cwstxml -po soIgnoreAttrs="c,xb" -do cwstbasefile=$< -do cwstsofile=$(word 2,$^) -do cwstfile=$@ $(xmldir)/$*.xml
@@ -592,7 +592,7 @@ cwst-xml: $(XML:.xml=.cwst.xml)
 no-cwst-xml: ; rm -f *.cwst.xml
 CLEAN_FILES += *.cwst.xml
 
-##-- splice: .ws.xml + .t.xml -> .wst.xml
+##-- splice: .ws.xml + .t.xml -> .wst.xml   : should be OBSOLETE! (Thu, 04 Oct 2012 15:11:31 +0200)
 wst-xml: $(XML:.xml=.wst.xml)
 %.wst.xml: %.ws.xml %.t.xml tokwrap
 	$(TOKWRAP) -t=cwstxml -po soIgnoreAttrs="c,xb" -do cwstbasefile=$< -do cwstsofile=$(word 2,$^) -do cwstfile=$@ $(xmldir)/$*.xml

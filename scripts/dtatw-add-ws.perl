@@ -23,9 +23,6 @@ our $outfile = "-";   ##-- default: stdout
 our $srcInfix = '.chr';
 our $soInfix  = '.t';
 
-##-- init
-DTA::TokWrap::Logger->ensureLog();
-
 ##------------------------------------------------------------------------------
 ## Command-line
 ##------------------------------------------------------------------------------
@@ -38,6 +35,9 @@ GetOptions(##-- General
 	   'output|out|o=s' => \$outfile,
 	  );
 
+##-- init
+DTA::TokWrap::Logger->ensureLog();
+
 ##-- command-line: arguments
 pod2usage({-exitval=>0,-verbose=>0}) if ($help);
 pod2usage({-message=>"Not enough arguments given!",-exitval=>0,-verbose=>0}) if (@ARGV < 1);
@@ -49,7 +49,7 @@ if (!defined($sofile)) {
 
 ##-- call tokwrap methods
 our $doc   = DTA::TokWrap::Document->new(xmlfile=>$srcfile,xtokfile=>$sofile,cwsfile=>$outfile);
-our $addws = DTA::TokWrap::Processor::addws->new();
+our $addws = DTA::TokWrap::Processor::addws->new(traceLevel=>'trace');
 $doc->addws($addws);
 
 __END__

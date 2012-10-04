@@ -118,11 +118,11 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    #xtokdoc  => $xtokdoc,   ##-- XML::LibXML::Document for $xtokdata (parsed from string)
 ##
 ##    ##-- ws-splice (see DTA::TokWrap::Processor::addws)
-##    cwsdata => $cwsdata,    ##-- ws-spliced output data (xmlfile with <s> and <w> elements)
+##    #cwsdata => $cwsdata,    ##-- ws-spliced output data (xmlfile with <s> and <w> elements)
 ##    cwsfile => $cwsfile,    ##-- ws-spliced output file (default="$outdir/$outbase.cws.xml")
 ##
 ##    ##-- property-splice (see DTA::TokWrap::Processor::idsplice)
-##    cwstbasebufr => \$bdata,  ##-- base data-ref for idsplice (xml with //*/@id) [default=\$cwsdata]
+##    cwstbasebufr => \$bdata,  ##-- base data-ref for idsplice (xml with //*/@id) [default=\$cwsdata if defined]
 ##    cwstbasefile => $bfile,   ##-- source file for $bdata [default=$cwsfile]
 ##    cwstsobufr   => \$sodata, ##-- standoff data-ref for idsplice (xml with //*/@id, additional attributes and content) [default=\$xtokdata]
 ##    cwstsofile   => $sofile,  ##-- source file for $sodata [default=$xtokfile]
@@ -204,7 +204,7 @@ sub defaults {
 	  xtokfile => undef,
 
 	  ##-- ws-splice data
-	  cwsdata => undef,
+	  #cwsdata => undef,
 	  cwsfile => undef,
 
 	  ##-- wst-splice data

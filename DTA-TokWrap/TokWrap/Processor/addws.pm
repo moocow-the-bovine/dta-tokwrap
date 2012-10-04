@@ -59,7 +59,8 @@ our $SEG_SEND  = 8;
 ##				##         $xlen = $int, ##-- byte length in $srcbuf of this <w>-segment's contents
 ##				##         $segi = $int, ##-- original segment index (+1): 1 <= $segi <= $wid2nsegs{$xref}
 ##				##         $sid  = $str, ##-- xml:id of the <s> element to which this <w> belongs
-##				##         $sbegi = $int, ##-- <s>-segment index (+1) to be opened before this token: 1 <= $ssegi <= $wid2nsegs{$xref} [see find_s_segments()]
+##				##         $sbegi = $int,  ##-- <s>-segment index (+1) to be opened before this token
+##				##			   ##   : 1 <= $ssegi <= $wid2nsegs{$xref} [see find_s_segments()]
 ##				##         $sprvi = $int,  ##-- previous <s>-segment index (+1)
 ##				##         $snxti = $int,  ##-- next <s>-segment index (+1)
 ##				##         $send  = $bool, ##-- true iff the enclosing <s>-segment should be closed after this <w>-segment
@@ -110,6 +111,7 @@ sub xmlParser {
   my ($nw);	   ##-- number of tokens (//w elements) parsed
   my ($ns);	   ##-- number of sentences (//s elements) parsed
   my ($w_segs,$wid2nsegs,$sid2nsegs) = @$p{qw(w_segs wid2nsegs sid2nsegs)} = ([],{},{});
+  my ($sid2attrs,$wid2attrs,$wid2content) = @$p{qw(sid2attrs wid2attrs wid2content)} = ({},{},{});
 
   ##----------------------------
   ## undef = cb_init($expat)
@@ -120,6 +122,9 @@ sub xmlParser {
     @$w_segs    = qw();
     %$wid2nsegs = qw();
     %$sid2nsegs = qw();
+    %$sid2attrs = qw();
+    %$wid2attrs = qw();
+    %$wid2content = qw();
   };
 
   ##----------------------------
@@ -142,6 +147,7 @@ sub xmlParser {
 	  }
 	}
 	$wid2nsegs->{$wid} = $xbi;
+	($wid2attrs->{$wid} = $_[0]->original_string) =~ s/(?:^<w\b|\/?>$|(?:\s+(?:c|xb|id|xml:id)=\"[^\"]*\"))//g;
       }
       else {
 	$_[0]->xpcroak("$prog: no //w/\@xb attribute defined (do you have DTA::TokWrap >= v0.34-1?)");
@@ -149,7 +155,11 @@ sub xmlParser {
     }
     elsif ($_[1] eq 's') {
       $sid = $_attrs{'id'} || $_attrs{'xml:id'};
+      ($sid2attrs->{$sid} = $_[0]->original_string) =~ s/(?:^<s\b|\/?>$|(?:\s+(?:id|xml:id)=\"[^\"]*\"))//g;
       ++$ns;
+    }
+    else {
+      $_[0]->default_current();
     }
   };
 
@@ -158,13 +168,22 @@ sub xmlParser {
   my $cb_end = sub {
     if    ($_[1] eq 'w') { $wid=undef; }
     elsif ($_[1] eq 's') { $sid=undef; }
+    else { $_[0]->default_current(); }
   };
+
+  ##----------------------------
+  ## undef = cb_default($expat,$string)
+  my $cb_default = sub {
+    $wid2content->{$wid} .= $_[0]->original_string() if (defined($wid) && $_[1] !~ /^\s*$/);
+  };
+
 
   ##----------------------------
   ## undef = cb_final($expat)
   my $cb_final = sub {
     #@w_segs = sort {$a->[$SEG_XOFF] <=> $b->[$SEG_XOFF]} @w_segs; ##-- NOT HERE
     @$p{qw(ns nw w_segs wid2nsegs sid2nsegs)} = ($ns,$nw,$w_segs,$wid2nsegs,$sid2nsegs);
+    @$p{qw(sid2attrs wid2attrs wid2content)}  = ($sid2attrs,$wid2attrs,$wid2content);
   };
 
   ##----------------------------
@@ -177,6 +196,7 @@ sub xmlParser {
 					      Init  => $cb_init,
 					      Start => $cb_start,
 					      End   => $cb_end,
+					      Default => $cb_default,
 					      Final => $cb_final,
 					     },
 			   )
@@ -242,19 +262,19 @@ sub find_s_segments {
 ##----------------------------------------------------------------------
 ## Subs: splice segments into base document
 
-## undef = splice_segments(\$outbufr)
+## undef = splice_segments($outfh)
 ##  + splices final segments from @w_segs=@{$p->{w_segs}} into $srcbuf; dumping output to $outfh
 ##  + sorts @w_segs on xml offset ($SEG_OFF)
 sub splice_segments {
-  my ($p,$outbufr) = @_;
-  $outbufr  = \(my $outbuf='') if (!defined($outbufr));
-  $$outbufr = '';
+  my ($p,$outfh) = @_;
+  $p->logconfess("splice_segments(): \$outfh not defined") if (!defined($outfh));
   my ($xref_this,$xref_prev,$xref_next);
   my ($xref,$xoff,$xlen,$segi, $sid,$sbegi,$sprvi,$snxti,$send);
   my ($nwsegs,$nssegs);
   my $off = 0;
   my ($wIdAttr,$sIdAttr)  = @$p{qw(wIdAttr sIdAttr)};
   my ($w_segs,$wid2nsegs,$srcbufr) = @$p{qw(w_segs wid2nsegs srcbufr)};
+  my ($sid2attrs,$wid2attrs,$wid2content) = @$p{qw(sid2attrs wid2attrs wid2content)};
 
   @$w_segs = sort {$a->[$SEG_XOFF] <=> $b->[$SEG_XOFF]} @$w_segs; ##-- sort in source-document order
   foreach (@$w_segs) {
@@ -263,13 +283,13 @@ sub splice_segments {
     $nwsegs  = $wid2nsegs->{$xref};
 
     ##-- splice in prefix
-    $$outbufr .= substr($$srcbufr, $off, ($xoff-$off));
+    $outfh->print(substr($$srcbufr, $off, ($xoff-$off)));
 
     ##-- maybe splice in <s>-start-tag
     if ($sbegi) {
       if (!$sprvi && !$snxti) {
 	##-- //s-start-tag: single-element item
-	$$outbufr .= "<s $sIdAttr=\"$sid\">";
+	$outfh->print("<s $sIdAttr=\"$sid\" ", ($sid2attrs->{$sid}||''), ">");
       } else {
 	##-- //s-start-tag: multi-segment item
 	$xref_this = "${sid}".($sprvi ? "_$sbegi" : '');
@@ -278,13 +298,13 @@ sub splice_segments {
 
 	if (!$sprvi) {
 	  ##-- //s-start-tag: multi-segment item: initial segment
-	  $$outbufr .= "<s part=\"I\" $sIdAttr=\"$xref_this\" next=\"$xref_next\">";
+	  $outfh->print("<s $sIdAttr=\"$xref_this\" next=\"$xref_next\"", ($sid2attrs->{$sid}||''), ">"); #." part=\"I\""
 	} elsif (!$snxti) {
 	  ##-- //s-start-tag: multi-segment item: final segment
-	  $$outbufr .= "<s part=\"F\" $sIdAttr=\"$xref_this\" prev=\"$xref_prev\">"; #." $s_refAttr=\"#$xref\""
+	  $outfh->print("<s $sIdAttr=\"$xref_this\" prev=\"$xref_prev\">"); #." part=\"F\" $s_refAttr=\"#$xref\""
 	} else {
 	  ##-- //s-start-tag: multi-segment item: middle segment
-	  $$outbufr .= "<s part=\"M\" $sIdAttr=\"$xref_this\" prev=\"$xref_prev\" next=\"$xref_next\">"; #." $s_refAttr=\"#$xref\""
+	  $outfh->print("<s $sIdAttr=\"$xref_this\" prev=\"$xref_prev\" next=\"$xref_next\">"); #."part=\"M\" $s_refAttr=\"#$xref\""
 	}
       }
     }
@@ -295,7 +315,7 @@ sub splice_segments {
     ##    - keep old @part attributes for compatibility (but throw out $w_refAttr ("n"))
     if ($nwsegs==1) {
       ##-- //w-start-tag: single-segment item
-      $$outbufr .= "<w $wIdAttr=\"$xref\">";
+      $outfh->print("<w $wIdAttr=\"$xref\"", ($wid2attrs->{$xref}||''), ">", (defined($wid2content->{$xref}) ? $wid2content->{$xref} : qw()));
     } else {
       ##-- //w-start-tag: multi-segment item
       $xref_this = "${xref}".($segi>1 ? ("_".($segi-1)) : '');
@@ -304,27 +324,29 @@ sub splice_segments {
 
       if ($segi==1) {
 	##-- //w-start-tag: multi-segment item: initial segment
-	$$outbufr .= "<w part=\"I\" $wIdAttr=\"$xref_this\" next=\"$xref_next\">";
+	$outfh->print("<w $wIdAttr=\"$xref_this\" next=\"$xref_next\"", ($wid2attrs->{$xref}||''), ">",  #." part=\"I\""
+		      (defined($wid2content->{$xref}) ? $wid2content->{$xref} : qw()),
+		     );
       } elsif ($segi==$nwsegs) {
 	##-- //w-start-tag: multi-segment item: final segment
-	$$outbufr .= "<w part=\"F\" $wIdAttr=\"$xref_this\" prev=\"$xref_prev\">"; #." $w_refAttr=\"#$xref\""
+	$outfh->print("<w $wIdAttr=\"$xref_this\" prev=\"$xref_prev\">"); #." part=\"F\" $w_refAttr=\"#$xref\""
       } else {
 	##-- //w-start-tag: multi-segment item: middle segment
-	$$outbufr .= "<w part=\"M\" $wIdAttr=\"$xref_this\" prev=\"$xref_prev\" next=\"$xref_next\">"; #." $w_refAttr=\"#$xref\""
+	$outfh->print("<w $wIdAttr=\"$xref_this\" prev=\"$xref_prev\" next=\"$xref_next\">"); #." part=\"M\" $w_refAttr=\"#$xref\""
       }
     }
 
     ##-- //w-segment: splice in content and end-tag(s)
-    $$outbufr .= (substr($$srcbufr,$xoff,$xlen)
-		  ."</w>"
-		  .($send ? "</s>" : ''));
+    $outfh->print(substr($$srcbufr,$xoff,$xlen),
+		  "</w>",
+		  ($send ? "</s>" : qw()));
 
     ##-- update offset
     $off = $xoff+$xlen;
   }
 
   ##-- splice in post-token material
-  $$outbufr .= substr($$srcbufr, $off,length($$srcbufr)-$off);
+  $outfh->print(substr($$srcbufr, $off,length($$srcbufr)-$off));
 }
 
 
@@ -338,7 +360,9 @@ sub splice_segments {
 ##    xmldata => $xmldata,   ##-- (input) source xml file
 ##    xtokdata => $xtokdata, ##-- (input) standoff xml-ified tokenizer output: data
 ##    xtokfile => $xtokfile, ##-- (input) standoff xml-ified tokenizer output: file (only if $xtokdata is missing)
-##    cwsdata  => $cwsdata,  ##-- (output) back-spliced xml data
+##    #cwsdata  => $cwsdata,  ##-- (output) back-spliced xml data
+##    cwsfile  => $cwsfile,  ##-- (output) back-spliced xml file
+##    cwsfh    => $cwsfh,    ##-- (output) back-spliced xml handle (overrides $cwsfile)
 ##    addws_stamp0 => $f,    ##-- (output) timestamp of operation begin
 ##    addws_stamp  => $f,    ##-- (output) timestamp of operation end
 ##    cwsdata_stamp => $f,   ##-- (output) timestamp of operation end
@@ -387,8 +411,10 @@ sub addws {
 
   ##-- output: splice in <w> and <s> segments
   $p->vlog($p->{traceLevel},"addws(): creating $doc->{cwsfile}");
-  $p->splice_segments(\$doc->{cwsdata});
-  ref2file(\$doc->{cwsdata},$doc->{cwsfile},{binmode=>(utf8::is_utf8($doc->{cwsdata}) ? ':utf8' : ':raw')});
+  my $cwsfh = defined($doc->{cwsfh}) ? $doc->{cwsfh} : IO::File->new(">$doc->{cwsfile}");
+  $p->logconfess("could not open cwsfile '$doc->{cwsfile}' for write: $!") if (!defined($cwsfh));
+  $p->splice_segments($cwsfh);
+  $cwsfh->close();
 
   ##-- finalize
   $doc->{addws_stamp} = timestamp(); ##-- stamp

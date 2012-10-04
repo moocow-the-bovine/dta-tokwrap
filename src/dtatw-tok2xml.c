@@ -29,12 +29,14 @@ ByteOffset ntoks   = 0; //-- for profiling: number of tokens (from .t file)
 const char *indent_root = "\n";
 const char *indent_s    = "\n  ";
 const char *indent_w    = "\n    ";
-const char *indent_a    = "\n      ";
+const char *indent_al   = "\n      ";
+const char *indent_a    = "\n        ";
 
 //-- xml structure constants (should jive with 'mkbx0', 'mkbx')
 const char *docElt = "sentences";  //-- output document element
 const char *sElt   = "s";          //-- output sentence element
 const char *wElt   = "w";          //-- output token element
+const char *alElt  = "toka";	   //-- output token-analyses element
 const char *aElt   = "a";          //-- output token-analysis element
 const char *txtPosAttr = "b";      //-- output .txt byte-position attribute (b="OFFSET LEN")
 const char *xmlPosAttr = "xb";     //-- output .xml byte-position attribute (xb="OFFSET_0+LEN_0... OFFSET_N+LEN_N")
@@ -248,7 +250,7 @@ static void tt_next_word(FILE *f_out, ttWordBuffer *w0, ttWordBuffer *w1, int *s
     //-- output: w0: analyses (finishing <w ...>, also writing </w> if required)
     if (w0->w_rest[0]) {
       char *w_rest = &w0->w_rest[0], *tail;
-      fputc('>',f_out);
+      fprintf(f_out, ">%s<%s>", indent_al, alElt);
       do {
 	tail = next_tab(w_rest);
 	fprintf(f_out, "%s<%s>", indent_a, aElt);
@@ -257,7 +259,7 @@ static void tt_next_word(FILE *f_out, ttWordBuffer *w0, ttWordBuffer *w1, int *s
 	if (tail && *tail) tail++;
 	w_rest = tail;
       } while (*w_rest);
-      fprintf(f_out, "%s</w>", indent_w);
+      fprintf(f_out, "%s</%s>%s</w>", indent_al, alElt, indent_w);
     }
     else {
       fputs("/>", f_out);
