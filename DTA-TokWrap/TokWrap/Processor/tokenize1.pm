@@ -230,11 +230,12 @@ sub tokenize1 {
     ## fix: pre-numeric abbreviations (e.g. biblical books), part 1: collect suspects
     $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: scan");
     my %nabbrs   = (map {($_=>undef)}
-		    qw( Bar Dan Deut Esra Est Ex Galater Man Hos Ijob Job Jak Col Kor Cor Mal Ri Sir ),
+		    qw( Bar Dan Deut Esra Eſra Est Eſt Ex Galater Man Hos Hoſ Ijob Job Jak Col Kor Cor Mal Ri Sir ),
 		    #qw( Mark ), ##-- heuristics too dodgy
 		    qw( Art Bon Kim ),
 		    ##-- more bible books
-		    qw( Es Gall Reg Hose Rom ),
+		    qw( Gall Reg Hos Hoſ Hose Hoſe Rom Reg ),
+		    qw( Johan Johann Malach Eze Esa Eſa Sap ),
 		   );
     my ($offd,$lend);
     my $nabbr_max_distance = 2; ##-- max number of text bytes between end(w1) and start(w2), including EOS-dot
