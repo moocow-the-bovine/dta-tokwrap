@@ -29,6 +29,7 @@ char *file_basename(char *dst, const char *src, const char *suff, int srclen, in
   for (base0=base1; *base0 != '/' && *base0 != '\\'; base0--) {
     if (base0==src) break;
   }
+  if (base0<base1) ++base0;
 
   //-- maybe allocate dst
   if (dst==NULL) {
@@ -176,6 +177,8 @@ cxData *cxDataLoad(cxData *cxd, FILE *f)
     //-- bxp
     cx.bxp = NULL;
 #endif
+
+    cx.claimed = 0;
 
     cxDataPush(cxd, &cx);
   }

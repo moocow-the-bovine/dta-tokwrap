@@ -11,8 +11,8 @@
 // WARN_ON_OVERLAP : whether to output warnings when token overlap is detected
 //  + whether or not this is defined, an "overlap" attribute will be written
 //    for overlapping tokens if 'olAttr' is non-NULL (see xml structure constants, below)
-//#define WARN_ON_OVERLAP 1
-#undef WARN_ON_OVERLAP
+#define WARN_ON_OVERLAP 1
+//#undef WARN_ON_OVERLAP
 
 // COMPRESS_CIDS
 //  + if defined, c id lists will be compressed into '${CID_FIRST}+${LEN}' lists
@@ -132,7 +132,7 @@ static void tt_next_word(FILE *f_out, ttWordBuffer *w0, ttWordBuffer *w1, int *s
     int w1i;
 
 #if WARN_ON_OVERLAP
-    fprintf(stderr, "%s: Warning: file `%s' line %u: token-overlap between \"%s\" and \"%s\" detected, c-id=\"%s\"\n",
+    fprintf(stderr, "%s: WARNING: file `%s' line %u: token-overlap between \"%s\" and \"%s\" detected, c-id=\"%s\"\n",
 	    prog, tt_filename, tt_linenum, w0->w_text, w1->w_text, cx->id);
 #endif
 
@@ -358,7 +358,7 @@ static void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *fi
     memcpy(w1.w_cx, txtb2cx.data+w1.w_off, w1.w_len*sizeof(cxRecord*));
     w1.w_cx[w1.w_len] = NULL;
 
-    //-- word: delegate output to boundary-condition checker
+    //-- word: dump output
     tt_next_word(f_out, &w0, &w1, &s_open);
   }
   //-- output final word (in 'w0' buffer)
@@ -391,7 +391,7 @@ int main(int argc, char **argv)
   int i;
 
   //-- initialize: globals
-  prog = argv[0];
+  prog = file_basename(NULL,argv[0],"",-1,0);
 
   //-- command-line: usage
   if (argc <= 3) {

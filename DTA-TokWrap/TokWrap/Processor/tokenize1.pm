@@ -32,12 +32,16 @@ our @ISA = qw(DTA::TokWrap::Processor::tokenize);
 ## %defaults = CLASS->defaults()
 ##  + static class-dependent defaults
 ##  + %args, %defaults, %$tp:
-##    fixtok => $bool,                     ##-- if true (default), attempt to fix common tomata2-tokenizer errors
+##    (
+##     fixtok => $bool,		##-- if true (default), attempt to fix common tomata2-tokenizer errors
+##     fixInfoLevel => $level,	##-- log-level for verbose autofix messages (default='none':off)
+##    )
 sub defaults {
   my $that = shift;
   return (
 	  $that->DTA::TokWrap::Processor::defaults(),
 	  fixtok => 1,
+	  fixInfoLevel => 'none',
 	 );
 }
 
@@ -103,25 +107,37 @@ sub tokenize1 {
     ##------------------------------------
     ## fix: overlap
     $tp->vlog($tp->{traceLevel},"autofix: token overlap");
-    $nsusp = $nfixed = $off = 0;
+    $nsusp = $nfixed = $off = $j = 0;
     my $ndel = 0;
     foreach (@lines) {
       if (/^([^\t]*)\t([0-9]+) ([0-9]+)(.*)$/) {
 	($s_txt,$s_off,$s_len,$s_rest) = ($1,$2,$3,$4);
 	if ($s_off < $off) {
-	  ($ol_off,$ol_len) = ($s_off,$s_len);
-	  $s_len = $ol_off+$ol_len - $off;
-	  $s_off = $off;
-	  #print STDERR "  - OVERLAP[off=$off]: ($s_txt \@$ol_off.$ol_len :$s_rest) --> ", ($s_len <= 0 ? 'DELETE' : "TRUNCATE"), "\n";
-	  if ($s_len <= 0) {
-	    ++$ndel;
-	    $_ = undef;
-	  } else {
-	    ++$nfixed;
-	    $_ = "$s_txt\t$s_off $s_len$s_rest";
+	  ##-- v2: throw out all overlapping tokens
+	  $tp->vlog($tp->{fixInfoLevel},
+		    "\n+ SUSPECT: OVERLAP[off=$off]: ($s_txt \@$s_off.$s_len :$s_rest) --> DELETE");
+	  $_ = $lines[$j] = undef;
+
+	  if (0) {
+	    ##-- v1: attempt to retain as much as we can
+	    ##   + fails for e.g http://kaskade.dwds.de/dtaq/book/view/17014?p=754 (//pb/@n="[735]")
+	    ##   + may truncate in the middle of a UTF-8 code, breaking the whole document
+	    ($ol_off,$ol_len) = ($s_off,$s_len);
+	    $s_len = $ol_off+$ol_len - $off;
+	    $s_off = $off;
+	    $tp->vlog($tp->{fixInfoLevel},
+		      "\n+ SUSPECT: OVERLAP[off=$off]: ($s_txt \@$ol_off.$ol_len :$s_rest) --> ", ($s_len <= 0 ? 'DELETE' : "TRUNCATE"));
+	    if (1 || $s_len <= 0) {
+	      ++$ndel;
+	      $_ = undef;
+	    } else {
+	      ++$nfixed;
+	      $_ = "$s_txt\t$s_off $s_len$s_rest";
+	    }
 	  }
+	  $off = $s_off+$s_len;
+	  $j   = $_;
 	}
-	$off = $s_off+$s_len;
       }
     }
     @lines = grep {defined($_)} @lines if ($ndel);
@@ -244,8 +260,9 @@ sub tokenize1 {
 		  );
 	}
 
-	##-- DEBUG
-	#print STDERR "  - SUSPECT: ($txt1 \@$off1.$len1 :$rest1)  +  ($txt2 \@$off2.$len2 :$rest2)  -->  ".(@repl ? join(" + ",map {"($_)"} @repl)."\n" : "IGNORE\n");
+	$tp->vlog($tp->{fixInfoLevel},
+		  "\n+ SUSPECT: LINEBREAK: ($txt1 \@$off1.$len1 :$rest1) + ($txt2 \@$off2.$len2 :$rest2)  -->  ",
+		  (@repl ? join(" + ",map {"($_)"} @repl)."\n" : "IGNORE\n"));
 	if (@repl) {
 	  splice(@lines, $i, (1+$j-$i), @repl);
 	  ++$nfixed;
@@ -310,8 +327,9 @@ sub tokenize1 {
 			 ));
 	}
 
-	##-- DEBUG
-	#print STDERR "  - NABBR: ($txt1 \@$off1.$len1 :$rest1) + . + EOS +  ($txt2 \@$off2.$len2 :$rest2)  -->  ".(@repl ? join(" + ", map {"($_)"} @repl) : "IGNORE")."\n" if (@repl);
+	$tp->vlog($tp->{fixInfoLevel},
+		  "\n+ SUSPECT: NABBR: ($txt1 \@$off1.$len1 :$rest1) + . + EOS + ($txt2 \@$off2.$len2 :$rest2)  -->  ",
+		  (@repl ? join(" + ", map {"($_)"} @repl) : "IGNORE")) if (@repl);
       }
     }
     $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: $nsusp suspect(s), $nfixed fix(es)");
