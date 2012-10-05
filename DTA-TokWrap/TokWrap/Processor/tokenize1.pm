@@ -112,7 +112,7 @@ sub tokenize1 {
 	  ($ol_off,$ol_len) = ($s_off,$s_len);
 	  $s_len = $ol_off+$ol_len - $off;
 	  $s_off = $off;
-	  print STDERR "  - OVERLAP[off=$off]: ($s_txt \@$ol_off.$ol_len :$s_rest) --> ", ($s_len <= 0 ? 'DELETE' : "TRUNCATE"), "\n";
+	  #print STDERR "  - OVERLAP[off=$off]: ($s_txt \@$ol_off.$ol_len :$s_rest) --> ", ($s_len <= 0 ? 'DELETE' : "TRUNCATE"), "\n";
 	  if ($s_len <= 0) {
 	    ++$ndel;
 	    $_ = undef;
