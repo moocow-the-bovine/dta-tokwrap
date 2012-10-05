@@ -18,6 +18,7 @@ our $prog = basename($0);
 our $DEBUG = 0;
 
 ##-- vars: I/O
+our $want_cids  = 0;		  ##-- bool: assign id attributes for auto-generated //c elements?
 our $idns       = ''; #'xmlns:';  ##-- 'xml:' namespace prefix+colon for output id attributes (empty for none)
 our $rmns	= 1;	  	  ##-- true causes default namespaces (xmlns="...") to be encoded as XMLNS="..."
 our $outfile    = "-";            ##-- default: stdout
@@ -49,8 +50,9 @@ GetOptions(##-- General
 	   'help|h' => \$help,
 
 	   ##-- I/O
-	   'id-namespace|idns|id|xmlns=s' => sub { $xmlns=$_[1] ? "xml:" : ''; }, ##-- bad name 'xmlns'
+	   'id-namespace|idns|xmlns=s' => sub { $xmlns=$_[1] ? "xml:" : ''; }, ##-- bad name 'xmlns'
 	   'no-idns|noxmlns' => sub { $xmlns=''; },
+	   'cids|ids|cid|id!' => \$want_cids,
 
 	   'rm-default-namespaces|rm-default-ns|rm-ns|rmns!' => \$rmns,
 	   'keep-default-namespaces|keep-defaultns|keep-ns|keepns|ns!' => sub {$rmns=!$_[1]},
@@ -111,7 +113,7 @@ sub cb_char {
     } else {
       $c_rest = '';
     }
-    $outfh->print("<c ${idns}id=\"c", ++$cnum, "\">", encode_utf8($c_char), "</c>", $c_rest);
+    $outfh->print("<c", ($want_cids ? (" ${idns}id=\"c", ++$cnum, "\"") : qw()), ">", encode_utf8($c_char), "</c>", $c_rest);
   }
 }
 
@@ -124,7 +126,7 @@ sub cb_start {
     }
     ++$c_depth;
     $cs = $_[0]->original_string();
-    if ($cs !~ m/\s(?:xml\:)?id=\"[^\"]+\"/io) {
+    if ($want_cids && $cs !~ m/\s(?:xml\:)?id=\"[^\"]+\"/io) {
       ##-- pre-existing <c> WITHOUT xml:id attribute: assign one
       ++$cnum;
       $cs =~ s|(/?>)$| ${idns}id="c$cnum"$1|o;
@@ -237,7 +239,7 @@ foreach $infile (@ARGV) {
   }
   debugmsg("initialized \$cnum=$cnum") if ($DEBUG);
 
-  ##-- assign new //c/@ids
+  ##-- assign new //c elements (and maybe //c/@id attributes)
   $xp->parse($buf);
 
   ##-- profile
@@ -284,6 +286,7 @@ dtatw-add-c.perl - add <c> elements to DTA XML documents
 
  I/O Options:
   -output FILE           # specify output file (default='-' (STDOUT))
+   -cids  , -nocids	 # do/don't assign ids for auto-generated <c> elements (default=-nocids)
   -idns=NAMESPACE        # namespace prefix for id attributes, e.g. "xml:" (default=none)
   -rmns   , -keepns      # do/don't encode default namespaces as for dtatw-nsdefault-encode.perl (default=do)
   -guess-min PERCENT     # in -guess mode, minimum percentage of data in <c> elements which is 'enough' (default=50)

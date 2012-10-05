@@ -43,12 +43,12 @@ our $do_bbox = 1;
 our $do_unicruft = 1;
 our $do_wsep = 1;
 
-our $do_keep_c  = 1;
+#our $do_keep_c  = 1;
 our $do_keep_b  = 1;
 our $do_keep_xb = 1;
 
-our $do_cofflen = 0;
-our $do_bofflen = 0;
+#our $do_cofflen = 0;
+#our $do_bofflen = 0;
 
 ##-- output attributes
 our $rendition_attr = 'xr';
@@ -58,10 +58,10 @@ our $page_attr      = 'pb';
 our $line_attr      = 'lb';
 our $bbox_attr      = 'bb';
 our $unicruft_attr  = 'u';
-our $coff_attr      = 'coff';
-our $clen_attr      = 'clen';
-our $boff_attr      = 'boff';
-our $blen_attr      = 'blen';
+#our $coff_attr      = 'coff';
+#our $clen_attr      = 'clen';
+#our $boff_attr      = 'boff';
+#our $blen_attr      = 'blen';
 our $wsep_attr	    = 'ws';
 our $formula_text   = ''; ##-- output text for //formula elements (undef: no change)
 
@@ -71,7 +71,7 @@ our $vl_progress = 2;
 our $verbose = $vl_progress;     ##-- print progress messages by default
 
 ##-- warnings: specific options
-our $warn_on_empty_cids = 1;     ##-- warn on empty //w/@c id-list attribute in txmlfile?
+our $warn_on_clist = 1;     	 ##-- warn on empty //w/c node-list txmlfile?
 our $warn_on_bad_page   = 1;     ##-- warn on bad //w/@pb attribute?
 our %n_warnings = qw();
 
@@ -98,9 +98,9 @@ GetOptions(##-- General
 	   'coordinates|coords|coord|c|bboxes|bbox|bb|b!' => \$do_bbox,
 	   'unicruft|cruft|u|transliterate|xlit|xl!' => \$do_unicruft,
 	   'word-separation|word-sep|wsep|sep!' => \$do_wsep,
-	   'char-offsets|c-offsets|coff|co!' => \$do_cofflen,
-	   'byte-offsets|b-offsets|boff|bo!' => \$do_bofflen,
-	   'keep-c|keepc|kc!' => \$do_keep_c,
+	   #'char-offsets|c-offsets|coff|co!' => \$do_cofflen,
+	   #'byte-offsets|b-offsets|boff|bo!' => \$do_bofflen,
+	   #'keep-c|keepc|kc!' => \$do_keep_c,
 	   'keep-b|keepb|kb!' => \$do_keep_b,
 	   'keep-xb|keepxb|kxb!' => \$do_keep_xb,
 	   'formula-text|ft=s' => \$formula_text,
@@ -151,13 +151,15 @@ sub load_txml {
 our %c_packas =
   (
    cn => 'l',
+   xo => 'l', 'xl'=>'s',
    pb => 'l',
    lb => 's',
    (map {($_=>'l')} qw(ulx uly lrx lry)),
-   (map {($_=>'Z*')} qw(elt id xr xc xp)),
+   (map {($_=>'Z*')} qw(elt xr xc xp)), #id
   );
 our @c_pkeys = (
-		'elt', 'id', 'cn',
+		'elt', #'id',
+		'cn', 'xo', 'xl',
 		($do_page ? 'pb' : qw()),
 		($do_line ? 'lb' : qw()),
 		($do_bbox ? qw(ulx uly lrx lry) : qw()),
@@ -190,15 +192,23 @@ sub c_unpack {
 ##  + each $edata on stack = {tag=>$tag, rendition=>\%rendition, context=>\%context, ...}
 ##  + global $edata: current top of stack
 ##  + $path: current xpath (without numeric positions)
-our (@stack,$edata,$xpath,$page,$line);
+our (@stack,$edata,$xpath,$page,$line,$xoff);
 
-##-- $cid maps (for //c elements not assigned to any word)
-our %cid2cn   = qw();   ##-- %cid2cn  = ($cid=>$cn, ...)
+##-- character maps (for //c elements not assigned to any word)
+our %xoff2cn  = qw();   ##-- %xoff2cn  = ($xml_offset=>$cn, ...)
 
 ##-- $c_packed = $cn2packed[$cn]
 ## + with $cdata_packed = c_pack(%cdata)
 ## + and  %cdata        = c_unpack($cdata_packed)
 our @cn2packed = qw();
+
+our (%_attrs,%_c);
+our ($facs,$rendition,$xcontext);
+our ($cid,$cn,$pn, $xoff,$xlen);
+
+our %xcontext_elts = (map {($_=>$_)}
+		      qw(text front body back head left foot end argument hi cit fw lg stage speaker formula table)
+		     );
 
 ## undef = cxml_cb_init($expat)
 sub cxml_cb_init {
@@ -208,7 +218,8 @@ sub cxml_cb_init {
   $xpath = '';
   $page  = -1;
   $line  =  1;
-  %cid2cn  = qw();
+  $cn    = 0;
+  %xoff2cn  = qw();
   @cn2packed = qw();
 }
 
@@ -217,14 +228,6 @@ sub cxml_cb_init {
 #  base_flush_segment();
 #  return \@w_segs0;
 #}
-
-our (%_attrs,%_c);
-our ($facs,$rendition,$xcontext);
-our ($cid,$cn,$pn);
-
-our %xcontext_elts = (map {($_=>$_)}
-		      qw(text front body back head left foot end argument hi cit fw lg stage speaker formula table)
-		     );
 
 ## undef = cxml_cb_start($expat, $elt,%attrs)
 sub cxml_cb_start {
@@ -244,12 +247,14 @@ sub cxml_cb_start {
   ##-- tag-dispatch
   if ($_[1] eq 'c' || $_[1] eq 'formula') {
     ##-- //c assigned to some //w: extract data
-    $cid = $_attrs{'id'} || $_attrs{'xml:id'} || '$'.uc($_[1]).':'.($_[0]->current_byte).'$';
-    $cn  = scalar(@cn2packed);
+    #$cid  = $_attrs{'id'} || $_attrs{'xml:id'} || '$'.uc($_[1]).':'.($_[0]->current_byte).'$';
+    $xlen = bytes::length($_[0]->original_string);
+    $xoff = $_[0]->current_byte() - $xlen;
     %_c = (
 	   %_attrs,
 	   elt=>$_[1],
-	   id=>$cid,
+	   #id=>$cid,
+	   xo=>$xoff, xl=>$xlen,
 	   cn=>$cn,
 	   pb=>$page,
 	   lb=>$line,
@@ -258,8 +263,9 @@ sub cxml_cb_start {
 	   ($do_xpath     ? (xp=>$xpath) : qw()),
 	  );
     $_c{$_} = -1 foreach (grep {!defined($_c{$_}) || $_c{$_} eq ''} qw(pb lb ulx uly lrx lry));
-    push(@cn2packed,c_pack(\%_c));
-    $cid2cn{$cid} = $cn;
+    $cn2packed[$cn] = c_pack(\%_c);
+    $xoff2cn{$xoff} = $cn;
+    ++$cn;
   }
   elsif ($do_xcontext && defined($xcontext=$xcontext_elts{$_[1]})) {
     ##-- structural context: element-based
@@ -328,6 +334,7 @@ sub apply_ddc_attrs {
   @wnoc  = qw();                     ##-- indices in @$wnods: //w nodes with no //c/@id list
   @wfml  = qw();                     ##-- indices in @$wnods: formula //w nodes
   $cn2wn = '';                       ##-- maps //c indices to //w indices of claiming wnod ("good" wnods only)
+  vec($cn2wn,$cn,$CN2WN_BITS)=0;     ##-- pre-allocate
   my ($wi);
   for ($wi=0; $wi <= $#$wnods; $wi++) {
     apply_word($wi);
@@ -341,7 +348,7 @@ sub apply_ddc_attrs {
     foreach $wi (@wfml) {
       ##-- get //c list
       $wnod = $wnods->[$wi];
-      @cs = grep {defined($_)} clist($wnod->getAttribute('c') || $wnod->getAttribute('cs') || '');
+      @cs = grep {defined($_)} clist($wnod->getAttribute('xb') || '');
       next if (!defined($c0=$cs[0]));
 
       ##-- get characters by surrounding line(s)
@@ -384,7 +391,8 @@ sub apply_ddc_attrs {
       $ynext = int($ynext+0.5);
 
       ##-- assign line-based bbox (if available)
-      warn("$prog: WARNING: could not guess bbox for formula <w> with id ", ($wnod->getAttribute('id')||'?'), " at $txmlfile line ", $wnod->line_number, "\n")
+      warn("$prog: WARNING: could not guess bbox for formula <w> with id ",
+	   ($wnod->getAttribute('id')||$wnod->getAttribute('xml:id')||'?'), " at $txmlfile line ", $wnod->line_number, "\n")
 	if ($verbose >= $vl_warn && ($yprev<0 && $ynext<0));
 
       $wnod->setAttribute($bbox_attr, join('|', (-1,$yprev,-1,$ynext)));
@@ -414,15 +422,16 @@ sub apply_ddc_attrs {
 }
 
 ## undef = apply_word($w_index)
-## undef = apply_word($w_index,\@cids)
-## undef = apply_word($w_index,\@cids,$bbsingle)
+## NO: undef = apply_word($w_index,\@cxbs)
+## NO: undef = apply_word($w_index,\@cxbs,$bbsingle)
 ##  + populates globals: ($wnod,$wid,$cids,@cids,$wpage,$wrend,$wcon,$wxpath,@wbboxes)
-my ($wi,$wnod,$wid,$cids,@cids,@cs,$off,$len,$wpage,$wline,$wrend,$wcon,$wxpath,$bbsingle);
+my ($wi,$wnod,$wid,$off,$len,$wpage,$wline,$wrend,$wcon,$wxpath);
+my (@cs,$xend,$c);
 my ($wcs,@wbboxes,@cbboxes,$cbbox,$wbbox,$wtxt,$utxt,$w_is_formula);
 my ($poff,$plen);
 my (@cn2wnod);
 sub apply_word {
-  ($wi,$cids,$bbsingle) = @_;
+  ($wi) = @_;
   $wnod = $wnods->[$wi];
 
   ##-- get id
@@ -438,27 +447,15 @@ sub apply_word {
     }
   }
 
-  ##-- get cids
-  $cids = $wnod->getAttribute('c') || $wnod->getAttribute('cs') || '' if (!defined($cids));
-  @cids = ref($cids) ? @$cids : cidlist($cids);
-  @cs   = map {c_unpack($_)} @cn2packed[grep {defined($_)} @cid2cn{@cids}];
-  if (!@cids && $warn_on_empty_cids && $verbose >= $vl_warn && ++$n_warnings{empty_cids}<=10) {
-    ##-- $wnod without a //c/@id list
-    ##   + this happens e.g. for 'FORMEL' inserted via DTA::TokWrap::mkbx0 'hint_replace_xpaths'
-    ##   + push these to @wnoc and try to fudge them in a second pass
-    no warnings 'uninitialized';
-    warn("$prog: WARNING: no //c/\@id list for //w#$wid at $txmlfile line ", $wnod->line_number, "\n");
-  }
-  elsif (!@cs) {
-    warn("$prog: WARNING: invalid //c/\@id list =(", join(',',@cids), ") for //w#$wid at $txmlfile line ", $wnod->line_number, "\n")
-      if ($verbose >= $vl_warn);
-  }
+  ##-- get //c elements
+  @cs = clist($wnod->getAttribute('xb')||'');
 
-  ##-- compute & assign: character offset-length split (default: off=-1, len=1)
-  if ($do_cofflen) {
-    ($off,$len) = split(/\+/,($cids||''),2);
-    $wnod->setAttribute($coff_attr, ($off||'-1'));
-    $wnod->setAttribute($clen_attr, (defined($len) && $len ne '' ? $len : 1));
+  if (!@cs && $warn_on_empty_clist && $verbose >= $vl_warn && ++$n_warnings{empty_clist}<=10) {
+    ##-- $wnod without a //c list
+    ##   + this happens e.g. for 'FORMEL' inserted via DTA::TokWrap::mkbx0 'hint_replace_xpaths'
+    ##   + such words will be pushed to @wnoc and we'll try to fudge them in a second pass
+    no warnings 'uninitialized';
+    warn("$prog: WARNING: no //c list from //w#$wid/\@xb at $txmlfile line ", $wnod->line_number, "\n");
   }
 
   ##-- compute & assign: byte offset-length split (default: off=-1, len=1)
@@ -477,10 +474,10 @@ sub apply_word {
   }
 
   ##-- detect: formula
-  $w_is_formula = (@cs && $cs[0]{elt} eq 'formula') || (@cids && $cids[0] =~ m/\$FORMULA:[0-9]+\$$/);
+  $w_is_formula = (@cs && $cs[0]{elt} eq 'formula'); #|| (@cids && $cids[0] =~ m/\$FORMULA:[0-9]+\$$/);
 
   ##-- get text
-  $wtxt = $wnod->getAttribute('t') || $wnod->getAttribute('text') || '';
+  $wtxt = $wnod->getAttribute('t'); #|| $wnod->getAttribute('text') || '';
   $wtxt = decode_utf8($wtxt) if (!utf8::is_utf8($wtxt));
 
   ##-- compute & assign: formula text (non-empty @cids only)
@@ -503,6 +500,8 @@ sub apply_word {
     }
     $wnod->setAttribute($unicruft_attr,$utxt);
   }
+
+  ##-- CONTINUE HERE
 
   ##-- compute & assign: rendition (undef -> '-')
   if ($do_rendition) {
@@ -628,9 +627,9 @@ sub lstddev {
 }
 
 
-## @cids = clist($cids_str)
+## @cids = cids($cids_str)
 ##  + expand compressed //c/@id lists, also accepts old-style space-separated id-lists
-sub cidlist {
+sub cidlist_old {
   map {
     (m/^(.*)c([0-9]+)\+([0-9]+)$/
      ? (map {$1.'c'.$_} ($2..($2+$3-1)))
@@ -642,7 +641,7 @@ sub cidlist {
 ## @cs = clist(\@cids)
 ##  + expand compressed //c/@id lists and unpack to hash
 ##  + also accepts old-style space-separated id-lists
-sub clist {
+sub clist_old {
   return
     (
      map {c_unpack($_)}
@@ -657,6 +656,27 @@ sub clist {
 		}
 	       ]
     );
+}
+
+## @clist = xb2clist($xb)
+my (@xb2c_clist,$xb2c_off,$xb2c_len,$xb2c_end,$xb2c_cn,$xb2c_c);
+sub xb2clist {
+  @xb2c_clist = qw();
+  foreach (split(' ',$_[0])) {
+    ($xb2c_off,$xb2c_len) = split(/\+/,$_,2);
+    $xb2c_end = $xoff+$xlen;
+    if (!defined($xb2c_cn=$xoff2cn{$xb2c_off})) {
+      warn("$prog: WARNING: no //c element at offset $xb2c_off\n");
+      next;
+    }
+    while (1) {
+      next if (!defined($xb2c_c=$cn2packed[$xb2c_cn++]));
+      $xb2c_c = c_unpack($xb2c_c);
+      last if ($xb2c_c->{xo} >= $xb2c_xend);
+      push(@xb2c_clist,$xb2c_c);
+    }
+  }
+  return @xb2c_clist;
 }
 
 ## @clist = clist_byline($page,$line,$cn0)
@@ -793,10 +813,10 @@ dtatw-get-ddc-attrs.perl - get DDC-relevant attributes from DTA::TokWrap files
   -bbox   , -nobbox      # do/don't extract //w/@bb (bbox; default=do)
   -xlit   , -noxlit      # do/don't extract //w/@u  (unicruft transliteration; default=do)
   -wsep   , -nowsep	 # do/don't extract //w/@ws (boolean space-separation; default=do)
-  -coff   , -nocoff      # do/don't extract //w/(@coff|@clen) from //w/@c or //w/@cs (default=don't)
-  -boff   , -noboff      # do/don't extract //w/(@boff|@blen) from //w/@b (default=don't)
   -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in T_XML_FILE file (default=don't)
-  -keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=keep)
+  #-coff   , -nocoff      # do/don't extract //w/(@coff|@clen) from //w/@c or //w/@cs (default=don't)
+  #-boff   , -noboff      # do/don't extract //w/(@boff|@blen) from //w/@b (default=don't)
+  #-keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=keep)
   -keep-b , -nokeep-b    # do/don't keep existing //w/@b attributes (default=keep)
   -keep-xb, -nokeep-xb   # do/don't keep existing //w/@xb attributes (default=keep)
   -formula-text TEXT     # output text for //formula elements (default='' (no change))

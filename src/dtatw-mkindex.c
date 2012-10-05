@@ -337,7 +337,7 @@ int main(int argc, char **argv)
   ByteOffset n_xbytes = 0;
 
   //-- initialize: globals
-  prog = argv[0];
+  prog = file_basename(NULL,argv[0],"",-1,0);
 
   //-- sanity checks & defaults
   assert(strlen(CX_NIL_ID) < CIDBUFSIZE);

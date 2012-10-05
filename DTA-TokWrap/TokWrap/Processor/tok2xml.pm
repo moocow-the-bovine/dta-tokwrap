@@ -32,6 +32,7 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##    (
 ##    txmlsort => $bool,	     ##-- if true (default), sort output .t.xml data as close to input document-order as sentence boundaries will allow
 ##    t2x => $path_to_dtatw_tok2xml, ##-- default: search
+##    b2xb => $path_to_dtatw_b2xb,   ##-- default: search; 'off' to disable
 ##    inplace => $bool,              ##-- prefer in-place programs for search?
 ##    )
 sub defaults {
@@ -45,6 +46,7 @@ sub defaults {
 
 	  ##-- programs
 	  t2x => undef,
+	  b2xb => undef,
 	  inplace => 1,
 	 );
 }
@@ -54,9 +56,16 @@ sub defaults {
 sub init {
   my $t2x = shift;
 
-  ##-- search for mkindex program
+  ##-- search for program(s)
   if (!defined($t2x->{t2x})) {
     $t2x->{t2x} = path_prog('dtatw-tok2xml',
+			    prepend=>($t2x->{inplace} ? ['.','../src'] : undef),
+			    warnsub=>sub {$t2x->logconfess(@_)},
+			   );
+  }
+
+  if (!defined($t2x->{b2xb})) {
+    $t2x->{b2xb} = path_prog('dtatw-b2xb',
 			    prepend=>($t2x->{inplace} ? ['.','../src'] : undef),
 			    warnsub=>sub {$t2x->logconfess(@_)},
 			   );
@@ -98,10 +107,17 @@ sub tok2xml {
   file_try_open($doc->{bxfile}) || $t2x->logconfess("tok2xml(): could not open .bx file '$doc->{bxfile}': $!");
   file_try_open($doc->{tokfile1}) || $t2x->logconfess("tok2xml(): could not open .t1 file '$doc->{tokfile1}': $!");
 
-  ##-- run client program
-  $t2x->vlog($t2x->{traceLevel},"command: $t2x->{t2x}");
-  my $cmdfh = opencmd("'$t2x->{t2x}' '$doc->{tokfile1}' '$doc->{cxfile}' '$doc->{bxfile}' - '$doc->{xmlbase}' |")
-    or $t2x->logconfess("tok2xml(): open failed for pipe from '$t2x->{t2x}': $!");
+  ##-- run client program(s)
+  my ($cmd);
+  if ($t2x->{b2xb} ne 'off') {
+    $t2x->vlog($t2x->{traceLevel},"command: $t2x->{b2xb} | $t2x->{t2x}");
+    $cmd = "'$t2x->{b2xb}' '$doc->{tokfile1}' '$doc->{cxfile}' '$doc->{bxfile}' - | '$t2x->{t2x}' - - '$doc->{xmlbase}' |";
+  } else {
+    $t2x->vlog($t2x->{traceLevel},"command: $t2x->{t2x}");
+    $cmd = "'$t2x->{t2x}' '$doc->{tokfile1}' - '$doc->{xmlbase}' |";
+  }
+  my $cmdfh = opencmd("$cmd")
+    or $t2x->logconfess("tok2xml(): open failed for pipe '$t2x->{b2xb}'|'$t2x->{t2x}'|: $!");
   $doc->{xtokdata} = undef;
   slurp_fh($cmdfh,\$doc->{xtokdata});
   $cmdfh->close();

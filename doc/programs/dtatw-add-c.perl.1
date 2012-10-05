@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "DTATW-ADD-C.PERL 1"
-.TH DTATW-ADD-C.PERL 1 "2012-10-02" "dta-tokwrap v0.37" "DTA Tokenization Utilities"
+.TH DTATW-ADD-C.PERL 1 "2012-10-05" "dta-tokwrap v0.38" "DTA Tokenization Utilities"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -141,6 +141,7 @@ dtatw\-add\-c.perl \- add <c> elements to DTA XML documents
 \&
 \& I/O Options:
 \&  \-output FILE           # specify output file (default=\*(Aq\-\*(Aq (STDOUT))
+\&   \-cids  , \-nocids      # do/don\*(Aqt assign ids for auto\-generated <c> elements (default=\-nocids)
 \&  \-idns=NAMESPACE        # namespace prefix for id attributes, e.g. "xml:" (default=none)
 \&  \-rmns   , \-keepns      # do/don\*(Aqt encode default namespaces as for dtatw\-nsdefault\-encode.perl (default=do)
 \&  \-guess\-min PERCENT     # in \-guess mode, minimum percentage of data in <c> elements which is \*(Aqenough\*(Aq (default=50)

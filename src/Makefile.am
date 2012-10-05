@@ -14,12 +14,13 @@ bin_PROGRAMS = \
 	dtatw-rm-namespaces \
 	dtatw-tokenize-dummy \
 	dtatw-b2xb \
-	dtatw-tok2xml \
+	dtatw-tok2xml
+
+EXTRA_PROGRAMS = dtatw-cxlexer \
+	dtatw-txml2master \
 	dtatw-txml2wxml \
 	dtatw-txml2sxml \
 	dtatw-txml2axml
-
-EXTRA_PROGRAMS = dtatw-cxlexer dtatw-txml2master
 
 common_deps = dtatwCommon.c dtatwCommon.h config.h dtatwConfig.h dtatwConfigAuto.h dtatwConfigNoAuto.h
 expat_deps = dtatwExpat.c dtatwExpat.h
@@ -37,6 +38,7 @@ dtatw_rm_namespaces_SOURCES = dtatw-rm-namespaces.c $(common_deps) $(expat_deps)
 dtatw_rm_namespaces_LDADD = $(EXPAT_LIBS)
 
 dtatw_tok2xml_SOURCES = dtatw-tok2xml.c $(common_deps)
+
 dtatw_b2xb_SOURCES = dtatw-b2xb.c $(common_deps)
 
 dtatw_txml2wxml_SOURCES = dtatw-txml2wxml.c $(common_deps) $(expat_deps)

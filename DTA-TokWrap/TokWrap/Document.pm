@@ -1062,7 +1062,7 @@ sub saveXtokFile {
   ##-- get filehandle & print
   my $fh = ref($file) ? $file : IO::File->new(">$file");
   $fh->binmode() if (!ref($file));
-  my $format = (exists($opts{format}) ? $opts{format} : $doc->{format})||0;
+  my $format = (exists($opts{format}) ? $opts{format} : 0); #$doc->{format})||0;
   if (!$format) {
     $fh->print( $$xtdatar );
   } else {

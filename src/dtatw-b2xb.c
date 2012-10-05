@@ -57,8 +57,8 @@ static inline void cx_claim(cxRecord *cx)
 //--------------------------------------------------------------
 /* bool = cx_id_ok(cx)
  *  + returns true iff cx is a "real" character record with a valid id, etc.
- *  + ignores ids: NULL, "", CX_NIL_ID
- *  + does NOT ignore: CX_LB_ID, CX_PB_ID, CX_FORMULA_ID
+ *  + bad ids: NULL, ""
+ *  + NOT bad ids: CX_NIL_ID, CX_LB_ID, CX_PB_ID, CX_FORMULA_ID
  *  + see dtatwCommon.h for id constants
  */
 static inline int cx_id_ok(const cxRecord *cx)
@@ -66,7 +66,7 @@ static inline int cx_id_ok(const cxRecord *cx)
   return (cx
 	  && cx->id
 	  && cx->id[0]
-	  && strcmp(cx->id,CX_NIL_ID) !=0
+	  //&& strcmp(cx->id,CX_NIL_ID) !=0
 	  //&& strncmp(cx->id,CX_FORMULA_PREFIX,strlen(CX_FORMULA_PREFIX)) !=0
 	  //&& strcmp(cx->id,CX_LB_ID) !=0
 	  //&& strcmp(cx->id,CX_PB_ID) !=0
@@ -170,8 +170,12 @@ static void tt_dump_word(FILE *f_out, ttWordBuffer *w)
   //-- dump: text
   fputs(w->w_text, f_out);
 
+  //-- dump: text bytes
+  fprintf(f_out, "\t%lu %lu", w->w_off, w->w_len);
+
   //-- dump: xml bytes
-  fprintf(f_out, "\t[xb] %s", w_xmlpos);
+  fputc('\t', f_out);
+  fputs(w_xmlpos, f_out);
 
   //-- dump: rest
   if (w->w_rest[0]) {
