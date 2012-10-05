@@ -35,6 +35,7 @@ our ($xp); ##-- underlying XML::Parser object
 our $cnum = 0;           ##-- $cnum: global index of <c> element (number of elts read so far)
 our $text_depth = 0;     ##-- number of open <text> elements
 our $c_depth = 0;        ##-- number of open <c> elements (should never be >1)
+our $c_is_space = 0;	 ##-- whether current <c> is a pure space (requires text node for dtatw-rm-c.perl consistency)
 
 our $guess_thresh = undef;   ##-- minimum percent of total input data bytes occurring in //c elements
                              ##   in order to return input document as-is (0: always process)
@@ -83,12 +84,18 @@ sub cb_init {
   #$cnum = 0;
   $text_depth = 0;
   $c_depth = 0;
+  $c_is_space = 0;
 }
 
 ## undef = cb_char($expat,$string)
-our ($c_block,$c_char,$c_rest);
+our ($c_block,$c_char,$c_rest, $cs);
 sub cb_char {
-  if ($text_depth <= 0 || $c_depth > 0) {
+  if ($c_depth > 0) {
+    $c_is_space = ($_[1] eq ' ') if ($c_depth>0);
+    $outfh->print($_[0]->original_string());
+    return;
+  }
+  elsif ($text_depth <= 0) {
     $outfh->print($_[0]->original_string());
     return;
   }
@@ -109,7 +116,6 @@ sub cb_char {
 }
 
 ## undef = cb_start($expat, $elt,%attrs)
-our ($cs);
 sub cb_start {
   if ($_[1] eq 'c') {
     ##-- pre-existing <c>: respect it
@@ -135,8 +141,15 @@ sub cb_start {
 
 ## undef = cb_end($expat, $elt)
 sub cb_end {
-  if ($_[1] eq 'c') { --$c_depth; }
-  elsif ($_[1] eq 'text') { --$text_depth; }
+  if ($_[1] eq 'c') {
+    --$c_depth;
+    $outfh->print($_[0]->original_string(), ($c_is_space ? ' ' : qw()));
+    $c_is_space = 0;
+    return;
+  }
+  elsif ($_[1] eq 'text') {
+    --$text_depth;
+  }
   $outfh->print($_[0]->original_string);
 }
 
@@ -208,6 +221,7 @@ foreach $infile (@ARGV) {
     if ($cpct >= $guess_thresh) {
       ##-- enough <c>s already: just dump the buffer
       debugmsg(sprintf("found %.1f%% //c data >= threshhold=%s%% : dumping as-is\n", $cpct, $guess_thresh)) if ($DEBUG);
+      $buf =~ s{(<c\b[^\>]*> </c>)(\S)}{$1 $2}g;  ##-- insert whitespace text nodes for dtatw-rm-c.perl consistency
       $outfh->print($buf);
       $nxbytes += length($buf);
       $nchrs   += $nc;
