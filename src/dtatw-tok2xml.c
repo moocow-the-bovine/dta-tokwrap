@@ -82,9 +82,12 @@ static void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *fi
     //-- check for comments
     if (linebuf[0]=='%' && linebuf[1]=='%') {
       if (strncmp(linebuf,"%% base=",8)!=0) { //-- ... unless it's just an xml:base declaration
+	/*
 	fputs("\n<!--", f_out);
 	put_escaped_str(f_out, linebuf+2, -1);
-	fputs("-->", f_out);
+	fputs(" -->", f_out);
+	*/
+	fprintf(f_out, "\n<!--%s -->", linebuf+2);
       }
       continue;
     }
@@ -101,7 +104,7 @@ static void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *fi
     //-- word: inital parse into strings (w_text, w_tloc, w_xloc, w_rest)
     w_text = linebuf;
     w_tloc = next_tab_z(w_text)+1;
-    w_xloc = next_tab_z(w_tloc)+1;
+    w_xloc = next_char_z(w_tloc,'~')+1;
     w_rest = next_tab_z(w_xloc)+1;
 
     //-- output: BOS

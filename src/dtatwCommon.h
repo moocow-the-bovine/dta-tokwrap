@@ -46,6 +46,29 @@ extern char *CX_FORMULA_TEXT; //-- default: " FORMULA "
 extern char *xmlid_name; 
 
 /*======================================================================
+ * utf8 stuff
+ */
+
+/** \brief typedef for unicode codepoints */
+typedef unsigned int ucs4;
+
+/** \brief useful alias */
+#ifndef uint
+#define uint unsigned int
+#endif
+
+/** \brief useful alias */
+#ifndef uchar
+# define uchar unsigned char
+#endif
+
+/** \brief utf8.h wants this */
+#ifndef u_int32_t
+# define u_int32_t ucs4
+#endif
+
+
+/*======================================================================
  * Debug
  */
 
@@ -172,6 +195,17 @@ inline static char *next_tab_z(char *s)
   return s;
 }
 
+//--------------------------------------------------------------
+// next_char_z()
+//  + returns char* to position of next character c or '\0' in s
+//  + sets the matching character to '\0', so returned string always looks like ""
+inline static char *next_char_z(char *s, char c)
+{
+  for (; *s && *s != c; s++) ;
+  *s = '\0';
+  return s;
+}
+
 /*======================================================================
  * Utils: slurp
  */
@@ -194,13 +228,10 @@ size_t file_slurp(FILE *f, char **bufp, size_t buflen);
  */
 
 // CX_HAVE_PB : whether to parse 'pb' field in cxRecord
-#define CX_HAVE_PB 1
+//#define CX_HAVE_PB 1
 
 // CX_WANT_TEXT : whether to include (and parse) 'text' field in cxRecord
 #define CX_WANT_TEXT 1
-
-// CX_WANT_BXP : whether to include .bx block-pointers in cxRecord struct
-#define CX_WANT_BXP 1
 
 // cxRecord : struct for character-index records as loaded from .cx file
 typedef struct {
@@ -215,9 +246,7 @@ typedef struct {
 #ifdef CX_WANT_TEXT
   char      *text;      //-- output text (un-escaped)
 #endif
-#ifdef CX_WANT_BXP
   struct bxRecord_t *bxp; //-- pointer to .bx-record (block) containing this <c>, if available
-#endif
   unsigned char claimed;	//-- claimed (0:unclaimed, 1: claimed by current word, >1: claimed by other word)
 } cxRecord;
 

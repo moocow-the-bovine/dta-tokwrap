@@ -173,11 +173,8 @@ cxData *cxDataLoad(cxData *cxd, FILE *f)
     cx.text = cx_text_string(s0, s1-s0);
 #endif
 
-#ifdef CX_WANT_BXP
     //-- bxp
     cx.bxp = NULL;
-#endif
-
     cx.claimed = 0;
 
     cxDataPush(cxd, &cx);
@@ -371,7 +368,7 @@ Offset2CxIndex  *tx2cxIndex(Offset2CxIndex *txo2cx, cxData *cxd)
 //--------------------------------------------------------------
 /* txt2cxIndex()
  *  + allocates & populates txtb2cx lookup vector: cxRecord *cx = txtb2cx[txt_byte_index]
- *  + also sets cx->bxp to point to block from bxd, CX_WANT_BXP is defined
+ *  + also sets cx->bxp to point to block from bxd
  *  + requires:
  *    - populated bxdata[] vector (see loadBxFile())
  *    - populated txb2ci[] vector (see init_txb2ci())
@@ -413,9 +410,7 @@ Offset2CxIndex *txt2cxIndex(Offset2CxIndex *txto2cx, bxData *bxd, Offset2CxIndex
 	//-- (?) map special characters (e.g. <lb/>) to NULL here?
 	//if (cx->id[0]=='$') { ... }
 
-#ifdef CX_WANT_BXP
 	if (cx != NULL) cx->bxp = bx; //-- cache block pointer for cx
-#endif
       }
     }
     //-- hints and other pseudo-text with NO cx records are mapped to NULL (via memset(), above)
@@ -464,9 +459,7 @@ bxRecord **cx2bxIndex(cxData *cxd, bxData *bxd, Offset2CxIndex *tx2cx)
 int cx_is_adjacent(const cxRecord *cx1, const cxRecord *cx2) {
   if (!cx1 || !cx2) return 0;				//-- NULL records block adjacency
   if (cx1->xoff+cx1->xlen == cx2->xoff) return 1;	//-- immediate XML adjaceny at byte-level
-#ifdef CX_WANT_BXP
   if (cx1->bxp==cx2->bxp && cx2==(cx1+1)) return 1;	//-- immediate adjacency in .cx-file within a single block from .bx-file
-#endif
   return 0;
 }
 

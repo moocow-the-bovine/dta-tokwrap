@@ -151,13 +151,13 @@ static void tt_dump_word(FILE *f_out, ttWordBuffer *w)
       continue;
     } else if (icx->claimed <= 1) {
       //-- append: unclaimed initial character
-      xmlpos += sprintf(xmlpos, "%lu+%lu ", icx->xoff, xmlend - icx->xoff);
+      xmlpos += sprintf(xmlpos, " %lu+%lu", icx->xoff, xmlend - icx->xoff);
     } else if (icx->claimed > 1) {
       //-- append: claimed character
-      xmlpos += sprintf(xmlpos, "%lu+%lu ", icx->xoff, 0);
+      xmlpos += sprintf(xmlpos, " %lu+%lu", icx->xoff, 0);
     }
   }
-  if (xmlpos > w_xmlpos) *(--xmlpos) = '\0'; //-- truncate xmlpos
+  if (w_xmlpos) w_xmlpos[0] = '~';
 
   //-- claim all characters
   for (i=0; i < w->w_len; ++i) {
@@ -170,12 +170,8 @@ static void tt_dump_word(FILE *f_out, ttWordBuffer *w)
   //-- dump: text
   fputs(w->w_text, f_out);
 
-  //-- dump: text bytes
-  fprintf(f_out, "\t%lu %lu", w->w_off, w->w_len);
-
-  //-- dump: xml bytes
-  fputc('\t', f_out);
-  fputs(w_xmlpos, f_out);
+  //-- dump: byte offsets: "TOFF TLEN @ XOFF1+XLEN1 XOFF2+XLEN2 ... XOFFn+XLENn"
+  fprintf(f_out, "\t%lu %lu%s", w->w_off, w->w_len, w_xmlpos);
 
   //-- dump: rest
   if (w->w_rest[0]) {
