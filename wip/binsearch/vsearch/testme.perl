@@ -19,8 +19,15 @@ sub makevec {
   return $vec;
 }
 
+## \@l = vec2list($vec,$nbits)
+sub vec2list {
+  use bytes;
+  my ($vec,$nbits) = @_;
+  return [map {vec($vec,$_,$nbits)} (0..(length($vec)*8/$nbits-1))];
+}
+
 ##--------------------------------------------------------------
-## test: vindex
+## test: vget
 
 sub checkvec {
   use bytes;
@@ -31,7 +38,7 @@ sub checkvec {
   my ($i,$vval,$xval);
   foreach $i (0..(length($v) * (8.0/$nbits) - 1)) {
     $vval = vec($v,$i,$nbits);
-    $xval = vindex($v,$i,$nbits);
+    $xval = vget($v,$i,$nbits);
     print "$label\[$i]: ", ($vval==$xval ? "ok ($vval)" : "NOT ok (v:$vval != x:$xval)"), "\n" if ($verbose);
     $ok &&= ($vval==$xval);
   }
@@ -39,7 +46,7 @@ sub checkvec {
   return $ok;
 }
 
-sub test_vindex {
+sub test_vget {
   my $v1 = makevec(1, [qw(0 1 1 0 1 1 0 1)]);
   my $v2 = makevec(2, [qw(0 1 2 3 3 2 1 0)]);
   my $v4 = makevec(4, [qw(0 1 2 4 8 15)]);
@@ -63,16 +70,17 @@ sub test_vindex {
     print "random(nbits=$nbits,nelem=$nelem): ", ($ok ? "ok" : "NOT ok"), "\n";
   }
 }
-#test_vindex();
+#test_vget();
 
 ##--------------------------------------------------------------
 ## test: vset
 
 sub check_set {
-  my ($nbits,$l,$i,$val) = @_;
+  my ($nbits,$l,$i,$val, $verbose) = @_;
   my $label = "checkset(nbits=$nbits,i=$i,val=$val)";
+  $verbose  = 1 if (!defined($verbose));
 
-  my $v0 = makevec($nbits,$l);
+  my $v0 = ref($l) ? makevec($nbits,$l) : $l;
   my $vv = $v0;
   my $vx = $v0;
 
@@ -82,23 +90,45 @@ sub check_set {
   my $vgot = vec($vv,$i,$nbits);
   my $xgot = vec($vx,$i,$nbits);
   my $rc  = ($vgot==$xgot);
-  print "$label: ", ($rc ? "ok ($vgot)" : "NOT ok (v:$vgot != x:$xgot)"), "\n";
+  if ($verbose || !$rc) {
+    print "$label: ", ($rc ? "ok ($vgot)" : "NOT ok (v:$vgot != x:$xgot)"), "\n";
+  }
+  return $rc;
 }
 
 sub test_vset {
   ##-- set some stuff
   check_set(1,[qw(0 1 1 0 1 1 0 1)],3=>1); ##-- not ok: continue here
-  check_set(2,[qw(0 1 2 3 3 2 1 0)],3=>2);
-  check_set(4,[qw(0 1 2 4 8 15)],5=>7);
-  check_set(8,[qw(0 1 2 4 8 16 32 64 128 255)],1=>255);
-  check_set(16,[qw(100 500 1000 65000)], 3=>12345);
-  check_set(32,[qw(100 500 1000 100000)], 2=>98765);
+  check_set(1,[qw(1 1 1 0 0 1 1 1 0 0 0 0 0 0 0 0)],7=>0); ##-- not ok
+  die;
+  #check_set(2,[qw(0 1 2 3 3 2 1 0)], 6=>2);
+  #check_set(4,[qw(0 1 2 4 8 15)],5=>7);
+  #check_set(8,[qw(0 1 2 4 8 16 32 64 128 255)],1=>255);
+  #check_set(16,[qw(100 500 1000 65000)], 3=>12345);
+  #check_set(32,[qw(100 500 1000 100000)], 2=>98765);
+
+  ##-- random
+  foreach my $nbits (qw(1 1 1 1 1)) { #qw(1 2 4 8 16 32)) {
+    my $nelem = 10;
+    my $v     = makevec($nbits,[map {int(rand(2**$nbits))} (1..$nelem)]);
+    my $i     = int(rand($nelem));
+    my $ok = 1;
+    my ($val);
+    foreach $i (0..($nelem-1)) {
+      $val = int(rand(2**$nbits));
+      $l   = vec2list($v,$nbits); ##-- save
+      $ok &&= check_set($nbits,$v,$i,$val, 0);
+      last if (!$ok);
+    }
+    print "random_set(nbits=$nbits,l=[".join(' ',@$l)."],i=$i,val=$val): ", ($ok ? "ok" : "NOT ok"), "\n";
+    die if (!$ok);
+  }
 }
 test_vset();
 
 
 ##--------------------------------------------------------------
-## test: bsearch
+## test: bsearch (raw)
 
 sub check_bsearch {
   my ($nbits,$l,$key,$want) = @_;
@@ -131,7 +161,7 @@ sub check_lb {
   my ($nbits,$l,$key,$want) = @_;
   print STDERR "check_lb(nbits=$nbits,key=$key,l=[",join(' ',@$l),"]): ";
   my $v = makevec($nbits,$l);
-  my $i = lower_bound($v,$key,$nbits, 0,$#$l);
+  my $i = vsearch_lb($v,$key,$nbits, 0,$#$l);
   my $rc = ($i==$want);
   print STDERR ($rc ? "ok (=$want)" : "NOT ok (want=$want != got=$i)"), "\n";
   return $rc;
@@ -155,7 +185,7 @@ sub check_ub {
   my ($nbits,$l,$key,$want) = @_;
   print STDERR "check_ub(nbits=$nbits,key=$key,l=[",join(' ',@$l),"]): ";
   my $v = makevec($nbits,$l);
-  my $i = upper_bound($v,$key,$nbits, 0,$#$l);
+  my $i = vsearch_ub($v,$key,$nbits, 0,$#$l);
   my $rc = ($i==$want);
   print STDERR ($rc ? "ok (=$want)" : "NOT ok (want=$want != got=$i)"), "\n";
   return $rc;

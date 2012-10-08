@@ -26,8 +26,8 @@ our (%EXPORT_TAGS, @EXPORT_OK, @EXPORT);
 BEGIN {
   %EXPORT_TAGS =
     (
-     std   => [qw(bsearch lower_bound upper_bound)],
-     debug => [qw(vindex vset)],
+     std   => [qw(vbsearch vbsearch_lb vbsearch_ub)],
+     debug => [qw(vget vset)],
     );
   $EXPORT_TAGS{all} = [@{$EXPORT_TAGS{std}}, @{$EXPORT_TAGS{debug}}];
   @EXPORT_OK        = @{$EXPORT_TAGS{all}};

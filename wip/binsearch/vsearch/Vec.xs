@@ -36,14 +36,24 @@ static inline uint avbs_index(const uchar *v, uint i, uint nbits)
 //--------------------------------------------------------------
 static inline void avbs_vset(uchar *v, uint i, uint nbits, uint val)
 {
+  int b;
+  fprintf(stderr, "vset(i=%u, nbits=%u, val=%u)\n", i,nbits,val);
   switch (nbits) {
   default:
-  case 1:	v[i>>3] &= ((val&0x1)<<(i%8))      | ~(0x1<<(i%8));
-  case 2:	v[i>>2] &= ((val&0x3)<<((i%4)<<1)) | ~(0x3<<((i%4)<<1));
-  case 4:	v[i>>1] &= ((val&0xf)<<((i%2)<<2)) | ~(0xf<<((i%2)<<2));
-  case 8:	v[i] = val;
-  case 16:	i <<= 1; v[i]=(val>> 8)&0xff; v[i+1]=(val&0xff);
-  case 32:	i <<= 2; v[i]=(val>>24)&0xff; v[i+1]=(val>>16)&0xff; v[i+2]=(val>>8)&0xff; v[i+3]=val&0xff;
+  case 1:
+    /*if (val&1)	v[i>>3] |=  (0x1<<(i%8));
+      else	v[i>>3] &= ~(0x1<<(i%8));*/
+    /*
+    v[i>>3] &= ~(0x1<<(i%8));
+    v[i>>3] |=  ((val&0x1)<<(i%8))
+    */
+    b=i&0x7; i>>=3; v[i] ^= ((val & ((~v[i])>>b)) & 0x1)<<b;
+    break;
+  case 2:	v[i>>2] &= ((val&0x3)<<((i%4)<<1)) | ~(0x3<<((i%4)<<1)); break;
+  case 4:	v[i>>1] &= ((val&0xf)<<((i%2)<<2)) | ~(0xf<<((i%2)<<2)); break;
+  case 8:	v[i] = val; break;
+  case 16:	i <<= 1; v[i]=(val>> 8)&0xff; v[i+1]=(val&0xff); break;
+  case 32:	i <<= 2; v[i]=(val>>24)&0xff; v[i+1]=(val>>16)&0xff; v[i+2]=(val>>8)&0xff; v[i+3]=val&0xff; break;
   }
 }
 
@@ -118,7 +128,7 @@ PROTOTYPES: ENABLE
 
 ##--------------------------------------------------------------
 uint
-vindex(SV *vec, uint i, uint nbits)
+vget(SV *vec, uint i, uint nbits)
 PREINIT:
   uchar *vp;
 CODE:
@@ -142,7 +152,7 @@ CODE:
 
 ##--------------------------------------------------------------
 uint
-bsearch(SV *vec, uint key, uint nbits, ...)
+vbsearch(SV *vec, uint key, uint nbits, ...)
 PREINIT:
   const uchar *v;
   uint vlen, ilo, ihi;
@@ -160,7 +170,7 @@ OUTPUT:
 
 ##--------------------------------------------------------------
 uint
-lower_bound(SV *vec, uint key, uint nbits, ...)
+vbsearch_lb(SV *vec, uint key, uint nbits, ...)
 PREINIT:
   const uchar *v;
   uint vlen, ilo, ihi;
@@ -176,7 +186,7 @@ OUTPUT:
 
 ##--------------------------------------------------------------
 uint
-upper_bound(SV *vec, uint key, uint nbits, ...)
+vbsearch_ub(SV *vec, uint key, uint nbits, ...)
 PREINIT:
   const uchar *v;
   uint vlen, ilo, ihi;
@@ -192,5 +202,27 @@ OUTPUT:
 
 
 ##=====================================================================
-## BINARY SEARCH, vector-wise
+## BINARY SEARCH, array-wise
 
+AV*
+avbsearch(SV *haystack, AV *needle, uint nbits, ...)
+PREINIT:
+  const uchar *v;
+  uint vlen, ilo, ihi;
+  I32 i,n;
+CODE:
+ v = SvPV(haystack,vlen);
+ if (items > 3) ilo = SvUV(ST(3));
+ else ilo = 0;
+ if (items > 4) ihi = SvUV(ST(4));
+ else ihi = vlen * 8/nbits;
+ n = av_len(needle);
+ RETVAL = newAV();
+ av_extend(RETVAL, n);
+ for (i=0; i<=n; ++i) {
+   SV   **key   = av_fetch(needle, i, 0);
+   uint   found = avbs_bsearch(v,SvUV(*key),ilo,ihi,nbits);
+   av_store(RETVAL, i, (found == (uint)-1 ? newSV(0) : newSVuv(found)));
+ }
+OUTPUT:
+ RETVAL
