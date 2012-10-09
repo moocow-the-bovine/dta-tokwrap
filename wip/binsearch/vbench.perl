@@ -3,6 +3,9 @@
 use PDL;
 use Benchmark qw(cmpthese timethese);
 
+use lib qw(vsearch/blib/lib vsearch/blib/arch);
+use Algorithm::BinarySearch::Vec::XS ':all';
+
 
 ##==============================================================
 ## bench: load: list
@@ -175,6 +178,14 @@ if (0) {
   $i = binsearch_v(\$v, 512);
 }
 
+##==============================================================
+## bench: lookup: vec-xs
+
+sub lookup_vec_xs {
+  #my ($vr,$co) = @_;
+  return Algorithm::BinarySearch::Vec::XS::vabsearch_lb($_[0],$_[1],32);
+}
+
 
 ##==============================================================
 ## MAIN
@@ -213,10 +224,12 @@ if (1) {
   my $ip = lookup_pdl($p,\@cql);
   my $il = lookup_list($l,\@cql);
   my $iv = lookup_vec(\$v,\@cql);
+  my $ix = lookup_vec_xs($v,\@cql);
 
   $ip = lookup_pdl($cop,\@cql);
   $il = lookup_list($col,\@cql);
   $iv = lookup_vec(\$cov,\@cql);
+  $ix = lookup_vec_xs($cov,\@cql);
 }
 
 print STDERR "\ncompare: lookup_sx_*(n=$nq)\n";
@@ -224,10 +237,11 @@ cmpthese(-1,{
 	     'lookup_sx_p'=>sub {lookup_pdl($p,\@cql)},
 	     'lookup_sx_l'=>sub {lookup_list($l,\@cql)},
 	     'lookup_sx_v'=>sub {lookup_vec(\$v,\@cql)},
+	     'lookup_sx_vxs'=>sub {lookup_vec_xs($v,\@cql)},
 	     ##
-	     'lookup_sx_pg'=>sub {lookup_pdl_g($p,\@cql)},
-	     'lookup_sx_lg'=>sub {lookup_list_g($l,\@cql)},
-	     'lookup_sx_vg'=>sub {lookup_vec_g(\$v,\@cql)},
+	     #'lookup_sx_pg'=>sub {lookup_pdl_g($p,\@cql)},
+	     #'lookup_sx_lg'=>sub {lookup_list_g($l,\@cql)},
+	     #'lookup_sx_vg'=>sub {lookup_vec_g(\$v,\@cql)},
 	    });
 
 print STDERR "\ncompare: lookup_cx_*(n=$nq)\n";
@@ -235,8 +249,9 @@ cmpthese(-1,{
 	     'lookup_cx_p'=>sub {lookup_pdl($cop,\@cql)},
 	     'lookup_cx_l'=>sub {lookup_list($col,\@cql)},
 	     'lookup_cx_v'=>sub {lookup_vec(\$cov,\@cql)},
+	     'lookup_cx_vxs'=>sub {lookup_vec_xs($cov,\@cql)},
 	     ##
-	     'lookup_cx_pg'=>sub {lookup_pdl_g($cop,\@cql)},
-	     'lookup_cx_lg'=>sub {lookup_list_g($col,\@cql)},
-	     'lookup_cx_vg'=>sub {lookup_vec_g(\$cov,\@cql)},
+	     #'lookup_cx_pg'=>sub {lookup_pdl_g($cop,\@cql)},
+	     #'lookup_cx_lg'=>sub {lookup_list_g($col,\@cql)},
+	     #'lookup_cx_vg'=>sub {lookup_vec_g(\$cov,\@cql)},
 	    });
