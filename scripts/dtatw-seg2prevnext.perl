@@ -19,7 +19,7 @@ my ($xmlbuf);
   $xmlbuf =~ s|(<[^>]*\s)xmlns=|${1}XMLNS=|g;  ##-- remove default namespaces
   close XML;
 }
-my $xmlparser = libxml_parser(keep_blanks=>1);
+my $xmlparser = libxml_parser(keep_blanks=>1,expand_entities=>0);
 my $xmldoc    = $xmlparser->parse_string($xmlbuf)
   or die("$prog: ERROR: could not parse XML file '$xmlfile': $!");
 my $root = $xmldoc->documentElement;
