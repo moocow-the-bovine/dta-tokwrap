@@ -19,7 +19,7 @@ use DTA::TokWrap::Processor::tokenize::tomasotath_02x;
 use DTA::TokWrap::Processor::tokenize::dummy;
 use DTA::TokWrap::Processor::tokenize1;
 use DTA::TokWrap::Processor::tok2xml;
-use DTA::TokWrap::Processor::standoff;
+#use DTA::TokWrap::Processor::standoff;
 #use DTA::TokWrap::Processor::standoff::xsl;
 use DTA::TokWrap::Processor::addws;
 use DTA::TokWrap::Processor::idsplice;
@@ -38,13 +38,14 @@ our @ISA = ('DTA::TokWrap::Base','Exporter');
 ##  + default tokenizer subclass
 our $TOKENIZE_CLASS = $DTA::TokWrap::Processor::tokenize::DEFAULT_SUBCLASS;
 
-## $CX_ID   : {cxdata} index of id field
-## $CX_XOFF : {cxdata} index of XML byte-offset field
-## $CX_XLEN : {cxdata} index of XML byte-length field
-## $CX_TOFF : {cxdata} index of .tx byte-offset field
-## $CX_TLEN : {cxdata} index of .tx byte-length field
-## $CX_TEXT : {cxdata} index of text / details field(s)
-our ($CX_ID,$CX_XOFF,$CX_XLEN,$CX_TOFF,$CX_TLEN,$CX_TEXT) = (0..5);
+## $CX_ID    : {cxdata} index of id field
+## $CX_XOFF  : {cxdata} index of XML byte-offset field
+## $CX_XLEN  : {cxdata} index of XML byte-length field
+## $CX_TOFF  : {cxdata} index of .tx byte-offset field
+## $CX_TLEN  : {cxdata} index of .tx byte-length field
+## $CX_TEXT  : {cxdata} index of text / details field(s)
+## $CX_ATTRS : {cxdata} index of attribute field(s)
+our ($CX_ID,$CX_XOFF,$CX_XLEN,$CX_TOFF,$CX_TLEN,$CX_TEXT,$CX_ATTRS) = (0..6);
 
 our @EXPORT = qw();
 our %EXPORT_TAGS = (
@@ -130,9 +131,9 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    cwstfile     => $wstfile, ##-- idsplice output file [default="$outdir/$outbase.cwst.xml"]
 ##
 ##    ##-- standoff xml data (see DTA::TokWrap::Processor::standoff -- OBSOLETE)
-##    sosfile => $sosfile,   ##-- sentence standoff file (default="$outdir/$outbase.s.xml")
-##    sowfile => $sowfile,   ##-- token standoff file (default="$outdir/$outbase.w.xml")
-##    soafile => $soafile,   ##-- token-analysis standoff file (default="$outdir/$outbase.a.xml")
+##    #sosfile => $sosfile,   ##-- sentence standoff file (default="$outdir/$outbase.s.xml")
+##    #sowfile => $sowfile,   ##-- token standoff file (default="$outdir/$outbase.w.xml")
+##    #soafile => $soafile,   ##-- token-analysis standoff file (default="$outdir/$outbase.a.xml")
 ##   )
 sub new {
   my ($that,%opts) = @_;
@@ -215,9 +216,9 @@ sub defaults {
 	  #sowdoc => undef,
 	  #soadoc => undef,
 	  ##
-	  sosfile => undef,
-	  sowfile => undef,
-	  soafile => undef,
+	  #sosfile => undef,
+	  #sowfile => undef,
+	  #soafile => undef,
 	 );
 }
 
@@ -285,9 +286,9 @@ sub init {
   #$doc->{sowdoc} = undef;
   #$doc->{soadoc} = undef;
   ##
-  $doc->{sosfile} = $doc->{outdir}.'/'.$doc->{outbase}.".s.xml" if (!$doc->{sosfile});
-  $doc->{sowfile} = $doc->{outdir}.'/'.$doc->{outbase}.".w.xml" if (!$doc->{sowfile});
-  $doc->{soafile} = $doc->{outdir}.'/'.$doc->{outbase}.".a.xml" if (!$doc->{soafile});
+  #$doc->{sosfile} = $doc->{outdir}.'/'.$doc->{outbase}.".s.xml" if (!$doc->{sosfile});
+  #$doc->{sowfile} = $doc->{outdir}.'/'.$doc->{outbase}.".w.xml" if (!$doc->{sowfile});
+  #$doc->{soafile} = $doc->{outdir}.'/'.$doc->{outbase}.".a.xml" if (!$doc->{soafile});
 
   ##-- return
   return $doc;
@@ -452,7 +453,7 @@ BEGIN {
        map {$_=>$spec} ("mk${_}xml", "mkso${_}", "so${_}xml","so${_}file","${_}xml")
      } ('s','w','a')),
 
-     (map {$_=>[qw(loadXtokFile standoff)]} qw(mkstandoff standoff so mkso)),
+     #(map {$_=>[qw(loadXtokFile standoff)]} qw(mkstandoff standoff so mkso)),
 
      'tei2txml' => [qw(mkindex),
 		    qw(mkbx0 saveBx0File),
@@ -473,7 +474,7 @@ BEGIN {
 	     qw(tok2xml saveXtokFile),
 	     qw(addws),
 	     #qw(standoff),
-	     qw(idsplice),
+	     #qw(idsplice),
 	    ],
     );
 }
@@ -609,43 +610,6 @@ sub idsplice {
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{idsplice}) || 'DTA::TokWrap::Processor::idsplice')->idsplice($_[0]);
 }
 
-## $doc_or_undef = $doc->sosxml($so)
-## $doc_or_undef = $doc->sosxml()
-##  + see DTA::TokWrap::Processor::standoff::sosxml()
-sub sosxml {
-  $_[0]->setLogContext();
-  $_[0]->vlog($_[0]{traceProc},"sosxml()") if ($_[0]{traceProc});
-  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::Processor::standoff')->sosxml($_[0]);
-}
-
-## $doc_or_undef = $doc->sowxml($so)
-## $doc_or_undef = $doc->sowxml()
-##  + see DTA::TokWrap::Processor::standoff::sowxml()
-sub sowxml {
-  $_[0]->setLogContext();
-  $_[0]->vlog($_[0]{traceProc},"sowxml()") if ($_[0]{traceProc});
-  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::Processor::standoff')->sowxml($_[0]);
-}
-
-## $doc_or_undef = $doc->soaxml($so)
-## $doc_or_undef = $doc->soaxml()
-##  + see DTA::TokWrap::Processor::standoff::soaxml()
-sub soaxml {
-  $_[0]->setLogContext();
-  $_[0]->vlog($_[0]{traceProc},"soaxml()") if ($_[0]{traceProc});
-  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::Processor::standoff')->soaxml($_[0]);
-}
-
-## $doc_or_undef = $doc->standoff($so)
-## $doc_or_undef = $doc->standoff()
-##  + wrapper for sosxml(), sowxml(), soaxml()
-##  + see DTA::TokWrap::Processor::standoff::standoff()
-sub standoff {
-  $_[0]->setLogContext();
-  $_[0]->vlog($_[0]{traceProc},"standoff()") if ($_[0]{traceProc});
-  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{standoff}) || 'DTA::TokWrap::Processor::standoff')->standoff($_[0]);
-}
-
 ##==============================================================================
 ## Methods: Member I/O
 ##==============================================================================
@@ -722,7 +686,7 @@ sub loadBxFile {
 ## $cxdata_or_undef = $doc->loadCxFile()
 ##  + loads $doc->{cxdata} from $filename_or_fh (default=$doc->{cxfile})
 ##  + $doc->{cxdata} = [ $cx0, ... ]
-##    - where each $cx = [ $id, $xoff,$xlen, $toff,$tlen, $text ]
+##    - where each $cx = [ $id, $xoff,$xlen, $toff,$tlen, $text, @attrs ]
 ##    - globals $CX_ID, $CX_XOFF, etc. are indices for $cx arrays
 sub loadCxFile {
   my ($doc,$file) = @_;
@@ -1140,10 +1104,6 @@ DTA::TokWrap::Document - DTA tokenizer wrappers: document wrapper
  $doc_or_undef = $doc->mkbx();
  $doc_or_undef = $doc->tokenize();
  $doc_or_undef = $doc->tok2xml();
- $doc_or_undef = $doc->sosxml();
- $doc_or_undef = $doc->sowxml();
- $doc_or_undef = $doc->soaxml();
- $doc_or_undef = $doc->standoff();
  
  ##========================================================================
  ## Methods: Member I/O
@@ -1203,7 +1163,7 @@ $TOKENIZE_CLASS
 Default tokenizer sub-processor class
 (default='L<DTA::TokWrap::Processor::tokenize|tokenize>').
 
-=item Variables: ($CX_ID,$CX_XOFF,$CX_XLEN,$CX_TOFF,$CX_TLEN,$CX_TEXT)
+=item Variables: ($CX_ID,$CX_XOFF,$CX_XLEN,$CX_TOFF,$CX_TLEN,$CX_TEXT,$CX_ATTRS)
 
 Field indices in .cx files generated by the
 L<mkindex()|/mkindex> method.
@@ -1282,14 +1242,18 @@ instead of calling this constructor directly.
  xtokfile => $xtokfile,  ##-- XML-ified tokenizer output file (default="$outdir/$outbase.t.xml")
  xtokdoc  => $xtokdoc,   ##-- XML::LibXML::Document for $xtokdata (parsed from string)
  ##
- ##-- standoff xml data (see DTA::TokWrap::Processor::standoff)
- sosdoc  => $sosdata,   ##-- XML::LibXML::Document: sentence standoff data
- sowdoc  => $sowdata,   ##-- XML::LibXML::Document: token standoff data
- soadoc  => $soadata,   ##-- XML::LibXML::Document: analysis standoff data
+ ##-- ws-splice (see DTA::TokWrap::Processor::addws)
+ #cwsdata => $cwsdata,    ##-- ws-spliced output data (xmlfile with <s> and <w> elements)
+ cwsfile => $cwsfile,    ##-- ws-spliced output file (default="$outdir/$outbase.cws.xml")
  ##
- sosfile => $sosfile,   ##-- filename for $sosdoc (default="$outdir/$outbase.s.xml")
- sowfile => $sowfile,   ##-- filename for $sowdoc (default="$outdir/$outbase.w.xml")
- soafile => $soafile,   ##-- filename for $soadoc (default="$outdir/$outbase.a.xml")
+ ##-- property-splice (see DTA::TokWrap::Processor::idsplice)
+ ## cwstbasebufr => \$bdata,  ##-- base data-ref for idsplice (xml with //*/@id) [default=\$cwsdata if defined]
+ ## cwstbasefile => $bfile,   ##-- source file for $bdata [default=$cwsfile]
+ ## cwstsobufr   => \$sodata, ##-- standoff data-ref for idsplice (xml with //*/@id, additional attributes and content) [default=\$xtokdata]
+ ## cwstsofile   => $sofile,  ##-- source file for $sodata [default=$xtokfile]
+ ## cwstbufr     => $wstbufr, ##-- idsplice output buffer (base + id-spliced attributes, content) -- available for override, not used by default
+ ## cwstfile     => $wstfile, ##-- idsplice output file [default="$outdir/$outbase.cwst.xml"]
+
 
 =item defaults
 
@@ -1465,36 +1429,19 @@ L<DTA::TokWrap::Processor::tokenize1::tokenize1()|DTA::TokWrap::Processor::token
 
 see L<DTA::TokWrap::Processor::tok2xml::tok2xml()|DTA::TokWrap::Processor::tok2xml/tok2xml>.
 
-=item sosxml
+=item addws
 
- $doc_or_undef = $doc->sosxml($so);
- $doc_or_undef = $doc->sosxml();
+ $doc_or_undef = $doc->addws($addws);
+ $doc_or_undef = $doc->addws();
 
-see L<DTA::TokWrap::Processor::standoff::sosxml()|DTA::TokWrap::Processor::standoff/sosxml>
+see L<DTA::TokWrap::Processor::addws::addws()|DTA::TokWrap::Processor::addws/addws>.
 
+=item idsplice
 
-=item sowxml
+ $doc_or_undef = $doc->idsplice($addws);
+ $doc_or_undef = $doc->idsplice();
 
- $doc_or_undef = $doc->sowxml($so);
- $doc_or_undef = $doc->sowxml();
-
-see L<DTA::TokWrap::Processor::standoff::sowxml()|DTA::TokWrap::Processor::standoff/sowxml>
-
-=item soaxml
-
- $doc_or_undef = $doc->soaxml($so);
- $doc_or_undef = $doc->soaxml();
-
-see L<DTA::TokWrap::Processor::standoff::soaxml()|DTA::TokWrap::Processor::standoff/soaxml>
-
-=item standoff
-
- $doc_or_undef = $doc->standoff($so);
- $doc_or_undef = $doc->standoff();
-
-Wrapper for L<sosxml()|/sosxml>, L<sowxml()|/sowxml>, L<soaxml()|/soaxml>.
-
-see L<DTA::TokWrap::Processor::standoff::standoff()|DTA::TokWrap::Processor::standoff/standoff>.
+see L<DTA::TokWrap::Processor::idsplice::idsplice()|DTA::TokWrap::Processor::idsplice/idsplice>.
 
 =back
 
@@ -1537,7 +1484,7 @@ $doc-E<gt>{cxdata} = [ $cx0, ... ], where:
 
 =item *
 
-each $cx = [ $id, $xoff,$xlen, $toff,$tlen, $text ]
+each $cx = [ $id, $xoff,$xlen, $toff,$tlen, $text, @attrs ]
 
 =item *
 
@@ -1712,10 +1659,10 @@ Bryan Jurish E<lt>jurish@bbaw.deE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Bryan Jurish
+Copyright (C) 2009-2012 by Bryan Jurish
 
 This package is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.8.7 or,
+it under the same terms as Perl itself, either Perl version 5.10.1 or,
 at your option, any later version of Perl 5 you may have available.
 
 =cut

@@ -163,24 +163,11 @@ the document B<MUST> be encoded in UTF-8,
 
 =item *
 
-all text nodes to be tokenized should be descendants of a C<E<lt>cE<gt>> element
-which is itself a descendant of a C<E<lt>textE<gt>> element (XPath C<//text//c//text()>),
+all text nodes to be tokenized should be descendants of a C<E<lt>textE<gt>> element,
+and may optionally be immediate daughters of a C<E<lt>cE<gt>> element
+(XPath C<//text//text()|//text//c/text()>). C<E<lt>cE<gt>> elements may not be nested.
 
-=item *
-
-the document should contain exactly one such C<E<lt>cE<gt>> element for
-I<each logical character>
-which may be passed to the tokenizer,
-
-=item *
-
-no C<E<lt>cE<gt>> element may be a descendant of another C<E<lt>cE<gt>> element,
-and
-
-=item *
-
-if stand-off annotations are desired (the default),
-each C<c> element should have a valid C<xml:id> attribute.
+Prior to dta-tokwrap v0.38, C<E<lt>cE<gt>> elements were required.
 
 =back
 
@@ -207,21 +194,6 @@ and tokenizer-provided token analyses.  Source for various stand-off annotation 
 This format can also be passed directly to and from the L<DTA::CAB(3pm)|DTA::CAB>
 analysis suite using the L<DTA::CAB::Format::XmlNative(3pm)|DTA::CAB::Format::XmlNative>
 formatter class.
-
-=item F<doc1.w.xml>
-
-Stand-off XML file encoding token boundaries.
-Contains references to C<//c/@xml:id> attributes of F<doc1.xml>.
-
-=item F<doc1.s.xml>
-
-Stand-off XML file encoding token boundaries.
-Contains references to C<//w/@xml:id> attributes of F<doc1.w.xml>.
-
-=item F<doc1.a.xml>
-
-Stand-off XML file encoding tokenizer-provided token analyses.
-Contains references to C<//w/@xml:id> attributes of F<doc1.w.xml>.
 
 =back
 
@@ -356,6 +328,12 @@ See L<"the dtatw-xml2ddc.perl manpage"|dtatw-xml2ddc.perl> for more details.
 
 Simple script to check consistency of tokenizer output (*.t) offset + length
 fields with input (*.txt) file.
+
+=item dtatw-add-c.perl
+
+Script to add C<E<lt>cE<gt>> elements to an XML document which does
+not already contain them.
+Not really useful as of dta-tokwrap v0.38.
 
 =item dtatw-rm-c.perl
 

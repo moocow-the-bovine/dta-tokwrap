@@ -4,7 +4,8 @@ use PDL;
 use Benchmark qw(cmpthese timethese);
 
 use lib qw(vsearch/blib/lib vsearch/blib/arch);
-use Algorithm::BinarySearch::Vec::XS ':all';
+use Algorithm::BinarySearch::Vec ':all';
+use Devel::Peek qw(Dump SvREFCNT);
 
 
 ##==============================================================
@@ -183,7 +184,7 @@ if (0) {
 
 sub lookup_vec_xs {
   #my ($vr,$co) = @_;
-  return Algorithm::BinarySearch::Vec::XS::vabsearch_lb($_[0],$_[1],32);
+  return Algorithm::BinarySearch::Vec::vabsearch_lb($_[0],$_[1],32);
 }
 
 

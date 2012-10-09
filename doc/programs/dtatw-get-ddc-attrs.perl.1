@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "DTATW-GET-DDC-ATTRS.PERL 1"
-.TH DTATW-GET-DDC-ATTRS.PERL 1 "2012-10-02" "dta-tokwrap v0.38" "DTA Tokenization Utilities"
+.TH DTATW-GET-DDC-ATTRS.PERL 1 "2012-10-05" "dta-tokwrap v0.38" "DTA Tokenization Utilities"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -151,10 +151,10 @@ dtatw\-get\-ddc\-attrs.perl \- get DDC\-relevant attributes from DTA::TokWrap fi
 \&  \-bbox   , \-nobbox      # do/don\*(Aqt extract //w/@bb (bbox; default=do)
 \&  \-xlit   , \-noxlit      # do/don\*(Aqt extract //w/@u  (unicruft transliteration; default=do)
 \&  \-wsep   , \-nowsep      # do/don\*(Aqt extract //w/@ws (boolean space\-separation; default=do)
-\&  \-coff   , \-nocoff      # do/don\*(Aqt extract //w/(@coff|@clen) from //w/@c or //w/@cs (default=don\*(Aqt)
-\&  \-boff   , \-noboff      # do/don\*(Aqt extract //w/(@boff|@blen) from //w/@b (default=don\*(Aqt)
 \&  \-blanks , \-noblanks    # do/don\*(Aqt keep \*(Aqignorable\*(Aq whitespace in T_XML_FILE file (default=don\*(Aqt)
-\&  \-keep\-c , \-nokeep\-c    # do/don\*(Aqt keep existing //w/@c and //w/@cs attributes (default=keep)
+\&  #\-coff   , \-nocoff      # do/don\*(Aqt extract //w/(@coff|@clen) from //w/@c or //w/@cs (default=don\*(Aqt)
+\&  #\-boff   , \-noboff      # do/don\*(Aqt extract //w/(@boff|@blen) from //w/@b (default=don\*(Aqt)
+\&  #\-keep\-c , \-nokeep\-c    # do/don\*(Aqt keep existing //w/@c and //w/@cs attributes (default=keep)
 \&  \-keep\-b , \-nokeep\-b    # do/don\*(Aqt keep existing //w/@b attributes (default=keep)
 \&  \-keep\-xb, \-nokeep\-xb   # do/don\*(Aqt keep existing //w/@xb attributes (default=keep)
 \&  \-formula\-text TEXT     # output text for //formula elements (default=\*(Aq\*(Aq (no change))
