@@ -23,7 +23,7 @@ typedef struct {
   ByteOffset n_chrs;    //-- number of logical characters read
   ByteOffset loc_xoff;  //-- last xml-offset written to .sx as location-block (see LOC_FMT, cb_default())
   ByteOffset loc_toff;  //-- last text-offset written to .sx as location-block (see LOC_FMT, cb_default())
-  XML_Char e_name[ELTBUFSIZE];	//-- text buffer for current element name (usually "c")
+  //XML_Char e_name[ELTBUFSIZE];	//-- text buffer for current element name (usually "c")
   XML_Char e_abuf[ATTRBUFSIZE]; //-- text buffer for raw element attributes (for <c> elements)
   XML_Char *e_attrs[N_ATTRS];  //-- attribute buffer: e_attrs[2*i]=key, e_attrs[2*i+1]=val; NUL-terminated :  pointers into e_abuf
   XML_Char c_tbuf[CTBUFSIZE];	//-- text buffer for current character
@@ -36,8 +36,8 @@ typedef struct {
 } TokWrapData;
 
 //-- want_profile: if true, some profiling information will be printed to stderr
-int want_profile = 1;
-//int want_profile = 0;
+//int want_profile = 1;
+int want_profile = 0;
 
 //-- want_outfile_comments: if true, some explanatory comments will be printed to the output file
 int want_outfile_comments = 1;
@@ -140,7 +140,7 @@ void put_record_char(TokWrapData *data)
 {
   ByteOffset c_xlen = XML_GetCurrentByteIndex(data->xp) + XML_GetCurrentByteCount(data->xp) - data->c_xoffset;
   put_record_raw(data->f_cx,
-		 data->e_name,
+		 "c",
 		 data->c_xoffset, c_xlen,
 		 data->c_toffset, data->c_tlen,
 		 data->c_tbuf,
@@ -249,8 +249,8 @@ void put_record_formula(TokWrapData *data, const XML_Char **attrs)
 void cb_start(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
 {
   if (data->text_depth) {
-    assert(strlen(name) < ELTBUFSIZE);
-    strcpy(data->e_name,name);
+    //assert(strlen(name) < ELTBUFSIZE);
+    //strcpy(data->e_name,name);
 
     if (strcmp(name,"c")==0) { // || strcmp(name,"formula")==0
       if (data->c_depth) {
@@ -343,7 +343,7 @@ void cb_char(TokWrapData *data, const XML_Char *s, int len)
   }
   else if (data->text_depth>0) {
     //-- character data: generate pseudo-elements
-    strcpy(data->e_name,CX_NIL_ID);
+    //strcpy(data->e_name,CX_NIL_ID);
     data->e_attrs[0] = NULL;
     if (is_ws(s,len)) {
       //-- whitespace-only: remember that we saw it
