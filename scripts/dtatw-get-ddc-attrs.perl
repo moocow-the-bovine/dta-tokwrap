@@ -494,14 +494,14 @@ sub apply_word {
   ##-- compute & assign: unicruft
   if ($do_unicruft) {
     if ($wtxt =~ m(^[\x{00}-\x{ff}\p{Latin}\p{IsPunct}\p{IsMark}]*$)) {
-      $utxt = decode('latin1',Unicruft::utf8_to_latin1_de($wtxt));
+      $utxt = Unicruft::utf8_to_utf8_de($wtxt);
     } else {
       $utxt = $wtxt;
     }
     $wnod->setAttribute($unicruft_attr,$utxt);
   }
 
-  ##-- CONTINUE HERE
+  ##-- !!! CONTINUE HERE: ids-to-offsets !!!
 
   ##-- compute & assign: rendition (undef -> '-')
   if ($do_rendition) {

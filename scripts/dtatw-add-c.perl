@@ -38,11 +38,6 @@ our $text_depth = 0;     ##-- number of open <text> elements
 our $c_depth = 0;        ##-- number of open <c> elements (should never be >1)
 our $c_is_space = 0;	 ##-- whether current <c> is a pure space (requires text node for dtatw-rm-c.perl consistency)
 
-our $guess_thresh = undef;   ##-- minimum percent of total input data bytes occurring in //c elements
-                             ##   in order to return input document as-is (0: always process)
-our $guess_default = 50;
-
-
 ##------------------------------------------------------------------------------
 ## Command-line
 ##------------------------------------------------------------------------------
@@ -57,15 +52,13 @@ GetOptions(##-- General
 	   'rm-default-namespaces|rm-default-ns|rm-ns|rmns!' => \$rmns,
 	   'keep-default-namespaces|keep-defaultns|keep-ns|keepns|ns!' => sub {$rmns=!$_[1]},
 
-	   'guess|g!' => sub { $guess_thresh=($_[1] ? $guess_default : 0); },
-	   'guess-min|gm=f' => \$guess_thresh,
+	   'guess|g!' => sub {;}, ##-- null-op for compatibility
 	   'output|out|o=s' => \$outfile,
 	   'profile|p!' => \$profile,
 	  );
 
 
 pod2usage({-exitval=>0,-verbose=>0}) if ($help);
-$guess_thresh = $guess_default if (!defined($guess_thresh));
 
 ##======================================================================
 ## Subs
@@ -207,31 +200,6 @@ foreach $infile (@ARGV) {
   ##-- encode default namespaces if requested
   $buf =~ s|(<[^>]*\s)xmlns=|${1}XMLNS=|g if ($rmns);
 
-  ##-- optionally guess whether we need to add //c elements at all
-  if ($guess_thresh > 0) {
-    use bytes;
-    my $inbytes = length($buf);
-    my $cbytes  = 0;
-    my $nc = 0;
-    while ($buf =~ m|<c\b[^>]*>(?:[^<]{0,8})</c>|isg) {
-      $cbytes += ($+[0] - $-[0]);
-      ++$nc;
-    }
-    my $cpct = $inbytes ? (100*$cbytes/$inbytes) : 'nan';
-    debugmsg(sprintf("found $cbytes bytes for <c> elements in $inbytes total bytes (%.1f%%)", $cpct)) if ($DEBUG);
-
-    if ($cpct >= $guess_thresh) {
-      ##-- enough <c>s already: just dump the buffer
-      debugmsg(sprintf("found %.1f%% //c data >= threshhold=%s%% : dumping as-is\n", $cpct, $guess_thresh)) if ($DEBUG);
-      $buf =~ s{(<c\b[^\>]*> </c>)(\S)}{$1 $2}g;  ##-- insert whitespace text nodes for dtatw-rm-c.perl consistency
-      $outfh->print($buf);
-      $nxbytes += length($buf);
-      $nchrs   += $nc;
-      next;
-    }
-    debugmsg(sprintf("found %.1f%% //c data < threshhold=%s%% : generating //c elements", $cpct, $guess_thresh)) if ($DEBUG);
-  }
-
   ##-- initialize $cnum counter by checking any pre-assigned //c/@id values (fast regex hack)
   $cnum = 0;
   while ($buf =~ m/\<c\b[^\>]*\s(?:xml\:)?id=\"c([0-9]+)\"/isg) {
@@ -286,11 +254,9 @@ dtatw-add-c.perl - add <c> elements to DTA XML documents
 
  I/O Options:
   -output FILE           # specify output file (default='-' (STDOUT))
-   -cids  , -nocids	 # do/don't assign ids for auto-generated <c> elements (default=-nocids)
+  -cids  , -nocids	 # do/don't assign ids for auto-generated <c> elements (default=-nocids)
   -idns=NAMESPACE        # namespace prefix for id attributes, e.g. "xml:" (default=none)
   -rmns   , -keepns      # do/don't encode default namespaces as for dtatw-nsdefault-encode.perl (default=do)
-  -guess-min PERCENT     # in -guess mode, minimum percentage of data in <c> elements which is 'enough' (default=50)
-  -guess  , -noguess     # do/don't attempt to guess whether 'enough' <c> elements are already present (default='-guess')
   -profile, -noprofile   # output profiling information? (default=no)
 
 =cut
@@ -313,7 +279,9 @@ Not yet written.
 
 =head1 DESCRIPTION
 
-Adds E<lt>cE<gt> elements to DTA XML files and/or assigns C<xml:id>s to existing elements.
+Adds E<lt>cE<gt> elements to DTA XML files and/or assign C<xml:id>s to existing E<lt>cE<gt>s.
+
+Pretty much useless as of dta-tokwrap v0.38.
 
 =cut
 
