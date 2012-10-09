@@ -1,4 +1,4 @@
-package Algorithm::BinarySearch::Vec;
+package Algorithm::BinarySearch::Vec::XS;
 
 use 5.008004;
 use strict;
@@ -12,7 +12,7 @@ our @ISA = qw(Exporter);
 our $VERSION = '0.01';
 
 require XSLoader;
-XSLoader::load('Algorithm::BinarySearch::Vec', $VERSION);
+XSLoader::load('Algorithm::BinarySearch::Vec::XS', $VERSION);
 
 # Preloaded methods go here.
 #require Algorithm::BinarySearch::Vec::Whatever;
@@ -31,9 +31,10 @@ BEGIN {
 	      ],
      debug => [qw(vget vset)],
     );
-  $EXPORT_TAGS{all} = [@{$EXPORT_TAGS{std}}, @{$EXPORT_TAGS{debug}}];
-  @EXPORT_OK        = @{$EXPORT_TAGS{all}};
-  @EXPORT           = qw();
+  $EXPORT_TAGS{default} = [@{$EXPORT_TAGS{std}}];
+  $EXPORT_TAGS{all}     = [@{$EXPORT_TAGS{std}}, @{$EXPORT_TAGS{debug}}];
+  @EXPORT_OK            = @{$EXPORT_TAGS{all}};
+  @EXPORT               = @{$EXPORT_TAGS{default}};
 }
 
 ##======================================================================

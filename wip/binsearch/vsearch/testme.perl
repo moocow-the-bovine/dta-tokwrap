@@ -2,7 +2,7 @@
 #-*- Mode: CPerl; coding: utf-8 -*-
 
 use lib qw(./blib/lib ./blib/arch);
-use Algorithm::BinarySearch::Vec ':all';
+use Algorithm::BinarySearch::Vec::XS ':all';
 
 BEGIN {
   #binmode(\*STDOUT,':utf8');

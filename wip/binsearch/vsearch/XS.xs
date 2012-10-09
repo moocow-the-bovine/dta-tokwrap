@@ -108,7 +108,7 @@ static uint avbs_bsearch(const uchar *v, uint key, uint ilo, uint ihi, uint nbit
  * XS Guts
  */
 
-MODULE = Algorithm::BinarySearch::Vec    PACKAGE = Algorithm::BinarySearch::Vec
+MODULE = Algorithm::BinarySearch::Vec::XS    PACKAGE = Algorithm::BinarySearch::Vec::XS
 
 PROTOTYPES: ENABLE
 

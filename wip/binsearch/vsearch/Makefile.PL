@@ -5,22 +5,22 @@ use ExtUtils::MakeMaker;
 ##----------------------------------------------------------------------
 WriteMakefile
   (
-   NAME		=> 'Algorithm::BinarySearch::Vec',
+   NAME		=> 'Algorithm::BinarySearch::Vec::XS',
    AUTHOR       => 'Bryan Jurish <moocow@cpan.org>',
-   ABSTRACT	=> 'binary search on vec() vectors',
-   VERSION_FROM	=> 'Vec.pm',
+   ABSTRACT	=> 'fast binary search functions for vec() vectors',
+   VERSION_FROM	=> 'XS.pm',
 
    ##-- user variables
    #CC           => 'c++',   ##-- your c++ compiler
-   #LIBS         => "$UX_LDFLAGS $UX_LIBS",      ##-- additional libraries
+   #LIBS         => "$MY_LDFLAGS $MY_LIBS",      ##-- additional libraries
    #DEFINE       => '-DHAVE_CONFIG_H',     ##-- additional defines
-   #INC          => $UX_IFLAGS,      ##-- additional includes
+   #INC          => $MY_IFLAGS,      ##-- additional includes
    #CCFLAGS      => '',          ##-- additional flags
-   OPTIMIZE    => '-O2 -pipe', ##-- optimization flags
-   #OBJECT      => 'Gfsm.o GfsmPerl.o',
+   OPTIMIZE    => '-O2 -pipe',  ##-- optimization flags
+   #OBJECT      => 'foo.o',
 
    ##-- install these
-   EXE_FILES => [glob("*.perl")],
+   #EXE_FILES => [glob("*.perl")],
 
    ##-- DEBUG
    #MAKEAPERL=>1,
@@ -36,7 +36,7 @@ WriteMakefile
 
    ##-- prerequisites
    PREREQ_PM    => {
-		    #'Encode' => undef,
+		    #'Module' => $version,
 		   },
   );
 
@@ -48,13 +48,7 @@ WriteMakefile
 ##---------------------------------------------------------------
 sub MY::constants {
   package MY;
-  my $css = 'moopod.css';
   my $inherited = shift->SUPER::constants(@_);
-  $inherited .= (
-		 ###-- constants: html css
-		 "\n"
-		 ."CSS ?= $css\n"
-		);
   return $inherited;
 }
 
@@ -67,11 +61,8 @@ sub MY::depend {
 		 "\n\n"
 		 .join('',
 		      map {
-			#"$_: README.txt\n\n",
-			''
-		      }
-		      qw(dist create_distdir distdir_am distcheck manicheck)
-		     )
+			"$_: README.txt\n\n"
+		      } qw(dist create_distdir distdir_am distcheck manicheck))
 		);
   return $inherited;
 }
