@@ -48,21 +48,32 @@ sub load_pdl0 {
 
 ##==============================================================
 ## bench: lookup: pdl
+my ($lp_co,$lp_bi,$lp_tmp);
 sub lookup_pdl {
-  #my ($p,\@co) = @_;
-  #return [pdl(long,$_[1])->vsearch($_[0])->list];
-  my $co = pdl(long,$_[1]);
-  my $bi = $co->vsearch($_[0]);
-  (my $tmp=$bi->where($_[0]->index($bi)!=$co)) -= 1;
-  return [$bi->list];
+  #my ($pdl,$col) = @_;
+  my $lp_co = pdl(long,$_[1]);
+  my $lp_bi = $lp_co->vsearch($_[0]);
+  (my $lp_tmp=$lp_bi->where($_[0]->index($lp_bi)!=$lp_co)) -= 1;
+  return [$lp_bi->list];
+}
+sub lookup_pdl_g {
+  $lp_co = pdl(long,$_[1]);
+  $lp_bi = $lp_co->vsearch($_[0]);
+  (my $lp_tmp=$lp_bi->where($_[0]->index($lp_bi)!=$lp_co)) -= 1;
+  return [$lp_bi->list];
 }
 
 ##==============================================================
 ## bench: lookup: native
 sub lookup_list {
-  my ($l,$co) = @_;
-  return [map {binsearch_l($l,$_)} @$co];
+  #my ($l,$co) = @_;
+  return [map {binsearch_l($_[0],$_)} @{$_[1]}];
 }
+sub lookup_list_g {
+  #my ($l,$co) = @_;
+  return [map {binsearch_lg($_[0],$_)} @{$_[1]}];
+}
+
 
 sub binsearch_l {
   my ($l,$key)=@_[0,1];
@@ -83,6 +94,21 @@ sub binsearch_l {
   return $ilo if ($l->[$ilo]==$key);
   return $l->[$ihi]<=$key ? $ihi : $ilo;
 }
+my ($l,$key,$ilo,$ihi,$imid);
+sub binsearch_lg {
+  ($l,$key)=@_[0,1];
+  $ilo = @_>2 ? $_[2] : 0;
+  $ihi = @_>3 ? $_[3] : $#$l;
+
+  while ($ihi-$ilo > 1) {
+    $imid = ($ihi+$ilo) >> 1;
+    if ($l->[$imid] < $key) { $ilo = $imid; }
+    else { $ihi = $imid; }
+  }
+  return $ilo if ($l->[$ilo]==$key);
+  return $l->[$ihi]<=$key ? $ihi : $ilo;
+}
+
 
 ##-- TEST
 if (0) {
@@ -96,8 +122,12 @@ if (0) {
 ##==============================================================
 ## bench: lookup: vector
 sub lookup_vec {
-  my ($vr,$co) = @_;
-  return [map {binsearch_v($vr,$_)} @$co];
+  #my ($vr,$co) = @_;
+  return [map {binsearch_v($_[0],$_)} @{$_[1]}];
+}
+sub lookup_vec_g {
+  #my ($vr,$co) = @_;
+  return [map {binsearch_vg($_[0],$_)} @{$_[1]}];
 }
 
 sub binsearch_v {
@@ -120,6 +150,21 @@ sub binsearch_v {
   return $ilo if (vec($$vr,$ilo,32)==$key);
   return vec($$vr,$ihi,32)<=$key ? $ihi : $ilo;
 }
+my ($vr);
+sub binsearch_vg {
+  ($vr,$key)=@_[0,1];
+  $ilo = @_>2 ? $_[2] : 0;
+  $ihi = @_>3 ? $_[3] : ((length($$vr)>>2)-1);
+
+  while ($ihi-$ilo > 1) {
+    $imid = ($ihi+$ilo) >> 1;
+    if (vec($$vr,$imid,32) < $key) { $ilo = $imid; }
+    else { $ihi = $imid; }
+  }
+  return $ilo if (vec($$vr,$ilo,32)==$key);
+  return vec($$vr,$ihi,32)<=$key ? $ihi : $ilo;
+}
+
 
 ##-- TEST
 if (0) {
@@ -138,7 +183,7 @@ $sxfile = 'sj01.sxc' if (!$sxfile);
 $cofile = 'sj01.cxo' if (!$cofile);
 
 ##-- load
-my $l = load_list($sxfile,1);
+$l = load_list($sxfile,1);
 my $p = load_pdl($sxfile,1);
 my $v = load_vec($sxfile,1);
 
@@ -158,7 +203,8 @@ my $cov = pack('N*',@$col);
 my $cop = pdl(long,$col);
 
 ##-- random c indices
-my $cqpi = (random(99)*($cop->nelem))->long->qsort;
+my $nq   = 10;
+my $cqpi = (random($nq)*($cop->nelem))->long->qsort;
 my $cqp  = $cop->index($cqpi);
 my @cql  = $cqp->list;
 
@@ -173,16 +219,24 @@ if (1) {
   $iv = lookup_vec(\$cov,\@cql);
 }
 
-print STDERR "\ncompare: lookup_sx_*()\n";
+print STDERR "\ncompare: lookup_sx_*(n=$nq)\n";
 cmpthese(-1,{
 	     'lookup_sx_p'=>sub {lookup_pdl($p,\@cql)},
 	     'lookup_sx_l'=>sub {lookup_list($l,\@cql)},
 	     'lookup_sx_v'=>sub {lookup_vec(\$v,\@cql)},
+	     ##
+	     'lookup_sx_pg'=>sub {lookup_pdl_g($p,\@cql)},
+	     'lookup_sx_lg'=>sub {lookup_list_g($l,\@cql)},
+	     'lookup_sx_vg'=>sub {lookup_vec_g(\$v,\@cql)},
 	    });
 
-print STDERR "\ncompare: lookup_cx_*()\n";
+print STDERR "\ncompare: lookup_cx_*(n=$nq)\n";
 cmpthese(-1,{
 	     'lookup_cx_p'=>sub {lookup_pdl($cop,\@cql)},
 	     'lookup_cx_l'=>sub {lookup_list($col,\@cql)},
 	     'lookup_cx_v'=>sub {lookup_vec(\$cov,\@cql)},
+	     ##
+	     'lookup_cx_pg'=>sub {lookup_pdl_g($cop,\@cql)},
+	     'lookup_cx_lg'=>sub {lookup_list_g($col,\@cql)},
+	     'lookup_cx_vg'=>sub {lookup_vec_g(\$cov,\@cql)},
 	    });

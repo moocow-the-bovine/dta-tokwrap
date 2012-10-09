@@ -26,7 +26,9 @@ our (%EXPORT_TAGS, @EXPORT_OK, @EXPORT);
 BEGIN {
   %EXPORT_TAGS =
     (
-     std   => [qw(vbsearch vbsearch_lb vbsearch_ub)],
+     std   => [qw( vbsearch  vbsearch_lb  vbsearch_ub),
+	       qw(vabsearch vabsearch_lb vabsearch_ub),
+	      ],
      debug => [qw(vget vset)],
     );
   $EXPORT_TAGS{all} = [@{$EXPORT_TAGS{std}}, @{$EXPORT_TAGS{debug}}];
