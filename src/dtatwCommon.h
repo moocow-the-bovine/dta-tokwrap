@@ -26,18 +26,8 @@ typedef int ByteLen;
 
 extern char *prog;
 
-//-- CX_NIL_ID: pseudo-id used for missing (xml:)?id attributes on <c> elements
-extern char *CX_NIL_ID; //-- default: "-"
-
-//-- CX_LB_ID : pseudo-ID for <lb/> records
-extern char *CX_LB_ID; //-- default: "$LB$"
-
-//-- CX_PB_ID : pseudo-ID for <pb/> records
-extern char *CX_PB_ID; //-- default: "$PB$"
-
-//-- CX_FORMULA_ID : pseudo-ID format for <formula/> records (given original byte offset)
-#define CX_FORMULA_PREFIX "$FORMULA:"
-extern char *CX_FORMULA_ID; //-- default: CX_FORMULA_PREFIX ":%lu$"
+//-- CX_NIL_ELT: pseudo-name used for raw text nodes in cx-records
+extern char *CX_NIL_ELT; //-- default: "-"
 
 //-- CX_FORMULA_TEXT : text inserted for <formula/> records
 extern char *CX_FORMULA_TEXT; //-- default: " FORMULA "
@@ -235,7 +225,7 @@ size_t file_slurp(FILE *f, char **bufp, size_t buflen);
 
 // cxRecord : struct for character-index records as loaded from .cx file
 typedef struct {
-  char        *id;      //-- (xml:)?id of source <c>
+  char       *elt;      //-- name of source element (e.g. "c" or "-")
   ByteOffset xoff;      //-- original xml byte offset
   ByteLen    xlen;      //-- original xml byte length
   ByteOffset toff;      //-- .tx byte offset

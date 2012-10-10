@@ -55,23 +55,23 @@ static inline void cx_claim(cxRecord *cx)
 }
 
 //--------------------------------------------------------------
-/* bool = cx_id_ok(cx)
- *  + returns true iff cx is a "real" character record with a valid id, etc.
- *  + bad ids: NULL, ""
- *  + NOT bad ids: CX_NIL_ID, CX_LB_ID, CX_PB_ID, CX_FORMULA_ID
+/* bool = cx_elt_ok(cx)
+ *  + returns true iff cx is a "real" character record with a valid element name, etc.
+ *  + bad names: NULL, ""
  *  + see dtatwCommon.h for id constants
  */
-static inline int cx_id_ok(const cxRecord *cx)
+static inline int cx_elt_ok(const cxRecord *cx)
 {
   return (cx
-	  && cx->id
-	  && cx->id[0]
+	  && cx->elt
+	  && cx->elt[0]
 	  //&& strcmp(cx->id,CX_NIL_ID) !=0
 	  //&& strncmp(cx->id,CX_FORMULA_PREFIX,strlen(CX_FORMULA_PREFIX)) !=0
 	  //&& strcmp(cx->id,CX_LB_ID) !=0
 	  //&& strcmp(cx->id,CX_PB_ID) !=0
 	  );
 }
+
 
 //--------------------------------------------------------------
 /* Typedef(s) for .tt "word buffer"
@@ -131,14 +131,14 @@ static void tt_dump_word(FILE *f_out, ttWordBuffer *w)
       if (jcx && jcx->claimed > 1) {
 #if WARN_ON_OVERLAP
 	if ( !(w->w_flags&ttwOver) )
-	  fprintf(stderr, "%s: WARNING: `%s' line %u: overlapping word `%s' at XML-byte %lu (c#%s)\n",
-		  prog, tt_filename, tt_linenum, w->w_text, (jcx ? jcx->xoff : 0), (jcx ? jcx->id : "?"));
+	  fprintf(stderr, "%s: WARNING: `%s' line %u: overlapping word `%s' at XML-byte %lu (elt=%s)\n",
+		  prog, tt_filename, tt_linenum, w->w_text, (jcx ? jcx->xoff : 0), (jcx ? jcx->elt : "?"));
 #endif
 	w->w_flags |= ttwOver;
 	break;
       }
       if (jcx==jcx_prev) continue; //-- ignore word-internal duplicates
-      if (!cx_id_ok(jcx) || !cx_is_adjacent(jcx_prev,jcx)) break;
+      if (!cx_elt_ok(jcx) || !cx_is_adjacent(jcx_prev,jcx)) break;
 
       jcx->claimed = 1;
       jcx_prev = jcx;

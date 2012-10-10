@@ -5,10 +5,7 @@
  * Globals
  */
 char *prog = "dtatwCommon"; //-- used for error reporting
-char *CX_NIL_ID = "-";
-char *CX_LB_ID  = "$LB$";
-char *CX_PB_ID  = "$PB$";
-char *CX_FORMULA_ID  = CX_FORMULA_PREFIX "%lu$";
+char *CX_NIL_ELT = "-";
 char *CX_FORMULA_TEXT  = " FORMULA ";
 //char *xmlid_name = "xml:id";
 char *xmlid_name = "id";
@@ -134,10 +131,10 @@ cxData *cxDataLoad(cxData *cxd, FILE *f)
     char *tail;
     if (linebuf[0]=='%' && linebuf[1]=='%') continue;  //-- skip comments
 
-    //-- ID
+    //-- elt
     s0  = linebuf;
     s1  = next_tab_z(s0);
-    cx.id = strdup(s0);
+    cx.elt = strdup(s0);
 
     //-- xoff
     s0 = s1+1;
@@ -407,9 +404,6 @@ Offset2CxIndex *txt2cxIndex(Offset2CxIndex *txto2cx, bxData *bxd, Offset2CxIndex
       for (txti=0; txti < bx->otlen; txti++) {
 	cxRecord *cx = txb2cx->data[bx->toff+txti];
 	txto2cx->data[bx->otoff+txti] = cx;
-	//-- (?) map special characters (e.g. <lb/>) to NULL here?
-	//if (cx->id[0]=='$') { ... }
-
 	if (cx != NULL) cx->bxp = bx; //-- cache block pointer for cx
       }
     }

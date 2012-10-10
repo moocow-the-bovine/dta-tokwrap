@@ -154,7 +154,7 @@ void put_record_char(TokWrapData *data)
 void put_record_textchar(TokWrapData *data, ByteOffset xoff, ByteOffset xlen)
 {
   put_record_raw(data->f_cx,
-		 CX_NIL_ID,
+		 CX_NIL_ELT,
 		 xoff, xlen,
 		 data->c_toffset, data->c_tlen,
 		 data->c_tbuf,
@@ -179,7 +179,7 @@ inline void flush_ws(TokWrapData *data)
 {
   if (data->ws_pending) {
     put_record_raw(data->f_cx,
-		   CX_NIL_ID,
+		   CX_NIL_ELT,
 		   data->c_xoffset, data->c_xlen,
 		   data->c_toffset, 1,
 		   " ",

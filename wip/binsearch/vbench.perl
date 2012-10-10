@@ -31,6 +31,16 @@ sub load_vec {
   return pack('N*', map {ref($_) ? @$_ : $_} @$l);
 }
 
+sub list2hash {
+  my $l = shift;
+  my $h = { map {($l->[$_]=>$_)} (0..$#$l) };
+  return $h;
+}
+
+sub load_hash {
+  return list2hash(load_list(@_));
+}
+
 ##==============================================================
 ## bench: load: pdl
 sub load_pdl {
@@ -189,6 +199,15 @@ sub lookup_vec_xs {
 
 
 ##==============================================================
+## bench: lookup: hash
+
+sub lookup_hash {
+  #my ($h,$co) = @_;
+  return [@{$_[0]}{@{$_[1]}}];
+}
+
+
+##==============================================================
 ## MAIN
 my ($sxfile,$cofile) = @ARGV;
 $sxfile = 'sj01.sxc' if (!$sxfile);
@@ -198,6 +217,7 @@ $cofile = 'sj01.cxo' if (!$cofile);
 $l = load_list($sxfile,1);
 my $p = load_pdl($sxfile,1);
 my $v = load_vec($sxfile,1);
+my $h = list2hash($l);
 
 ##-- bench: load
 if (0) {
@@ -206,6 +226,7 @@ if (0) {
 	       'load_sx_l'=>sub {load_list($sxfile,1)},
 	       'load_sx_v'=>sub {load_vec($sxfile,1)},
 	       'load_sx_p'=>sub {load_pdl($sxfile,1)},
+	       'load_sx_h'=>sub {load_hash($sxfile,1)},
 	      });
 }
 
@@ -213,6 +234,7 @@ if (0) {
 my $col = load_list($cofile,1);
 my $cov = pack('N*',@$col);
 my $cop = pdl(long,$col);
+my $coh = list2hash($col);
 
 ##-- random c indices
 my $nq   = 10;
@@ -226,11 +248,13 @@ if (1) {
   my $il = lookup_list($l,\@cql);
   my $iv = lookup_vec(\$v,\@cql);
   my $ix = lookup_vec_xs($v,\@cql);
+  my ($ih);
 
   $ip = lookup_pdl($cop,\@cql);
   $il = lookup_list($col,\@cql);
   $iv = lookup_vec(\$cov,\@cql);
   $ix = lookup_vec_xs($cov,\@cql);
+  $ih = lookup_hash($coh,\@cql);
 }
 
 print STDERR "\ncompare: lookup_sx_*(n=$nq)\n";
@@ -239,6 +263,7 @@ cmpthese(-1,{
 	     'lookup_sx_l'=>sub {lookup_list($l,\@cql)},
 	     'lookup_sx_v'=>sub {lookup_vec(\$v,\@cql)},
 	     'lookup_sx_vxs'=>sub {lookup_vec_xs($v,\@cql)},
+	     #'lookup_sx_h'=>sub {lookup_hash($h,\@cql)}, ##-- pointless!
 	     ##
 	     #'lookup_sx_pg'=>sub {lookup_pdl_g($p,\@cql)},
 	     #'lookup_sx_lg'=>sub {lookup_list_g($l,\@cql)},
@@ -249,6 +274,7 @@ print STDERR "\ncompare: lookup_cx_*(n=$nq)\n";
 cmpthese(-1,{
 	     'lookup_cx_p'=>sub {lookup_pdl($cop,\@cql)},
 	     'lookup_cx_l'=>sub {lookup_list($col,\@cql)},
+	     'lookup_cx_h'=>sub {lookup_hash($coh,\@cql)},
 	     'lookup_cx_v'=>sub {lookup_vec(\$cov,\@cql)},
 	     'lookup_cx_vxs'=>sub {lookup_vec_xs($cov,\@cql)},
 	     ##
