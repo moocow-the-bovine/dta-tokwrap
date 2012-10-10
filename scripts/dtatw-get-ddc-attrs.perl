@@ -231,7 +231,7 @@ sub load_sx {
 	push(@xc, $aname);
       }
     }
-    push(@sx_blocks, {xoff=>$xoff,xlen=>$xlen,xp=>$xp,xr=>join(' ',luniq(@xr)),xc=>join(' ',luniq(@xc))});
+    push(@sx_blocks, {xoff=>$xoff,xlen=>$xlen,xp=>$xp,xpp=>$xpp,xr=>join(' ',luniq(@xr)),xc=>join(' ',luniq(@xc))});
   }
 
   ##-- populate block index
