@@ -82,17 +82,12 @@ USAGE
 
     *   the document MUST be encoded in UTF-8,
 
-    *   all text nodes to be tokenized should be descendants of a "<c>"
-        element which is itself a descendant of a "<text>" element (XPath
-        "//text//c//text()"),
+    *   all text nodes to be tokenized should be descendants of a "<text>"
+        element, and may optionally be immediate daughters of a "<c>"
+        element (XPath "//text//text()|//text//c/text()"). "<c>" elements
+        may not be nested.
 
-    *   the document should contain exactly one such "<c>" element for *each
-        logical character* which may be passed to the tokenizer,
-
-    *   no "<c>" element may be a descendant of another "<c>" element, and
-
-    *   if stand-off annotations are desired (the default), each "c" element
-        should have a valid "xml:id" attribute.
+        Prior to dta-tokwrap v0.38, "<c>" elements were required.
 
   Example: Tokenizing a single XML file
     Assume we wish to tokenize a single DTA "base-format" XML file doc1.xml.
@@ -108,18 +103,6 @@ USAGE
         various stand-off annotation formats. This format can also be passed
         directly to and from the DTA::CAB(3pm) analysis suite using the
         DTA::CAB::Format::XmlNative(3pm) formatter class.
-
-    doc1.w.xml
-        Stand-off XML file encoding token boundaries. Contains references to
-        "//c/@xml:id" attributes of doc1.xml.
-
-    doc1.s.xml
-        Stand-off XML file encoding token boundaries. Contains references to
-        "//w/@xml:id" attributes of doc1.w.xml.
-
-    doc1.a.xml
-        Stand-off XML file encoding tokenizer-provided token analyses.
-        Contains references to "//w/@xml:id" attributes of doc1.w.xml.
 
   Example: Tokenizing multiple XML files
     Assume we wish to tokenize a corpus of three DTA "base-format" XML files
@@ -224,6 +207,10 @@ TOOLS
     dtatw-t-check.perl
         Simple script to check consistency of tokenizer output (*.t) offset
         + length fields with input (*.txt) file.
+
+    dtatw-add-c.perl
+        Script to add "<c>" elements to an XML document which does not
+        already contain them. Not really useful as of dta-tokwrap v0.38.
 
     dtatw-rm-c.perl
         Script to remove "<c>" elements from an XML document. Regex hack,

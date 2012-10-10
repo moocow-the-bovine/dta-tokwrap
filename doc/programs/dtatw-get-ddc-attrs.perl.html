@@ -39,31 +39,30 @@
 <hr />
 <h1><a name="synopsis">SYNOPSIS</a></h1>
 <pre>
- dtatw-get-ddc-attrs.perl [OPTIONS] T_XML_FILE [CHR_XML_FILE=T_XML_FILE:.t.xml=.xml]</pre>
+ dtatw-get-ddc-attrs.perl [OPTIONS] T_XML_FILE [SX_FILE=T_XML_FILE:.t.xml=.sx [CX_FILE=SX_FILE:.sx=.cx]]</pre>
 <pre>
  General Options:
   -help                  # this help message
-  -verbose LEVEL         # set verbosity level (0&lt;=LEVEL&lt;=1)
-  -quiet                 # be silent</pre>
+  -verbose LEVEL         # set verbosity level (0&lt;=LEVEL&lt;=3)
+  -quiet                 # be silent; alias for -verbose=0</pre>
 <pre>
  I/O Options:
+  -output FILE           # specify output file (default='-' (STDOUT))
+  -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in T_XML_FILE file (default=don't)
   -ws     , -nows        # do/don't keep whitespace in //w/@t (default=don't)
   -page   , -nopage      # do/don't extract //w/@pb (page-break; default=do)
   -line   , -noline      # do/don't extract //w/@lb (line-break; default=do)
   -rend   , -norend      # do/don't extract //w/@xr (rendition; default=do)
   -xcon   , -noxcon      # do/don't extract //w/@xc (xml context; default=do)
-  -xpath  , -noxpath     # do/don't extract //w/@xp (xpath; default=do)
+  -xpath  , -noxpath     # do/don't extract //w/@xp (trimmed xpath; default=do)
+  -xppath , -noxppath    # do/don't extract //w/@xpp (untrimmed xpath; default=don't)
   -bbox   , -nobbox      # do/don't extract //w/@bb (bbox; default=do)
   -xlit   , -noxlit      # do/don't extract //w/@u  (unicruft transliteration; default=do)
   -wsep   , -nowsep      # do/don't extract //w/@ws (boolean space-separation; default=do)
-  -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in T_XML_FILE file (default=don't)
-  #-coff   , -nocoff      # do/don't extract //w/(@coff|@clen) from //w/@c or //w/@cs (default=don't)
-  #-boff   , -noboff      # do/don't extract //w/(@boff|@blen) from //w/@b (default=don't)
-  #-keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=keep)
+  -keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=keep)
   -keep-b , -nokeep-b    # do/don't keep existing //w/@b attributes (default=keep)
   -keep-xb, -nokeep-xb   # do/don't keep existing //w/@xb attributes (default=keep)
-  -formula-text TEXT     # output text for //formula elements (default='' (no change))
-  -output FILE           # specify output file (default='-' (STDOUT))</pre>
+  -formula-text TEXT     # output text for //formula elements (default='' (no change))</pre>
 <p>
 </p>
 <hr />

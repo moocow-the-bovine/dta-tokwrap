@@ -46,11 +46,9 @@
 <pre>
  I/O Options:
   -output FILE           # specify output file (default='-' (STDOUT))
-   -cids  , -nocids      # do/don't assign ids for auto-generated &lt;c&gt; elements (default=-nocids)
+  -cids  , -nocids       # do/don't assign ids for auto-generated &lt;c&gt; elements (default=-nocids)
   -idns=NAMESPACE        # namespace prefix for id attributes, e.g. &quot;xml:&quot; (default=none)
   -rmns   , -keepns      # do/don't encode default namespaces as for dtatw-nsdefault-encode.perl (default=do)
-  -guess-min PERCENT     # in -guess mode, minimum percentage of data in &lt;c&gt; elements which is 'enough' (default=50)
-  -guess  , -noguess     # do/don't attempt to guess whether 'enough' &lt;c&gt; elements are already present (default='-guess')
   -profile, -noprofile   # output profiling information? (default=no)</pre>
 <p>
 </p>
@@ -61,7 +59,8 @@
 </p>
 <hr />
 <h1><a name="description">DESCRIPTION</a></h1>
-<p>Adds &lt;c&gt; elements to DTA XML files and/or assigns <code>xml:id</code>s to existing elements.</p>
+<p>Adds &lt;c&gt; elements to DTA XML files and/or assign <code>xml:id</code>s to existing &lt;c&gt;s.</p>
+<p>Pretty much useless as of dta-tokwrap v0.38.</p>
 <p>
 </p>
 <hr />
