@@ -10,36 +10,31 @@ char *CX_FORMULA_TEXT  = " FORMULA ";
 //char *xmlid_name = "xml:id";
 char *xmlid_name = "id";
 
+//-- foward decl (lives in string.h)
+extern char *basename(const char *path);
+
 /*======================================================================
  * Utils: basename
  */
 char *file_basename(char *dst, const char *src, const char *suff, int srclen, int dstlen)
 {
-  const char *base0, *base1;
-  int suflen = strlen(suff);
-  if (srclen < 0) srclen = strlen(src);
-
-  base1 = src+srclen;
-  if (srclen >= suflen && strcmp(suff,src+srclen-suflen)==0) base1 -= suflen;
-
-  //-- scan backwards for first directory separator
-  for (base0=base1; *base0 != '/' && *base0 != '\\'; base0--) {
-    if (base0==src) break;
-  }
-  if (base0<base1) ++base0;
+  const char *b = basename(src);
+  int blen = strlen(b);
+  int suflen = suff ? strlen(suff) : 0;
+  if (suff && blen >= suflen && strcmp(suff,b+blen-suflen)==0) { blen -= suflen; }
 
   //-- maybe allocate dst
   if (dst==NULL) {
-    if (dstlen <= 0) dstlen  = base1-base0+1;
-    else             dstlen += base1-base0+1;
+    if (dstlen <= 0) dstlen  = blen+1;
+    else             dstlen += blen+1;
     dst = (char*)malloc(dstlen);
     assert(dst != NULL /* malloc error */);
   }
 
   //-- copy
-  assert(dstlen > base1-base0 /* buffer overflow */);
-  memcpy(dst, base0, base1-base0);
-  dst[base1-base0] = '\0';
+  assert(dstlen > blen /* buffer overflow */);
+  memcpy(dst, b, blen);
+  dst[blen] = '\0';
 
   return dst;
 }

@@ -122,7 +122,7 @@ static void tt_dump_word(FILE *f_out, ttWordBuffer *w)
 
   //-- compute xml-bytes
   *xmlpos = '\0';
-  for (i=0; i < w->w_len; i = j+1) {
+  for (i=0; i < w->w_len; i=j+1) {
     icx    = jcx_prev = txtb2cx.data[w->w_off+i];
     xmlend = icx ? (icx->xoff + icx->xlen) : (ByteOffset)-1;
 
@@ -138,7 +138,10 @@ static void tt_dump_word(FILE *f_out, ttWordBuffer *w)
 	break;
       }
       if (jcx==jcx_prev) continue; //-- ignore word-internal duplicates
-      if (!cx_elt_ok(jcx) || !cx_is_adjacent(jcx_prev,jcx)) break;
+      if (!cx_elt_ok(jcx) || !cx_is_adjacent(jcx_prev,jcx)) {
+	--j;
+	break;
+      }
 
       jcx->claimed = 1;
       jcx_prev = jcx;
