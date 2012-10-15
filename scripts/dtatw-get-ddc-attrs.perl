@@ -8,6 +8,7 @@ use Encode qw(encode decode encode_utf8 decode_utf8);
 use File::Basename qw(basename);
 use Time::HiRes qw(gettimeofday tv_interval);
 use Unicruft;
+use Algorithm::BinarySearch::Vec qw(:default);
 use Pod::Usage;
 
 use strict;
@@ -20,7 +21,8 @@ our ($help);
 
 ##-- vars: I/O
 our $txmlfile = undef; ##-- required
-our $cxmlfile = "-";   ##-- default: stdin
+our $cxfile   = undef; ##-- default: ($txmlfile:.t.xml=.cx)
+our $sxfile   = undef; ##-- default: ($cxfile:.cx=.sx)
 our $outfile  = "-";   ##-- default: stdout
 our $format = 1;       ##-- output format level
 
@@ -29,7 +31,7 @@ our $PAGE_BOTTOM_Y = 50001;
 our $PAGE_TOP_Y = 1;
 our $MAX_FORMULA_PIX = 1024; ##-- any formula bboxes higher $MAX_FORMULA_PIX are chucked
 our $MIN_FORMULA_PIX = 100;  ##-- formula bboxes shorter than $MIN_FORMULA_PIX are extended
-our $CN2WN_BITS = 32;
+our $NOKEY = $Algorithm::BinarySearch::Vec::KEY_NOT_FOUND;
 
 ##-- selection
 our $keep_blanks = 0;  ##-- libxml parser attribute
@@ -39,6 +41,7 @@ our $do_line = 1;
 our $do_rendition = 1;
 our $do_xcontext = 1;
 our $do_xpath = 1;
+our $do_xppath= 0;
 our $do_bbox = 1;
 our $do_unicruft = 1;
 our $do_wsep = 1;
@@ -47,13 +50,11 @@ our $do_keep_c  = 1;
 our $do_keep_b  = 1;
 our $do_keep_xb = 1;
 
-our $do_cofflen = 0;
-our $do_bofflen = 0;
-
 ##-- output attributes
 our $rendition_attr = 'xr';
 our $xcontext_attr  = 'xc';
 our $xpath_attr     = 'xp';
+our $xppath_attr    = 'xpp';
 our $page_attr      = 'pb';
 our $line_attr      = 'lb';
 our $bbox_attr      = 'bb';
@@ -67,12 +68,14 @@ our $formula_text   = ''; ##-- output text for //formula elements (undef: no cha
 
 ##-- constants: verbosity levels
 our $vl_warn     = 1;
-our $vl_progress = 2;
+our $vl_info     = 2;
+our $vl_progress = 3;
 our $verbose = $vl_progress;     ##-- print progress messages by default
 
 ##-- warnings: specific options
-our $warn_on_empty_cids = 1;     ##-- warn on empty //w/@c id-list attribute in txmlfile?
-our $warn_on_bad_page   = 1;     ##-- warn on bad //w/@pb attribute?
+our $warn_on_empty_clist = 1;       ##-- warn on empty //c list for //w in txmlfile?
+our $warn_on_empty_blist = 1;       ##-- warn on empty sx-block list for //w in txmlfile?
+our $warn_on_bad_page   = 1;        ##-- warn on bad //w/@pb attribute?
 our %n_warnings = qw();
 
 ##------------------------------------------------------------------------------
@@ -84,6 +87,8 @@ GetOptions(##-- General
 	   'quiet|q' => sub { $verbose=!$_[1]; },
 
 	   ##-- I/O
+	   'cxfile|cxf|cx=s' => \$cxfile,
+	   'sxfile|sxf|sx=s' => \$sxfile,
 	   'keep-blanks|blanks!' => \$keep_blanks,
 	   'output|out|o=s' => \$outfile,
 	   'format|f!' => \$format,
@@ -95,11 +100,10 @@ GetOptions(##-- General
 	   'rendition|rend|xr|r!' => \$do_rendition,
 	   'xcontext|context|xcon|con|xc!' => \$do_xcontext,
 	   'xpath|path|xp!' => \$do_xpath,
+	   'xppath|ppath|xpp!' => \$do_xppath,
 	   'coordinates|coords|coord|c|bboxes|bbox|bb|b!' => \$do_bbox,
 	   'unicruft|cruft|u|transliterate|xlit|xl!' => \$do_unicruft,
 	   'word-separation|word-sep|wsep|sep!' => \$do_wsep,
-	   'char-offsets|c-offsets|coff|co!' => \$do_cofflen,
-	   'byte-offsets|b-offsets|boff|bo!' => \$do_bofflen,
 	   'keep-c|keepc|kc!' => \$do_keep_c,
 	   'keep-b|keepb|kb!' => \$do_keep_b,
 	   'keep-xb|keepxb|kxb!' => \$do_keep_xb,
@@ -109,14 +113,18 @@ GetOptions(##-- General
 pod2usage({-exitval=>0,-verbose=>0}) if ($help);
 
 ##-- command-line: arguments
-($txmlfile, $cxmlfile) = @ARGV;
-$txmlfile = '-' if (!$txmlfile);
-if (!defined($cxmlfile) || $cxmlfile eq '') {
-  ($cxmlfile = $txmlfile) =~ s/\.t\.xml$/.xml/;
-  pod2usage({-exitval=>0,-verbose=>0,-msg=>"$prog: could not guess CHR_XML_FILE for T_XML_FILE=$txmlfile"})
-    if ($cxmlfile eq $txmlfile);
+$txmlfile = @ARGV ? shift : '-';
+if (!defined($cxfile) || $cxfile eq '') {
+  ($cxfile = $txmlfile) =~ s/\.t\.xml$/.cx/;
+  pod2usage({-exitval=>0,-verbose=>0,-msg=>"$prog: could not guess CX_FILE for T_XML_FILE=$txmlfile"})
+    if ($cxfile eq $txmlfile);
 }
-$prog  = "$prog: ".basename($cxmlfile);
+if (!defined($sxfile) || $sxfile eq '') {
+  ($sxfile = $cxfile) =~ s/\.cx$/.sx/;
+  pod2usage({-exitval=>0,-verbose=>0,-msg=>"$prog: could not guess SX_FILE for CX_FILE=$cxfile"})
+    if ($sxfile eq $cxfile);
+}
+$prog  = "$prog: ".basename($txmlfile);
 
 ##-- sanity checks
 $do_page = 1 if ($do_bbox);
@@ -124,6 +132,10 @@ $do_line = 1 if ($do_bbox);
 
 ##======================================================================
 ## Subs: t-xml stuff (*.t.xml)
+
+## $Ns,$Nw : number of (words|sentences) from .tx-file
+##  + only set if $verbose >= $vl_info
+our ($Ns,$Nw) = (0,0);
 
 ## $txmldoc = load_txml($txmlfile)
 ##  + loads and returns xml doc
@@ -137,179 +149,240 @@ sub load_txml {
 
   ##-- load xml
   my $xdoc = $xmlfile eq '-' ? $parser->parse_fh(\*STDIN) : $parser->parse_file($xmlfile);
-  die("$prog: ERROR: could not parse .t.xml file '$xmlfile': $!") if (!$xdoc);
+  die("$prog: FATAL: could not parse .t.xml file '$xmlfile': $!") if (!$xdoc);
+
+  ##-- get stats
+  if ($verbose >= $vl_info) {
+    $Ns = scalar(@{$xdoc->findnodes('//s')});
+    $Nw = scalar(@{$xdoc->findnodes('//w')});
+  }
 
   ##-- ... and just return here
   return $xdoc;
 }
 
+##======================================================================
+## Subs: sx stuff (*.sx)
+
+## @sx_blocks : blocks parsed from .sx file:
+## {
+##  xoff=>$xoff,
+##  xlen=>$xlen,
+##  xp=>$xpath,   ##-- xpath without []-indices, and with initial m(^(?:/TEI)?(?:/text)?) removed
+##  xpp=>$xpath,  ##-- xpath with []-indices
+##  xr=>$rendition,
+##  xc=>$context,
+## }
+our @sx_blocks = qw();
+
+## $sx_blockv : vector index of blocks from .sx file
+## + vec($sx_blockv,$i,32) == $sx_blocks[$i]{xoff}
+our $sx_blockv = '';
+
+## $Nsx : number of sx-records; $Nsx == scalar(@sx_blocks) == bytes::length($sx_blockv)/4;
+our $Nsx = 0;
+
+## $bool = load_sx($sxfile)
+##  + loads sx data from $sxfile
+##  + populates globals @sx_blocks, $sx_blockv
+sub load_sx {
+  my $xmlfile = shift;
+
+  local $/ = undef;
+  open(my $fh, "<$xmlfile") or die("$prog: FATAL: open failed for .sx-file $sxfile: $!");
+  my $xmlbuf = <$fh>;
+  close($fh);
+  $xmlbuf =~ s|(<[^>]*\s)xmlns=|${1}XMLNS=|g;  ##-- remove default namespaces
+
+  ##-- initialize LibXML parser
+  my $parser = XML::LibXML->new();
+  $parser->keep_blanks(0);
+  $parser->line_numbers(1);
+
+  ##-- load xml
+  my $xdoc = $parser->parse_string($xmlbuf)
+    or die("$prog: FATAL: could not parse .sx file from '$xmlfile': $!");
+
+  ##-- descendants of these elements get marked in their 'xc' attribute
+  my %xcontext_elts = (map {($_=>undef)}
+		       qw(text front body back head left foot end argument hi cit fw lg stage speaker formula table),
+		       qw(note),
+		      );
+
+  ##-- populate sx-blocks
+  @sx_blocks = qw();
+  my ($cnod,$cn,$xoff,$xlen,$nrest,$xp,$xpp, @xr,@xc,$tmp,$aname);
+  foreach $cnod (@{$xdoc->findnodes('//c[@n]')}) {
+    next if (!($cn = $cnod->getAttribute('n')) || $cn =~ /\b0\z/); ##-- ignore block-nodes without tx data
+    ($xoff,$xlen,$nrest) = split(' ',$cn,3);
+    ($xpp = $cnod->nodePath()) =~ s{\/c[^\/]*$}{};
+    ($xp = $xpp) =~ s{\[[0-9]+\]}{}g;
+    $xp =~ s{^/(?:(?:TEI/)?(?:text/)?)}{};
+
+    @xr = @xc = qw();
+    foreach (@{$cnod->findnodes('ancestor::*')}) {
+      push(@xr,$tmp) if ( ($tmp=$_->getAttribute('rendition')) );
+      if ( ($aname=$_->nodeName) eq 'note' ) {
+	##-- context: note: mark @place attribute
+	push(@xc, "note_".($_->getAttribute('place')||'other'));
+      }
+      elsif (exists($xcontext_elts{$aname})) {
+	##-- context: element-based
+	push(@xc, $aname);
+      }
+    }
+    push(@sx_blocks, {xoff=>$xoff,xlen=>$xlen,xp=>$xp,xpp=>$xpp,xr=>join(' ',luniq(@xr)),xc=>join(' ',luniq(@xc))});
+  }
+
+  ##-- populate block index
+  $Nsx = scalar(@sx_blocks);
+  $sx_blockv = '';
+  vec($sx_blockv,$Nsx-1,32) = 0; ##-- allocate
+  my $blki = 0;
+  foreach (@sx_blocks) {
+    vec($sx_blockv,$blki,32) = $_->{xoff};
+    ++$blki;
+  }
+
+  ##-- ... and return true
+  return 1;
+}
 
 ##======================================================================
-## Subs: character record packing
+## Subs: cx stuff (*.cx)
 
-##-- page packing: formats
-our %c_packas =
-  (
-   cn => 'l',
-   pb => 'l',
-   lb => 's',
-   (map {($_=>'l')} qw(ulx uly lrx lry)),
-   (map {($_=>'Z*')} qw(elt id xr xc xp)),
-  );
-our @c_pkeys = (
-		'elt', 'id', 'cn',
-		($do_page ? 'pb' : qw()),
-		($do_line ? 'lb' : qw()),
-		($do_bbox ? qw(ulx uly lrx lry) : qw()),
-		($do_rendition ? 'xr' : qw()),
-		($do_xcontext ? 'xc' : qw()),
-		($do_xpath ? 'xp' : qw()),
-	       );
-our $c_pack  = join('',map {$c_packas{$_}} @c_pkeys);
+##--------------------------------------------------------------
+## cx stuff: cx-character record packing
 
-## $c_packed = c_pack(\%c)
+## @cn2packed : $c_packed = $cn2packed[$cn]
+## + with  $cdata_packed = c_pack(%cdata)
+## + and  \%cdata        = c_unpack($cdata_packed)
+our @cn2packed = qw();
+
+## $cn2xoffv : $xoff == c_unpack($cn2packed[$cn])->{xoff} == vec($cn2xoffv,$cn,32)
+our $cn2xoffv = '';
+
+## $Ncx : number of cx-records : $Nc == scalar(@cn2packed) == bytes::length($cn2xoffv)/4
+our $Ncx = 0;
+
+## $c_pack : pack format for c_pack(), c_unpack()
+our $c_pack = '(Z*)llsss(Z*)(llll)';
+
+## @c_pkeys : \%c keys for (un)packing
+our @c_pkeys = qw(elt cn xo xl pb lb xr ulx uly lrx lry);
+
+## $c_packed_or_undef = c_pack(\%c)
 sub c_pack {
   #no warnings qw(uninitialized numeric);
   return undef if (!defined($_[0]));
   return pack($c_pack, @{$_[0]}{@c_pkeys});
 }
 
-## \%c = c_unpack($c_packed)
-my ($_c_unpack_tmp);
+## \%c_or_undef = c_unpack($c_packed)
 sub c_unpack {
   return undef if (!defined($_[0]));
-  $_c_unpack_tmp = {};
-  @$_c_unpack_tmp{@c_pkeys} = unpack($c_pack,$_[0]);
-  return $_c_unpack_tmp;
+  my $c = {};
+  @$c{@c_pkeys} = unpack($c_pack,$_[0]);
+  return $c;
+}
+
+## \%c_or_undef = c_get($cn)
+##  + wrapper for c_unpack($cn2packed[$cn])
+sub c_get {
+  return c_unpack($cn2packed[$_[0]]);
 }
 
 ##======================================================================
-## Subs: cxmlfile stuff (*.chr.xml)
+## Subs: cx stuff (*.cx)
 
-## @stack: stack of element-data hashes
-##  + each $edata on stack = {tag=>$tag, rendition=>\%rendition, context=>\%context, ...}
-##  + global $edata: current top of stack
-##  + $path: current xpath (without numeric positions)
-our (@stack,$edata,$xpath,$page,$line);
 
-##-- $cid maps (for //c elements not assigned to any word)
-our %cid2cn   = qw();   ##-- %cid2cn  = ($cid=>$cn, ...)
+##--------------------------------------------------------------
+## cx stuff: load cx-file
 
-##-- $c_packed = $cn2packed[$cn]
-## + with $cdata_packed = c_pack(%cdata)
-## + and  %cdata        = c_unpack($cdata_packed)
-our @cn2packed = qw();
+## $bool = load_cx($cxfile)
+##  + loads cx data from $cxfile
+##  + populates globals @cn2packed, $cn2xoffv
+sub load_cx {
+  my $cxfile = shift;
+  open(CX,"<$cxfile") or die("$prog: FATAL: open failed for .cx-file $cxfile: $!");
 
-## undef = cxml_cb_init($expat)
-sub cxml_cb_init {
-  #($_xp) = @_;
-  @stack = qw();
-  $edata = { rendition=>{}, xcontext=>{} };  ##-- current stack item
-  $xpath = '';
-  $page  = -1;
-  $line  =  1;
-  %cid2cn  = qw();
+  my $lb=0;
+  my ($pn,$pb)=(0,0);
+  my $cn=0;
+  my %c =qw();
+  my %unescape = ('t'=>"\t",'n'=>"\n",'r'=>"\r",'\\'=>'\\');
+
   @cn2packed = qw();
-}
+  $cn2xoffv  = '';
 
-## undef = cxml_cb_final($expat)
-#sub cxml_cb_final {
-#  base_flush_segment();
-#  return \@w_segs0;
-#}
+  my ($elt,$xoff,$xlen,$toff,$tlen,$txt);
+  my (@attrs,$facs);
+  while (<CX>) {
+    next if (/^(?:\%\%|\s*$)/);
+    chomp;
+    ($elt,$xoff,$xlen,$toff,$tlen,$txt,@attrs) = split(/\t/,$_);
+    %c = map {split(/=/,$_,2)} @attrs;
+    s/\\([tn\\])/$unescape{$1}/eg foreach (values %c);
 
-our (%_attrs,%_c);
-our ($facs,$rendition,$xcontext);
-our ($cid,$cn,$pn);
-
-our %xcontext_elts = (map {($_=>$_)}
-		      qw(text front body back head left foot end argument hi cit fw lg stage speaker formula table)
-		     );
-
-## undef = cxml_cb_start($expat, $elt,%attrs)
-sub cxml_cb_start {
-  #($_xp,$_elt,%_attrs) = @_;
-  %_attrs = @_[2..$#_];
-
-  ##-- new stack item
-  $edata = {%$edata, tag=>$_[1]};
-  push(@stack,$edata);
-  $xpath .= "/$_[1]";
-
-  ##-- rendition
-  if ($do_rendition && defined($rendition=$_attrs{rendition})) {
-    $edata->{rendition} = { %{$edata->{rendition}}, map {($_=>undef)} split(' ',$rendition) };
-  }
-
-  ##-- tag-dispatch
-  if ($_[1] eq 'c' || $_[1] eq 'formula') {
-    ##-- //c assigned to some //w: extract data
-    $cid = $_attrs{'id'} || $_attrs{'xml:id'} || '$'.uc($_[1]).':'.($_[0]->current_byte).'$';
-    $cn  = scalar(@cn2packed);
-    %_c = (
-	   %_attrs,
-	   elt=>$_[1],
-	   id=>$cid,
-	   cn=>$cn,
-	   pb=>$page,
-	   lb=>$line,
-	   ($do_rendition ? (xr=>join(' ', keys %{$edata->{rendition}})) : qw()),
-	   ($do_xcontext  ? (xc=>join(' ', keys %{$edata->{xcontext}})) : qw()),
-	   ($do_xpath     ? (xp=>$xpath) : qw()),
-	  );
-    $_c{$_} = -1 foreach (grep {!defined($_c{$_}) || $_c{$_} eq ''} qw(pb lb ulx uly lrx lry));
-    push(@cn2packed,c_pack(\%_c));
-    $cid2cn{$cid} = $cn;
-  }
-  elsif ($do_xcontext && defined($xcontext=$xcontext_elts{$_[1]})) {
-    ##-- structural context: element-based
-    $edata->{xcontext} = { %{$edata->{xcontext}}, $xcontext=>undef };
-  }
-  elsif ($do_xcontext && $_[1] eq 'note') {
-    ##-- structural context: marginalia: subdivide by placement
-    $xcontext = 'note_'.($_attrs{'place'}||'other');
-    $edata->{xcontext} = { %{$edata->{xcontext}}, $xcontext=>undef };
-  }
-  elsif ($do_page && $_[1] eq 'pb') {
-    ##-- page break
-    ++$pn;
-    if (defined($facs=$_attrs{'facs'})) {
-      no warnings 'numeric';
-      ($page=$facs) =~ s/^\#?f?0*(?=.)//;
-      if (($page+0) ne $page) {
-	warn("$prog: WARNING: invalid \@facs=\"$facs\" in <pb> at $cxmlfile line ", $_[0]->current_line, ", column ", $_[0]->current_column);
-	$page = $page+0;
-      }
-    } else {
-      warn("$prog: WARNING: no \@facs attribute for ${pn}-th <pb> at $cxmlfile line ", $_[0]->current_line, ", column ", $_[0]->current_column);
-      $page = $pn;
+    if ($tlen > 0) {
+      ##-- text element: treat it as a logical character
+      @c{qw(elt cn xo xl pb lb xr)} = ($elt,$cn,$xoff,$xlen,$pb,$lb,($c{rendition}||''));
+      $c{$_} = -1 foreach (grep {!defined($c{$_}) || $c{$_} eq ''} qw(ulx uly lrx lry));
+      $cn2packed[$cn] = c_pack(\%c);
+      vec($cn2xoffv,$cn,32) = $xoff;
+      ++$cn;
+      ++$lb if ($elt eq 'lb');
     }
-    $line = 1;
+    elsif ($elt eq 'pb') {
+      ++$pn;
+      if (defined($facs = $c{facs})) {
+	no warnings 'numeric';
+	($pb = $facs) =~ s/^\#?f?0*(?=.)//;
+	if (($pb+0) ne $pb) {
+	  warn("$prog: WARNING: invalid \@facs=\"$facs\" in <pb> at $cxfile line $.");
+	  $pb = $pb+0;
+	}
+      } else {
+	warn("$prog: WARNING: no \@facs attribute for ${pn}-th <pb> at $cxfile line $.");
+	$pb = $pn;
+      }
+      $lb = 1;
+    }
+    ##-- neither text-carrier nor <pb/>: silently ignore
   }
-  elsif ($do_line && $_[1] eq 'lb') {
-    ++$line;
-  }
+  close(CX);
 
-  return;
+  ##-- get number of //c records
+  $Ncx = bytes::length($cn2xoffv)/4;
+
+  ##-- return true
+  return 1;
 }
 
-## undef = cxml_cb_end($expat, $elt)
-sub cxml_cb_end {
-  #($_xp,$_elt) = @_;
-  substr($xpath,-length($edata->{tag})-1) = '';
-  pop(@stack);
-  $edata = $stack[$#stack];
+##======================================================================
+## Subs: lookup utils
+
+## \@cns = xb2cns($xb)
+##  + uses globals @_cs, $_xoff, $_xlen, $_cn
+my (@_cns,$_xoff, $_cn);
+sub xb2cns {
+  @_cns = qw();
+  while ($_[0] =~ /\b([0-9]+)\+/g) {
+    ##-- don't use xlen (or xend=(xoff+xlen)) here, because formulae have xlen==0 !
+    $_xoff = $1;
+    for ($_cn=vbsearch($cn2xoffv,$_xoff,32); ($_cn < $Ncx) && (vec($cn2xoffv,$_cn,32) <= $_xoff); ++$_cn) {
+      push(@_cns,$_cn);
+    }
+  }
+  return \@_cns;
 }
 
-### undef = cxml_cb_char($expat,$string)
-#sub cxml_cb_char {
-#  $_[0]->default_current;
-#}
+## \@cs = xb2cs($xb)
+##  + wrapper for [map {c_unpack($_)} @cn2packed[@{xb2cns($xb)}]]
+sub xb2cs {
+  return [ map {c_unpack($_)} @cn2packed[@{xb2cns($_[0])}] ];
+}
 
-## undef = cxml_cb_default($expat, $str)
-#sub cxml_cb_default {
-#  $outfh->print($_[0]->original_string);
-#}
 
 ##======================================================================
 ## Subs: merge
@@ -341,12 +414,12 @@ sub apply_ddc_attrs {
     foreach $wi (@wfml) {
       ##-- get //c list
       $wnod = $wnods->[$wi];
-      @cs = grep {defined($_)} clist($wnod->getAttribute('c') || $wnod->getAttribute('cs') || '');
+      @cs  = @{xb2cs($wnod->getAttribute('xb')||'')};
       next if (!defined($c0=$cs[0]));
 
       ##-- get characters by surrounding line(s)
-      @lprev_cs = grep {$_->{elt} eq 'c' && vec($cn2wn,$_->{cn},$CN2WN_BITS)} map {clist_byline($c0->{pb}, $c0->{lb}-$_, $c0->{cn})} @clist_context;
-      @lnext_cs = grep {$_->{elt} eq 'c' && vec($cn2wn,$_->{cn},$CN2WN_BITS)} map {clist_byline($c0->{pb}, $c0->{lb}+$_, $c0->{cn})} @clist_context;
+      @lprev_cs = grep {$_->{elt} eq 'c' && vec($cn2wn,$_->{cn},32)} map {clist_byline($c0->{pb}, $c0->{lb}-$_, $c0->{cn})} @clist_context;
+      @lnext_cs = grep {$_->{elt} eq 'c' && vec($cn2wn,$_->{cn},32)} map {clist_byline($c0->{pb}, $c0->{lb}+$_, $c0->{cn})} @clist_context;
 
       ##-- get line bbox (min,max)
       $yprev = lmax(grep {defined($_) && $_>=0} map {$_->{lry}} @lprev_cs);
@@ -384,7 +457,7 @@ sub apply_ddc_attrs {
       $ynext = int($ynext+0.5);
 
       ##-- assign line-based bbox (if available)
-      warn("$prog: WARNING: could not guess bbox for formula <w> with id ", ($wnod->getAttribute('id')||'?'), " at $txmlfile line ", $wnod->line_number, "\n")
+      warn("$prog: WARNING: could not guess bbox for formula //w#", ($wnod->getAttribute('id')||'-'), " at $txmlfile line ", $wnod->line_number, "\n")
 	if ($verbose >= $vl_warn && ($yprev<0 && $ynext<0));
 
       $wnod->setAttribute($bbox_attr, join('|', (-1,$yprev,-1,$ynext)));
@@ -414,15 +487,15 @@ sub apply_ddc_attrs {
 }
 
 ## undef = apply_word($w_index)
-## undef = apply_word($w_index,\@cids)
-## undef = apply_word($w_index,\@cids,$bbsingle)
+## undef = apply_word($w_index)
+##  + uses globals: $wnods, $bbsingle, ...
 ##  + populates globals: ($wnod,$wid,$cids,@cids,$wpage,$wrend,$wcon,$wxpath,@wbboxes)
-my ($wi,$wnod,$wid,$cids,@cids,@cs,$off,$len,$wpage,$wline,$wrend,$wcon,$wxpath,$bbsingle);
+my ($wi,$wnod,$wid,$wxb,@cs,@blks,  $off,$len,$wpage,$wline);
+my ($brend,$crend,$wrend,$wcon,$wxpath,$bbsingle);
 my ($wcs,@wbboxes,@cbboxes,$cbbox,$wbbox,$wtxt,$utxt,$w_is_formula);
 my ($poff,$plen);
-my (@cn2wnod);
 sub apply_word {
-  ($wi,$cids,$bbsingle) = @_;
+  ($wi) = @_;
   $wnod = $wnods->[$wi];
 
   ##-- get id
@@ -430,58 +503,48 @@ sub apply_word {
     ##-- ...and ensure it's in the raw '//w/@id' attribute and not 'xml:id'
     if (defined($wid=$wnod->getAttribute('xml:id'))) {
       $wnod->getAttributeNode('xml:id')->setNamespace('','');
-    }
-    else {
-      ##-- complain if no id is present
-      warn("$prog: WARNING: //w node without \@id attribute at $txmlfile line ", $wnod->line_number, "\n")
-	if ($verbose >= $vl_warn);
+    } else {
+      $wid = '-'; ##-- nil id
     }
   }
 
-  ##-- get cids
-  $cids = $wnod->getAttribute('c') || $wnod->getAttribute('cs') || '' if (!defined($cids));
-  @cids = ref($cids) ? @$cids : cidlist($cids);
-  @cs   = map {c_unpack($_)} @cn2packed[grep {defined($_)} @cid2cn{@cids}];
-  if (!@cids && $warn_on_empty_cids && $verbose >= $vl_warn && ++$n_warnings{empty_cids}<=10) {
-    ##-- $wnod without a //c/@id list
+  ##-- get cx records
+  $wxb = $wnod->getAttribute('xb')||'';
+  @cs  = @{xb2cs($wxb)};
+  if (!@cs && $warn_on_empty_clist && $verbose >= $vl_warn && ++$n_warnings{empty_clist}<=10) {
+    ##-- $wnod without a //c-list
     ##   + this happens e.g. for 'FORMEL' inserted via DTA::TokWrap::mkbx0 'hint_replace_xpaths'
-    ##   + push these to @wnoc and try to fudge them in a second pass
+    ##   + push these to @wnoc and try to fudge them in a second pass (see below)
     no warnings 'uninitialized';
-    warn("$prog: WARNING: no //c/\@id list for //w#$wid at $txmlfile line ", $wnod->line_number, "\n");
-  }
-  elsif (!@cs) {
-    warn("$prog: WARNING: invalid //c/\@id list =(", join(',',@cids), ") for //w#$wid at $txmlfile line ", $wnod->line_number, "\n")
-      if ($verbose >= $vl_warn);
+    warn("$prog: WARNING: no cx-list for //w#$wid \[\@xb=\"$wxb\"] at $txmlfile line ", $wnod->line_number, "\n");
   }
 
-  ##-- compute & assign: character offset-length split (default: off=-1, len=1)
-  if ($do_cofflen) {
-    ($off,$len) = split(/\+/,($cids||''),2);
-    $wnod->setAttribute($coff_attr, ($off||'-1'));
-    $wnod->setAttribute($clen_attr, (defined($len) && $len ne '' ? $len : 1));
+  ##-- get sx records
+  @blks = @{vabsearch_lb($sx_blockv,[map {$_->{xo}} @cs],32)};
+  $cs[$_]{blk} = $sx_blocks[$blks[$_]] foreach (grep {$blks[$_] != $NOKEY} (0..$#blks));
+  @blks = @sx_blocks[ luniq(grep {$_ != $NOKEY} @blks) ];
+  if (@cs && !@blks && $warn_on_empty_blist && $verbose >= $vl_warn && ++$n_warnings{empty_blist}<=10) {
+    ##-- $wnod outside of any source block
+    ##  + does this ever happen?
+    no warnings 'uninitialized';
+    warn("$prog: WARNING: no sx-block-list for //w#$wid \[\@xb=\"$wxb\"] at $txmlfile line ", $wnod->line_number, "\n");
   }
 
-  ##-- compute & assign: byte offset-length split (default: off=-1, len=1)
-  if ($do_bofflen || $do_wsep) {
+  ##-- compute & assign: whitespace-separation (wsep: does whitespace precede this word?)
+  if ($do_wsep) {
     ($off,$len) = split(' ', ($wnod->getAttribute('b')||''), 2);
     $off = 0 if (!defined($off) || $off eq '');
     $len = 1 if (!defined($len) || $len eq '');
-    if ($do_wsep) {
-      ($poff,$plen) = $wi>0 && $wnods->[$wi-1] ? split(' ', ($wnods->[$wi-1]->getAttribute('b')||''), 2) : (0,0);
-      $wnod->setAttribute($wsep_attr, ($off == ($poff||0)+($plen||0) ? 0 : 1));
-    }
-    if ($do_bofflen) {
-      $wnod->setAttribute($boff_attr, $off);
-      $wnod->setAttribute($blen_attr, $len);
-    }
+    ($poff,$plen) = $wi>0 && $wnods->[$wi-1] ? split(' ', ($wnods->[$wi-1]->getAttribute('b')||''), 2) : (0,0);
+    $wnod->setAttribute($wsep_attr, ($off == ($poff||0)+($plen||0) ? 0 : 1));
   }
 
   ##-- detect: formula
-  $w_is_formula = (@cs && $cs[0]{elt} eq 'formula') || (@cids && $cids[0] =~ m/\$FORMULA:[0-9]+\$$/);
+  $w_is_formula = (@cs && $cs[0]{elt} eq 'formula'); #  || (@cids && $cids[0] =~ m/\$FORMULA:[0-9]+\$$/);
 
   ##-- get text
   $wtxt = $wnod->getAttribute('t') || $wnod->getAttribute('text') || '';
-  $wtxt = decode_utf8($wtxt) if (!utf8::is_utf8($wtxt));
+  utf8::upgrade($wtxt) if (!utf8::is_utf8($wtxt));
 
   ##-- compute & assign: formula text (non-empty @cids only)
   if ($formula_text ne '' && $w_is_formula) {
@@ -490,14 +553,14 @@ sub apply_word {
   }
 
   ##-- compute & assign: whitespace-bashing
-  if ($keep_ws) {
+  if (!$keep_ws) {
     $wnod->setAttribute('t',$wtxt) if ($wtxt =~ s/\s/_/g);
   }
 
   ##-- compute & assign: unicruft
   if ($do_unicruft) {
     if ($wtxt =~ m(^[\x{00}-\x{ff}\p{Latin}\p{IsPunct}\p{IsMark}]*$)) {
-      $utxt = decode('latin1',Unicruft::utf8_to_latin1_de($wtxt));
+      $utxt = Unicruft::utf8_to_utf8_de($wtxt);
     } else {
       $utxt = $wtxt;
     }
@@ -506,27 +569,33 @@ sub apply_word {
 
   ##-- compute & assign: rendition (undef -> '-')
   if ($do_rendition) {
-    #$wrend = join('|', luniq(map {s/^\#//; $_} map {split(' ',$_->{xr})} @cs)) || ''; 		##-- MEET ~ UNION
-    $wrend  = join('|', map {s/^\#//; $_} llintersect(map {[split(' ',$_->{xr})]} @cs)) || '';	##-- JOIN ~ INTERSECTION
+    $wrend = join('|',
+		   map {s/^\#//;$_}
+		   llintersect(map {[luniq (split(' ',$_->{xr}),($_->{blk} ? split(' ',$_->{blk}{xr}) : qw()))]} @cs));
     $wnod->setAttribute($rendition_attr, $wrend ? "|$wrend|" : '-');
   }
 
   ##-- compute & assign: structural context: xcontext (undef -> '-')
   if ($do_xcontext) {
-    $wcon = join('|', luniq(map {split(' ',$_->{xc})} @cs)) || '';
+    $wcon = join('|', luniq(map {split(' ',$_->{xc})} @blks));
     $wnod->setAttribute($xcontext_attr, $wcon ? "|$wcon|" : '-');
   }
 
   ##-- compute & assign: xpath (undef -> '/..' (== empty node set))
   if ($do_xpath) {
-    $wxpath = @cs ? $cs[0]{xp} : undef;
-    $wxpath = '/..' if (!$wxpath); ##-- invalid xpath
-    $wxpath =~ s|/c$||i;           ##-- prune final 'c'-element from //w xpath
-    $wxpath =~ s|^/TEI(?:/text/?)?||; ##-- prune leading '/TEI/text' from //w xpath
+    $wxpath = @blks ? $blks[0]{xp} : undef;
+    $wxpath = '/..' if (!defined($wxpath)); ##-- invalid xpath
     $wnod->setAttribute($xpath_attr, $wxpath);
   }
 
-  ##-- compute & assign: page (undef -> -1; non-empty @cids only)
+  ##-- compute & assign: xppath (undef -> '/..' (== empty node set))
+  if ($do_xppath) {
+    $wxpath = @blks ? $blks[0]{xpp} : undef;
+    $wxpath = '/..' if (!defined($wxpath)); ##-- invalid xpath
+    $wnod->setAttribute($xppath_attr, $wxpath);
+  }
+
+  ##-- compute & assign: page (undef -> -1; non-empty @cs only)
   if ($do_page) {
     $wpage = @cs ? $cs[0]{pb} : undef;
     $wpage = -1 if (!defined($wpage) || $wpage eq '');
@@ -535,28 +604,28 @@ sub apply_word {
       if ($wpage==-1 && $verbose >= $vl_warn && $warn_on_bad_page && ++$n_warnings{page}<=10);
   }
 
-  ##-- compute & assign: line (undef -> -1; non-empty @cids only)
+  ##-- compute & assign: line (undef -> -1; non-empty @cs only)
   if ($do_line) {
     $wline = @cs ? $cs[0]{lb} : undef;
     $wline = -1 if (!defined($wline) || $wline eq '');
     $wnod->setAttribute($line_attr, $wline);
   }
 
-  ##-- compute & assign: bbox (undef -> ''; non-empty @cids only) : TODO
+  ##-- compute & assign: bbox (undef -> ''; non-empty @cs only)
   if ($do_bbox && @cs) {
     @wbboxes = bboxes(\@cs,$bbsingle);
     $wnod->setAttribute($bbox_attr, join('_', map {join('|',@$_)} @wbboxes));
   }
 
-  ##-- record: claim //c indices
-  vec($cn2wn, $_, $CN2WN_BITS) = $wi foreach (map {$_->{cn}} @cs);
+  ##-- record: claim //c records
+  vec($cn2wn, $_, 32) = $wi foreach (map {$_->{cn}} @cs);
 
   ##-- record: special attributes
   if ($w_is_formula) {
     push(@wfml,$wi);
   }
   elsif (!@cs) {
-    ##-- @wnoc: //w node without //c id-list
+    ##-- @wnoc: //w node without //c-list
     push(@wnoc,$wi);
   }
 }
@@ -627,38 +696,6 @@ sub lstddev {
   return sqrt($lsd_ex2 - $lsd_ex**2);
 }
 
-
-## @cids = clist($cids_str)
-##  + expand compressed //c/@id lists, also accepts old-style space-separated id-lists
-sub cidlist {
-  map {
-    (m/^(.*)c([0-9]+)\+([0-9]+)$/
-     ? (map {$1.'c'.$_} ($2..($2+$3-1)))
-     : $_)
-  } (ref($_[0]) ? @{$_[0]} : split(' ',$_[0]));
-}
-
-## @cs = clist($cids_str)
-## @cs = clist(\@cids)
-##  + expand compressed //c/@id lists and unpack to hash
-##  + also accepts old-style space-separated id-lists
-sub clist {
-  return
-    (
-     map {c_unpack($_)}
-     @cn2packed[
-		grep {defined($_)}
-		@cid2cn{
-		  map {
-		    (m/^(.*)c([0-9]+)\+([0-9]+)$/
-		     ? (map {$1.'c'.$_} ($2..($2+$3-1)))
-		     : $_)
-		  } split(' ',$_[0])
-		}
-	       ]
-    );
-}
-
 ## @clist = clist_byline($page,$line,$cn0)
 sub clist_byline {
   my ($pb,$lb,$cn0) = @_;
@@ -667,14 +704,14 @@ sub clist_byline {
   my ($cn,$c);
   my (@cs);
   ##-- stupid linear scan: backwards until $cn <= FIRST_CHAR($page,$line)
-  for ($cn=$cn0; $cn > 0 && $cn <= $#cn2packed; $cn--) {
+  for ($cn=$cn0; $cn > 0 && $cn < $Ncx; $cn--) {
     next if (!defined($c = c_unpack($cn2packed[$cn])));
     last if ($c->{pb} < $pb || ($c->{pb}==$pb && $c->{lb} <  $lb));
     next if ($c->{pb} > $pb || ($c->{pb}==$pb && $c->{lb} >= $lb));
   }
 
   ##-- stupid linear scan: forwards until $cn >= LAST_CHAR($page,$line), pushing onto @cs
-  for ( ; $cn >= 0 && $cn <= $#cn2packed; $cn++) {
+  for ( ; $cn >= 0 && $cn < $Ncx; $cn++) {
     next if (!defined($c = c_unpack($cn2packed[$cn])));
     push(@cs,$c) if ($c->{pb}==$pb && $c->{lb}==$lb);
     last if ($c->{pb} >$pb || ($c->{pb}==$pb && $c->{lb} > $lb));
@@ -683,10 +720,10 @@ sub clist_byline {
   return @cs;
 }
 
-## @bboxes = bboxes(\@cus)
-## @bboxes = bboxes(\@cus,$single=0)
+## @bboxes = bboxes(\@cs)
+## @bboxes = bboxes(\@cs,$single=0)
 ##  + gets list of word bounding boxes @bboxes=($bbox1,$bbox2,...)
-##    for a "word" composed of the characters in //c/@id array-ref \@cids
+##    for a "word" composed of the characters in array-ref of cx-record \@cs
 ##  + each bbox $bbox in @bboxes is of the form
 ##      $bbox=[$ulx,$uly,$lrx,$lry]
 ##    with $ulx<=$lrx, $uly<=$lry; where a coordinate of -1 indicates undefined
@@ -725,30 +762,26 @@ sub bboxes {
 ##======================================================================
 ## MAIN
 
-##-- scan .chr.xml file and grab attributes
-print STDERR "$prog: scanning chr-xml file '$cxmlfile'...\n"
-  if ($verbose>=$vl_progress);
-our $xp_cxml = XML::Parser->new(
-				ErrorContext => 1,
-				ProtocolEncoding => 'UTF-8',
-				#ParseParamEnt => '???',
-				Handlers => {
-					     Init   => \&cxml_cb_init,
-					     #XmlDecl => \&cxml_cb_xmldecl,
-					     #Char  => \&cxml_cb_char,
-					     Start  => \&cxml_cb_start,
-					     End    => \&cxml_cb_end,
-					     #Default => \&cxml_cb_default,
-					     #Final   => \&cxml_cb_final,
-					    },
-			       )
-  or die("$prog: ERROR: couldn't create XML::Parser for chr-xml file '$cxmlfile'");
-$xp_cxml->parsefile($cxmlfile);
-
-##-- grab .t.xml file into a libxml doc & pre-index some data
+##-- load .t.xml-file
 print STDERR "$prog: loading t-xml file '$txmlfile'...\n"
   if ($verbose>=$vl_progress);
 our $xdoc = load_txml($txmlfile);
+print STDERR "$prog: loaded $Nw word(s) in $Ns sentence(s) from '$txmlfile'\n"
+  if ($verbose>=$vl_info);
+
+##-- load .sx-file
+print STDERR "$prog: loading .sx-file '$sxfile'...\n"
+  if ($verbose>=$vl_progress);
+load_sx($sxfile) or die("$prog: FATAL: failed to load .sx-file '$sxfile'");
+print STDERR "$prog: loaded $Nsx block record(s) from '$sxfile'.\n"
+  if ($verbose>=$vl_info);
+
+##-- load .cx-file
+print STDERR "$prog: loading .cx-file '$cxfile'...\n"
+if ($verbose>=$vl_progress);
+load_cx($cxfile) or die("$prog: FATAL: failed to load .cx-file '$cxfile'");
+print STDERR "$prog: loaded $Ncx character record(s) from '$cxfile'.\n"
+  if ($verbose>=$vl_info);
 
 ##-- apply attributes from .chr.xml file to .t.xml file
 print STDERR "$prog: applying DDC-relevant attributes...\n"
@@ -776,31 +809,30 @@ dtatw-get-ddc-attrs.perl - get DDC-relevant attributes from DTA::TokWrap files
 
 =head1 SYNOPSIS
 
- dtatw-get-ddc-attrs.perl [OPTIONS] T_XML_FILE [CHR_XML_FILE=T_XML_FILE:.t.xml=.xml]
+ dtatw-get-ddc-attrs.perl [OPTIONS] T_XML_FILE [SX_FILE=T_XML_FILE:.t.xml=.sx [CX_FILE=SX_FILE:.sx=.cx]]
 
  General Options:
   -help                  # this help message
-  -verbose LEVEL         # set verbosity level (0<=LEVEL<=1)
-  -quiet                 # be silent
+  -verbose LEVEL         # set verbosity level (0<=LEVEL<=3)
+  -quiet                 # be silent; alias for -verbose=0
 
  I/O Options:
+  -output FILE           # specify output file (default='-' (STDOUT))
+  -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in T_XML_FILE file (default=don't)
   -ws     , -nows        # do/don't keep whitespace in //w/@t (default=don't)
   -page   , -nopage      # do/don't extract //w/@pb (page-break; default=do)
   -line   , -noline      # do/don't extract //w/@lb (line-break; default=do)
   -rend   , -norend      # do/don't extract //w/@xr (rendition; default=do)
   -xcon   , -noxcon      # do/don't extract //w/@xc (xml context; default=do)
-  -xpath  , -noxpath     # do/don't extract //w/@xp (xpath; default=do)
+  -xpath  , -noxpath     # do/don't extract //w/@xp (trimmed xpath; default=do)
+  -xppath , -noxppath    # do/don't extract //w/@xpp (untrimmed xpath; default=don't)
   -bbox   , -nobbox      # do/don't extract //w/@bb (bbox; default=do)
   -xlit   , -noxlit      # do/don't extract //w/@u  (unicruft transliteration; default=do)
   -wsep   , -nowsep	 # do/don't extract //w/@ws (boolean space-separation; default=do)
-  -coff   , -nocoff      # do/don't extract //w/(@coff|@clen) from //w/@c or //w/@cs (default=don't)
-  -boff   , -noboff      # do/don't extract //w/(@boff|@blen) from //w/@b (default=don't)
-  -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in T_XML_FILE file (default=don't)
   -keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=keep)
   -keep-b , -nokeep-b    # do/don't keep existing //w/@b attributes (default=keep)
   -keep-xb, -nokeep-xb   # do/don't keep existing //w/@xb attributes (default=keep)
   -formula-text TEXT     # output text for //formula elements (default='' (no change))
-  -output FILE           # specify output file (default='-' (STDOUT))
 
 =cut
 

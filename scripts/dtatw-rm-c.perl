@@ -1,11 +1,10 @@
 #!/usr/bin/perl -w
 
 while (<>) {
-  #s|\s+(?=<c\b)||g;		##-- remove all whitespace preceding <c> tags :: BUG: also removes newlines!
-  #s|(?<=<c\b)||g;		##-- remove single-spaces before <c> tags
-  s|<c\b[^>]*> </c>||g;		##-- remove whitespace <c> tags inserted by dtatw-add-c.perl (original whitespace is retained in following text node)
-
-  s|</?c\b[^>]*>||g;		##-- remove all <c> tags (and any preceding whitespace)
-  s|<lb\b[^\>]*/>|<lb/>|g;	##-- remove <lb> attributes too
+  #s|^\s+||g;			      ##-- remove whitespace at BOL
+  s|<c> </c>||g;	  	      ##-- remove id-less whitespace <c> tags inserted by dtatw-add-c.perl (original whitespace is retained in following text node)
+  s|\s*<c\s[^>]*>(.*)</c>\s*|$1|sg;   ##-- remove whitespace following OCR <c> tags
+  s|</?c\b[^>]*>||g;	  	      ##-- remove all remaining <c> tags (but keep content)
+  #s|(</[ws]>)\s*$|$1 |g;	      ##-- add non-newline after //w|s
   print;
 }

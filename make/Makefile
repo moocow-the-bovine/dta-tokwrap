@@ -233,10 +233,7 @@ ARC_TARGETS ?= \
 	User.mak \
 	$(config) \
 	$(logfile) \
-	$(XML:.xml=.t.xml) \
-	$(XML:.xml=.s.xml) \
-	$(XML:.xml=.w.xml) \
-	$(XML:.xml=.a.xml)
+	$(XML:.xml=.t.xml)
 
 ##--------------------------------------------------------------
 ## Configuration: Defaults: cleanup
@@ -340,7 +337,7 @@ no-xx: no-cx no-sx no-tx
 
 %.cx %.sx %.tx: $(xmldir)/%.xml tokwrap
 ifeq "$(TOKWRAP_ALL)" "yes"
-	$(TOKWRAP) -t mkindex $<
+	$(TOKWRAP) -t=mkindex $<
 else
 	$(PROG_DIR)dtatw-mkindex $< $*.cx $*.sx $*.tx
 endif
@@ -369,7 +366,7 @@ MISC_FILES += \
 
 bx0: $(XML:.xml=.bx0)
 %.bx0: %.sx tokwrap
-	$(TOKWRAP) -t mkbx0 $(xmldir)/$*.xml
+	$(TOKWRAP) -t=mkbx0 $(xmldir)/$*.xml
 
 no-bx0: ; rm -f *.bx0 bx0.stamp
 CLEAN_FILES += *.bx0 bx0.stamp
@@ -390,14 +387,14 @@ bx-txt: $(XML:.xml=.bx)
 
 ##-- separating these rules gets us t-xml re-made on 2 subsequent (make all)s
 #%.bx: %.bx0 %.tx tokwrap
-#	$(TOKWRAP) -t mktxt $(xmldir)/$*.xml
+#	$(TOKWRAP) -t=mktxt $(xmldir)/$*.xml
 #
 #%.txt: %.bx0 %.tx tokwrap
-#	$(TOKWRAP) -t mktxt $(xmldir)/$*.xml
+#	$(TOKWRAP) -t=mktxt $(xmldir)/$*.xml
 ##
 ##--
 %.bx %.txt: %.bx0 %.tx tokwrap
-	$(TOKWRAP) -t mktxt $(xmldir)/$*.xml
+	$(TOKWRAP) -t=mktxt $(xmldir)/$*.xml
 
 no-bx-txt: ; rm -f *.bx *.txt
 no-bx: no-bx-txt
@@ -412,7 +409,7 @@ MISC_FILES += $(XML:.xml=.bx) $(XML:.xml=.txt)
 t0: $(XML:.xml=.t0)
 %.t0: %.txt tokwrap
 ifeq "$(TOKENIZER)" ""
-	$(TOKWRAP) -t tokenize0 $(xmldir)/$*.xml
+	$(TOKWRAP) -t=tokenize0 $(xmldir)/$*.xml
 else
 	$(TOKENIZER) $< > $@ 
 endif
@@ -427,7 +424,7 @@ MISC_FILES += $(XML:.xml=.t0)
 
 t1: $(XML:.xml=.t1)
 %.t1: %.t0 tokwrap
-	$(TOKWRAP) -t tokenize1 $(xmldir)/$*.xml
+	$(TOKWRAP) -t=tokenize1 $(xmldir)/$*.xml
 
 no-t1: ; rm -f *.t1
 CLEAN_FILES += *.t1
@@ -449,18 +446,31 @@ CLEAN_FILES += *.t
 MISC_FILES += $(XML:.xml=.t)
 
 ##======================================================================
+## Rules: tokenization: serial-byte to xml-byte conversion (programs only atm)
+##  + for debugging
+
+xt: $(XML:.xml=.xt)
+%.xt: %.t %.cx %.bx tokwrap
+	$(PROG_DIR)dtatw-b2xb $< $*.cx $*.bx $@ $*.xml
+
+no-xt: ; rm -f *.xt
+CLEAN_FILES += *.xt
+MISC_FILES += $(XML:.xml=.xt)
+
+
+##======================================================================
 ## Rules: tokenized: master xml output
 
 t-xml: $(XML:.xml=.t.xml)
 
 ##-- always use dta-tokwrap.perl for tok2xml, since it also sorts back into pseudo-source-order using fast regexes
 %.t.xml: %.t %.cx %.bx tokwrap
-	$(TOKWRAP) -t tok2xml $(xmldir)/$*.xml
-
 #ifeq "$(TOKWRAP_ALL)" "yes"
-#	$(TOKWRAP) -t tok2xml $(xmldir)/$*.xml
+	$(TOKWRAP) -t=tok2xml $(xmldir)/$*.xml
 #else
-#	$(PROG_DIR)dtatw-tok2xml $< $*.cx $*.bx - $*.xml | xsltproc $(SCRIPT_DIR)dtatw-txmlsort.xsl -o "$@" -
+#%.t.xml: %.xt tokwrap
+#	$(TOKWRAP) -t=tok2xml -po=b2xb=off -do=tokfile1=$< $(xmldir)/$*.xml
+#	$(PROG_DIR)dtatw-tok2xml $< - *.xml | xsltproc -o "$@" $(SCRIPT_DIR)dtatw-txmlsort.xsl -
 #endif
 
 no-t-xml: ; rm -f *.t.xml
@@ -468,87 +478,7 @@ CLEAN_FILES += *.t.xml
 
 
 ##======================================================================
-## Rules: tokenized: xml-t: master xml output -> .tt
-
-%.t.xml.t: $(XSL_DIR)/dtatw-txml2tt.xsl %.t.xml
-	xsltproc --param w_loc 0 --param w_cab 0 --param w_a 0 -o "$@" $^
-
-%.t.xml.tt: $(XSL_DIR)/dtatw-txml2tt.xsl %.t.xml
-	xsltproc -o "$@" $^
-
-xml-t: t-xml-t
-xml-tt: t-xml-tt
-t-xml-t: $(XML:.xml=.t.xml.t)
-t-xml-tt: $(XML:.xml=.t.xml.tt)
-
-no-xml-t: no-t-xml-t
-no-xml-tt: no-t-xml-tt
-no-t-xml-t: ; rm -f *.t.xml.t
-no-t-xml-tt: ; rm -f *.t.xml.tt
-
-CLEAN_FILES += *.t.xml.t *.t.xml.tt
-
-##======================================================================
-## Rules: standoff (via C utilities)
-
-##--------------------------------------------------------------
-## standoff: top-level
-
-standoff: so-xml
-so-xml: s-xml w-xml a-xml
-no-standoff: no-s-xml no-w-xml no-a-xml
-
-%-standoff: %.s.xml %.w.xml %.a.xml
-
-T_XML_FILES = \
-	$(XML:.xml=.t.xml)
-
-STANDOFF_XML_FILES = \
-	$(XML:.xml=.s.xml) \
-	$(XML:.xml=.w.xml) \
-	$(XML:.xml=.a.xml) \
-	$(XML:.xml=.t.xml)
-
-##--------------------------------------------------------------
-## standoff: .s.xml
-s-xml: $(XML:.xml=.s.xml)
-
-%.s.xml: %.t.xml tokwrap
-ifeq "$(TOKWRAP_ALL)" "yes"
-	$(TOKWRAP) -t sosxml $(xmldir)/$*.xml
-else
-	$(PROG_DIR)dtatw-txml2sxml $< $@ $*.w.xml
-endif
-
-no-s-xml: ; rm -f *.s.xml
-CLEAN_FILES += *.s.xml
-
-##--------------------------------------------------------------
-## standoff: .w.xml
-w-xml: $(XML:.xml=.w.xml)
-
-%.w.xml: %.t.xml tokwrap
-ifeq "$(TOKWRAP_ALL)" "yes"
-	$(TOKWRAP) -t sowxml $(xmldir)/$*.xml
-else
-	$(PROG_DIR)dtatw-txml2wxml $< $@ $*.xml
-endif
-
-no-w-xml: ; rm -f *.w.xml
-CLEAN_FILES += *.w.xml
-
-##--------------------------------------------------------------
-## standoff: .a.xml
-a-xml: $(XML:.xml=.a.xml)
-%.a.xml: %.t.xml tokwrap
-ifeq "$(TOKWRAP_ALL)" "yes"
-	$(TOKWRAP) -t soaxml $(xmldir)/$*.xml
-else
-	$(PROG_DIR)dtatw-txml2axml $< $@ $*.w.xml
-endif
-
-no-a-xml: ; rm -f *.a.xml
-CLEAN_FILES += *.a.xml
+## Rules: standoff (via C utilities) : OBSOLETE
 
 
 ##======================================================================
@@ -567,7 +497,7 @@ ws-xml: $(XML:.xml=.ws.xml)
 cw-xml: cws-xml
 cws-xml: $(XML:.xml=.cws.xml)
 %.cws.xml: $(xmldir)/%.xml %.t.xml tokwrap
-	$(TOKWRAP) -t addws $(xmldir)/$*.xml
+	$(TOKWRAP) -t=addws $(xmldir)/$*.xml
 
 no-cw-xml: no-cws.xml
 no-cws-xml: ; rm -r *.cws.xml
@@ -609,47 +539,7 @@ CWS_XML_FILES = $(XML:.xml=.cws.xml) $(XML:.wst.xml)
 
 
 ##======================================================================
-## Rules: DTA::CAB analysis: direct: (v1): .t.xml -> .dta-cab.xml.bytok
-## + slow: 673 tok/sec
-## + gets us "true" dta-cab XML format:
-#    <sentences xml:base="ex2a.xml">...
-#    <s xml:id="s1">...
-#     <w xml:id="w1" b="13 6" t="Critik" c="c1 c2 c3 c4 c5 c6">
-#       <xlit t="Critik" isLatin1="1" isLatinExt="1"/>
-#       <lts>
-#         <a hi="kRitik" w="0"/>
-#       </lts>
-#       <eqpho>
-#         <a t="Critik"/>
-#         <a t="Kritik"/>
-#       </eqpho>
-#       <morph/>
-#       <msafe safe="0"/>
-#       <rewrite>
-#         <a hi="Kritik" w="5">
-#           <lts>
-#             <a hi="kRitik" w="0"/>
-#           </lts>
-#           <morph>
-#             <a hi="Kritik[_NN][abstr][fem][sg]*" w="0"/>
-#             <a hi="Kritik[_NN][k_l_h_sozeinh][fem][sg]*" w="0"/>
-#           </morph>
-#         </a>
-#       </rewrite>
-#     </w>
-
-cab-xml-bytok: dta-cab-xml-bytok
-dta-cab-xml-bytok: $(XML:.xml=.dta-cab.xml.bytok)
-
-%.dta-cab.xml.bytok: %.t.xml
-	dta-cab-xmlrpc-client.perl $(cab_options) -s=$(cab_server) -a=$(cab_analyzer) -raw -ic=Xml -oc=Xml -ol=1 -o="$@" "$<"
-
-no-dta-cab-xml-bytok: ; rm -f *.dta-cab.xml.bytok
-no-cab-xml-bytok: no-dta-cab-xmlw-bytok
-CLEAN_FILES += *.dta-cab.xml.bytok
-
-##======================================================================
-## Rules: tokenized: extended output (.u.xml)
+## Rules: tokenized: extended output (.u.xml) :: PROBABLY BROKEN
 ## + //w/@u  : unicruft text
 ## + //w/@t0 : raw text
 ## + //w/@u0 : unicrufted raw text raw
@@ -718,113 +608,16 @@ CLEAN_FILES += *.ddc.t.xml
 
 
 ##======================================================================
-## Rules: DTA::CAB Analysis: unicruft only
-
-cab-xlit: dta-cab-xml-xlit
-cab-xml-xlit: dta-cab-xml-xlit
-dta-cab-xml-xlit: $(XML:.xml=.dta-cab.xml.xlit)
-
-%.dta-cab.tt.xlit: %.t.xml.tt cab-xlit.plm
-	dta-cab-analyze.perl -verbose=warn -noprofile -c=cab-xlit.plm -oc=TT -o=$@ $<
-
-%.dta-cab.xml.xlit: %.dta-cab.tt.xlit scripts
-	$(SCRIPT_DIR)dtatw-cabtt2xml.perl $< > $@ 
-
-no-cab-xlit: no-dta-cab-xlit
-no-dta-cab-xlit: ; rm -f *.dta-cab.xlit.*
-
-CLEAN_FILES += *.dta-cab.tt.xlit *.dta-cab.xml.xlit
-
-##-- alias: .dta-cab.xml -> .dta-cab.xml.xlit
-cab-xml: dta-cab-xml
-dta-cab-xml: $(XML:.xml=.dta-cab.xml)
-%.dta-cab.xml: %.dta-cab.xml.xlit
-	rm -f $@
-	ln $< $@
-
-CLEAN_FILES += *.dta-cab.xml
-
-##======================================================================
-## Rules: DTA::CAB Analysis: Full: type-wise
-
-##--------------------------------------------------------------
-## Token->Type extraction: .t.xml.t -> .types.t
-
-types: types-t
-types-t: $(XML:.xml=.types.t)
-%.types.t: %.t.xml.tt
-	cut -d$$'\t' -f 1 $< | (grep -v '^%%' || true) | (grep . || true) | sort -u > $@ 
-
-no-types-t: ; rm -f *.types.t
-CLEAN_FILES += *.types.t
-
-##--------------------------------------------------------------
-## Type-wise analysis (DTA::CAB): types.t -> types.dta-cab.tt
-
-types-tt: types-cab-tt
-types-cab-tt: $(XML:.xml=.types.dta-cab.tt)
-%.types.dta-cab.tt: %.types.t
-	dta-cab-xmlrpc-client.perl $(cab_options) -s $(cab_server) -a $(cab_analyzer) -raw -ic=TT -oc=TT -ol=1 -o "$@" "$<"
-
-no-types-tt: no-types-cab-tt
-no-types-cab-tt: ; rm -f *.types.dta-cab.tt
-CLEAN_FILES += *.types.dta-cab.tt
-
-##--------------------------------------------------------------
-## Type->Token back-mapping: (.types.dta-cab.tt, .t.xml.tt) -> (.dta-cab.tt)
-
-cab-tt: dta-cab-tt
-dta-cab-tt: $(XML:.xml=.toks.dta-cab.tt)
-%.toks.dta-cab.tt: %.types.dta-cab.tt %.t.xml.tt scripts
-	$(SCRIPT_DIR)dtatw-tt-dictapply.perl $< $*.t.xml.tt > $@ 
-
-no-cab-tt: no-dta-cab-tt
-no-dta-cab-tt: ; rm -f *.dta-cab.tt
-CLEAN_FILES += *.dta-cab.tt
-
-##--------------------------------------------------------------
-## DTA::CAB XML (from token-expansion of type-wise analysis): .toks.dta-cab.tt -> .dta-cab.xml
-
-cab-xml-full: dta-cab-xml-full
-dta-cab-xml-full: $(XML:.xml=.dta-cab.xml.full)
-%.dta-cab.xml.full: %.toks.dta-cab.tt scripts
-#	dta-cab-convert.perl -verbose=info $< -oc=Xml -ol=1 -o $@  ##-- slow
-	$(SCRIPT_DIR)dtatw-cabtt2xml.perl $< > $@ 
-
-#%.dta-cab.xml: %.dta-cab.xml.full
-#	rm -f $@
-#	ln $< $@
-
-no-cab-xml-full: no-dta-cab-xml-full
-no-dta-cab-xml-full: ; rm -f *.dta-cab.xml.full
-CLEAN_FILES += *.dta-cab.xml *.dta-cab.xml.full
-
-CAB_XML_FILES = $(XML:.xml=.dta-cab.xml.full)
-
-##--------------------------------------------------------------
-## DTA::CAB: cleanup
-
-cab: cab-xml
-
-no-cab: no-dta-cab
-no-dta-cab: ; rm -f *.dta-cab.*
-
-CAB_MISC_FILES = \
-	$(XML:.xml=.toks.dta-cab.tt) \
-	$(XML:.xml=.types.dta-cab.tt)
-
-##======================================================================
 ## Rules: well-formed check
 
 xml-errors: src-xml-errors so-xml-errors
 extra-xml-errors: cab-xml-errors cws-xml-errors
 
 src-xml-errors: $(corpus).src.xml_errors
-so-xml-errors: $(corpus).so.xml_errors
 t-xml-errors: $(corpus).t.xml_errors
 ddc-t-xml-errors: $(corpus).ddc.t.xml_errors
-cab-xml-errors: $(corpus).cab.xml_errors
 cws-xml-errors: $(corpus).cws.xml_errors
+ws-xml-errors: $(corpus).ws.xml_errors
 all-xml-errors: $(corpus).all.xml_errors
 
 t0-errors: $(corpus).t0_errors
@@ -843,25 +636,22 @@ ifneq "$(xml_wfcheck)" "no"
 $(corpus).src.xml_errors: $(XML:.xml=.src.xml.errors)
 	cat $^ > $@
 
-$(corpus).so.xml_errors: $(STANDOFF_XML_FILES:=.errors)
-	cat $^ > $@
-
 $(corpus).t.xml_errors: $(T_XML_FILES:=.errors)
 	cat $^ > $@
 
 $(corpus).ddc.t.xml_errors: $(T_XML_FILES:.t.xml=.ddc.t.xml.errors)
 	cat $^ > $@
 
-$(corpus).cab.xml_errors: $(XML:.xml=.dta-cab.xml.errors)
+$(corpus).cws.xml_errors: $(XML:.xml=.cws.xml.errors)
 	cat $^ > $@
 
-$(corpus).cws.xml_errors: $(XML:.xml=.cws.xml.errors)
+$(corpus).ws.xml_errors: $(XML:.xml=.ws.xml.errors)
 	cat $^ > $@
 
 $(corpus).t0_errors: $(XML:.xml=.t0.errors)
 	cat $^ > $@
 
-%.all.xml_errors: %.so.xml_errors %.cab.xml_errors %.cws.xml_errors
+%.all.xml_errors: %.t.xml_errors %.cws.xml_errors %.ws.xml_errors
 	cat $^ > $@
 
 else
@@ -911,41 +701,6 @@ $(corpus).typf: $(XML:.xml=.t)
 	> $@ 
 
 REALCLEAN_FILES += *.types *.typf
-
-##--------------------------------------------------------------
-## Rules: Summaries: dict
-
-corpus-dict: $(corpus).dict
-$(corpus).dict: $(XML:.xml=.types.dta-cab.tt)
-	cat $^ | grep -v '^%%' | grep . | sort | uniq > $@ 
-
-corpus-dictf: $(corpus).dictf
-%.dictf: %.typf %.dict scripts
-	$(SCRIPT_DIR)dtatw-tt-dictapply.perl $*.dict $*.typf > $@ 
-
-REALCLEAN_FILES += *.dict *.dictf
-
-CAB_MISC_FILES += $(corpus).dictf
-
-##--------------------------------------------------------------
-## Rules: Summaries: rewrite
-
-rw-summary: $(corpus).rw-summary
-corpus-rw: $(corpus).rw-summary
-%.rw-summary: %.dictf
-	cat $^ | fgrep '[rw]' \
-	| sed -e's/^\([^\t]*\)\t\[freq\] \([^\t]*\).*\t\(\[rw\][^\t]*\).*/\1\t\2\t\3/1' - \
-	| sort -t$$'\t' -k2 -nr > $@ 
-
-unk-summary: $(corpus).unk-summary
-corpus-unk: $(corpus).unk-summary
-%.unk-summary: %.dictf
-	cat $^ | fgrep -v '[rw]' | fgrep -v '[morph]' | egrep -v '^[^'$$'\t'']*[[:digit:][:punct:]]' \
-	| sed -e's/^\([^\t]*\)\t\[freq\] \([^\t]*\).*/\1\t\2/1' - \
-	| sort -t$$'\t' -k2 -nr > $@ 
-
-SUMMARY_FILES    = $(patsubst %, $(corpus).%-summary, rw unk)
-CLEAN_FILES += *.rw-summary *.unk-summary
 
 ##======================================================================
 ## Rules: archiving

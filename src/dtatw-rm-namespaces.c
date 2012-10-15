@@ -87,7 +87,7 @@ int main(int argc, char **argv)
   FILE *f_out = stdout;  //-- output file
 
   //-- initialize: globals
-  prog = argv[0];
+  prog = file_basename(NULL,argv[0],"",-1,0);
 
   //-- command-line: usage
   if (argc <= 1) {

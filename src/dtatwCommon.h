@@ -26,24 +26,37 @@ typedef int ByteLen;
 
 extern char *prog;
 
-//-- CX_NIL_ID: pseudo-id used for missing (xml:)?id attributes on <c> elements
-extern char *CX_NIL_ID; //-- default: "-"
-
-//-- CX_LB_ID : pseudo-ID for <lb/> records
-extern char *CX_LB_ID; //-- default: "$LB$"
-
-//-- CX_PB_ID : pseudo-ID for <pb/> records
-extern char *CX_PB_ID; //-- default: "$PB$"
-
-//-- CX_FORMULA_ID : pseudo-ID format for <formula/> records (given original byte offset)
-#define CX_FORMULA_PREFIX "$FORMULA:"
-extern char *CX_FORMULA_ID; //-- default: CX_FORMULA_PREFIX ":%lu$"
+//-- CX_NIL_ELT: pseudo-name used for raw text nodes in cx-records
+extern char *CX_NIL_ELT; //-- default: "-"
 
 //-- CX_FORMULA_TEXT : text inserted for <formula/> records
 extern char *CX_FORMULA_TEXT; //-- default: " FORMULA "
 
 //-- xmlid_attr : output attribute for (xml:)?id attributes (default="id")
 extern char *xmlid_name; 
+
+/*======================================================================
+ * utf8 stuff
+ */
+
+/** \brief typedef for unicode codepoints */
+typedef unsigned int ucs4;
+
+/** \brief useful alias */
+#ifndef uint
+#define uint unsigned int
+#endif
+
+/** \brief useful alias */
+#ifndef uchar
+# define uchar unsigned char
+#endif
+
+/** \brief utf8.h wants this */
+#ifndef u_int32_t
+# define u_int32_t ucs4
+#endif
+
 
 /*======================================================================
  * Debug
@@ -172,6 +185,17 @@ inline static char *next_tab_z(char *s)
   return s;
 }
 
+//--------------------------------------------------------------
+// next_char_z()
+//  + returns char* to position of next character c or '\0' in s
+//  + sets the matching character to '\0', so returned string always looks like ""
+inline static char *next_char_z(char *s, char c)
+{
+  for (; *s && *s != c; s++) ;
+  *s = '\0';
+  return s;
+}
+
 /*======================================================================
  * Utils: slurp
  */
@@ -194,17 +218,14 @@ size_t file_slurp(FILE *f, char **bufp, size_t buflen);
  */
 
 // CX_HAVE_PB : whether to parse 'pb' field in cxRecord
-#define CX_HAVE_PB 1
+//#define CX_HAVE_PB 1
 
 // CX_WANT_TEXT : whether to include (and parse) 'text' field in cxRecord
 #define CX_WANT_TEXT 1
 
-// CX_WANT_BXP : whether to include .bx block-pointers in cxRecord struct
-#define CX_WANT_BXP 1
-
 // cxRecord : struct for character-index records as loaded from .cx file
 typedef struct {
-  char        *id;      //-- (xml:)?id of source <c>
+  char       *elt;      //-- name of source element (e.g. "c" or "-")
   ByteOffset xoff;      //-- original xml byte offset
   ByteLen    xlen;      //-- original xml byte length
   ByteOffset toff;      //-- .tx byte offset
@@ -215,9 +236,7 @@ typedef struct {
 #ifdef CX_WANT_TEXT
   char      *text;      //-- output text (un-escaped)
 #endif
-#ifdef CX_WANT_BXP
   struct bxRecord_t *bxp; //-- pointer to .bx-record (block) containing this <c>, if available
-#endif
 } cxRecord;
 
 // cxData : array of .cx records

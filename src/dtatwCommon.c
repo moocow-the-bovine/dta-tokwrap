@@ -5,43 +5,36 @@
  * Globals
  */
 char *prog = "dtatwCommon"; //-- used for error reporting
-char *CX_NIL_ID = "-";
-char *CX_LB_ID  = "$LB$";
-char *CX_PB_ID  = "$PB$";
-char *CX_FORMULA_ID  = CX_FORMULA_PREFIX "%lu$";
+char *CX_NIL_ELT = "-";
 char *CX_FORMULA_TEXT  = " FORMULA ";
 //char *xmlid_name = "xml:id";
 char *xmlid_name = "id";
+
+//-- foward decl (lives in string.h)
+extern char *basename(const char *path);
 
 /*======================================================================
  * Utils: basename
  */
 char *file_basename(char *dst, const char *src, const char *suff, int srclen, int dstlen)
 {
-  const char *base0, *base1;
-  int suflen = strlen(suff);
-  if (srclen < 0) srclen = strlen(src);
-
-  base1 = src+srclen;
-  if (srclen >= suflen && strcmp(suff,src+srclen-suflen)==0) base1 -= suflen;
-
-  //-- scan backwards for first directory separator
-  for (base0=base1; *base0 != '/' && *base0 != '\\'; base0--) {
-    if (base0==src) break;
-  }
+  const char *b = basename(src);
+  int blen = strlen(b);
+  int suflen = suff ? strlen(suff) : 0;
+  if (suff && blen >= suflen && strcmp(suff,b+blen-suflen)==0) { blen -= suflen; }
 
   //-- maybe allocate dst
   if (dst==NULL) {
-    if (dstlen <= 0) dstlen  = base1-base0+1;
-    else             dstlen += base1-base0+1;
+    if (dstlen <= 0) dstlen  = blen+1;
+    else             dstlen += blen+1;
     dst = (char*)malloc(dstlen);
     assert(dst != NULL /* malloc error */);
   }
 
   //-- copy
-  assert(dstlen > base1-base0 /* buffer overflow */);
-  memcpy(dst, base0, base1-base0);
-  dst[base1-base0] = '\0';
+  assert(dstlen > blen /* buffer overflow */);
+  memcpy(dst, b, blen);
+  dst[blen] = '\0';
 
   return dst;
 }
@@ -133,10 +126,10 @@ cxData *cxDataLoad(cxData *cxd, FILE *f)
     char *tail;
     if (linebuf[0]=='%' && linebuf[1]=='%') continue;  //-- skip comments
 
-    //-- ID
+    //-- elt
     s0  = linebuf;
     s1  = next_tab_z(s0);
-    cx.id = strdup(s0);
+    cx.elt = strdup(s0);
 
     //-- xoff
     s0 = s1+1;
@@ -172,10 +165,9 @@ cxData *cxDataLoad(cxData *cxd, FILE *f)
     cx.text = cx_text_string(s0, s1-s0);
 #endif
 
-#ifdef CX_WANT_BXP
     //-- bxp
     cx.bxp = NULL;
-#endif
+    cx.claimed = 0;
 
     cxDataPush(cxd, &cx);
   }
@@ -368,7 +360,7 @@ Offset2CxIndex  *tx2cxIndex(Offset2CxIndex *txo2cx, cxData *cxd)
 //--------------------------------------------------------------
 /* txt2cxIndex()
  *  + allocates & populates txtb2cx lookup vector: cxRecord *cx = txtb2cx[txt_byte_index]
- *  + also sets cx->bxp to point to block from bxd, CX_WANT_BXP is defined
+ *  + also sets cx->bxp to point to block from bxd
  *  + requires:
  *    - populated bxdata[] vector (see loadBxFile())
  *    - populated txb2ci[] vector (see init_txb2ci())
@@ -407,12 +399,7 @@ Offset2CxIndex *txt2cxIndex(Offset2CxIndex *txto2cx, bxData *bxd, Offset2CxIndex
       for (txti=0; txti < bx->otlen; txti++) {
 	cxRecord *cx = txb2cx->data[bx->toff+txti];
 	txto2cx->data[bx->otoff+txti] = cx;
-	//-- (?) map special characters (e.g. <lb/>) to NULL here?
-	//if (cx->id[0]=='$') { ... }
-
-#ifdef CX_WANT_BXP
 	if (cx != NULL) cx->bxp = bx; //-- cache block pointer for cx
-#endif
       }
     }
     //-- hints and other pseudo-text with NO cx records are mapped to NULL (via memset(), above)
@@ -461,9 +448,7 @@ bxRecord **cx2bxIndex(cxData *cxd, bxData *bxd, Offset2CxIndex *tx2cx)
 int cx_is_adjacent(const cxRecord *cx1, const cxRecord *cx2) {
   if (!cx1 || !cx2) return 0;				//-- NULL records block adjacency
   if (cx1->xoff+cx1->xlen == cx2->xoff) return 1;	//-- immediate XML adjaceny at byte-level
-#ifdef CX_WANT_BXP
   if (cx1->bxp==cx2->bxp && cx2==(cx1+1)) return 1;	//-- immediate adjacency in .cx-file within a single block from .bx-file
-#endif
   return 0;
 }
 
