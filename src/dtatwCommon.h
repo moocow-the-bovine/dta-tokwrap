@@ -9,6 +9,7 @@
 
 #include "dtatwConfig.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,8 +22,8 @@
  */
 
 #define FILE_BUFSIZE 8192 //-- file input buffer size
-typedef long unsigned int ByteOffset;
-typedef int ByteLen;
+typedef uint32_t ByteOffset;
+typedef uint32_t ByteLen;
 
 extern char *prog;
 
@@ -39,9 +40,6 @@ extern char *xmlid_name;
  * utf8 stuff
  */
 
-/** \brief typedef for unicode codepoints */
-typedef unsigned int ucs4;
-
 /** \brief useful alias */
 #ifndef uint
 #define uint unsigned int
@@ -50,11 +48,6 @@ typedef unsigned int ucs4;
 /** \brief useful alias */
 #ifndef uchar
 # define uchar unsigned char
-#endif
-
-/** \brief utf8.h wants this */
-#ifndef u_int32_t
-# define u_int32_t ucs4
 #endif
 
 
@@ -214,28 +207,61 @@ off_t file_size(FILE *f);
 size_t file_slurp(FILE *f, char **bufp, size_t buflen);
 
 /*======================================================================
- * Utils: .cx file(s)
+ * Utils: cx: binary
  */
 
-// CX_HAVE_PB : whether to parse 'pb' field in cxRecord
-//#define CX_HAVE_PB 1
+/// cxRecordType : enum for binary cx record types
+typedef enum {
+  cxrChar  = 0,		//-- cxrChar: "normal" character entry (attrs: @bbox = (@llx @lly @urx @ury))
+  cxrLb    = 1,		//-- cxrLb: line-break (attrs:none)
+  cxrPb    = 2,		//-- cxrPb: page-break (attrs:@facs)
+  cxrFormula = 3	//-- cxrFormula: formula (attrs:none)
+} cxRecordType;
 
-// CX_WANT_TEXT : whether to include (and parse) 'text' field in cxRecord
-#define CX_WANT_TEXT 1
+extern const uchar cxfTypeMask;		//-- cx flag mask: record type
+extern const uchar cxfHasXmlOffset;	//-- cx flag: xoff != (xoff[i-1]+xlen[i-1])
+extern const uchar cxfHasTxtLength;  	//-- cx flag: xlen != tlen
+extern const uchar cxfHasAttrs;		//-- cx flag: attributes present?
+
+//-- cx: packed: header
+extern const uchar      *cxMagic;	//-- cx header: magic (32 bytes)
+extern const uint32_t cxhVersion;	//-- cx header: current version
+extern const uint32_t cxhVersionMin;	//-- cx header: minimum compatible version for loading this file
+void cx_put_header(FILE *f);
+void cx_get_header(FILE *f, const char *filename);
+
+/** cxStoredRecord : binary stored cx record
+ *  + max size = l(flags) + l(xoff) + l(xlen) + l(toff) + l(tlen) + l(attrs)
+ *             =     1    +    4    +    1    +    0    +    1    +    20
+ *             = 27
+ */
+typedef struct {
+  uchar   flags;	//-- ((cxRecordType typ) & cxfTypeMask) |cxfNoXmlGap? |cxfNoTxtLen? |cxfHasAttrs?
+  uint32_t xoff;	//-- xml offset (only if (flags & cxfHasXmlOffset))
+  uchar    xlen;	//-- xml length
+  uchar    tlen;	//-- text length (only if (flags & cxfHasTxtLen))
+  uint32_t attrs[4];	//-- attributes (only if (flags & cxfHasAttrs)): pb->@facs, c->(@llx,@lly,@urx,@ury)
+} cxStoredRecord;
+
+void cx_put_record(FILE *f, const cxStoredRecord *cxr);
+void cx_get_record(FILE *f, cxStoredRecord *cxr, uint32_t *xmlOffset);
+
+//-- unused(?)
+void       put_packed_w(FILE *f, ByteOffset i);
+ByteOffset get_packed_w(FILE *f);
+
+
+/*======================================================================
+ * Utils: .cx file(s): new
+ */
 
 // cxRecord : struct for character-index records as loaded from .cx file
 typedef struct {
-  char       *elt;      //-- name of source element (e.g. "c" or "-")
+  char	     *elt;	//-- element name (TODO: get rid of it!)
   ByteOffset xoff;      //-- original xml byte offset
   ByteLen    xlen;      //-- original xml byte length
   ByteOffset toff;      //-- .tx byte offset
   ByteLen    tlen;      //-- .tx byte length
-#ifdef CX_HAVE_PB
-  int          pb;      //-- preceding::pb[1]/@facs (trimmed)
-#endif
-#ifdef CX_WANT_TEXT
-  char      *text;      //-- output text (un-escaped)
-#endif
   struct bxRecord_t *bxp; //-- pointer to .bx-record (block) containing this <c>, if available
   unsigned char claimed;	//-- claimed (0:unclaimed, 1: claimed by current word, >1: claimed by other word)
 } cxRecord;

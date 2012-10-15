@@ -43,7 +43,7 @@
  * \li dest will always be L'\0'-terminated, even if there isn't enough room for all the characters
  * \li if <tt>sz = srcsz+1</tt> (i.e. <tt>4*srcsz+4</tt> bytes), there will always be enough space.
  */
-int u8_toucs(u_int32_t *dest, int sz, const char *src, int srcsz);
+int u8_toucs(uint32_t *dest, int sz, const char *src, int srcsz);
 
 /** convert UTF-8 byte string to UCS-4 wide character string
  * \param dest = destination wide-character buffer
@@ -61,20 +61,20 @@ int u8_toucs(u_int32_t *dest, int sz, const char *src, int srcsz);
  *
  * \li the destination string will never be bigger than the source string.
  */
-int u8_toutf8(char *dest, int sz, const u_int32_t *src, int srcsz);
+int u8_toutf8(char *dest, int sz, const uint32_t *src, int srcsz);
 
 /** (moo) get number of bytes required for representing a wide character \a ch in UTF-8 */
-int u8_wc_len(u_int32_t ch);
+int u8_wc_len(uint32_t ch);
 
 /** (moo) get number of bytes required for representing a wide character string \a ws in UTF-8 */
-int u8_ws_len(const u_int32_t *src, int srcsz);
+int u8_ws_len(const uint32_t *src, int srcsz);
 
 /** single character to UTF-8
  * \param dest destination buffer
  * \param ch character to convert
  * \returns number of bytes written to \a dest (0 <= RETVAL <= 4)
  */
-int u8_wc_toutf8(char *dest, u_int32_t ch);
+int u8_wc_toutf8(char *dest, uint32_t ch);
 
 /** character number to byte offset */
 int u8_offset(const char *str, int charnum);
@@ -83,16 +83,16 @@ int u8_offset(const char *str, int charnum);
 int u8_charnum(const char *s, int offset);
 
 /** return next character, updating an index variable.  expects NUL-terminated \a s */
-u_int32_t u8_nextchar(const char *s, int *i);
+uint32_t u8_nextchar(const char *s, int *i);
 
 /** (moo): return next character, updating an index variable which may not exceed length \a slen */
-u_int32_t u8_nextcharn(const char *s, int slen, int *i);
+uint32_t u8_nextcharn(const char *s, int slen, int *i);
 
 /** (moo): return next character; expects NUL-terminated \a s */
-u_int32_t u8_peek(const char *s);
+uint32_t u8_peek(const char *s);
 
 /** (moo): return next character; uses buffer length */
-u_int32_t u8_peekn(const char *s, int slen);
+uint32_t u8_peekn(const char *s, int slen);
 
 /** move to next character */
 void u8_inc(const char *s, int *i);
@@ -104,16 +104,16 @@ void u8_dec(const char *s, int *i);
 int u8_seqlen(const char *s);
 
 /** returns true iff ch is a combining diacritical mark. */
-int u8_is_combining(u_int32_t ch);
+int u8_is_combining(uint32_t ch);
 
 /** assuming src points to the character after a backslash, read an
    escape sequence, storing the result in dest and returning the number of
    input characters processed */
-int u8_read_escape_sequence(const char *src, u_int32_t *dest);
+int u8_read_escape_sequence(const char *src, uint32_t *dest);
 
 /** given a wide character, convert it to an ASCII escape sequence stored in
    buf, where buf is "sz" bytes. returns the number of characters output. */
-int u8_escape_wchar(char *buf, int sz, u_int32_t ch);
+int u8_escape_wchar(char *buf, int sz, uint32_t ch);
 
 /** convert a string "src" containing escape sequences to UTF-8 */
 int u8_unescape(char *buf, int sz, const char *src);
@@ -129,11 +129,11 @@ int hex_digit(char c);
 
 /** return a pointer to the first occurrence of ch in s, or NULL if not
    found. character index of found character returned in *charn. */
-char *u8_strchr(char *s, u_int32_t ch, int *charn);
+char *u8_strchr(char *s, uint32_t ch, int *charn);
 
 /** same as the above, but searches a buffer of a given size instead of
    a NUL-terminated string. */
-char *u8_memchr(char *s, u_int32_t ch, size_t sz, int *charn);
+char *u8_memchr(char *s, uint32_t ch, size_t sz, int *charn);
 
 /** count the number of characters in a UTF-8 string */
 int u8_strlen(const char *s);

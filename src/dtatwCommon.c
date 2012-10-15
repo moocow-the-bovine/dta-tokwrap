@@ -70,6 +70,123 @@ size_t file_slurp(FILE *f, char **bufp, size_t buflen)
 }
 
 /*======================================================================
+ * Utils: cx: packed
+ */
+
+
+//-- cx: packed: flags
+const uchar cxfTypeMask = 0x7;
+const uchar cxfHasXmlOffset = 0x8;
+const uchar cxfHasTxtLength = 0x10;
+const uchar cxfHasAttrs = 0x20;
+const uchar cxfUnused1 = 0x40;
+const uchar cxfUnused2 = 0x80;
+
+//-- cx: packed: header
+const uchar    *cxMagic      = "dtatw binary cx";
+const uint32_t cxhVersion    = 0;
+const uint32_t cxhVersionMin = 0;
+
+//--------------------------------------------------------------
+void cx_put_header(FILE *f)
+{
+  //-- header: magic
+  uchar magic[32];
+  memset(magic,0,32);
+  strcpy(magic,cxMagic);
+  fwrite(magic,32,1,f);
+
+  //-- header: version stuff
+  fwrite(&cxhVersion,    4, 1, f);
+  fwrite(&cxhVersionMin, 4, 1, f);
+}
+
+//--------------------------------------------------------------
+void cx_get_header(FILE *f, const char *filename)
+{
+  int rc = 1;
+  uchar magic[32];
+  uint32_t vinfo[2];
+  if (fread(magic,32,1,f) != 32) {
+    fprintf(stderr, "%s: failed to read magic from cx file %s\n", (filename ? filename : "NULL"));
+    exit(1);
+  }
+  if (strcmp(magic,cxMagic) != 0) {
+    fprintf(stderr, "%s: bad magic from cx file %s\n", (filename ? filename : "NULL"));
+    exit(1);
+  }
+
+  if (fread(vinfo,4,2,f) != 8) {
+    fprintf(stderr, "%s: failed to read version info from cx file %s\n", (filename ? filename : "NULL"));
+    exit(1);
+  }
+  if (vinfo[1] > cxhVersion) {
+    fprintf(stderr, "%s: cx file %s requires cx-version %u, but we have only %u\n", (filename ? filename : "NULL"), vinfo[1], cxhVersion);
+    exit(1);
+  }
+  if (cxhVersionMin > vinfo[0]) {
+    fprintf(stderr, "%s: we require cx-version %u, but cx file %s is only %u\n", (filename ? filename : "NULL"), cxhVersionMin, vinfo[0]);
+    exit(1);
+  }
+}
+
+//--------------------------------------------------------------
+void cx_put_record(FILE *f, const cxStoredRecord *cxr)
+{
+  fputc(cxr->flags,f);
+  if (cxr->flags & cxfHasXmlOffset)
+    fwrite(&cxr->xoff,4,1,f);
+  fputc(cxr->xlen,f);
+  if (cxr->flags & cxfHasTxtLength)
+    fputc(cxr->tlen,f);
+  if (cxr->flags & cxfHasAttrs)
+    fwrite(cxr->attrs,4,4,f);
+}
+
+//--------------------------------------------------------------
+void cx_get_record(FILE *f, cxStoredRecord *cxr, uint32_t *xmlOffset)
+{
+  assert(!feof(f));
+  cxr->flags = fgetc(f);
+
+  if (cxr->flags & cxfHasXmlOffset)
+    fread(&cxr->xoff,4,1,f);
+  else
+    cxr->xoff = (xmlOffset ? *xmlOffset : 0);
+
+  cxr->xlen = fgetc(f);
+
+  if (cxr->flags & cxfHasTxtLength)
+    cxr->tlen = fgetc(f);
+  else
+    cxr->tlen = cxr->xlen;
+
+  if (cxr->flags & cxfHasAttrs)
+    fread(cxr->attrs,4,4,f);
+}
+
+//--------------------------------------------------------------
+void put_paced_w(FILE *f, ByteOffset i)
+{
+  for (; i >= 0x80; i >>= 7) {
+    fputc( (0x80 | (i&0x7f)), f );
+  }
+  fputc( (i&0x7f), f );
+}
+
+//--------------------------------------------------------------
+ByteOffset get_packed_w(FILE *f)
+{
+  int c;
+  ByteOffset i;
+  for (i=0, c=fgetc(f); (c&0x80); c=fgetc(f)) {
+    i = (i<<7) | (c & 0x7f);
+  }
+  return (i<<7) | (c & 0x7f);
+}
+
+
+/*======================================================================
  * Utils: .cx file(s)
  */
 
@@ -150,20 +267,6 @@ cxData *cxDataLoad(cxData *cxd, FILE *f)
     s0 = s1+1;
     s1 = next_tab(s0);
     cx.tlen = strtol(s0,&tail,0);
-
-#ifdef CX_HAVE_PB
-    //-- pb
-    s0 = s1+1;
-    s1 = next_tab(s0);
-    cx.pb = strtol(s0,&tail,0);
-#endif
-
-#ifdef CX_WANT_TEXT
-    //-- text
-    s0 = s1+1;
-    s1 = next_tab_z(s0);
-    cx.text = cx_text_string(s0, s1-s0);
-#endif
 
     //-- bxp
     cx.bxp = NULL;

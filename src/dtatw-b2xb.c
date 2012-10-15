@@ -132,7 +132,9 @@ static void tt_dump_word(FILE *f_out, ttWordBuffer *w)
 #if WARN_ON_OVERLAP
 	if ( !(w->w_flags&ttwOver) )
 	  fprintf(stderr, "%s: WARNING: `%s' line %u: overlapping word `%s' at XML-byte %lu (elt=%s)\n",
-		  prog, tt_filename, tt_linenum, w->w_text, (jcx ? jcx->xoff : 0), (jcx ? jcx->elt : "?"));
+		  prog, tt_filename, tt_linenum, w->w_text,
+		  (jcx ? jcx->xoff : 0),
+		  (jcx ? jcx->elt : "?"));
 #endif
 	w->w_flags |= ttwOver;
 	break;
