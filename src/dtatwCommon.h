@@ -237,6 +237,7 @@ typedef struct {
   char      *text;      //-- output text (un-escaped)
 #endif
   struct bxRecord_t *bxp; //-- pointer to .bx-record (block) containing this <c>, if available
+  unsigned char claimed;	//-- claimed (0:unclaimed, 1: claimed by current word, >1: claimed by other word)
 } cxRecord;
 
 // cxData : array of .cx records

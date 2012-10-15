@@ -19,7 +19,7 @@ typedef struct {
   int text_depth;       //-- number of open <text> elements
   int total_depth;      //-- total number of open elements (global depth)
   int c_depth;          //-- total number of open <c> elements (either 0 or 1: nested <c>s are not allowed)
-  int is_chardata;      //-- true if current event is character data
+  int is_chardata;      //-- true if current event is character data (used by cb_default)
   ByteOffset n_chrs;    //-- number of logical characters read
   ByteOffset loc_xoff;  //-- last xml-offset written to .sx as location-block (see LOC_FMT, cb_default())
   ByteOffset loc_toff;  //-- last text-offset written to .sx as location-block (see LOC_FMT, cb_default())
@@ -389,7 +389,7 @@ void cb_char(TokWrapData *data, const XML_Char *s, int len)
 	}
 
 	//-- we've got a text character in $ctx[i:j] and its unicode codepoint in $u
-	if (isspace(u)) {
+	if (u<=0xff && isspace(u)) {
 	  data->c_xoffset = xoff+i;
 	  data->c_xlen = j-i;
 	  data->ws_pending = 1;
@@ -404,36 +404,45 @@ void cb_char(TokWrapData *data, const XML_Char *s, int len)
       flush_ws(data);
     }
   }
-  data->is_chardata = 1;
-  XML_DefaultCurrent(data->xp);
+  else {
+    //-- character data outside of //text : shunt it to sx
+    data->is_chardata = 1;
+    XML_DefaultCurrent(data->xp);
+  }
 }
 
 //--------------------------------------------------------------
-static const char *LOC_FMT = "<c n=\"%lu %lu %lu %lu\"/>"; //-- xoff xlen toff tlen
-//static const char *LOC_FMT = "<c n=\"%lu %lu\"/>";
-//static const char *LOC_FMT = "<dta.tw.b n=\"%lu %lu\"/>";
-//static const char *LOC_FMT = "<dta.tw.block xb=\"%lu\" tb=\"%lu\"/>";
-//static const char *LOC_FMT = "<milestone unit=\"dta.loc\" n=\"%lu %lu\"/>";
+//#define TW_DEBUG_LOC
+#ifdef TW_DEBUG_LOC
+static const char *LOC_FMT_PRE  = "<c type=\"pre\" n=\"%lu %lu %lu %lu\"/>";  //-- xoff xlen toff tlen
+static const char *LOC_FMT_POST = "<c type=\"post\" n=\"%lu %lu %lu %lu\"/>"; //-- xoff xlen toff tlen
+#else
+static const char *LOC_FMT_PRE  = "<c n=\"%lu %lu %lu %lu\"/>"; //-- xoff xlen toff tlen
+static const char *LOC_FMT_POST = "<c n=\"%lu %lu %lu %lu\"/>"; //-- xoff xlen toff tlen
+#endif
+
 void cb_default(TokWrapData *data, const XML_Char *s, int len)
 {
   int ctx_len;
   const XML_Char *ctx = get_event_context(data->xp, &ctx_len);
-  ByteOffset xoff = XML_GetCurrentByteIndex(data->xp);
+  ByteOffset     xoff = XML_GetCurrentByteIndex(data->xp);
   if (data->total_depth > 0 && !data->is_chardata && xoff != data->loc_xoff) {
-    //-- pre-event location element (for close-tags)
+    //-- pre-copy location element (for close-tags)
     ByteOffset xlen = xoff - data->loc_xoff;
     ByteOffset tlen = data->c_toffset + data->c_tlen - data->loc_toff;
-    if (data->f_sx) fprintf(data->f_sx, LOC_FMT, data->loc_xoff, xlen, data->loc_toff, tlen);
+    if (data->f_sx) fprintf(data->f_sx, LOC_FMT_PRE, data->loc_xoff, xlen, data->loc_toff, tlen);
     data->loc_xoff = xoff;
     data->loc_toff = data->c_toffset + data->c_tlen;
   }
-  if (data->f_sx && (data->text_depth<=0 || !data->is_chardata))
+  if (data->f_sx) {
+    //-- copy literal event to sx
     fwrite(ctx, 1,ctx_len, data->f_sx);
+  }
   if (data->total_depth > 1 && !data->is_chardata && xoff+ctx_len != data->loc_xoff) {
-    //-- post-event location element (for open-tags)
+    //-- post-copy location element (for open-tags)
     ByteOffset xlen = xoff + ctx_len - data->loc_xoff;
     ByteOffset tlen = data->c_toffset + data->c_tlen - data->loc_toff;
-    if (data->f_sx) fprintf(data->f_sx, LOC_FMT, data->loc_xoff, xlen, data->loc_toff, tlen);
+    if (data->f_sx) fprintf(data->f_sx, LOC_FMT_POST, data->loc_xoff, xlen, data->loc_toff, tlen);
     data->loc_xoff = xoff + ctx_len;
     data->loc_toff = data->c_toffset + data->c_tlen;
   }
