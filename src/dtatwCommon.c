@@ -70,9 +70,8 @@ size_t file_slurp(FILE *f, char **bufp, size_t buflen)
 }
 
 /*======================================================================
- * Utils: cx: packed
+ * Utils: cx: packed: flags
  */
-
 
 //-- cx: packed: flags
 const uchar cxfTypeMask = 0x7;
@@ -82,53 +81,98 @@ const uchar cxfHasAttrs = 0x20;
 const uchar cxfUnused1 = 0x40;
 const uchar cxfUnused2 = 0x80;
 
+const  char *cxTypeNames[8] = {"c","lb","pb","formula","EOF","#5","#6","#7"};
+
+/*======================================================================
+ * Utils: cx: packed: header
+ */
+
 //-- cx: packed: header
-const uchar    *cxMagic      = "dtatw binary cx";
-const uint32_t cxhVersion    = 0;
-const uint32_t cxhVersionMin = 0;
+const char *cxhMagic   = PACKAGE " cx bin\n";
+const char *cxhVersion = PACKAGE_VERSION; 
+const char *cxhVersionMinR = "0.39";
+const char *cxhVersionMinW = "0.39";
+
+//--------------------------------------------------------------
+int cx_version_cmp(const char *v1, const char *v2)
+{
+  unsigned long int u1, u2;
+  char *tail1=NULL, *tail2=NULL;
+  while (v1 && v2 && *v1 && *v2) {
+    u1 = strtoul(v1,&tail1,10);
+    u2 = strtoul(v2,&tail2,10);
+    if      (u1 < u2) return -1;
+    else if (u1 > u2) return  1;
+
+    v1 = tail1 && *tail1 ? (tail1+1) : NULL;
+    v2 = tail2 && *tail2 ? (tail2+1) : NULL;
+  }
+  if      (! v1 &&   v2) return -1;
+  else if (  v1 && ! v2) return  1;
+  else if (! v1 && ! v2) return  0;
+  else if (!*v1 &&  *v2) return -1;
+  else if ( *v1 && !*v2) return  1;
+  return 0;
+}
 
 //--------------------------------------------------------------
 void cx_put_header(FILE *f)
 {
-  //-- header: magic
-  uchar magic[32];
-  memset(magic,0,32);
-  strcpy(magic,cxMagic);
-  fwrite(magic,32,1,f);
+  cxHeader h;
+  memset(&h, 0, sizeof(cxHeader));
+  strncpy(h.magic,       cxhMagic,       CXH_MAGIC_LEN);
+  strncpy(h.version,     cxhVersion,     CXH_VERSION_LEN);
+  strncpy(h.version_min, cxhVersionMinW, CXH_VERSION_LEN);
+  fwrite(&h, sizeof(cxHeader), 1, f);
+}
 
-  //-- header: version stuff
-  fwrite(&cxhVersion,    4, 1, f);
-  fwrite(&cxhVersionMin, 4, 1, f);
+
+//--------------------------------------------------------------
+cxHeader* cx_get_header(FILE *f, const char *filename, cxHeader *h)
+{
+  const char *file = filename ? filename : "(null)";
+  if (!h)
+    h = (cxHeader*)malloc(sizeof(cxHeader));
+  
+  memset(h, 0, sizeof(cxHeader));
+  if (fread(h, sizeof(cxHeader), 1, f) != 1) {
+    fprintf(stderr, "%s: failed to read header from binary cx-file %s\n", prog, file);
+    exit(1);
+  }
+  h->magic[CXH_MAGIC_LEN-1] = '\0';
+  h->version[CXH_VERSION_LEN-1] = '\0';
+  h->version_min[CXH_VERSION_LEN-1] = '\0';
+  return h;
 }
 
 //--------------------------------------------------------------
-void cx_get_header(FILE *f, const char *filename)
+int cx_check_header(const cxHeader *h, const char *filename)
 {
-  int rc = 1;
-  uchar magic[32];
-  uint32_t vinfo[2];
-  if (fread(magic,32,1,f) != 32) {
-    fprintf(stderr, "%s: failed to read magic from cx file %s\n", (filename ? filename : "NULL"));
-    exit(1);
-  }
-  if (strcmp(magic,cxMagic) != 0) {
-    fprintf(stderr, "%s: bad magic from cx file %s\n", (filename ? filename : "NULL"));
-    exit(1);
+  const char *file = filename ? filename : "(null)";
+
+  //-- check: magic
+  if (strcmp(h->magic,cxhMagic) != 0) {
+    fprintf(stderr, "%s: bad magic `%s' from cx-file %s\n", prog, h->magic, file);
+    return 0;
   }
 
-  if (fread(vinfo,4,2,f) != 8) {
-    fprintf(stderr, "%s: failed to read version info from cx file %s\n", (filename ? filename : "NULL"));
-    exit(1);
+  //-- check: version
+  if (cx_version_cmp(h->version_min, cxhVersion) > 0) {
+    fprintf(stderr, "%s: cx file %s requires v%s, but we have only v%s\n", prog, file, h->version_min, cxhVersion);
+    return 0;
   }
-  if (vinfo[1] > cxhVersion) {
-    fprintf(stderr, "%s: cx file %s requires cx-version %u, but we have only %u\n", (filename ? filename : "NULL"), vinfo[1], cxhVersion);
-    exit(1);
+  if (cx_version_cmp(h->version, cxhVersionMinR) < 0) {
+    fprintf(stderr, "%s: cx file %s is only v%s, but we require >= v%s\n", prog, file, h->version, cxhVersionMinR);
+    return 0;
   }
-  if (cxhVersionMin > vinfo[0]) {
-    fprintf(stderr, "%s: we require cx-version %u, but cx file %s is only %u\n", (filename ? filename : "NULL"), cxhVersionMin, vinfo[0]);
-    exit(1);
-  }
+
+  //-- all ok
+  return 1;
 }
+
+/*======================================================================
+ * Utils: cx: packed: i/o
+ */
 
 //--------------------------------------------------------------
 void cx_put_record(FILE *f, const cxStoredRecord *cxr)
@@ -139,15 +183,24 @@ void cx_put_record(FILE *f, const cxStoredRecord *cxr)
   fputc(cxr->xlen,f);
   if (cxr->flags & cxfHasTxtLength)
     fputc(cxr->tlen,f);
-  if (cxr->flags & cxfHasAttrs)
-    fwrite(cxr->attrs,4,4,f);
+  if (cxr->flags & cxfHasAttrs) {
+    switch (cxr->flags&cxfTypeMask) {
+    case cxrChar: fwrite(cxr->attrs,4,4,f); break;
+    case cxrPb:   fwrite(cxr->attrs,4,1,f); break;
+    default: break;
+    }
+  }
 }
 
 //--------------------------------------------------------------
-void cx_get_record(FILE *f, cxStoredRecord *cxr, uint32_t *xmlOffset)
+int cx_get_record(FILE *f, cxStoredRecord *cxr, uint32_t *xmlOffset)
 {
-  assert(!feof(f));
-  cxr->flags = fgetc(f);
+  int i = fgetc(f);
+  if (i==EOF || feof(f)) {
+    cxr->flags = cxrEOF;
+    return cxrEOF;
+  }
+  cxr->flags = i;
 
   if (cxr->flags & cxfHasXmlOffset)
     fread(&cxr->xoff,4,1,f);
@@ -161,12 +214,19 @@ void cx_get_record(FILE *f, cxStoredRecord *cxr, uint32_t *xmlOffset)
   else
     cxr->tlen = cxr->xlen;
 
-  if (cxr->flags & cxfHasAttrs)
-    fread(cxr->attrs,4,4,f);
+  if (cxr->flags & cxfHasAttrs) {
+    switch (cxr->flags&cxfTypeMask) {
+    case cxrChar: fread(cxr->attrs,4,4,f); break;
+    case cxrPb:   fread(cxr->attrs,4,1,f); break;
+    default: break;
+    }
+  }
+
+  return (cxr->flags&cxfTypeMask);
 }
 
 //--------------------------------------------------------------
-void put_paced_w(FILE *f, ByteOffset i)
+void put_packed_w(FILE *f, ByteOffset i)
 {
   for (; i >= 0x80; i >>= 7) {
     fputc( (0x80 | (i&0x7f)), f );

@@ -206,18 +206,20 @@ void cb_start(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
       for ( ; *attrs; attrs += 2) {
 	if (strlen(*attrs) != 3) continue;
 	switch (attrs[0][0]) {
-	case 'l':
-	  switch (attrs[0][2]) {
-	  case 'x': data->cx_attrs[0] = strtoul(attrs[1],NULL,10); break;
-	  case 'y': data->cx_attrs[1] = strtoul(attrs[1],NULL,10); break;
-	  default: break;
-	  }
 	case 'u':
 	  switch (attrs[0][2]) {
-	  case 'x': data->cx_attrs[2] = strtoul(attrs[1],NULL,10); break;
-	  case 'y': data->cx_attrs[3] = strtoul(attrs[1],NULL,10); break;
+	  case 'x': data->cx_attrs[0] = strtoul(attrs[1],NULL,10); break; //-- 0: u[l]x
+	  case 'y': data->cx_attrs[1] = strtoul(attrs[1],NULL,10); break; //-- 1: u[l]y
 	  default: break;
 	  }
+	  break;
+	case 'l':
+	  switch (attrs[0][2]) {
+	  case 'x': data->cx_attrs[2] = strtoul(attrs[1],NULL,10); break; //-- 2: l[r]x
+	  case 'y': data->cx_attrs[3] = strtoul(attrs[1],NULL,10); break; //-- 3: l[r]x
+	  default: break;
+	  }
+	  break;
 	default: break;
 	}
       }
@@ -423,9 +425,9 @@ int main(int argc, char **argv)
     fprintf(stderr, "Usage:\n");
     fprintf(stderr, " + %s INFILE [CXFILE [SXFILE [TXFILE]]]\n", prog);
     fprintf(stderr, " + INFILE : XML source file with <lb> elements and optional <c> elements\n");
-    fprintf(stderr, " + CXFILE : output character-index CSV file; default=stdout\n");
+    fprintf(stderr, " + CXFILE : output character-index binary file; default=stdout\n");
     fprintf(stderr, " + SXFILE : output structure-index XML file; default=none\n");
-    fprintf(stderr, " + TXFILE : output raw text-index file (unserialized); default=none\n");
+    fprintf(stderr, " + TXFILE : output raw text-data file (unserialized); default=none\n");
     fprintf(stderr, " + \"-\" may be used in place of any filename to indicate standard (in|out)put\n");
     fprintf(stderr, " + \"\"  may be used in place of any output filename to discard output\n");
     exit(1);

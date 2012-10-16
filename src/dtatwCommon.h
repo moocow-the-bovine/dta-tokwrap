@@ -27,9 +27,6 @@ typedef uint32_t ByteLen;
 
 extern char *prog;
 
-//-- CX_NIL_ELT: pseudo-name used for raw text nodes in cx-records
-extern char *CX_NIL_ELT; //-- default: "-"
-
 //-- CX_FORMULA_TEXT : text inserted for <formula/> records
 extern char *CX_FORMULA_TEXT; //-- default: " FORMULA "
 
@@ -212,11 +209,13 @@ size_t file_slurp(FILE *f, char **bufp, size_t buflen);
 
 /// cxRecordType : enum for binary cx record types
 typedef enum {
-  cxrChar  = 0,		//-- cxrChar: "normal" character entry (attrs: @bbox = (@llx @lly @urx @ury))
+  cxrChar  = 0,		//-- cxrChar: "normal" character entry (attrs: @bbox = (@ulx @uly @lrx @lry))
   cxrLb    = 1,		//-- cxrLb: line-break (attrs:none)
   cxrPb    = 2,		//-- cxrPb: page-break (attrs:@facs)
-  cxrFormula = 3	//-- cxrFormula: formula (attrs:none)
+  cxrFormula = 3,	//-- cxrFormula: formula (attrs:none)
+  cxrEOF = 4		//-- cxrEOF: special type for eof pseudo-records
 } cxRecordType;
+extern const char *cxTypeNames[8]; //-- for mask-safety
 
 extern const uchar cxfTypeMask;		//-- cx flag mask: record type
 extern const uchar cxfHasXmlOffset;	//-- cx flag: xoff != (xoff[i-1]+xlen[i-1])
@@ -224,11 +223,23 @@ extern const uchar cxfHasTxtLength;  	//-- cx flag: xlen != tlen
 extern const uchar cxfHasAttrs;		//-- cx flag: attributes present?
 
 //-- cx: packed: header
-extern const uchar      *cxMagic;	//-- cx header: magic (32 bytes)
-extern const uint32_t cxhVersion;	//-- cx header: current version
-extern const uint32_t cxhVersionMin;	//-- cx header: minimum compatible version for loading this file
-void cx_put_header(FILE *f);
-void cx_get_header(FILE *f, const char *filename);
+extern const char *cxhMagic;		//-- cx header: magic
+extern const char *cxhVersion;		//-- cx header: current tokwrap version
+extern const char *cxhVersionMinR;	//-- cx header: min tokwrap-version of cx-files we can read
+extern const char *cxhVersionMinW;	//-- cx header: min tokwrap-version required for cx-files we write
+
+#define CXH_MAGIC_LEN 32
+#define CXH_VERSION_LEN 8
+typedef struct {
+  char magic[CXH_MAGIC_LEN];		//-- cx header: magic
+  char version[CXH_VERSION_LEN];	//-- cx header: current tokwrap version
+  char version_min[CXH_VERSION_LEN];	//-- cx header: minimum compatible version for loading this file
+} cxHeader;
+int       cx_version_cmp(const char *v1, const char *v2);
+void      cx_put_header(FILE *f);
+cxHeader* cx_get_header(FILE *f, const char *filename, cxHeader *h);
+int	  cx_check_header(const cxHeader *h, const char *filename);
+
 
 /** cxStoredRecord : binary stored cx record
  *  + max size = l(flags) + l(xoff) + l(xlen) + l(toff) + l(tlen) + l(attrs)
@@ -244,9 +255,11 @@ typedef struct {
 } cxStoredRecord;
 
 void cx_put_record(FILE *f, const cxStoredRecord *cxr);
-void cx_get_record(FILE *f, cxStoredRecord *cxr, uint32_t *xmlOffset);
+int cx_get_record(FILE *f, cxStoredRecord *cxr, uint32_t *xmlOffset); //-- returns cxRecordType
 
-//-- unused(?)
+//-- packed i/o: perl pack('w',$i)
+// + BER-compressed integers (unsigned int in base-128, high bit (0x80) set on all but final byte)
+// + unused
 void       put_packed_w(FILE *f, ByteOffset i);
 ByteOffset get_packed_w(FILE *f);
 
