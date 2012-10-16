@@ -73,10 +73,10 @@ sub cx_check_header {
   die("bad magic '$hdr->{magic}' in cx-file") if ($cxhMagic ne $hdr->{magic});
 
   ##-- check: versions
-  my $xv    = version->parse($cxhVersion);
-  my $xvmin = version->parse($cxhVersionMinR);
-  my $hv    = version->parse($hdr->{version});
-  my $hvmin = version->parse($hdr->{version_min});
+  my $xv    = version->new("$cxhVersion");
+  my $xvmin = version->new("$cxhVersionMinR");
+  my $hv    = version->new("$hdr->{version}");
+  my $hvmin = version->new("$hdr->{version_min}");
 
   die("cx-file requires v$hvmin, but we have only v$xv") if ($hvmin > $xv);
   die("we require v$xvmin, but cx-file is only v$hv") if ($xvmin > $hv);
