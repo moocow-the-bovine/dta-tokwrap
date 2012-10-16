@@ -79,8 +79,6 @@ int main(int argc, char **argv)
 {
   ParseData data;
   XML_Parser xp;
-  void *buf;
-  int  isFinal = 0;
   char *filename_in  = "-";
   char *filename_out = "-";
   FILE *f_in  = stdin;   //-- input file

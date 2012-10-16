@@ -344,4 +344,9 @@ Offset2CxIndex *txt2cxIndex(Offset2CxIndex *txto2cx, bxData *bxd, Offset2CxIndex
 // cx_is_adjacent(): check whether cx1 immediately follows cx2
 int cx_is_adjacent(const cxRecord *cx1, const cxRecord *cx2);
 
+/*======================================================================
+ * forward c library decls
+ */
+extern ssize_t getline (char **LINEPTR, size_t *N, FILE *STREAM);
+
 #endif /* DTATW_COMMON_H */

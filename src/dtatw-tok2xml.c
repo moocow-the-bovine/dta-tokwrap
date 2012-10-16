@@ -109,12 +109,12 @@ static void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *fi
 
     //-- output: BOS
     if (!s_open) {
-      fprintf(f_out, "%s<%s %s=\"s%lx\">", indent_s, sElt, xmlid_name, ++s_id_ctr);
+      fprintf(f_out, "%s<%s %s=\"s%x\">", indent_s, sElt, xmlid_name, ++s_id_ctr);
       s_open = 1;
     }
 
     //-- output: w: begin: open <w ...>
-    fprintf(f_out, "%s<%s %s=\"w%lx\"", indent_w, wElt, xmlid_name, ++w_id_ctr);
+    fprintf(f_out, "%s<%s %s=\"w%x\"", indent_w, wElt, xmlid_name, ++w_id_ctr);
 
     //-- output: w: text
     if (textAttr) {

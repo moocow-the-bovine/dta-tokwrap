@@ -35,7 +35,7 @@ if test "$enable_debug" == "yes" ; then
    CONFIG_OPTIONS="DEBUG=1"
 else
   AC_MSG_RESULT(no)
-  ac_OFLAGS="-pipe -O" ##-- this is actually faster for dta-tokwrap c progs!
+  ac_OFLAGS="-pipe -O2"
   #CONFIG_OPTIONS="$CONFIG_OPTIONS DEBUG=0"
   CONFIG_OPTIONS="DEBUG=0"
 fi
@@ -49,17 +49,27 @@ case "$USER_CFLAGS" in
     ;;
 esac
 
+case "$USER_CFLAGS" in
+  *-W*)
+    AC_MSG_NOTICE([CFLAGS appears already to contain warning flags - skipping])
+    ac_WFLAGS=""
+    ;;
+  *)
+    ac_WFLAGS="-Wall"
+    ;;
+esac
+
 if test -n "$ac_OFLAGS" ; then
   if test "$GCC" == "yes" ; then
-     AC_MSG_NOTICE([GNU C compiler detected: setting appropriate optimization and/or debugging flags: $ac_OFLAGS])
-     OFLAGS="$ac_OFLAGS"
+     AC_MSG_NOTICE([GNU C compiler detected: setting appropriate optimization and/or debugging flags: $ac_WFLAGS $ac_OFLAGS])
+     OFLAGS="$ac_OFLAGS $ac_WFLAGS"
   else
      AC_MSG_WARN([GNU C compiler not detected: you must use CFLAGS to set compiler optimization and/or debugging flags])
      OFLAGS=""
    fi
 fi  
 
-test -n "$OFLAGS" && USER_CFLAGS="$USER_CFLAGS $OFLAGS" && CFLAGS="$CLFAGS $OFLAGS"
+test -n "$OFLAGS" && USER_CFLAGS="$USER_CFLAGS $OFLAGS" && CFLAGS="$CFLAGS $OFLAGS"
 AC_SUBST(OFLAGS)
 ##
 ## /debug ?

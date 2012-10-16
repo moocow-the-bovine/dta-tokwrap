@@ -81,17 +81,17 @@ void dump_record(FILE *f, const cxStoredRecord *cxr, FILE *f_tx)
     fread(txbuf, 1, cxr->tlen, f_tx);
     txbuf[cxr->tlen] = '\0';
   }
-  fprintf(f, "%s\t%lu\t%d\t%lu\t%d\t%s",
+  fprintf(f, "%s\t%u\t%hhu\t%u\t%hhu\t%s",
 	  cxTypeNames[(cxr->flags&cxfTypeMask)],
-	  cxr->xoff, cxr->xlen,
-	  txOffset, cxr->tlen,
-	  dump_text(txbuf,cxr->tlen));
+	  (uint)cxr->xoff, cxr->xlen,
+	  (uint)txOffset, cxr->tlen,
+	  dump_text((char*)txbuf,(int)cxr->tlen));
 
   //-- attrs
   if (cxr->flags&cxfHasAttrs) {
     switch (cxr->flags&cxfTypeMask) {
-    case cxrChar: fprintf(f, "\tulx=%lu uly=%lu lrx=%lu lry=%lu", cxr->attrs[0], cxr->attrs[1], cxr->attrs[2], cxr->attrs[3]); break;
-    case cxrPb:   fprintf(f, "\tfacs=#f%0.4lu", cxr->attrs[0]); break;
+    case cxrChar: fprintf(f, "\tulx=%u uly=%u lrx=%u lry=%u", (uint)cxr->attrs[0], (uint)cxr->attrs[1], (uint)cxr->attrs[2], (uint)cxr->attrs[3]); break;
+    case cxrPb:   fprintf(f, "\tfacs=#f%04u", (uint)cxr->attrs[0]); break;
     default: break;
     }
   }

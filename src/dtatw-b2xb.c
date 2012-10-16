@@ -114,9 +114,8 @@ unsigned int tt_linenum = 1;
 const char *tt_filename = "(?)";
 static void tt_dump_word(FILE *f_out, ttWordBuffer *w)
 {
-  int i,j,len;
+  int i,j;
   char     *xmlpos   = w_xmlpos;
-  ByteOffset xmloff  = (ByteOffset)-1;
   ByteOffset xmlend  = (ByteOffset)-1;
   cxRecord *icx, *jcx, *jcx_prev;
 
@@ -131,9 +130,9 @@ static void tt_dump_word(FILE *f_out, ttWordBuffer *w)
       if (jcx && jcx->claimed > 1) {
 #if WARN_ON_OVERLAP
 	if ( !(w->w_flags&ttwOver) )
-	  fprintf(stderr, "%s: WARNING: `%s' line %u: overlapping word `%s' at XML-byte %lu (elt=%s)\n",
+	  fprintf(stderr, "%s: WARNING: `%s' line %u: overlapping word `%s' at XML-byte %u (elt=%s)\n",
 		  prog, tt_filename, tt_linenum, w->w_text,
-		  (jcx ? jcx->xoff : 0),
+		  (uint)(jcx ? jcx->xoff : 0),
 		  (jcx ? cxTypeNames[jcx->typ] : "?"));
 #endif
 	w->w_flags |= ttwOver;
@@ -156,13 +155,13 @@ static void tt_dump_word(FILE *f_out, ttWordBuffer *w)
       continue;
     } else if (icx->claimed <= 1) {
       //-- append: unclaimed initial character
-      xmlpos += sprintf(xmlpos, " %lu+%lu", icx->xoff, xmlend - icx->xoff);
+      xmlpos += sprintf(xmlpos, " %u+%d", (uint)icx->xoff, (int)(xmlend - icx->xoff));
     } else if (icx->claimed > 1) {
       //-- append: claimed character
-      xmlpos += sprintf(xmlpos, " %lu+%lu", icx->xoff, 0);
+      xmlpos += sprintf(xmlpos, " %u+%d", (uint)icx->xoff, 0);
     }
   }
-  if (w_xmlpos) w_xmlpos[0] = '~';
+  if (w_xmlpos[0]) w_xmlpos[0] = '~';
 
   //-- claim all characters
   for (i=0; i < w->w_len; ++i) {
@@ -176,7 +175,7 @@ static void tt_dump_word(FILE *f_out, ttWordBuffer *w)
   fputs(w->w_text, f_out);
 
   //-- dump: byte offsets: "TOFF TLEN @ XOFF1+XLEN1 XOFF2+XLEN2 ... XOFFn+XLENn"
-  fprintf(f_out, "\t%lu %lu%s", w->w_off, w->w_len, w_xmlpos);
+  fprintf(f_out, "\t%u %u%s", (uint)w->w_off, (uint)w->w_len, w_xmlpos);
 
   //-- dump: rest
   if (w->w_rest[0]) {

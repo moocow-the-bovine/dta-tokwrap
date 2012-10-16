@@ -119,7 +119,7 @@ static void print_token(const char *typ)
       fputc(yytext[i],yyout);
     }
   }
-  fprintf(yyout, "\t%lu %d", thebyte, yyleng);
+  fprintf(yyout, "\t%lu %d", (long unsigned int)thebyte, yyleng);
   if (typ != NULL) { fputc('\t',yyout); fputs(typ,yyout); }
   fputc('\n',yyout);
   lastWasEOS = 0;

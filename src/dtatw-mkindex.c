@@ -197,8 +197,8 @@ void cb_start(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
 
     if (strcmp(name,"c")==0) { // || strcmp(name,"formula")==0
       if (data->c_depth) {
-	fprintf(stderr, "%s: cannot handle nested <c> elements starting at bytes %lu, %lu\n",
-		prog, data->c_xoffset, XML_GetCurrentByteIndex(data->xp));
+	fprintf(stderr, "%s: cannot handle nested <c> elements starting at bytes %u, %u\n",
+		prog, (uint)data->c_xoffset, (uint)XML_GetCurrentByteIndex(data->xp));
 	exit(3);
       }
       //-- parse attributes
@@ -301,8 +301,8 @@ void cb_char(TokWrapData *data, const XML_Char *s, int len)
       int i,j;
       int ctx_len;
       char *ctx = (char*)get_event_context(data->xp,&ctx_len), *tail;
-      ByteOffset xoff = XML_GetCurrentByteIndex(data->xp), xlen;
-      uint32_t u;
+      ByteOffset xoff = XML_GetCurrentByteIndex(data->xp);
+      uint32_t u = 0;
       for (i=0; i < ctx_len; i=j) {
 	j=i;
 
@@ -324,7 +324,7 @@ void cb_char(TokWrapData *data, const XML_Char *s, int len)
 	  else if (i+5 < ctx_len && strncmp(ctx+i+1,"quot;",5)==0) { u='"'; j=i+6; }
 	  else if (i+5 < ctx_len && strncmp(ctx+i+1,"apos;",5)==0) { u='\''; j=i+5; }
 	  else {
-	    fprintf(stderr, "%s: WARNING: unparsed entity at XML byte %lu\n", prog, data->c_xoffset);
+	    fprintf(stderr, "%s: WARNING: unparsed entity at XML byte %u\n", prog, (uint)data->c_xoffset);
 	  }
 	}
 	if (j==i) {

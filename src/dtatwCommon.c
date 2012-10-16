@@ -91,8 +91,8 @@ const  char *cxTypeNames[8] = {"c","lb","pb","formula","EOF","#5","#6","#7"};
 //-- cx: packed: header
 const char *cxhMagic   = PACKAGE " cx bin\n";
 const char *cxhVersion = PACKAGE_VERSION; 
-const char *cxhVersionMinR = "0.39";
-const char *cxhVersionMinW = "0.39";
+const char *cxhVersionMinR = "0.40";
+const char *cxhVersionMinW = "0.40";
 
 //--------------------------------------------------------------
 int cx_version_cmp(const char *v1, const char *v2)
@@ -484,7 +484,7 @@ Offset2CxIndex  *tx2cxIndex(Offset2CxIndex *txo2cx, cxData *cxd)
 Offset2CxIndex *txt2cxIndex(Offset2CxIndex *txto2cx, bxData *bxd, Offset2CxIndex *txb2cx)
 {
   bxRecord *bx;
-  ByteOffset ntxtb, bxi, txti, ot_end;
+  ByteOffset ntxtb, bxi, txti;
   assert(bxd != NULL && bxd->data != NULL /* require loaded bx data */);
   assert(bxd->len > 0    /* require non-empty bx index */);
 

@@ -19,9 +19,9 @@ ByteOffset expat_parse_file(XML_Parser xp, FILE *f_in, const char *filename_in)
     //-- check for file errors
     is_final = feof(f_in);
     if (ferror(f_in) && !is_final) {
-      fprintf(stderr, "%s: `%s' (line %d, col %d, byte %ld): I/O error: %s\n",
+      fprintf(stderr, "%s: `%s' (line %u, col %u, byte %u): I/O error: %s\n",
 	      prog, filename_in,
-	      XML_GetCurrentLineNumber(xp), XML_GetCurrentColumnNumber(xp), XML_GetCurrentByteIndex(xp),
+	      (uint)XML_GetCurrentLineNumber(xp), (uint)XML_GetCurrentColumnNumber(xp), (uint)XML_GetCurrentByteIndex(xp),
 	      strerror(errno));
       exit(2);
     }
@@ -32,9 +32,9 @@ ByteOffset expat_parse_file(XML_Parser xp, FILE *f_in, const char *filename_in)
     if (status != XML_STATUS_OK) {
       int ctx_offset = 0, ctx_len = 0;
       const char *ctx_buf;
-      fprintf(stderr, "%s: `%s' (line %d, col %d, byte %ld): XML error: %s\n",
+      fprintf(stderr, "%s: `%s' (line %u, col %u, byte %u): XML error: %s\n",
 	      prog, filename_in,
-	      XML_GetCurrentLineNumber(xp), XML_GetCurrentColumnNumber(xp), XML_GetCurrentByteIndex(xp),
+	      (uint)XML_GetCurrentLineNumber(xp), (uint)XML_GetCurrentColumnNumber(xp), (uint)XML_GetCurrentByteIndex(xp),
 	      XML_ErrorString(XML_GetErrorCode(xp)));
 
       ctx_buf = get_error_context(xp, 64, &ctx_offset, &ctx_len);
@@ -59,9 +59,9 @@ ByteOffset expat_parse_string(XML_Parser xp, const char *buf, int buflen, const 
   if (status != XML_STATUS_OK) {
     int ctx_offset = 0, ctx_len = 0;
     const char *ctx_buf;
-    fprintf(stderr, "%s: `%s' (line %d, col %d, byte %ld): XML error: %s\n",
+    fprintf(stderr, "%s: `%s' (line %u, col %u, byte %u): XML error: %s\n",
 	    prog, (srcname ? srcname : "?"),
-	    XML_GetCurrentLineNumber(xp), XML_GetCurrentColumnNumber(xp), XML_GetCurrentByteIndex(xp),
+	    (uint)XML_GetCurrentLineNumber(xp), (uint)XML_GetCurrentColumnNumber(xp), (uint)XML_GetCurrentByteIndex(xp),
 	    XML_ErrorString(XML_GetErrorCode(xp)));
     
     ctx_buf = get_error_context(xp, 64, &ctx_offset, &ctx_len);
