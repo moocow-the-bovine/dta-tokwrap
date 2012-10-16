@@ -19,6 +19,10 @@ L<DTA::TokWrap::Base|DTA::TokWrap::Base> - DTA tokenizer wrappers: base class
 
 =item *
 
+L<DTA::TokWrap::CxData|DTA::TokWrap::CxData> - DTA tokenizer wrappers: utilities for binary cx-file I/O
+
+=item *
+
 L<DTA::TokWrap::Document|DTA::TokWrap::Document> - DTA tokenizer wrappers: document wrapper
 
 =item *

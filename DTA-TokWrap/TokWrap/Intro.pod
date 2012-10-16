@@ -168,6 +168,15 @@ L<DTA::TokWrap::Processor::tokenize|DTA::TokWrap::Processor::tokenize>.
 See L<DTA::TokWrap::Processor::tokenize::dummy(3pm)|DTA::TokWrap::Processor::tokenize::dummy>
 for details.
 
+=head3 DTA::TokWrap::Processor::tokenize1
+
+DTA::TokWrap::Processor::tokenize1 provides an object-oriented
+L<DTA::TokWrap::Processor|/DTA::TokWrap::Processor> wrapper
+for some required and/or optional post-processing of tokenized files
+used by L<DTA::TokWrap::Document|/DTA::TokWrap::Document> objects.
+
+See L<DTA::TokWrap::Processor::tokenize1(3pm)|DTA::TokWrap::Processor::tokenize1>
+for details.
 
 =head3 DTA::TokWrap::Processor::tok2xml
 
@@ -183,6 +192,8 @@ for details.
 
 =head3 DTA::TokWrap::Processor::standoff
 
+B<***OBSOLETE***>
+
 DTA::TokWrap::Processor::standoff provides an object-oriented
 L<DTA::TokWrap::Processor|/DTA::TokWrap::Processor> wrapper
 for generation of various standoff XML formats
@@ -190,7 +201,6 @@ for L<DTA::TokWrap::Document|/DTA::TokWrap::Document> objects.
 
 See L<DTA::TokWrap::Processor::standoff(3pm)|DTA::TokWrap::Processor::standoff>
 for details.
-
 
 =cut
 

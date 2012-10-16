@@ -11,6 +11,7 @@ include $(top_srcdir)/Common.am
 
 bin_PROGRAMS = \
 	dtatw-mkindex \
+	dtatw-cx2dat \
 	dtatw-rm-namespaces \
 	dtatw-tokenize-dummy \
 	dtatw-b2xb \
@@ -28,6 +29,8 @@ utf8_deps = dtatwUtf8.h h dtatwUtf8.c
 
 dtatw_mkindex_SOURCES = dtatw-mkindex.c $(common_deps) $(expat_deps) $(utf8_deps)
 dtatw_mkindex_LDADD = $(EXPAT_LIBS)
+
+dtatw_cx2dat_SOURCES = dtatw-cx2dat.c $(common_deps)
 
 if HAVE_FLEX
 dtatw_tokenize_dummy_SOURCES = dtatw-tokenize-dummy.l

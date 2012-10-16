@@ -57,14 +57,14 @@ static inline void cx_claim(cxRecord *cx)
 //--------------------------------------------------------------
 /* bool = cx_elt_ok(cx)
  *  + returns true iff cx is a "real" character record with a valid element name, etc.
- *  + bad names: NULL, ""
+ *  + bad names: none
  *  + see dtatwCommon.h for id constants
  */
 static inline int cx_elt_ok(const cxRecord *cx)
 {
-  return (cx
-	  && cx->elt
-	  && cx->elt[0]
+  return (cx != NULL
+	  //&& cx->elt
+	  //&& cx->elt[0]
 	  //&& strcmp(cx->id,CX_NIL_ID) !=0
 	  //&& strncmp(cx->id,CX_FORMULA_PREFIX,strlen(CX_FORMULA_PREFIX)) !=0
 	  //&& strcmp(cx->id,CX_LB_ID) !=0
@@ -132,7 +132,9 @@ static void tt_dump_word(FILE *f_out, ttWordBuffer *w)
 #if WARN_ON_OVERLAP
 	if ( !(w->w_flags&ttwOver) )
 	  fprintf(stderr, "%s: WARNING: `%s' line %u: overlapping word `%s' at XML-byte %lu (elt=%s)\n",
-		  prog, tt_filename, tt_linenum, w->w_text, (jcx ? jcx->xoff : 0), (jcx ? jcx->elt : "?"));
+		  prog, tt_filename, tt_linenum, w->w_text,
+		  (jcx ? jcx->xoff : 0),
+		  (jcx ? cxTypeNames[jcx->typ] : "?"));
 #endif
 	w->w_flags |= ttwOver;
 	break;
@@ -372,7 +374,7 @@ int main(int argc, char **argv)
   }
 
   //-- load .cx data
-  cxDataLoad(&cxdata, f_cx);
+  cxDataLoad(&cxdata, f_cx, filename_cx);
   if (f_cx != stdin) fclose(f_cx);
   f_cx = NULL;
 #ifdef VERBOSE_IO
@@ -388,7 +390,7 @@ int main(int argc, char **argv)
   fprintf(stderr, "%s: parsed %lu records from .bx file '%s'\n", prog, bxdata.len, filename_bx);
   assert(cxdata != NULL && cxdata->data != NULL /* require cxdata */);
   assert(cxdata.len > 0 /* require non-empty cxdata */);
-  fprintf(stderr, "%s: number of source XML-bytes ~= %lu\n", prog, cxdata->data[cxdata.len-1].xoff);
+  fprintf(stderr, "%s: number of source XML-bytes ~= %lu\n", prog, cxdata->data[cxdata.len-1].xoff+cxdata->data[cxdata.len-1].xlen);
 #endif
 
   //-- create (tx_byte_index => cx_record) lookup vector

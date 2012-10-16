@@ -11,6 +11,9 @@ use Unicruft;
 use Algorithm::BinarySearch::Vec qw(:default);
 use Pod::Usage;
 
+use lib qw(.);
+use DTA::TokWrap::CxData qw(:all);
+
 use strict;
 
 ##------------------------------------------------------------------------------
@@ -265,11 +268,13 @@ our $cn2xoffv = '';
 ## $Ncx : number of cx-records : $Nc == scalar(@cn2packed) == bytes::length($cn2xoffv)/4
 our $Ncx = 0;
 
-## $c_pack : pack format for c_pack(), c_unpack()
-our $c_pack = '(Z*)llsss(Z*)(llll)';
+## cx-bin (v0.39): source constants [see dtatwCommon.h, DTA::TokWrap::CxData]
 
-## @c_pkeys : \%c keys for (un)packing
-our @c_pkeys = qw(elt cn xo xl pb lb xr ulx uly lrx lry);
+## @c_pkeys : \%c keys for local (un)packing
+our @c_pkeys = qw(cn typ   xo xl   pb lb   xr   ulx uly lrx lry);
+
+## $c_pack : pack format for local c_pack(), c_unpack()
+our $c_pack = 'lC(lC)(ss)(Z*)(llll)';
 
 ## $c_packed_or_undef = c_pack(\%c)
 sub c_pack {
@@ -305,6 +310,11 @@ sub c_get {
 sub load_cx {
   my $cxfile = shift;
   open(CX,"<$cxfile") or die("$prog: FATAL: open failed for .cx-file $cxfile: $!");
+  binmode(CX,":raw");
+
+  ##-- cx: get and check header
+  eval { cx_check_header(cx_get_header(\*CX)) }
+    or die("$prog: FATAL: error reading cx-header from $cxfile: $@");
 
   my $lb=0;
   my ($pn,$pb)=(0,0);
@@ -315,40 +325,37 @@ sub load_cx {
   @cn2packed = qw();
   $cn2xoffv  = '';
 
-  my ($elt,$xoff,$xlen,$toff,$tlen,$txt);
-  my (@attrs,$facs);
-  while (<CX>) {
-    next if (/^(?:\%\%|\s*$)/);
-    chomp;
-    ($elt,$xoff,$xlen,$toff,$tlen,$txt,@attrs) = split(/\t/,$_);
-    %c = map {split(/=/,$_,2)} @attrs;
-    s/\\([tn\\])/$unescape{$1}/eg foreach (values %c);
+  my $xmlOffset = 0;
+  my ($cxr,$typ,$facs);
+  while (!eof(CX)) {
+    $cxr = cx_get_record(\*CX,$xmlOffset);
+    $typ = $cxr->[$CX_FLAGS] & $cxfTypeMask;
+    last if ($typ == $cxrEOF);
 
-    if ($tlen > 0) {
+    if ($cxr->[$CX_TLEN] > 0) {
       ##-- text element: treat it as a logical character
-      @c{qw(elt cn xo xl pb lb xr)} = ($elt,$cn,$xoff,$xlen,$pb,$lb,($c{rendition}||''));
-      $c{$_} = -1 foreach (grep {!defined($c{$_}) || $c{$_} eq ''} qw(ulx uly lrx lry));
+      @c{qw(cn typ xo xl pb lb xr)} = ($cn,$typ, @$cxr[$CX_XOFF,$CX_XLEN], $pb,$lb, ''); ##-- no "rendition" attribute saved!
+      @c{qw(ulx uly lrx lry)} = map {defined($_) ? $_ : -1} @$cxr[$CX_ATTR_ULX..$CX_ATTR_LRY];
       $cn2packed[$cn] = c_pack(\%c);
-      vec($cn2xoffv,$cn,32) = $xoff;
+      vec($cn2xoffv,$cn,32) = $cxr->[$CX_XOFF];
       ++$cn;
-      ++$lb if ($elt eq 'lb');
+      ++$lb if ($typ == $cxrLb);
     }
-    elsif ($elt eq 'pb') {
+    elsif ($typ == $cxrPb) {
       ++$pn;
-      if (defined($facs = $c{facs})) {
-	no warnings 'numeric';
-	($pb = $facs) =~ s/^\#?f?0*(?=.)//;
-	if (($pb+0) ne $pb) {
-	  warn("$prog: WARNING: invalid \@facs=\"$facs\" in <pb> at $cxfile line $.");
-	  $pb = $pb+0;
-	}
+      if (defined($facs = $cxr->[$CX_ATTR_FACS])) {
+	$pb = $facs;
+	warn("$prog: WARNING: invalid \@facs for ${pn}-th <pb> from $cxfile record number $cn") if ($facs == 0xffffffff);
       } else {
-	warn("$prog: WARNING: no \@facs attribute for ${pn}-th <pb> at $cxfile line $.");
+	warn("$prog: WARNING: no \@facs attribute for ${pn}-th <pb> at $cxfile record number $cn");
 	$pb = $pn;
       }
       $lb = 1;
     }
     ##-- neither text-carrier nor <pb/>: silently ignore
+
+    ##-- update position tracker(s)
+    $xmlOffset = $cxr->[$CX_XOFF] + $cxr->[$CX_XLEN];
   }
   close(CX);
 
@@ -418,8 +425,8 @@ sub apply_ddc_attrs {
       next if (!defined($c0=$cs[0]));
 
       ##-- get characters by surrounding line(s)
-      @lprev_cs = grep {$_->{elt} eq 'c' && vec($cn2wn,$_->{cn},32)} map {clist_byline($c0->{pb}, $c0->{lb}-$_, $c0->{cn})} @clist_context;
-      @lnext_cs = grep {$_->{elt} eq 'c' && vec($cn2wn,$_->{cn},32)} map {clist_byline($c0->{pb}, $c0->{lb}+$_, $c0->{cn})} @clist_context;
+      @lprev_cs = grep {$_->{typ}==$cxrChar && vec($cn2wn,$_->{cn},32)} map {clist_byline($c0->{pb}, $c0->{lb}-$_, $c0->{cn})} @clist_context;
+      @lnext_cs = grep {$_->{typ}==$cxrChar && vec($cn2wn,$_->{cn},32)} map {clist_byline($c0->{pb}, $c0->{lb}+$_, $c0->{cn})} @clist_context;
 
       ##-- get line bbox (min,max)
       $yprev = lmax(grep {defined($_) && $_>=0} map {$_->{lry}} @lprev_cs);
@@ -540,7 +547,7 @@ sub apply_word {
   }
 
   ##-- detect: formula
-  $w_is_formula = (@cs && $cs[0]{elt} eq 'formula'); #  || (@cids && $cids[0] =~ m/\$FORMULA:[0-9]+\$$/);
+  $w_is_formula = (@cs && $cs[0]{typ}==$cxrFormula); #  || (@cids && $cids[0] =~ m/\$FORMULA:[0-9]+\$$/);
 
   ##-- get text
   $wtxt = $wnod->getAttribute('t') || $wnod->getAttribute('text') || '';

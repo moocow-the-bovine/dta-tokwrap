@@ -9,6 +9,7 @@
 
 #include "dtatwConfig.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,13 +22,10 @@
  */
 
 #define FILE_BUFSIZE 8192 //-- file input buffer size
-typedef long unsigned int ByteOffset;
-typedef int ByteLen;
+typedef uint32_t ByteOffset;
+typedef uint32_t ByteLen;
 
 extern char *prog;
-
-//-- CX_NIL_ELT: pseudo-name used for raw text nodes in cx-records
-extern char *CX_NIL_ELT; //-- default: "-"
 
 //-- CX_FORMULA_TEXT : text inserted for <formula/> records
 extern char *CX_FORMULA_TEXT; //-- default: " FORMULA "
@@ -39,9 +37,6 @@ extern char *xmlid_name;
  * utf8 stuff
  */
 
-/** \brief typedef for unicode codepoints */
-typedef unsigned int ucs4;
-
 /** \brief useful alias */
 #ifndef uint
 #define uint unsigned int
@@ -50,11 +45,6 @@ typedef unsigned int ucs4;
 /** \brief useful alias */
 #ifndef uchar
 # define uchar unsigned char
-#endif
-
-/** \brief utf8.h wants this */
-#ifndef u_int32_t
-# define u_int32_t ucs4
 #endif
 
 
@@ -214,30 +204,77 @@ off_t file_size(FILE *f);
 size_t file_slurp(FILE *f, char **bufp, size_t buflen);
 
 /*======================================================================
- * Utils: .cx file(s)
+ * Utils: cx: binary
  */
 
-// CX_HAVE_PB : whether to parse 'pb' field in cxRecord
-//#define CX_HAVE_PB 1
+/// cxRecordType : enum for binary cx record types
+typedef enum {
+  cxrChar  = 0,		//-- cxrChar: "normal" character entry (attrs: @bbox = (@ulx @uly @lrx @lry))
+  cxrLb    = 1,		//-- cxrLb: line-break (attrs:none)
+  cxrPb    = 2,		//-- cxrPb: page-break (attrs:@facs)
+  cxrFormula = 3,	//-- cxrFormula: formula (attrs:none)
+  cxrEOF = 4		//-- cxrEOF: special type for eof pseudo-records
+} cxRecordType;
+extern const char *cxTypeNames[8]; //-- for mask-safety
 
-// CX_WANT_TEXT : whether to include (and parse) 'text' field in cxRecord
-#define CX_WANT_TEXT 1
+/// cxStoredRecord: mask constants
+extern const uchar cxfTypeMask;		//-- cx flag mask: record type
+extern const uchar cxfHasXmlOffset;	//-- cx flag: xoff != (xoff[i-1]+xlen[i-1])
+extern const uchar cxfHasTxtLength;  	//-- cx flag: xlen != tlen
+extern const uchar cxfHasAttrs;		//-- cx flag: attributes present?
 
-// cxRecord : struct for character-index records as loaded from .cx file
+/// cxStoredRecord: basic i/o unit
 typedef struct {
-  char       *elt;      //-- name of source element (e.g. "c" or "-")
+  uchar   flags;	//-- ((cxRecordType typ) & cxfTypeMask) |cxfHasXmlOffset? |cxfHasTxtLength? |cxfHasAttrs?
+  uint32_t xoff;	//-- xml offset (only written if (flags & cxfHasXmlOffset))
+  uchar    xlen;	//-- xml length
+  uchar    tlen;	//-- text length (only written if (flags & cxfHasTxtLen))
+  uint32_t attrs[4];	//-- attributes (only written if (flags & cxfHasAttrs)): pb->@facs, c->(@ulx,@uly,@lrx,@lry)
+} cxStoredRecord;
+
+void cx_put_record(FILE *f, const cxStoredRecord *cxr);
+int cx_get_record(FILE *f, cxStoredRecord *cxr, uint32_t xmlOffset); //-- returns cxRecordType
+
+//-- cx: packed: header
+extern const char *cxhMagic;		//-- cx header: magic
+extern const char *cxhVersion;		//-- cx header: current tokwrap version
+extern const char *cxhVersionMinR;	//-- cx header: min tokwrap-version of cx-files we can read
+extern const char *cxhVersionMinW;	//-- cx header: min tokwrap-version required for cx-files we write
+
+#define CXH_MAGIC_LEN 32
+#define CXH_VERSION_LEN 8
+typedef struct {
+  char magic[CXH_MAGIC_LEN];		//-- cx header: magic
+  char version[CXH_VERSION_LEN];	//-- cx header: current tokwrap version
+  char version_min[CXH_VERSION_LEN];	//-- cx header: minimum compatible version for loading this file
+} cxHeader;
+int       cx_version_cmp(const char *v1, const char *v2);
+void      cx_put_header(FILE *f);
+cxHeader* cx_get_header(FILE *f, const char *filename, cxHeader *h);
+int	  cx_check_header(const cxHeader *h, const char *filename);
+
+
+//-- packed i/o: perl pack('w',$i)
+// + BER-compressed integers (unsigned int in base-128, high bit (0x80) set on all but final byte)
+// + unused
+void       put_packed_w(FILE *f, ByteOffset i);
+ByteOffset get_packed_w(FILE *f);
+
+
+/*======================================================================
+ * Utils: .cx file(s): new
+ */
+
+/// cxRecord : struct for character-index records as loaded from .cx file
+///  + routines should use cxStoredRecord internally
+typedef struct {
+  cxRecordType typ;	//-- record type (formerly char *elt)
   ByteOffset xoff;      //-- original xml byte offset
   ByteLen    xlen;      //-- original xml byte length
   ByteOffset toff;      //-- .tx byte offset
   ByteLen    tlen;      //-- .tx byte length
-#ifdef CX_HAVE_PB
-  int          pb;      //-- preceding::pb[1]/@facs (trimmed)
-#endif
-#ifdef CX_WANT_TEXT
-  char      *text;      //-- output text (un-escaped)
-#endif
   struct bxRecord_t *bxp; //-- pointer to .bx-record (block) containing this <c>, if available
-  unsigned char claimed;	//-- claimed (0:unclaimed, 1: claimed by current word, >1: claimed by other word)
+  uchar claimed;	//-- claimed (0:unclaimed, 1: claimed by current word, >1: claimed by other word)
 } cxRecord;
 
 // cxData : array of .cx records
@@ -252,10 +289,9 @@ typedef struct {
 # define CXDATA_DEFAULT_ALLOC 8192
 #endif
 
-cxData   *cxDataInit(cxData *cxd, size_t size); //-- initializes/allocates *cxd
+cxData   *cxDataInit(cxData *cxd, size_t size);     //-- initializes/allocates *cxd
 cxRecord *cxDataPush(cxData *cxd, cxRecord *cx);    //-- append *cx to *cxd->data, re-allocating if required
-cxData   *cxDataLoad(cxData *cx, FILE *f);          //-- loads *cxd from file f
-char *cx_text_string(char *src, int src_len);       //-- un-escapes cx-file "text" string to a new string (returned)
+cxData   *cxDataLoad(cxData *cx, FILE *f, const char *filename);  //-- loads *cxd from file f (filename is for error-reporting)
 
 /*======================================================================
  * Utils: .bx file(s)
@@ -304,9 +340,6 @@ Offset2CxIndex  *tx2cxIndex(Offset2CxIndex *txo2cx,  cxData *cxd);
 
 // txt2cxIndex(): init/alloc: cxRecord *cx = txto2cx->data[txt_byte_index]
 Offset2CxIndex *txt2cxIndex(Offset2CxIndex *txto2cx, bxData *bxd, Offset2CxIndex *txb2cx);
-
-// cx2bxIndex(): init/alloc: bxRecord *bx = cx2bx[cx_index]  :: UNUSED (?!)
-bxRecord **cx2bxIndex(cxData *cxd, bxData *bxd, Offset2CxIndex *tx2cx);
 
 // cx_is_adjacent(): check whether cx1 immediately follows cx2
 int cx_is_adjacent(const cxRecord *cx1, const cxRecord *cx2);
