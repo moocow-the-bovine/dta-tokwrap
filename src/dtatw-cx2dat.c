@@ -169,7 +169,7 @@ int main(int argc, char **argv)
   if (!cx_check_header(&hdr,filename_cx)) exit(1);
 
   //-- churn cx-records
-  while (f_cx && !feof(f_cx) && cx_get_record(f_cx, &cxr, &xmlOffset) != cxrEOF) {
+  while (f_cx && !feof(f_cx) && cx_get_record(f_cx, &cxr, xmlOffset) != cxrEOF) {
     dump_record(f_out, &cxr, f_tx);
     xmlOffset = cxr.xoff + cxr.xlen;
     txOffset += cxr.tlen;

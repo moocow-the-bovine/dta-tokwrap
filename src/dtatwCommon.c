@@ -5,8 +5,9 @@
  * Globals
  */
 char *prog = "dtatwCommon"; //-- used for error reporting
-char *CX_NIL_ELT = "-";
+
 char *CX_FORMULA_TEXT  = " FORMULA ";
+
 //char *xmlid_name = "xml:id";
 char *xmlid_name = "id";
 
@@ -193,7 +194,7 @@ void cx_put_record(FILE *f, const cxStoredRecord *cxr)
 }
 
 //--------------------------------------------------------------
-int cx_get_record(FILE *f, cxStoredRecord *cxr, uint32_t *xmlOffset)
+int cx_get_record(FILE *f, cxStoredRecord *cxr, uint32_t xmlOffset)
 {
   int i = fgetc(f);
   if (i==EOF || feof(f)) {
@@ -205,7 +206,7 @@ int cx_get_record(FILE *f, cxStoredRecord *cxr, uint32_t *xmlOffset)
   if (cxr->flags & cxfHasXmlOffset)
     fread(&cxr->xoff,4,1,f);
   else
-    cxr->xoff = (xmlOffset ? *xmlOffset : 0);
+    cxr->xoff = xmlOffset;
 
   cxr->xlen = fgetc(f);
 
@@ -281,93 +282,45 @@ cxRecord *cxDataPush(cxData *cxd, cxRecord *cx)
   return &cxd->data[cxd->len++];
 }
 
-//--------------------------------------------------------------
-#define INITIAL_CX_LINEBUF_SIZE 1024
-cxData *cxDataLoad(cxData *cxd, FILE *f)
-{
-  cxRecord cx;
-  char *linebuf=NULL;
-  size_t linebuf_alloc=0;
-  ssize_t linelen;
-  char *s0, *s1;
 
+//--------------------------------------------------------------
+cxData *cxDataLoad(cxData *cxd, FILE *f, const char *filename)
+{
+  const char *file = filename ? filename : "(null)";
+  cxHeader hdr;
+  cxStoredRecord cxr;
+  uint32_t xmlOffset = 0; //-- current xml byte offset
+  uint32_t txOffset = 0; //-- current tx-file offset
+  cxRecord cx;
+
+  //-- initialize data
   if (cxd==NULL || cxd->data==NULL) cxd=cxDataInit(cxd,0);
   assert(f!=NULL /* require .cx file */);
 
-  //-- init line buffer
-  linebuf = (char*)malloc(INITIAL_CX_LINEBUF_SIZE);
-  assert(linebuf != NULL /* malloc failed */);
-  linebuf_alloc = INITIAL_CX_LINEBUF_SIZE;
+  //-- get & check header
+  cx_get_header(f, file, &hdr);
+  if (!cx_check_header(&hdr,file)) exit(1);
 
-  while ( (linelen=getline(&linebuf,&linebuf_alloc,f)) >= 0 ) {
-    char *tail;
-    if (linebuf[0]=='%' && linebuf[1]=='%') continue;  //-- skip comments
+  //-- initialize temporaries
+  memset(&cx, 0,sizeof(cx));
+  memset(&cxr,0,sizeof(cxr));
 
-    //-- elt
-    s0  = linebuf;
-    s1  = next_tab_z(s0);
-    cx.elt = strdup(s0);
-
-    //-- xoff
-    s0 = s1+1;
-    s1 = next_tab(s0);
-    cx.xoff = strtoul(s0,&tail,0);
-
-    //-- xlen
-    s0 = s1+1;
-    s1 = next_tab(s0);
-    cx.xlen = strtol(s0,&tail,0);
-
-    //-- toff
-    s0 = s1+1;
-    s1 = next_tab(s0);
-    cx.toff = strtoul(s0,&tail,0);
-
-    //-- tlen
-    s0 = s1+1;
-    s1 = next_tab(s0);
-    cx.tlen = strtol(s0,&tail,0);
-
-    //-- bxp
-    cx.bxp = NULL;
-    cx.claimed = 0;
-
+  //-- churn cx-records
+  while (f && !feof(f) && cx_get_record(f, &cxr, xmlOffset) != cxrEOF) {
+    cx.typ  = (cxr.flags & cxfTypeMask);
+    cx.xoff = cxr.xoff;
+    cx.xlen = cxr.xlen;
+    cx.toff = txOffset;
+    cx.tlen = cxr.tlen;
     cxDataPush(cxd, &cx);
+
+    //-- update position globals
+    xmlOffset = cxr.xoff + cxr.xlen;
+    txOffset += cxr.tlen;
   }
 
-  //-- cleanup & return
-  if (linebuf) free(linebuf);
   return cxd;
 }
-
-
-//--------------------------------------------------------------
-// un-escapes cx file text string to a new string; returns newly allocated string
-char *cx_text_string(char *src, int src_len)
-{
-  int i,j;
-  char *dst = (char*)malloc(src_len);
-  for (i=0,j=0; src[i] && i < src_len; i++,j++) {
-    switch (src[i]) {
-    case '\\': {
-      i++;
-      switch (src[i]) {
-      case '0': dst[j] = '\0'; break;
-      case 'n': dst[j] = '\n'; break;
-      case 't': dst[j] = '\t'; break;
-      case '\\': dst[j] = '\\'; break;
-      default: dst[j] = src[i]; break;
-      }
-    }
-    default:
-      dst[j] = src[i];
-      break;
-    }
-  }
-  dst[j] = '\0';
-  return dst;
-}
-
 
 
 /*======================================================================
@@ -569,42 +522,6 @@ Offset2CxIndex *txt2cxIndex(Offset2CxIndex *txto2cx, bxData *bxd, Offset2CxIndex
   }
 
   return txto2cx;
-}
-
-//--------------------------------------------------------------
-/* cx2bxIndex() :: UNUSED (?!)
- *  + allocates & populates cx2bx: bxRecord *bx = cx2bx[cx_index]
- *  + requires populated cxd, bxd
- */
-bxRecord **cx2bxIndex(cxData *cxd, bxData *bxd, Offset2CxIndex *tx2cx)
-{
-  bxRecord **cx2bx;
-  ByteOffset bxi, txi, cxi;
-
-  //-- sanity checks
-  assert(cxd != NULL);
-  assert(bxd != NULL);
-  assert(tx2cx != NULL);
-  assert(cxd->data != NULL);
-  assert(bxd->data != NULL);
-  assert(tx2cx->data != NULL);
-
-  //-- allocate index vector
-  cx2bx = (bxRecord**)malloc(cxd->len*sizeof(bxRecord*));
-  assert2(cx2bx != NULL, "malloc failed");
-
-  //-- populate index vector
-  for (bxi=0; bxi < bxd->len; bxi++) {
-    bxRecord *bx = &bxd->data[bxi];
-    for (txi=0; txi < bx->tlen; txi++) {
-      cxRecord *cx = tx2cx->data[txi];
-      if (cx==NULL) continue; //-- skip pseudo-records
-      cxi = cx-&cxd->data[0];
-      cx2bx[cxi] = bx;
-    }
-  }
-
-  return cx2bx;
 }
 
 //--------------------------------------------------------------

@@ -17,6 +17,9 @@ use DTA::TokWrap::Utils qw(:si);
 use DTA::TokWrap::Document qw(:tok);
 use DTA::TokWrap::Document::Maker;
 
+##-- optional sub-packages
+use DTA::TokWrap::CxData qw();
+
 ##==============================================================================
 ## Constants
 ##==============================================================================
