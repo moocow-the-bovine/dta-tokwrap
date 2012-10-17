@@ -64,8 +64,8 @@ while (<TT>) {
   }
 
   ##-- check for suspicious text
-  if ($text =~ /^\$[SW]B\$_?$/) {
-    tokwarn("tokenizer hint appears as token for $toklabel\n");
+  if ($text =~ /\$[SW]B\$/) {
+    tokwarn("tokenizer hint appears in token text for $toklabel\n");
     next;
   }
   if ($text =~ /_$/ && $rest =~ /\[\$ABBREV\]/) {
