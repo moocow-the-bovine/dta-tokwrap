@@ -17,15 +17,14 @@ typedef struct {
   int total_depth;      //-- total number of open elements (global depth)
   int c_depth;          //-- total number of open <c> elements (either 0 or 1: nested <c>s are not allowed)
   int is_chardata;      //-- true if current event is character data (used by cb_default)
+  int last_c_was_text;	//-- true iff last cx-record output was from a raw text node (if so, we don't ignore whitespace text nodes)
   ByteOffset n_chrs;    //-- number of logical characters read
   ByteOffset loc_xoff;  //-- last xml-offset written to .sx as location-block (see LOC_FMT, cb_default())
   ByteOffset loc_toff;  //-- last text-offset written to .sx as location-block (see LOC_FMT, cb_default())
   XML_Char c_tbuf[CTBUFSIZE];	//-- text buffer for current character
   int c_tlen;			//-- byte length of text in character buffer c_tbuf[]
   ByteOffset c_xoffset;		//-- byte offset in XML stream at which current <c> started
-  ByteOffset c_xlen;		//-- byte length in XML stream of current <c> (currently only used by flush_ws())
   ByteOffset c_toffset;		//-- byte offset in text stream at which current <c> started
-  int ws_pending;		//-- have we seen some whitespace?
   uint32_t   cx_attrs[4];	//-- stores bbox for <c> records
 } TokWrapData;
 
@@ -72,7 +71,7 @@ void put_record_raw(TokWrapData *data, cxRecordType elt, ByteOffset xoffset, int
 }
 
 //--------------------------------------------------------------
-void put_record_char(TokWrapData *data)
+void put_record_c_elt(TokWrapData *data)
 {
   ByteOffset c_xlen = XML_GetCurrentByteIndex(data->xp) + XML_GetCurrentByteCount(data->xp) - data->c_xoffset;
   put_record_raw(data,
@@ -82,11 +81,12 @@ void put_record_char(TokWrapData *data)
 		 data->cx_attrs
 		 );
   put_raw_text(data, data->c_tlen, data->c_tbuf);
+  data->last_c_was_text = 0;
   data->c_tlen = 0; //-- reset character-data buffer
 }
 
 //--------------------------------------------------------------
-void put_record_textchar(TokWrapData *data, ByteOffset xoff, ByteOffset xlen)
+void put_record_c_text(TokWrapData *data, ByteOffset xoff, ByteOffset xlen)
 {
   put_record_raw(data,
 		 cxrChar,
@@ -95,6 +95,7 @@ void put_record_textchar(TokWrapData *data, ByteOffset xoff, ByteOffset xlen)
 		 NULL
 		 );
   put_raw_text(data, data->c_tlen, data->c_tbuf);
+  data->last_c_was_text = 1;
   data->c_tlen = 0; //-- reset character-data buffer
 }
 
@@ -109,22 +110,6 @@ int is_ws(const XML_Char *s, int len)
 }
 
 //--------------------------------------------------------------
-inline void flush_ws(TokWrapData *data)
-{
-  if (data->ws_pending) {
-    put_record_raw(data,
-		   cxrChar,
-		   data->c_xoffset, data->c_xlen,
-		   /*data->c_toffset,*/ 1,
-		   NULL
-		   );
-    put_raw_text(data, 1, " ");
-    data->c_tlen = 0; //-- reset character-data buffer
-    data->ws_pending = 0;
-  }
-}
-
-//--------------------------------------------------------------
 void put_record_lb(TokWrapData *data, const XML_Char **attrs)
 {
   ByteOffset my_xoff = XML_GetCurrentByteIndex(data->xp);
@@ -136,6 +121,7 @@ void put_record_lb(TokWrapData *data, const XML_Char **attrs)
 		 NULL
 		 );
   put_raw_text(data, 1, "\n");
+  data->last_c_was_text = 0;
 }
 
 //--------------------------------------------------------------
@@ -228,13 +214,11 @@ void cb_start(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
       data->n_chrs++;
       data->total_depth++;
       data->c_depth = 1;
-      data->ws_pending = 0;
       return;
     }
     else if (strcmp(name,"lb")==0) {
       put_record_lb(data,attrs);
       data->total_depth++;
-      data->ws_pending = 0;
       return;
     }
     else if (strcmp(name,"pb")==0) {
@@ -242,12 +226,10 @@ void cb_start(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
     }
     else if (strcmp(name,"formula")==0) {
       put_record_formula(data,attrs);
-      data->ws_pending = 0;
     }
   }
   else if (strcmp(name,"text")==0) {
     data->text_depth++;
-    data->ws_pending = 0;
   }
   data->is_chardata = 0;
   XML_DefaultCurrent(data->xp);
@@ -258,20 +240,17 @@ void cb_start(TokWrapData *data, const XML_Char *name, const XML_Char **attrs)
 void cb_end(TokWrapData *data, const XML_Char *name)
 {
   if (strcmp(name,"c")==0) {
-    put_record_char(data);  //-- output: index record + raw text
+    put_record_c_elt(data);  //-- output: index record + raw text
     data->total_depth--;
     data->c_depth = 0;      //-- ... and leave <c>-parsing mode
-    data->ws_pending = 0;
     return;
   }
   else if (strcmp(name,"lb")==0) {
     data->total_depth--;
-    data->ws_pending = 0;
     return;
   }
   else if (strcmp(name,"text")==0) {
     data->text_depth--;
-    data->ws_pending = 0;
   }
   data->is_chardata = 0;
   XML_DefaultCurrent(data->xp);
@@ -285,19 +264,25 @@ void cb_char(TokWrapData *data, const XML_Char *s, int len)
     assert2((data->c_tlen + len < CTBUFSIZE), "<c> text buffer overflow");
     memcpy(data->c_tbuf+data->c_tlen, s, len); //-- copy required, else clobbered by nested elts (e.g. <c><g>...</g></c>)
     data->c_tlen += len;
-    data->ws_pending = 0;
     return;
   }
   else if (data->text_depth>0) {
     //-- character data: generate pseudo-elements
     if (is_ws(s,len)) {
-      //-- whitespace-only: remember that we saw it
-      data->c_xoffset = XML_GetCurrentByteIndex(data->xp);
-      data->c_xlen    = XML_GetCurrentByteCount(data->xp);
-      data->ws_pending = 1;
+      //-- whitespace-only: ignore it
+      if (data->last_c_was_text) {
+	//-- ... unless it follows a text-node cx-record
+	ByteOffset xoff = XML_GetCurrentByteIndex(data->xp);
+	ByteOffset xlen = XML_GetCurrentByteCount(data->xp);
+	data->c_tbuf[0] = ' ';
+	data->c_tbuf[1] = '\0';
+	data->c_tlen = 1;
+	put_record_c_text(data, xoff, xlen);
+      }
+      return;
     }
     else {
-      //-- non-whitespace: parse character data
+      //-- non-whitespace: parse and dump character data
       int i,j;
       int ctx_len;
       char *ctx = (char*)get_event_context(data->xp,&ctx_len), *tail;
@@ -334,19 +319,11 @@ void cb_char(TokWrapData *data, const XML_Char *s, int len)
 	}
 
 	//-- we've got a text character in $ctx[i:j] and its unicode codepoint in $u
-	if (u<=0xff && isspace(u)) {
-	  data->c_xoffset = xoff+i;
-	  data->c_xlen = j-i;
-	  data->ws_pending = 1;
-	} else {
-	  flush_ws(data);
-	  u8_wc_toutf8(data->c_tbuf, u);
-	  data->c_tlen = u8_wc_len(u);
-	  data->c_tbuf[data->c_tlen] = '\0'; //-- nul-terminate
-	  put_record_textchar(data, xoff+i, j-i);
-	}
+	u8_wc_toutf8(data->c_tbuf, u);
+	data->c_tlen = u8_wc_len(u);
+	data->c_tbuf[data->c_tlen] = '\0'; //-- nul-terminate
+	put_record_c_text(data, xoff+i, j-i);
       }
-      flush_ws(data);
     }
   }
   else {

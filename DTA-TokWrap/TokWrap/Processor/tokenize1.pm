@@ -142,7 +142,8 @@ sub tokenize1 {
     $tp->vlog($tp->{traceLevel},"autofix: \${WB,SB}\$");
     $nfixed = 0;
     foreach (@lines) {
-      ++$nfixed if (s/^\$[WS]B\$_?\t.*$//);	##-- e.g. "$SB\tOFF LEN\t[XY]\t[$ABBREV]\n
+      #++$nfixed if (s/^\$[WS]B\$_?\t.*$//);	##-- e.g. "$SB$\tOFF LEN\t[XY]\t[$ABBREV]\n"
+      ++$nfixed if (s/^[^\t]*\$[WS]B\$.*$//);	##-- e.g. "O$SB$\tOFF LEN\t[XY]\t[$ABBREV]\n"
     }
     $tp->vlog($tp->{traceLevel},"autofix: \${WB,SB}\$: ", ($nfixed+0), " fix(es)");
 

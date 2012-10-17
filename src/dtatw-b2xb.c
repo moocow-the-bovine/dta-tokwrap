@@ -13,6 +13,11 @@
 #define WARN_ON_OVERLAP 1
 //#undef WARN_ON_OVERLAP
 
+// WARN_ON_NOCX : whether to output warnings when token without cx record is detected
+//  + whether or not this is defined, tokens with no cx records will be commented out
+#define WARN_ON_NOCX 1
+//#undef WARN_ON_NOCX
+
 //-- want_profile: if true, some profiling information will be printed to stderr
 //int want_profile = 1;
 int want_profile = 0;
@@ -84,12 +89,11 @@ static inline int cx_elt_ok(const cxRecord *cx)
 typedef enum {
   ttwNone  = 0x0000,    //-- no special flags
   ttwSB    = 0x0001,    //-- whether we saw a sentence boundary before this word
-  ttwOverL = 0x0004,    //-- did this word overlap to its left?
-  ttwOverR = 0x0008,    //-- did this word overlap to its right?
+  ttwOver  = 0x0004,    //-- did this word overlap?
+  ttwNoCx  = 0x0008,	//-- is this word missing any cx-record?
   ttwAll   = 0x000f,    //-- all flags
 } ttWordFlags;
 
-const unsigned int ttwOver = (ttwOverL|ttwOverR); //-- flag-mask: all overlap flags
 
 typedef struct {
   unsigned int w_flags;                //-- mask of ttWordFlags flags
@@ -162,6 +166,13 @@ static void tt_dump_word(FILE *f_out, ttWordBuffer *w)
     }
   }
   if (w_xmlpos[0]) w_xmlpos[0] = '~';
+  else {
+#if WARN_ON_NOCX
+    fprintf(stderr, "%s: WARNING: `%s' line %u: no cx-records for word `%s' at txt-byte %u\n",
+	    prog, tt_filename, tt_linenum, w->w_text, w->w_off);
+#endif
+    w->w_flags |= ttwNoCx; //-- no cx-record(s) for this word: wtf?
+  }
 
   //-- claim all characters
   for (i=0; i < w->w_len; ++i) {
@@ -169,7 +180,8 @@ static void tt_dump_word(FILE *f_out, ttWordBuffer *w)
   }
 
   //-- dump: bad-flag (comment)
-  if (w->w_flags & ttwOver) fputs("%%$OVERLAP\t", f_out);
+  if      (w->w_flags & ttwOver) fputs("%%$OVERLAP\t", f_out);
+  else if (w->w_flags & ttwNoCx) fputs("%%$NOCX\t", f_out);
 
   //-- dump: text
   fputs(w->w_text, f_out);

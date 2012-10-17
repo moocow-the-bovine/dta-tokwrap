@@ -28,7 +28,7 @@ if test "$enable_debug" == "yes" ; then
    dnl    + libtool  1.5.20
    dnl
    dnl AC_DISABLE_SHARED
-   ac_OFLAGS="-g"
+   ac_OFLAGS="-ggdb -O0"
 
    AC_DEFINE(DEBUG_ENABLED,1, [Define this to enable debugging code])
    DOXY_DEFINES="$DOXY_DEFINES DEBUG_ENABLED=1"

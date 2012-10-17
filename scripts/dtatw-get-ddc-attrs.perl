@@ -237,6 +237,9 @@ sub load_sx {
     push(@sx_blocks, {xoff=>$xoff,xlen=>$xlen,xp=>$xp,xpp=>$xpp,xr=>join(' ',luniq(@xr)),xc=>join(' ',luniq(@xc))});
   }
 
+  ##-- sort block-list
+  @sx_blocks = sort {$a->{xoff}<=>$b->{xoff} || $a->{xlen}<=>$b->{xlen}} @sx_blocks;
+
   ##-- populate block index
   $Nsx = scalar(@sx_blocks);
   $sx_blockv = '';
@@ -370,14 +373,14 @@ sub load_cx {
 ## Subs: lookup utils
 
 ## \@cns = xb2cns($xb)
-##  + uses globals @_cs, $_xoff, $_xlen, $_cn
-my (@_cns,$_xoff, $_cn);
+##  + uses globals @_cns, $_xoff, $_xlen, $_cn
+my (@_cns,$_xoff,$_xend, $_cn);
 sub xb2cns {
   @_cns = qw();
-  while ($_[0] =~ /\b([0-9]+)\+/g) {
-    ##-- don't use xlen (or xend=(xoff+xlen)) here, because formulae have xlen==0 !
-    $_xoff = $1;
-    for ($_cn=vbsearch($cn2xoffv,$_xoff,32); ($_cn < $Ncx) && (vec($cn2xoffv,$_cn,32) <= $_xoff); ++$_cn) {
+  while ($_[0] =~ /\b([0-9]+)\+([0-9]+)/g) {
+    ($_xoff,$_xend) = ($1,$1+$2);
+    $_xend = $_xoff+1 if ($_xend==$_xoff); ##-- check because formulae have xlen==0 !
+    for ($_cn=vbsearch($cn2xoffv,$_xoff,32); ($_cn < $Ncx) && (vec($cn2xoffv,$_cn,32) < $_xend); ++$_cn) {
       push(@_cns,$_cn);
     }
   }
@@ -515,10 +518,16 @@ sub apply_word {
     }
   }
 
-  ##-- get cx records
+  ##-- get xml byte-range
   $wxb = $wnod->getAttribute('xb')||'';
+  if ($wxb eq '' && $verbose >= $vl_warn && ++$n_warnings{empty_xb}) {
+    no warnings 'uninitialized';
+    warn("$prog: WARNING: no xml byte-range attribute \@xb for //w#$wid at $txmlfile line ", $wnod->line_number, "\n");
+  }
+
+  ##-- get cx records
   @cs  = @{xb2cs($wxb)};
-  if (!@cs && $warn_on_empty_clist && $verbose >= $vl_warn && ++$n_warnings{empty_clist}<=10) {
+  if ($wxb && !@cs && $warn_on_empty_clist && $verbose >= $vl_warn && ++$n_warnings{empty_clist}<=10) {
     ##-- $wnod without a //c-list
     ##   + this happens e.g. for 'FORMEL' inserted via DTA::TokWrap::mkbx0 'hint_replace_xpaths'
     ##   + push these to @wnoc and try to fudge them in a second pass (see below)
@@ -540,8 +549,8 @@ sub apply_word {
   ##-- compute & assign: whitespace-separation (wsep: does whitespace precede this word?)
   if ($do_wsep) {
     ($off,$len) = split(' ', ($wnod->getAttribute('b')||''), 2);
-    $off = 0 if (!defined($off) || $off eq '');
-    $len = 1 if (!defined($len) || $len eq '');
+    $off = -1 if (!defined($off) || $off eq '');
+    $len =  1 if (!defined($len) || $len eq '');
     ($poff,$plen) = $wi>0 && $wnods->[$wi-1] ? split(' ', ($wnods->[$wi-1]->getAttribute('b')||''), 2) : (0,0);
     $wnod->setAttribute($wsep_attr, ($off == ($poff||0)+($plen||0) ? 0 : 1));
   }
@@ -608,7 +617,7 @@ sub apply_word {
     $wpage = -1 if (!defined($wpage) || $wpage eq '');
     $wnod->setAttribute($page_attr, $wpage);
     warn("$prog: WARNING: invalid \@pb=-1 for //w#$wid at $txmlfile line ", $wnod->line_number, "\n")
-      if ($wpage==-1 && $verbose >= $vl_warn && $warn_on_bad_page && ++$n_warnings{page}<=10);
+      if (@cs && $wpage==-1 && $verbose >= $vl_warn && $warn_on_bad_page && ++$n_warnings{page}<=10);
   }
 
   ##-- compute & assign: line (undef -> -1; non-empty @cs only)
