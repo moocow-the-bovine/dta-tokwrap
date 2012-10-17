@@ -1,10 +1,19 @@
 #!/usr/bin/perl -w
 
 use lib qw(.);
-use DTA::TokWrap;
-use DTA::TokWrap::Utils ':libxml';
+use XML::LibXML;
 use File::Basename qw(basename dirname);
 use strict;
+
+##--------------------------------------------------------------
+## globals
+
+##--------------------------------------------------------------
+## help
+if (grep {/^\-{1,2}(?:h|help)$/} @ARGV) {
+  print STDERR "Usage: $0 [INFILE=- [OUTFILE=-]]\n";
+  exit 0;
+}
 
 
 ##--------------------------------------------------------------
@@ -15,11 +24,15 @@ my ($xmlbuf);
 {
   local $/=undef;
   open(XML,"<$xmlfile") or die("$prog: ERROR: open failed for XML file '$xmlfile': $!");
+  binmode(XML,":raw");
   $xmlbuf = <XML>;
   $xmlbuf =~ s|(<[^>]*\s)xmlns=|${1}XMLNS=|g;  ##-- remove default namespaces
   close XML;
 }
-my $xmlparser = libxml_parser(keep_blanks=>1,expand_entities=>1);
+my $xmlparser = XML::LibXML->new();
+$xmlparser->line_numbers(1);
+$xmlparser->keep_blanks(1);
+$xmlparser->expand_entities(0);
 my $xmldoc    = $xmlparser->parse_string($xmlbuf)
   or die("$prog: ERROR: could not parse XML file '$xmlfile': $!");
 my $root = $xmldoc->documentElement;
@@ -35,34 +48,56 @@ $xc->registerNs('tei',($root->getNamespaceURI||'')) if (!$root->lookupNamespaceU
 my $idfmt = 'seg2pn_%d_%d';
 my ($id_i,$id_j) = (0,0);
 my $n_updated = 0;
-my (@chain, $nod,$cur,$nxt, $pb1);
+my ($seg,$line,@kids,@chain, $nod,$cur,$nxt, $pb1, $label);
 
-my $n_segs = scalar(@{$root->findnodes('//seg')});
+my $all_segs = $xc->findnodes('//seg');
+my $n_segs   = scalar(@$all_segs);
 
 CHAIN:
-foreach $nod ($n_segs==0 ? qw() : @{$xc->findnodes('//seg[@part="I"]/note')}) {
-  #++$n_suspects;
+foreach my $seg (@$all_segs) {
+  ##-- check for and warn about ignored segs
+  next if (!$seg->parentNode->isa('XML::LibXML::Element')); ##-- already removed
+  $line = $seg->line_number;
+  #print STDERR "$0: check //seg at line $line\n";
+  @kids = @{$seg->findnodes('./*')};
+  if (@kids==0) {
+    warn("$prog: no child element for //seg at line $line: skipping");
+    next;
+  } elsif (@kids > 1) {
+    warn("$prog: multiple child elements for //seg at line $line: skipping");
+    next;
+  } elsif ($kids[0]->nodeName ne 'note') {
+    warn("$prog: cowardly ignoring non-\"note\" //seg/", $kids[0]->nodeName, " at line $line: skipping");
+    next;
+  } elsif (($seg->getAttribute('part')||'') ne 'I') {
+    ##-- silently ignore non-initial segs here
+    next;
+  }
+
+  ##-- now get down to it
+  $nod  = $kids[0];
+  $line = $nod->line_number;
   @chain = qw();
   $id_j = 0;
   push(@chain, $cur={
 		     nod=>$nod,
 		     pb1=>$nod->findnodes('following::pb[1]')->[0],
-		     n=>$nod->getAttribute('n'),
+		     n=>($nod->getAttribute('n') || ''),
 		     id=>($nod->getAttribute('xml:id') || $nod->getAttribute('id') || sprintf($idfmt,++$id_i,++$id_j)),
 		    });
   ##-- sanity checks
   if (!$cur->{pb1}) {
-    warn("$prog: no following::pb for //seg/note at line ", $nod->line_number, ": skipping chain");
+    warn("$prog: no following::pb for //seg/note[\@n='$cur->{n}'] at line $line: skipping chain");
     next CHAIN;
   }
   elsif (!$cur->{n}) {
-    warn("$prog: no \@n attribute for //seg/note at line ", $nod->line_number, ": skipping chain");
+    warn("$prog: no \@n attribute for //seg/note at line $line: skipping chain");
     next CHAIN;
   }
 
  NODE:
   while (defined($nod=$cur->{nod}->findnodes('following::seg[string(@part)!="I"][1]/'.$cur->{nod}->nodeName)->[0])) {
-    #++$n_suspects;
+    $line = $nod->line_number;
     push(@chain, $nxt={
 		       nod=>$nod,
 		       pb0=>$nod->findnodes('preceding::pb[1]')->[0],
@@ -73,15 +108,15 @@ foreach $nod ($n_segs==0 ? qw() : @{$xc->findnodes('//seg[@part="I"]/note')}) {
 
     ##-- sanity check(s)
     if (!$nxt->{pb0} || !$nxt->{pb0}->isSameNode($cur->{pb1})) {
-      warn("$prog: not exactly one intervening //pb for //seg/note at line ", $nod->line_number, ": skipping chain");
+      warn("$prog: not exactly one intervening //pb for //seg/note[\@n='$nxt->{n}'] at line $line: skipping chain");
       next CHAIN;
     }
     elsif (!$cur->{n}) {
-      warn("$prog: no \@n attribute for //seg/note at line ", $nod->line_number, ": skipping chain");
+      warn("$prog: no \@n attribute for //seg/note at line $line: skipping chain");
       next CHAIN;
     }
     elsif ($cur->{n} ne $nxt->{n}) {
-      warn("$prog: \@n attribute mismatch for //seg/note at line ", $nod->line_number, ": skipping chain");
+      warn("$prog: \@n attribute mismatch for //seg/note[\@n='$nxt->{n}'] at line $line: skipping chain");
       next CHAIN;
     }
 
@@ -117,5 +152,6 @@ $xmlbuf =~ s|(<[^>]*\s)XMLNS=|${1}xmlns=|g;  ##-- restore default namespaces
 
 my $outfile = @ARGV ? shift : '-';
 open(OUT,">$outfile") or die("$prog: ERROR: open failed for '$outfile': $!");
+binmode(OUT,":raw");
 print OUT $xmlbuf;
 close OUT or die("$prog: ERROR: failed to close output file '$outfile': $!");
