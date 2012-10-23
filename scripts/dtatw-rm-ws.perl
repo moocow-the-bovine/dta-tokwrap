@@ -44,7 +44,10 @@ local $/=undef;
 my $buf = <>;
 
 ##-- remove selected elements
-$buf =~ s{</?(?:[wa]|moot|cab:\w+)\b[^>]*>}{}g if (!$keep_w);
+if (!$keep_w) {
+  $buf =~ s{<a\b[^>]*>[^<>]*</a>}{}g; ##-- remove tokenizer-analyses
+  $buf =~ s{</?(?:[wa]|moot|toka|cab:\w+)\b[^>]*>}{}g;
+}
 $buf =~ s{</?s\b[^>]*>}{}g if (!$keep_s);
 
 ##-- dump

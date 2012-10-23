@@ -48,7 +48,7 @@ GetOptions(##-- General
 	   'elements|elts|e=s' => \@xp_elts,
 	   'attributes|attrs|as=s' => \@xp_attrs,
 	   'all-attributes|all-attrs|aas|aa' => sub {@xp_attrs=qw()},
-	   'no-attributes|no-attrs|no-as|A' => sub {@xp_attrs=qw(__NO_ATTRIBUTES__)},
+	   'no-attributes|no-attrs|noattrs|no-as|noas|noa|A' => sub {@xp_attrs=qw(__NO_ATTRIBUTES__)},
 	   'positions|pos|p!' => \$xp_pos,
 	   'xpath-attribute|xpath-attr|xattr|xpa|xa|xp|x=s' => \$out_attr,
 	   'parent-xpath|parent|px|P!' => \$parent_xpath,
@@ -90,41 +90,39 @@ sub xmlesc {
 ##--------------------------------------------------------------
 ## XML::Parser handlers
 
-our %pos   = qw();
 our @stack = qw();
-our $cur   = undef; ##-- current xpath
+our $cur   = undef; ##-- current stack item
 
 ## undef = cb_init($expat)
 sub cb_init {
   #$cnum = 0;
-  @stack = qw();
-  %pos   = qw();
-  $cur   = qw();
+  @stack = ({elt=>'',attrs=>{},pos=>{},xp=>''});
+  $cur   = $stack[0];
 }
 
 ## undef = cb_start($expat, $elt,%attrs)
-my ($_xp,$elt,%attrs,$ostr,$xpstr);
+my ($_xp,$elt,%attrs, $prv,$ostr,$xpstr);
 sub cb_start {
   ($_xp,$elt,%attrs) = @_;
-  push(@stack, $cur={elt=>$elt,attrs=>{%attrs}});
+  $prv = $cur;
+  push(@stack, $cur={elt=>$elt,attrs=>{%attrs},pos=>{}});
 
   ##-- setup $cur->{xp}
-  $cur->{xp} = (@stack>1 ? $stack[$#stack-1]{xp} : '')."/$elt";
+  $cur->{xp} = $elt;
   if (!@xp_attrs) {
     $cur->{xp} .= join('', map {"[\@$_='".xmlesc($attrs{$_})."']"} sort keys %attrs);
   } else {
     $cur->{xp} .= join('', map {"[\@$_='".xmlesc($attrs{$_})."']"} grep {exists $attrs{$_}} @xp_attrs);
   }
   if ($xp_pos) {
-    $cur->{xp} .= "[".(++$pos{$cur->{xp}})."]";
+    $cur->{xp} .= "[".(++$prv->{pos}{$cur->{xp}})."]";
   }
+  $cur->{xp} = "$prv->{xp}/$cur->{xp}";
 
   ##-- check and possibly annotate
   if (exists($xp_elts{$elt})) {
     $ostr  = $_xp->original_string;
-    $xpstr = ($parent_xpath
-	      ? (@stack>1 ? $stack[$#stack-1]{xp} : '/..')
-	      : $cur->{xp});
+    $xpstr = ($parent_xpath ? $prv->{xp} : $cur->{xp});
     $xpstr = encode_utf8(" $out_attr=\"$xpstr\"");
     $ostr  =~ s{(\/?>)$}{${xpstr}$1};
     print $outfh $ostr;
