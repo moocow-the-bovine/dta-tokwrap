@@ -295,6 +295,12 @@ my @dirname_xpaths = ('fileDesc/publicationStmt/idno[@type="DTADirName"]', ##-- 
 my $dirname = xpgrepval($hroot,@dirname_xpaths) || $basename;
 ensure_xpath($hroot,$dirname_xpaths[$_],$dirname,($_==0)) foreach (0..$#dirname_xpaths);
 
+##-- meta: dtaid
+my @dtaid_xpaths = ('fileDesc/publicationStmt/idno[@type="DTAID"]',
+		   );
+my $dtaid = xpgrepval($hroot,@dtaid_xpaths) || "0";
+ensure_xpath($hroot,$dtaid_xpaths[$_],$dtaid,($_==0)) foreach (0..$#dtaid_xpaths);
+
 ##-- meta: timestamp: ISO
 my $timestamp_xpath = 'fileDesc/publicationStmt/date';
 my $timestamp = xpval($timestamp_xpath);
