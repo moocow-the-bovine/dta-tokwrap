@@ -263,10 +263,12 @@ sub mkbx {
   ##-- hack: txtdata: tokenizer input text buffer
   ##  + workaround for mantis bug #242 (http://odo.dwds.de/mantis/view.php?id=242)
   ##    : '"kontinuierte" quotes @ zeilenanfang --> müll'
+  ##  + see also mantis bug #560
   $$txtbufr = decode_utf8($$txtbufr) if (!utf8::is_utf8($$txtbufr));
-  $$txtbufr =~ s/ (\n[^\x{201e}\x{ab}\x{bb}"\n]+\n)([\x{201e}"]) / $1."\$QKEEP:$2\$"              /sgxe;
-  $$txtbufr =~ s/ \n(\ *[\x{201e}\x{ab}\x{bb}"])                 / "\n".(" " x bytes::length($1)) /sgxe;
-  $$txtbufr =~ s/ \n\$QKEEP:([^\$]+)\$				 / "\n".$1                        /sgxe;
+  my $quot  = "\x{201c}-\x{201f}\x{275d}-\x{275e}\x{301d}-\x{301f}\x{ab}\x{bb}\"";
+  $$txtbufr =~ s/ (\n[^${quot}\n]+\n\ *)([${quot}]) / $1."\$QKEEP:$2\$"              /gxe;
+  $$txtbufr =~ s/ \n(\ *[${quot}])                  / "\n".(" " x bytes::length($1)) /gxe;
+  $$txtbufr =~ s/ \n\$QKEEP:([^\$]+)\$		    / "\n".$1                        /gxe;
   $$txtbufr = encode_utf8($$txtbufr);
 
   ##-- stamp
