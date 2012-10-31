@@ -75,6 +75,13 @@ sub loadxml {
 ##======================================================================
 ## X-Path utilities: get
 
+## \@nods = xpnods($root, $xpath)
+sub xpnods {
+  my ($root,$xp) = @_;
+  return undef if (!ref($root));
+  return $root->findnodes($xp);
+}
+
 ## $nod = xpnod($root, $xpath)
 sub xpnod {
   my ($root,$xp) = @_;
@@ -203,25 +210,25 @@ if ($author_nod && $author_nod->nodeName eq 'persName') {
   $author = $author_nod->textContent;
   warn("$prog: $basename: WARNING: using obsolete author node ", $author_nod->nodePath);
 }
+elsif ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttribute('n')||'') eq 'ddc') {
+  ##-- ddc-author node: direct from document
+  $author = $author_nod->textContent;
+}
 elsif ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttribute('n')||'') ne 'ddc') {
   warn("$prog: $basename: WARNING: formatting author node from ", $author_nod->nodePath) if ($verbose >= $vl_progress);
   ##-- parse structured author node (new, 2012-07)
-  my ($nnods,$first,$last,@other,$name);
+  my ($nnods,$first,$last,$gen,@other,$name);
   $author = join('; ',
 		 map {
 		   $last  = xpval($_,'surname');
 		   $first = xpval($_,'forename');
+		   $gen   = xpval($_,'genName');
 		   @other = (
-			     ($_->hasAttribute('key') ? $_->getAttribute('key') : qw()),
-			     map {
-			       ($_->nodeName eq 'name' && $_->hasAttribute('key') ? $_->getAttribute('key')
-				: ($_->nodeName eq 'idno' ? (($_->getAttribute('type')||'idno').":".$_->textContent)
-				   : $_->textContent))
-			     }
-			     grep {$_->nodeName !~ /^(?:sur|fore)name$/}
-			     @{$_->findnodes('*')}
+			     (map {$_->textContent} @{$_->findnodes('addName')}), #|roleName e.g. "König von Preußen" beim alten Fritz (http://d-nb.info/gnd/118535749)
+			     ($_->hasAttribute('ref') ? $_->getAttribute('ref') : qw()),
 			    );
-		   $name = ($last||'').", ".($first||'').' ('.join('; ', @other).')';
+		   $_ =~ s{^http://d-nb.info/gnd/}{#}g foreach (@other); ##-- pnd hack
+		   $name = ($last||'').", ".($first||'').($gen ? " $gen" : '').' ('.join('; ', @other).')';
 		   $name =~ s/^, //;
 		   $name =~ s/ \(\)//;
 		   $name
@@ -234,29 +241,58 @@ elsif ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttr
 }
 if (!defined($author)) {
   ##-- guess author from basename
-  warn("$prog: $basename: WARNING: missing author XPath(s) ", join('|', @author_xpaths)) if ($verbose >= $vl_warn);
+  Warn("$prog: $basename: WARNING: missing author XPath(s) ", join('|', @author_xpaths)) if ($verbose >= $vl_warn);
   $author = ($basename =~ m/^([^_]+)_/ ? $1 : '');
   $author =~ s/\b([[:lower:]])/\U$1/g; ##-- implicitly upper-case
 }
 ensure_xpath($hroot, 'fileDesc/titleStmt/author[@n="ddc"]', $author);
 
 ##-- meta: title
-my $title = ($basename =~ m/^[^_]+_([^_]+)_/ ? ucfirst($1) : '');
-ensure_xpath($hroot, 'fileDesc/titleStmt/title', $title, 1);
+my $title       = ($basename =~ m/^[^_]+_([^_]+)_/ ? ucfirst($1) : '');
+my $title_xpath = 'fileDesc/titleStmt/title[@type="main" or @type="sub" or @type="vol"]';
+my $title_nods  = $hroot->findnodes($title_xpath);
+if (@$title_nods) {
+  $title  = join(' / ', map {$_->textContent} grep {$_->getAttribute('type') eq 'main'} @$title_nods);
+  $title .= join('', map {": ".$_->textContent} grep {$_->getAttribute('type') eq 'sub'} @$title_nods);
+  $title .= join('', map {" (".($_->textContent =~ m/\S/ ? $_->textContent : ($_->getAttribute('n')||'?')).")"} grep {$_->getAttribute('type') eq 'vol'} @$title_nods);
+  $title =~ s/\s+/ /g;
+  $title =~ s/^ //;
+  $title =~ s/ $//;
+} else {
+  warn("$prog: $basename: WARNING: missing title XPath(s) $title_xpath defaults to '$title'") if ($verbose >= $vl_warn);
+}
+ensure_xpath($hroot, 'fileDesc/titleStmt/title[@type="ddc"]', $title, 0);
 
-##-- meta: date
+##-- meta: date (published)
 my @date_xpaths = (
-		   'fileDesc/sourceDesc[@n="orig"]/biblFull/publicationStmt/date', ##-- old:firstDate
+		   'fileDesc/sourceDesc[@n="ddc"]/biblFull/publicationStmt/date[@type="pub"]', ##-- ddc
 		   'fileDesc/sourceDesc[@n="scan"]/biblFull/publicationStmt/date', ##-- old:publDate
-		   'fileDesc/sourceDesc/biblFull/publicationStmt/date', ##-- new:date
+		   'fileDesc/sourceDesc/biblFull/publicationStmt/date[@type="publication"]/supplied', ##-- new:date (published, supplied)
+		   'fileDesc/sourceDesc/biblFull/publicationStmt/date[@type="publication"]', ##-- new:date (published)
+		   'fileDesc/sourceDesc/biblFull/publicationStmt/date/supplied', ##-- new:date (generic, supplied)
+		   'fileDesc/sourceDesc/biblFull/publicationStmt/date', ##-- new:date (generic, supplied)
 		  );
 my $date = xpgrepval($hroot,@date_xpaths);
 if (!$date) {
   $date = ($basename =~ m/^[^\.]*_([0-9]+)$/ ? $1 : 0);
   warn("$prog: $basename: WARNING: missing date XPath $date_xpaths[$#date_xpaths] defaults to \"$date\"") if ($verbose >= $vl_warn);
 }
-ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="orig"]/biblFull/publicationStmt/date[@type="first"]', $date); ##-- old (<2012-07)
-ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="ddc"]/biblFull/publicationStmt/date', $date);  ##-- new (>=2012-07)
+#ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="scan"]/biblFull/publicationStmt/date[@type="first"]', $date); ##-- old (<2012-07)
+ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="ddc"]/biblFull/publicationStmt/date[@type="pub"]', $date);  ##-- new (>=2012-07)
+
+##-- meta: date (first)
+foreach (@date_xpaths) {
+  s/="scan"/="orig"/;
+  s/="publication"/="firstPublication"/;
+  s/="pub"/="first"/;
+}
+my $date1 = xpgrepval($hroot,@date_xpaths);
+if (!$date1) {
+  $date1 = $date;
+  warn("$prog: $basename: WARNING: missing original-date XPath $date_xpaths[$#date_xpaths] defaults to \"$date1\"") if (0 && $verbose >= $vl_warn);
+}
+#ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="orig"]/biblFull/publicationStmt/date[@type="first"]', $date1); ##-- old (<2012-07)
+ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="ddc"]/biblFull/publicationStmt/date[@type="first"]', $date1);  ##-- new (>=2012-11)
 
 ##-- meta: bibl
 my @bibl_xpaths = (
@@ -274,18 +310,22 @@ ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="orig"]/bibl', $bibl); ##-- old (<2
 ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="ddc"]/bibl', $bibl); ##-- new (>=2012-07)
 
 ##-- meta: shelfmark
-my @shelfmark_xpaths = ('fileDesc/sourceDesc/msDesc/msIdentifier/idno[@type="shelfmark"]', ##-- new (>=2012-07)
+my @shelfmark_xpaths = (
+			'fileDesc/sourceDesc[@n="ddc"]/msDesc/msIdentifier/idno[@type="shelfmark"]', ##-- new:canonical
+			'fileDesc/sourceDesc/msDesc/msIdentifier/idno[@type="shelfmark"]', ##-- new (>=2012-07)
 			'fileDesc/sourceDesc/biblFull/notesStmt/note[@type="location"]/ident[@type="shelfmark"]', ##-- old (<2012-07)
 		       );
-my $shelfmark = xpgrepval($hroot,@shelfmark_xpaths);
-ensure_xpath($hroot, $shelfmark_xpaths[$_], $shelfmark, ($_==0)) foreach (0..$#shelfmark_xpaths);
+my $shelfmark = xpgrepval($hroot,@shelfmark_xpaths) || '-';
+ensure_xpath($hroot, $shelfmark_xpaths[0], $shelfmark, 0);
 
 ##-- meta: library
-my @library_xpaths = ('fileDesc/sourceDesc/msDesc/msIdentifier/repository', ##-- new
+my @library_xpaths = (
+		      'fileDesc/sourceDesc[@n="ddc"]/msDesc/msIdentifier/repository', ##-- new:canonical
+		      'fileDesc/sourceDesc/msDesc/msIdentifier/repository', ##-- new
 		      'fileDesc/sourceDesc/biblFull/notesStmt/note[@type="location"]/name[@type="repository"]', ##-- old
 		     );
-my $library = xpgrepval($hroot, @library_xpaths);
-ensure_xpath($hroot, $library_xpaths[$_], $library, ($_==0)) foreach (0..$#library_xpaths);
+my $library = xpgrepval($hroot, @library_xpaths) || '-';
+ensure_xpath($hroot, $library_xpaths[0], $library, 0);
 
 ##-- meta: dtadir
 my @dirname_xpaths = ('fileDesc/publicationStmt/idno[@type="DTADirName"]', ##-- newer(?) (>=2012-09)
@@ -293,13 +333,13 @@ my @dirname_xpaths = ('fileDesc/publicationStmt/idno[@type="DTADirName"]', ##-- 
 		      'fileDesc/publicationStmt/idno[@type="DTADIR"]',     ##-- old (<2012-07)
 		     );
 my $dirname = xpgrepval($hroot,@dirname_xpaths) || $basename;
-ensure_xpath($hroot,$dirname_xpaths[$_],$dirname,($_==0)) foreach (0..$#dirname_xpaths);
+ensure_xpath($hroot,$dirname_xpaths[0],$dirname,1);
 
 ##-- meta: dtaid
 my @dtaid_xpaths = ('fileDesc/publicationStmt/idno[@type="DTAID"]',
 		   );
 my $dtaid = xpgrepval($hroot,@dtaid_xpaths) || "0";
-ensure_xpath($hroot,$dtaid_xpaths[$_],$dtaid,($_==0)) foreach (0..$#dtaid_xpaths);
+ensure_xpath($hroot,$dtaid_xpaths[0],$dtaid,1);
 
 ##-- meta: timestamp: ISO
 my $timestamp_xpath = 'fileDesc/publicationStmt/date';
@@ -309,6 +349,42 @@ if (!$timestamp) {
   $timestamp = POSIX::strftime("%FT%H:%M:%SZ",gmtime($time));
   ensure_xpath($hroot,$timestamp_xpath,$timestamp,1);
 }
+
+##-- meta: availability (text)
+my @avail_xpaths = (
+		    'fileDesc/publicationStmt/availability[@type="ddc"]',
+		    'fileDesc/publicationStmt/availability',
+		   );
+my $avail       = xpgrepval($hroot,@avail_xpaths) || "-";
+ensure_xpath($hroot, $avail_xpaths[0], $avail, 0);
+
+##-- meta: text-class: dta
+my $tcdta = join('::',
+		 map {$_->textContent}
+		 @{xpnods($hroot,join('|',
+				      'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtamain"]',
+				      'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtasub"]'))}
+		);
+ensure_xpath($hroot, 'profileDesc/textClass/classCode[@type="ddcTextClassDTA"]', ($tcdta||''), 0);
+
+##-- meta: text-class: dwds
+my $tcdwds = join('::',
+		  map {$_->textContent}
+		  @{xpnods($hroot,join('|',
+				       'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds1main"]',
+				       'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds1sub"]',
+				       'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds2main"]',
+				       'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds2sub"]',))}
+		 );
+ensure_xpath($hroot, 'profileDesc/textClass/classCode[@type="ddcTextClassDWDS"]', ($tcdwds||''), 0);
+
+##-- meta: text-class: dta-corpus (ocr|mts|cn|...)
+my $tccorpus = join('::',
+		    map {$_->textContent}
+		    @{xpnods($hroot,join('|',
+					 'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#DTACorpus"]'))}
+		   );
+ensure_xpath($hroot, 'profileDesc/textClass/classCode[@type="ddcTextClassCorpus"]', ($tccorpus||''), 0);
 
 ##-- dump
 ($outfile eq '-' ? $hdoc->toFH(\*STDOUT,$format) : $hdoc->toFile($outfile,$format))
