@@ -241,7 +241,7 @@ elsif ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttr
 }
 if (!defined($author)) {
   ##-- guess author from basename
-  Warn("$prog: $basename: WARNING: missing author XPath(s) ", join('|', @author_xpaths)) if ($verbose >= $vl_warn);
+  warn("$prog: $basename: WARNING: missing author XPath(s) ", join('|', @author_xpaths)) if ($verbose >= $vl_warn);
   $author = ($basename =~ m/^([^_]+)_/ ? $1 : '');
   $author =~ s/\b([[:lower:]])/\U$1/g; ##-- implicitly upper-case
 }
