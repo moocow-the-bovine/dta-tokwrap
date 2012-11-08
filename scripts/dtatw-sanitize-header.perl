@@ -365,7 +365,7 @@ my $tcdta = join('::',
 				      'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtamain"]',
 				      'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtasub"]'))}
 		);
-ensure_xpath($hroot, 'profileDesc/textClass/classCode[@type="ddcTextClassDTA"]', ($tcdta||''), 0);
+ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassDTA"]', ($tcdta||''), 0);
 
 ##-- meta: text-class: dwds
 my $tcdwds = join('::',
@@ -376,7 +376,7 @@ my $tcdwds = join('::',
 				       'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds2main"]',
 				       'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds2sub"]',))}
 		 );
-ensure_xpath($hroot, 'profileDesc/textClass/classCode[@type="ddcTextClassDWDS"]', ($tcdwds||''), 0);
+ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassDWDS"]', ($tcdwds||''), 0);
 
 ##-- meta: text-class: dta-corpus (ocr|mts|cn|...)
 my $tccorpus = join('::',
@@ -384,7 +384,7 @@ my $tccorpus = join('::',
 		    @{xpnods($hroot,join('|',
 					 'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#DTACorpus"]'))}
 		   );
-ensure_xpath($hroot, 'profileDesc/textClass/classCode[@type="ddcTextClassCorpus"]', ($tccorpus||''), 0);
+ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassCorpus"]', ($tccorpus||''), 0);
 
 ##-- dump
 ($outfile eq '-' ? $hdoc->toFH(\*STDOUT,$format) : $hdoc->toFile($outfile,$format))
