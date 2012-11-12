@@ -199,9 +199,12 @@ if ($hroot->nodeName ne 'teiHeader') {
 
 ##-- meta: author
 my @author_xpaths = (
-		     'fileDesc/titleStmt/author[@n="ddc"]', ##-- new (formatted)
-		     'fileDesc/titleStmt/author', ##-- new (un-formatted)
-		     'fileDesc/sourceDesc/listPerson[@type="searchNames"]/person/persName', ##-- old
+		     'fileDesc/titleStmt/author[@n="ddc"]',							##-- new (formatted)
+		     'fileDesc/titleStmt/author',								##-- new (direct, un-formatted)
+		     'fileDesc/sourceDesc/biblFull/titleStmt/author',						##-- new (sourceDesc, un-formatted)
+		     'fileDesc/titleStmt/editor[string(@corresp)!="#DTACorpusPublisher"]',   			##-- new (direct, un-formatted)
+		     'fileDesc/sourceDesc/biblFull/titleStmt/editor[string(@corresp)!="#DTACorpusPublisher"]',	##-- new (sourceDesc, un-formatted)
+		     'fileDesc/sourceDesc/listPerson[@type="searchNames"]/person/persName',			##-- old
 		    );
 my $author_nod = xpgrepnod($hroot,@author_xpaths);
 my ($author);
@@ -214,7 +217,7 @@ elsif ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttr
   ##-- ddc-author node: direct from document
   $author = $author_nod->textContent;
 }
-elsif ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttribute('n')||'') ne 'ddc') {
+elsif ($author_nod && $author_nod->nodeName =~ /^(?:author|editor)$/ && ($author_nod->getAttribute('n')||'') ne 'ddc') {
   warn("$prog: $basename: WARNING: formatting author node from ", $author_nod->nodePath) if ($verbose >= $vl_progress);
   ##-- parse structured author node (new, 2012-07)
   my ($nnods,$first,$last,$gen,@other,$name);
@@ -226,6 +229,7 @@ elsif ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttr
 		   @other = (
 			     (map {$_->textContent} @{$_->findnodes('addName')}), #|roleName e.g. "König von Preußen" beim alten Fritz (http://d-nb.info/gnd/118535749)
 			     ($_->hasAttribute('ref') ? $_->getAttribute('ref') : qw()),
+			     ($_->nodeName eq 'editor' || $_->parentNode->nodeName eq 'editor' ? 'ed.' : qw()),
 			    );
 		   $_ =~ s{^http://d-nb.info/gnd/}{#}g foreach (@other); ##-- pnd hack
 		   $name = ($last||'').", ".($first||'').($gen ? " $gen" : '').' ('.join('; ', @other).')';
@@ -237,7 +241,7 @@ elsif ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttr
 		   $nnods = $_->findnodes('name|persName');
 		   ($nnods && @$nnods ? @$nnods : $_)
 		 }
-		 @{$hroot->findnodes('fileDesc/titleStmt/author')});
+		 @{$author_nod->findnodes('../'.$author_nod->nodeName.'[string(@corresp)!="#DTACorpusPublisher"]')});
 }
 if (!defined($author)) {
   ##-- guess author from basename
