@@ -73,7 +73,7 @@ else {
 }
 
 ##-- insert newlines into $buf
-$buf =~ s{<lb\s*?/>(?!\R)}{<lb/>\n}sg if ($lb_newlines);
+$buf =~ s{(<[lp]b\b[^>]*/>)(?!\R)}{$1\n}sg if ($lb_newlines);
 
 ##-- dump output
 open(OUT,">$outfile") or die("$prog: open failed for output file '$outfile': $!");
