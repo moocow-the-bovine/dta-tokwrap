@@ -148,6 +148,7 @@ sub defaults {
 
 			     ##-- notes, tables, lists, etc.
 			     qw(row|cell),
+			     qw(item),
 
 			     ##-- drama-specific
 			     ## + e.g. goethe_iphegenie, schiller_kabale, hauptman_sonnenaufgang
