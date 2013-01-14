@@ -129,8 +129,9 @@ sub defaults {
 			     qw(lg),
 
 			     ##-- non-sentential stuff
-			     qw(ref|fw|list|item|head), ##-- ... be safe if tokenizing EVERYTHING (we should always EOS on head if we add a key for it!)
+			     #qw(ref|fw|list|item|head), ##-- ... be safe if tokenizing EVERYTHING (we should always EOS on head if we add a key for it!)
 			     #qw(ref|fw), ##-- ... be extra-safe if tokenizing EVERYTHING
+			     qw(fw),
 			    ],
 	  hint_wb_xpaths => [
 			     ##-- title page
@@ -179,7 +180,8 @@ sub defaults {
 	  sortkey_attr => 'dta.tw.key',
 	  sort_ignore_xpaths => [
 				 #qw(ref|fw|head), ##-- comment this out to tokenize EVERYTHING
-				 qw(ref|fw),       ##--  ... tokenize <head> (e.g. chapter titles), but not headers, footers, or references (TOC)
+				 #qw(ref|fw),      ##-- ... tokenize <head> (e.g. chapter titles), but not headers, footers, or references (TOC)
+				 qw(fw),	   ##-- ... tokenize <head> and <ref> (e.g. TOC), but not page headers or footers
 				 qw(teiHeader),
 				 #qw(formula),
 
