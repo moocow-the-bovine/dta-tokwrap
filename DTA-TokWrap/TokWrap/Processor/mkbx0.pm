@@ -192,12 +192,15 @@ sub defaults {
 				 'choice[./abbr and ./expan]/abbr',
 				],
 	  sort_addkey_xpaths => [
+	                         ##-- BE CAREFUL: only add keys (de-serialize) if you're also adding appropriate
+                                 ##   break hints (e.g. sb, wb) too!
+                                 ##--
 				 #'*[@next and not(@prev)]',
 				 #(map {"$_\[not(parent::seg or ancestor::*\[\@next or \@prev\])\]"} qw(table note argument figure)),
 				 ##--
 				 (map {"$_\[not(parent::seg)\]"} qw(table note argument figure)),
 				 qw(text|front|body|back),
-				 qw(ref|fw|list|castList),
+				 qw(fw|list|castList),
 				 'head[not(parent::list or parent::castList)]',  ##-- extract these from running text
 				],
 	  sort_stylestr  => undef,
