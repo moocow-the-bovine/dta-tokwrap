@@ -10,6 +10,7 @@ use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Utils qw(:progs :slurp);
 use DTA::TokWrap::Processor::tokenize::http;
+use DTA::TokWrap::Processor::tokenize::tomasotath_05x;
 use DTA::TokWrap::Processor::tokenize::tomasotath_04x;
 use DTA::TokWrap::Processor::tokenize::tomasotath_02x;
 use DTA::TokWrap::Processor::tokenize::dummy;
@@ -22,7 +23,7 @@ use strict;
 ##==============================================================================
 our @ISA = qw(DTA::TokWrap::Processor::tokenize);
 
-our @DEFAULT_CLASSES = qw(tomasotath_04x http tomasotath_02x dummy);
+our @DEFAULT_CLASSES = qw(tomasotath_05x tomasotath_04x http tomasotath_02x dummy);
 
 ##==============================================================================
 ## Constructors etc.
@@ -79,10 +80,11 @@ sub tokenize {
       if ($class =~ /^tomasotath/) {
 	next if ( !defined($args{tomata2} = path_prog('dwds_tomasotath', prepend=>($ta->{inplace} ? ['.','../src'] : undef))) );
 	my $vstr = `$args{tomata2} --version 2>&1` or next;
-	$vstr =~ s/^\S+\s+//;
+	$vstr =~ s/^\S*\s+//;
 	chomp($vstr);
-	next if ($class =~ /_04x$/ && $vstr !~ /0\.4\./);
-	next if ($class =~ /_02x$/ && $vstr !~ /0\.2\./);
+	next if ($class =~ /_05x$/ && $vstr !~ /^0\.5\./);
+	next if ($class =~ /_04x$/ && $vstr !~ /^0\.4\./);
+	next if ($class =~ /_02x$/ && $vstr !~ /^0\.2\./);
       }
       eval { $ta->{tokz} = "DTA::TokWrap::Processor::tokenize::$class"->new(%$ta,%args); };
       last if (!$@ && defined($ta->{tokz}));
