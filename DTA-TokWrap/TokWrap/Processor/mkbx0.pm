@@ -118,6 +118,7 @@ sub defaults {
 			     qw(figure),
 			     #'item[ref]',
 			     'item',
+			     'head',
 
 			     ##-- drama-specific
 			     ## + e.g. goethe_iphegenie, schiller_kabale, hauptman_sonnenaufgang
