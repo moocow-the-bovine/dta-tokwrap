@@ -117,7 +117,7 @@ sub defaults {
 			     qw(note|table|argument),
 			     qw(figure),
 			     #'item[ref]',
-			     'list|item',
+			     'list|item|trailer',
 			     'head',
 
 			     ##-- drama-specific
