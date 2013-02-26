@@ -265,6 +265,8 @@ sub tokenize1 {
 		    ##-- more bible books
 		    qw( Gall Reg Hos Hoſ Hose Hoſe Rom Reg ),
 		    qw( Johan Johann Malach Eze Esa Eſa Sap ),
+		    ##-- other stuff that fits here
+		    qw( Idiot idiot ),
 		   );
     my ($offd,$lend);
     my $nabbr_max_distance = 2; ##-- max number of text bytes between end(w1) and start(w2), including EOS-dot
