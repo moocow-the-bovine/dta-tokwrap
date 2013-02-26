@@ -184,7 +184,7 @@ sub tokenize1 {
     ##    -- this is not really a connector, but it might be used somewhere!
     $tp->vlog($tp->{traceLevel},"autofix: linebreak: scan");
     my ($txt1,$off1,$len1,$rest1, $txt2,$off2,$len2,$rest2, @repl);
-    my %nojoin_txt2 = map {($_=>undef)} qw(und oder als wie noch sondern ſondern u. o. bis);
+    my %nojoin_txt2 = map {($_=>undef)} qw(und vnd unnd vnnd nnd oder als wie noch sondern ſondern u. o. bis);
     $nsusp=$nfixed=0;
     for ($i=0; $i < $#lines; ++$i) {
       if ($lines[$i] =~ /^
