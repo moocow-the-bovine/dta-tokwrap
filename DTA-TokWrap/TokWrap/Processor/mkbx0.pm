@@ -168,6 +168,9 @@ sub defaults {
 			     ##-- segments
 			     'seg',
 
+			     ##-- page-breaks (these should really have <lb>s anyway, but sometimes it's missing)
+			     'pb',
+
 			     ##-- other things
 			     #map { "$_\[not(parent::seg)\]" } qw(table note argument figure),
 			    ],
