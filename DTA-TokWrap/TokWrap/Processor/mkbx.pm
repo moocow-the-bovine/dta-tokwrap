@@ -267,10 +267,15 @@ sub mkbx {
   $$txtbufr = decode_utf8($$txtbufr) if (!utf8::is_utf8($$txtbufr));
   my $txtlen= bytes::length($$txtbufr);
   my $quot  = "\x{201c}-\x{201f}\x{275d}-\x{275e}\x{301d}-\x{301f}\x{ab}\x{bb}\"";
-  $$txtbufr =~ s/ (\n[^${quot}\n]+\n\ *)([${quot}]) / $1."\$QKEEP:$2\$"              /gxe;
-  $$txtbufr =~ s/ \n(\ *[${quot}])                  / "\n".(" " x bytes::length($1)) /gxe;
-  $$txtbufr =~ s/ \$QKEEP:([^\$]+)\$	            / $1                             /gxe;
+  $$txtbufr =~ s/ (\n[^${quot}\n]+\n\ *)([${quot}]) / $1."\$QKEEP:$2\$"              /ogxe;
+  $$txtbufr =~ s/ \n(\ *[${quot}])                  / "\n".(" " x bytes::length($1)) /ogxe;
+  $$txtbufr =~ s/ \$QKEEP:([^\$]+)\$	            / $1                             /ogxe;
   $mbx->logconfess("mkbx(): line-initial quote heuristics changed text length") if (bytes::length($$txtbufr) != $txtlen);
+  ##
+  ##  + end-of-line quote hack; cf http://kaskade.dwds.de/dtaq/book/view/20001?p=43;hl=niciren
+  $$txtbufr =~ s/ ([${quot}]\ *)\n                  / "\n".(" " x bytes::length($1)) /ogxe;
+  $mbx->logconfess("mkbx(): line-final quote heuristics changed text length") if (bytes::length($$txtbufr) != $txtlen);
+
   $$txtbufr = encode_utf8($$txtbufr);
 
   ##-- stamp
