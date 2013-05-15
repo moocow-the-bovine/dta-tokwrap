@@ -95,7 +95,11 @@ sub tokenize {
   $tz->vlog($tz->{traceLevel},"tokenize(): url=$tz->{serverurl}?$tz->{txtparam}=...");
   $doc->{tokdata0} = '';
   slurp_file($doc->{txtfile},\$doc->{txtdata}) if (!defined($doc->{txtdata}));
-  my $rsp = $tz->{ua}->post($tz->{serverurl}, { $tz->{txtparam}=>$doc->{txtdata} });
+  ##
+  ## Wed, 15 May 2013 10:39:23 +0200 moocow
+  ## + use multipart/form-data to avoid implicit LF->CR+LF conversion by LWP::UserAgent (HTTP::Request::Common::POST() v6.03 / debian wheezy)
+  ## + fixes goofy byte-offset problems using HTTP tokenizer
+  my $rsp = $tz->{ua}->post($tz->{serverurl}, { $tz->{txtparam}=>$doc->{txtdata} }, 'Content-Type'=>'multipart/form-data');
   $tz->vlog($tz->{traceLevel},"tokenize(): response: ", $rsp ? $rsp->status_line : '(no response)');
   $tz->logconfess("tokenize(): error from server $tz->{serverurl}: ", ($rsp ? $rsp->as_string : '(no response)'))
     if (!$rsp || !$rsp->is_success);
