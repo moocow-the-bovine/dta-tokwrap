@@ -23,7 +23,8 @@ use strict;
 ##==============================================================================
 our @ISA = qw(DTA::TokWrap::Processor::tokenize);
 
-our @DEFAULT_CLASSES = qw(tomasotath_05x tomasotath_04x http tomasotath_02x dummy);
+#our @DEFAULT_CLASSES = qw(tomasotath_05x tomasotath_04x http tomasotath_02x dummy);
+our @DEFAULT_CLASSES = qw(tomasotath_04x http tomasotath_02x dummy);
 
 ##==============================================================================
 ## Constructors etc.
