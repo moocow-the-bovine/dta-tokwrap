@@ -30,7 +30,7 @@ our @ISA = qw(DTA::TokWrap::Processor::tokenize);
 ## %defaults = CLASS->defaults()
 ##  + static class-dependent defaults
 ##  + %args, %defaults, %$tz:
-##     serverurl => $url,      ##-- server url (default='http://kaskade.dwds.de/~moocow/opensearch/tok-cgi.perl')
+##     serverurl => $url,      ##-- server url (default='http://194.95.188.28/dtaos/tok-cgi.perl' [kaskade])
 ##     txtparam  => $param,    ##-- text query parameter (default='t')
 ##     timeout   => $secs,     ##-- user agent timeout (default=300)
 ##     ua => $ua,              ##-- low-level underlying LWP::UserAgent
@@ -38,7 +38,7 @@ sub defaults {
   my $that = shift;
   return (
 	  $that->SUPER::defaults(),
-	  serverurl => 'http://kaskade.dwds.de/~moocow/opensearch/tok-cgi.perl',
+	  serverurl => 'http://194.95.188.28/dtaos/tok-cgi.perl',
 	  txtparam  => 't',
 	  timeout   => 300,
 	  @_,
