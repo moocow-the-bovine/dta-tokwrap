@@ -47,10 +47,10 @@ sub init {
   my $tz = shift;
 
   ##-- search for tokenizer program
-  if (!defined($td->{tokenize})) {
-    $td->{tokenize} = path_prog('dwds_scanner',
-				prepend=>($td->{inplace} ? ['.','../src'] : undef),
-				warnsub=>sub {$td->logconfess(@_)},
+  if (!defined($tz->{tokenize})) {
+    $tz->{tokenize} = path_prog('dwds_scanner',
+				prepend=>($tz->{inplace} ? ['.','../src'] : undef),
+				warnsub=>sub {$tz->logconfess(@_)},
 			       );
   }
 

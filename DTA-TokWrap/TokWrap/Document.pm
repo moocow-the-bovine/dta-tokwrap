@@ -17,7 +17,7 @@ use DTA::TokWrap::Processor::tokenize::http;
 #use DTA::TokWrap::Processor::tokenize::tomasotath_05x;
 use DTA::TokWrap::Processor::tokenize::tomasotath_04x;
 use DTA::TokWrap::Processor::tokenize::tomasotath_02x;
-use DTA::TokWrap::Processor::tokenize::scanner;
+use DTA::TokWrap::Processor::tokenize::dwds_scanner;
 use DTA::TokWrap::Processor::tokenize::dummy;
 use DTA::TokWrap::Processor::tokenize1;
 use DTA::TokWrap::Processor::tok2xml;
