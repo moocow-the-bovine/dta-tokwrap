@@ -25,6 +25,7 @@ our $DEFAULT_SUBCLASS = 'auto'; ##-- default subclass
 #our $DEFAULT_SUBCLASS = 'auto';
 #our $DEFAULT_SUBCLASS = 'http';
 #our $DEFAULT_SUBCLASS = 'tomasotath';
+#our $DEFAULT_SUBCLASS = 'scanner';
 #our $DEFAULT_SUBCLASS = 'dummy';
 
 ##==============================================================================
