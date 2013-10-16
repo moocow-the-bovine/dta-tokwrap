@@ -457,6 +457,16 @@ BEGIN {
 
      #(map {$_=>[qw(loadXtokFile standoff)]} qw(mkstandoff standoff so mkso)),
 
+     'tei2t' =>[qw(mkindex),
+		qw(mkbx0 saveBx0File),
+		qw(mkbx saveBxFile saveTxtFile),
+		qw(tokenize0 saveTokFile0),
+		qw(tokenize1 saveTokFile1),
+		#qw(loadCxFile)
+		#qw(tok2xml saveXtokFile),
+		#qw(standoff),
+               ],
+
      'tei2txml' => [qw(mkindex),
 		    qw(mkbx0 saveBx0File),
 		    qw(mkbx saveBxFile saveTxtFile),
