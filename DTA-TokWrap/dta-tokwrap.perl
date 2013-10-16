@@ -689,8 +689,8 @@ LEVEL is as described in L<-traceLevel|/"-traceLevel LEVEL">.
 
 All other command-line arguments are assumed to be filenames of
 DTA "base-format" XML files,
-which are simply (TEI-conformant) UTF-8 encoded XML files with one C<E<lt>cE<gt>>
-element per character:
+which are simply (TEI-conformant) UTF-8 encoded XML files with
+one (optional as of dta-tokwrap v0.38) C<E<lt>cE<gt>> element per character:
 
 =over 4
 
@@ -700,24 +700,11 @@ the document B<MUST> be encoded in UTF-8,
 
 =item *
 
-all text nodes to be tokenized should be descendants of a C<E<lt>cE<gt>> element
-which is itself a descendant of a C<E<lt>textE<gt>> element (XPath=C<//text//c//text()>),
+all text nodes to be tokenized should be descendants of a C<E<lt>textE<gt>> element,
+and may optionally be immediate daughters of a C<E<lt>cE<gt>> element
+(XPath C<//text//text()|//text//c/text()>). C<E<lt>cE<gt>> elements may not be nested.
 
-=item *
-
-the document should contain exactly one such C<E<lt>cE<gt>> element for
-each I<logical character>
-which may be passed to the tokenizer,
-
-=item *
-
-no C<E<lt>cE<gt>> element may be a descendant of another C<E<lt>cE<gt>> element,
-and
-
-=item *
-
-if stand-off targets are to be built (the default),
-each C<E<lt>cE<gt>> element should have a valid C<xml:id> attribute.
+Prior to dta-tokwrap v0.38, C<E<lt>cE<gt>> elements were required.
 
 =back
 
@@ -753,7 +740,9 @@ L</"-make Mode"> and L</"-nomake Mode">.
 
 =head3 -make Mode
 
-In this (experimental) mode, the program attempts to emulate the dependency tracking
+B<(DEPRECATED)>
+
+In this (deprecated) mode, the program attempts to emulate the dependency tracking
 features of C<make> by (re-)building only those targets which either
 do not yet exist, or which are older than one or more of their dependencies.
 Since some dependencies are ephemeral, existing only in RAM during
