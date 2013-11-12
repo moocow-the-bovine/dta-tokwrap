@@ -14,6 +14,7 @@ use DTA::TokWrap::Processor::mkbx;
 use DTA::TokWrap::Processor::tokenize;
 use DTA::TokWrap::Processor::tokenize::auto;
 use DTA::TokWrap::Processor::tokenize::http;
+use DTA::TokWrap::Processor::tokenize::waste;
 #use DTA::TokWrap::Processor::tokenize::tomasotath_05x;
 use DTA::TokWrap::Processor::tokenize::tomasotath_04x;
 use DTA::TokWrap::Processor::tokenize::tomasotath_02x;

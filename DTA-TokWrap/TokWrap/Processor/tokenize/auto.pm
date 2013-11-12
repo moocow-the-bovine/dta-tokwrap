@@ -10,6 +10,7 @@ use DTA::TokWrap::Version;
 use DTA::TokWrap::Base;
 use DTA::TokWrap::Utils qw(:progs :slurp);
 use DTA::TokWrap::Processor::tokenize::http;
+use DTA::TokWrap::Processor::tokenize::waste;
 use DTA::TokWrap::Processor::tokenize::tomasotath_05x;
 use DTA::TokWrap::Processor::tokenize::tomasotath_04x;
 use DTA::TokWrap::Processor::tokenize::tomasotath_02x;
@@ -23,8 +24,9 @@ use strict;
 ##==============================================================================
 our @ISA = qw(DTA::TokWrap::Processor::tokenize);
 
-#our @DEFAULT_CLASSES = qw(tomasotath_05x tomasotath_04x http tomasotath_02x dummy);
-our @DEFAULT_CLASSES = qw(tomasotath_04x http tomasotath_02x dummy);
+#our @DEFAULT_CLASSES = qw(waste tomasotath_05x tomasotath_04x http tomasotath_02x dummy);
+our @DEFAULT_CLASSES = qw(waste tomasotath_04x http tomasotath_02x dummy);
+#our @DEFAULT_CLASSES = qw(     tomasotath_04x http tomasotath_02x dummy);
 
 ##==============================================================================
 ## Constructors etc.
@@ -78,6 +80,12 @@ sub tokenize {
     foreach my $class (@{$ta->{classes}}) {
       $ta->vlog($ta->{traceLevel},"trying tokenizer subclass '$class'...");
       my %args = qw();
+      if ($class =~ /^waste/) {
+	next if (!defined($args{waste}=path_prog("dwds_${class}", prepend=>($ta->{inplace} ? ['.','../src'] : undef)))
+		 &&
+		 !defined($args{waste}=path_prog('dwds_waste', prepend=>($ta->{inplace} ? ['.','../src'] : undef)))
+		);
+      }
       if ($class =~ /^tomasotath/) {
 	next if (!defined($args{tomata2}=path_prog("dwds_${class}", prepend=>($ta->{inplace} ? ['.','../src'] : undef)))
 		 &&
@@ -242,7 +250,7 @@ Bryan Jurish E<lt>jurish@bbaw.deE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2012 by Bryan Jurish
+Copyright (C) 2013 by Bryan Jurish
 
 This package is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.1 or,

@@ -40,7 +40,9 @@ sub defaults {
 	  $that->SUPER::defaults(),
 	  #serverurl => 'http://194.95.188.28/dtaos/tok-cgi.perl', ##-- kaskade1
           #serverurl => 'http://194.95.188.59/dtaos/tok-cgi.perl', ##-- kaskade2
-          serverurl => 'http://kaskade.dwds.de/dtaos/tok-cgi.perl',
+          #serverurl => 'http://kaskade.dwds.de/dtaos/tok-cgi.perl',
+	  serverurl => 'http://kaskade.dwds.de/waste/tokenize.fcgi?m=de-tiger',
+	  #serverpars => {},
 	  txtparam  => 't',
 	  timeout   => 300,
 	  @_,

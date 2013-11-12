@@ -28,7 +28,10 @@ our %twopts = (
 			    hint_sb_xpaths => $bx0opts{hint_sb_xpaths},
 			    hint_wb_xpaths => $bx0opts{hint_wb_xpaths},
 			    nohints => 0,        ##-- don't generate any hints in output .txt file
-			    abbrevLex => undef,  ##-- abbrev "lexicon"; see SVN 'dev/dta-resources' project
+			    abbrevLex => undef,  ##-- abbrev "lexicon"; see SVN 'dev/dta-resources' or 'dev/moot-models/dtiger' project
+			    stopLex => undef,    ##-- stopword "lexicon" (waste tokenizer only)
+			    conjLex => undef,    ##-- conjunction "lexicon" (waste tokenizer only)
+			    wasteHmm => undef,   ##-- waste model (waste tokenizer only)
 			    mweLex   => undef,   ##-- mwe "lexicon"; see SVN 'dev/dta-resources' project
 			   },
 	      );
@@ -124,6 +127,9 @@ GetOptions(
 	   'hints!' => sub { $twopts{procOpts}{nohints} = !$_[1]; },
 	   'abbrev-lex|to-abbrev-lex|al=s' => \$twopts{procOpts}{abbrevLex},
 	   'mwe-lex|to-mwe-lex|ml=s' => \$twopts{procOpts}{mweLex},
+	   'stop-lex|to-stop-lex|sl=s' => \$twopts{procOpts}{stopLex},
+	   'conj-lex|to-conj-lex|cl=s' => \$twopts{procOpts}{conjLex},
+	   'waste-model|to-waste-model|wm=s' => \$twopts{procOpts}{wasteHmm},
 	   'processor-option|procopt|po=s%' => $twopts{procOpts},
 
 	   ##-- DTA::TokWrap options: I/O
@@ -350,8 +356,11 @@ dta-tokwrap.perl - top-level tokenizer wrapper for DTA XML documents
   -hints, -nohints       # do/don't generate "hints" for the tokenizer (default=do)
   -weak-hints            # use whitespace-only hints rather than defaults ($WB$,$SB$)
   -strong-hints          # opposite of -weak-hints
-  -abbrev-lex=FILE       # abbreviation lexicon for dwds_tomasotath tokenizer
+  -abbrev-lex=FILE       # abbreviation lexicon for dwds_tomasotath or waste tokenizer
   -mwe-lex=FILE          # multiword-expression lexicon for dwds_tomasotath tokenizer
+  -stop-lex=FILE         # stopword lexicon for waste tokenizer
+  -conj-lex=FILE         # conjunction lexicon for waste tokenizer
+  -waste-model=FILE      # HMM file for waste tokenizer
   -procopt OPT=VALUE     # set arbitrary subprocessor options
  
  I/O Options:
@@ -372,7 +381,7 @@ dta-tokwrap.perl - top-level tokenizer wrapper for DTA XML documents
  Trace and Debugging Options:
   -dump-xsl PREFIX       # dump generated XSL stylesheets to PREFIX*.xsl and exit
   -dummy , -nodummy      # don't/do actually run any subprocessors (default=do)
-  -tokenizer-class CLASS # specify tokenizer subclass (e.g. http, dummy, tomasotath_04x, ...)
+  -tokenizer-class CLASS # specify tokenizer subclass (e.g. http, waste, dummy, tomasotath_04x, ...)
   -dummy-tokenizer       # alias for -tokenizer-class=dummy
   -http-tokenizer	 # alias for -tokenizer-class=http
   -trace , -notrace      # do/don't log trace messages (default: depends on -verbose)

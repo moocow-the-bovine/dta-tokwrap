@@ -2,7 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>DTA::TokWrap::Processor::tokenize::auto - DTA tokenizer wrappers: auto tokenizer</title>
+<title>DTA::TokWrap::Processor::tokenize::waste - DTA tokenizer wrappers: tokenizer: moot/waste via command-line</title>
 <link rel="stylesheet" href="dtatw.css" type="text/css" />
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
@@ -11,7 +11,7 @@
 <body>
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
 <tr><td class="block" valign="middle">
-<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::tokenize::auto - DTA tokenizer wrappers: auto tokenizer</span></strong></big>
+<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::tokenize::waste - DTA tokenizer wrappers: tokenizer: moot/waste via command-line</span></strong></big>
 </td></tr>
 </table>
 
@@ -44,25 +44,27 @@
 <p>
 </p>
 <h1><a name="name">NAME</a></h1>
-<p>DTA::TokWrap::Processor::tokenize::auto - DTA tokenizer wrappers: auto tokenizer</p>
+<p>DTA::TokWrap::Processor::tokenize::waste - DTA tokenizer wrappers: tokenizer: moot/waste via command-line</p>
 <p>
 <a href="#__index__"><small>(Back to Top)</small></a>
 </p>
 <hr />
 <h1><a name="synopsis">SYNOPSIS</a></h1>
 <pre>
- use DTA::TokWrap::Processor::tokenize::auto;
+ use DTA::TokWrap::Processor::tokenize::waste;
  
- $td = DTA::TokWrap::Processor::tokenize::auto-&gt;new(%args);
- $doc_or_undef = $td-&gt;tokenize($doc);</pre>
+ $tz = DTA::TokWrap::Processor::tokenize::waste-&gt;new(%args);
+ $doc_or_undef = $tz-&gt;tokenize($doc);</pre>
 <p>
 <a href="#__index__"><small>(Back to Top)</small></a>
 </p>
 <hr />
 <h1><a name="description">DESCRIPTION</a></h1>
-<p>DTA::TokWrap::Processor::tokenize::auto provides a &quot;smart&quot; wrapper
-for the low-level tokenizer class
-<a href="DTA.TokWrap.Processor.tokenize.html">DTA::TokWrap::Processor::tokenize</a>.</p>
+<p>This class is currently just a wrapper for the command-line
+low-level tokenizer <code>waste</code> (moot/waste), v &gt;= 2.0.10.</p>
+<p>Most users should use the high-level
+<a href="DTA.TokWrap.html">DTA::TokWrap</a> wrapper class
+instead of using this module directly.</p>
 <p>
 </p>
 <h2><a name="constants">Constants</a></h2>
@@ -70,7 +72,7 @@ for the low-level tokenizer class
 <dt><strong><a name="_isa" class="item">@ISA</a></strong></dt>
 
 <dd>
-<p>DTA::TokWrap::Processor::tokenize::auto
+<p>DTA::TokWrap::Processor::tokenize::tomasotath
 inherits from
 <a href="DTA.TokWrap.Processor.tokenize.html">DTA::TokWrap::Processor::tokenize</a>.</p>
 </dd>
@@ -83,26 +85,15 @@ inherits from
 
 <dd>
 <pre>
- $td = $CLASS_OR_OBJ-&gt;new(%args);</pre>
-<p>Constructor.</p>
-<p>%args, %$td:</p>
-<pre>
- tokenize =&gt; $path_to_dtatw_tokenize, ##-- default: search
- inplace  =&gt; $bool,                   ##-- prefer in-place programs for search?</pre>
+ $tz = $CLASS_OR_OBJ-&gt;new(%args);</pre>
+<p>%args, %$tz: (none yet)</p>
 </dd>
 <dt><strong><a name="defaults" class="item">defaults</a></strong></dt>
 
 <dd>
 <pre>
- %defaults = $CLASS-&gt;defaults();</pre>
+ %defaults = CLASS-&gt;defaults();</pre>
 <p>Static class-dependent defaults.</p>
-</dd>
-<dt><strong><a name="init" class="item">init</a></strong></dt>
-
-<dd>
-<pre>
- $td = $td-&gt;init();</pre>
-<p>Dynamic object-dependent defaults.</p>
 </dd>
 </dl>
 <p>
@@ -138,12 +129,12 @@ inherits from
 <h1><a name="copyright_and_license">COPYRIGHT AND LICENSE</a></h1>
 <p>Copyright (C) 2013 by Bryan Jurish</p>
 <p>This package is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.10.1 or,
+it under the same terms as Perl itself, either Perl version 5.14.2 or,
 at your option, any later version of Perl 5 you may have available.</p>
 <p><a href="#__index__"><small>(Back to Top)</small></a></p>
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
 <tr><td class="block" valign="middle">
-<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::tokenize::auto - DTA tokenizer wrappers: auto tokenizer</span></strong></big>
+<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::tokenize::waste - DTA tokenizer wrappers: tokenizer: moot/waste via command-line</span></strong></big>
 </td></tr>
 </table>
 

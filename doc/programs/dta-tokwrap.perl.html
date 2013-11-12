@@ -419,28 +419,17 @@ LEVEL is as described in <a href="#tracelevel_level">-traceLevel</a>.</p>
 <h1><a name="arguments">ARGUMENTS</a></h1>
 <p>All other command-line arguments are assumed to be filenames of
 DTA &quot;base-format&quot; XML files,
-which are simply (TEI-conformant) UTF-8 encoded XML files with one <code>&lt;c&gt;</code>
-element per character:</p>
+which are simply (TEI-conformant) UTF-8 encoded XML files with
+one (optional as of dta-tokwrap v0.38) <code>&lt;c&gt;</code> element per character:</p>
 <ul>
 <li>
 <p>the document <strong>MUST</strong> be encoded in UTF-8,</p>
 </li>
 <li>
-<p>all text nodes to be tokenized should be descendants of a <code>&lt;c&gt;</code> element
-which is itself a descendant of a <code>&lt;text&gt;</code> element (XPath=<code>//text//c//text()</code>),</p>
-</li>
-<li>
-<p>the document should contain exactly one such <code>&lt;c&gt;</code> element for
-each <em>logical character</em>
-which may be passed to the tokenizer,</p>
-</li>
-<li>
-<p>no <code>&lt;c&gt;</code> element may be a descendant of another <code>&lt;c&gt;</code> element,
-and</p>
-</li>
-<li>
-<p>if stand-off targets are to be built (the default),
-each <code>&lt;c&gt;</code> element should have a valid <code>xml:id</code> attribute.</p>
+<p>all text nodes to be tokenized should be descendants of a <code>&lt;text&gt;</code> element,
+and may optionally be immediate daughters of a <code>&lt;c&gt;</code> element
+(XPath <code>//text//text()|//text//c/text()</code>). <code>&lt;c&gt;</code> elements may not be nested.</p>
+<p>Prior to dta-tokwrap v0.38, <code>&lt;c&gt;</code> elements were required.</p>
 </li>
 </ul>
 <p>
@@ -465,7 +454,8 @@ see <a href="#known_targets">Known Targets</a> for details.</p>
 <p>
 </p>
 <h3><a name="_make_mode">-make Mode</a></h3>
-<p>In this (experimental) mode, the program attempts to emulate the dependency tracking
+<p><strong>(DEPRECATED)</strong></p>
+<p>In this (deprecated) mode, the program attempts to emulate the dependency tracking
 features of <code>make</code> by (re-)building only those targets which either
 do not yet exist, or which are older than one or more of their dependencies.
 Since some dependencies are ephemeral, existing only in RAM during

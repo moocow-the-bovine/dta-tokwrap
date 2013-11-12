@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "DTA-TOKWRAP.PERL 1"
-.TH DTA-TOKWRAP.PERL 1 "2013-06-03" "dta-tokwrap v0.46" "DTA Tokenization Utilities"
+.TH DTA-TOKWRAP.PERL 1 "2013-10-23" "dta-tokwrap v0.47" "DTA Tokenization Utilities"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -397,23 +397,16 @@ in \-traceX, and
 .IX Header "ARGUMENTS"
 All other command-line arguments are assumed to be filenames of
 \&\s-1DTA\s0 \*(L"base-format\*(R" \s-1XML\s0 files,
-which are simply (TEI-conformant) \s-1UTF\-8\s0 encoded \s-1XML\s0 files with one \f(CW\*(C`<c>\*(C'\fR
-element per character:
+which are simply (TEI-conformant) \s-1UTF\-8\s0 encoded \s-1XML\s0 files with
+one (optional as of dta-tokwrap v0.38) \f(CW\*(C`<c>\*(C'\fR element per character:
 .IP "\(bu" 4
 the document \fB\s-1MUST\s0\fR be encoded in \s-1UTF\-8\s0,
 .IP "\(bu" 4
-all text nodes to be tokenized should be descendants of a \f(CW\*(C`<c>\*(C'\fR element
-which is itself a descendant of a \f(CW\*(C`<text>\*(C'\fR element (XPath=\f(CW\*(C`//text//c//text()\*(C'\fR),
-.IP "\(bu" 4
-the document should contain exactly one such \f(CW\*(C`<c>\*(C'\fR element for
-each \fIlogical character\fR
-which may be passed to the tokenizer,
-.IP "\(bu" 4
-no \f(CW\*(C`<c>\*(C'\fR element may be a descendant of another \f(CW\*(C`<c>\*(C'\fR element,
-and
-.IP "\(bu" 4
-if stand-off targets are to be built (the default),
-each \f(CW\*(C`<c>\*(C'\fR element should have a valid \f(CW\*(C`xml:id\*(C'\fR attribute.
+all text nodes to be tokenized should be descendants of a \f(CW\*(C`<text>\*(C'\fR element,
+and may optionally be immediate daughters of a \f(CW\*(C`<c>\*(C'\fR element
+(XPath \f(CW\*(C`//text//text()|//text//c/text()\*(C'\fR). \f(CW\*(C`<c>\*(C'\fR elements may not be nested.
+.Sp
+Prior to dta-tokwrap v0.38, \f(CW\*(C`<c>\*(C'\fR elements were required.
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 This program is intended to provide a flexible high-level command-line interface
@@ -435,7 +428,9 @@ The program can be run in one of two modes of operation,
 \fI\-make Mode\fR
 .IX Subsection "-make Mode"
 .PP
-In this (experimental) mode, the program attempts to emulate the dependency tracking
+\&\fB(\s-1DEPRECATED\s0)\fR
+.PP
+In this (deprecated) mode, the program attempts to emulate the dependency tracking
 features of \f(CW\*(C`make\*(C'\fR by (re\-)building only those targets which either
 do not yet exist, or which are older than one or more of their dependencies.
 Since some dependencies are ephemeral, existing only in \s-1RAM\s0 during
