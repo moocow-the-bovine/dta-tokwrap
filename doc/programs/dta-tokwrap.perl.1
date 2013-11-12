@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "DTA-TOKWRAP.PERL 1"
-.TH DTA-TOKWRAP.PERL 1 "2013-10-23" "dta-tokwrap v0.47" "DTA Tokenization Utilities"
+.TH DTA-TOKWRAP.PERL 1 "2013-11-12" "dta-tokwrap v0.47" "DTA Tokenization Utilities"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -156,8 +156,11 @@ dta\-tokwrap.perl \- top\-level tokenizer wrapper for DTA XML documents
 \&  \-hints, \-nohints       # do/don\*(Aqt generate "hints" for the tokenizer (default=do)
 \&  \-weak\-hints            # use whitespace\-only hints rather than defaults ($WB$,$SB$)
 \&  \-strong\-hints          # opposite of \-weak\-hints
-\&  \-abbrev\-lex=FILE       # abbreviation lexicon for dwds_tomasotath tokenizer
+\&  \-abbrev\-lex=FILE       # abbreviation lexicon for dwds_tomasotath or waste tokenizer
 \&  \-mwe\-lex=FILE          # multiword\-expression lexicon for dwds_tomasotath tokenizer
+\&  \-stop\-lex=FILE         # stopword lexicon for waste tokenizer
+\&  \-conj\-lex=FILE         # conjunction lexicon for waste tokenizer
+\&  \-waste\-model=FILE      # HMM file for waste tokenizer
 \&  \-procopt OPT=VALUE     # set arbitrary subprocessor options
 \& 
 \& I/O Options:
@@ -178,7 +181,7 @@ dta\-tokwrap.perl \- top\-level tokenizer wrapper for DTA XML documents
 \& Trace and Debugging Options:
 \&  \-dump\-xsl PREFIX       # dump generated XSL stylesheets to PREFIX*.xsl and exit
 \&  \-dummy , \-nodummy      # don\*(Aqt/do actually run any subprocessors (default=do)
-\&  \-tokenizer\-class CLASS # specify tokenizer subclass (e.g. http, dummy, tomasotath_04x, ...)
+\&  \-tokenizer\-class CLASS # specify tokenizer subclass (e.g. http, waste, dummy, tomasotath_04x, ...)
 \&  \-dummy\-tokenizer       # alias for \-tokenizer\-class=dummy
 \&  \-http\-tokenizer        # alias for \-tokenizer\-class=http
 \&  \-trace , \-notrace      # do/don\*(Aqt log trace messages (default: depends on \-verbose)

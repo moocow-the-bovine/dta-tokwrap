@@ -89,8 +89,11 @@
   -hints, -nohints       # do/don't generate &quot;hints&quot; for the tokenizer (default=do)
   -weak-hints            # use whitespace-only hints rather than defaults ($WB$,$SB$)
   -strong-hints          # opposite of -weak-hints
-  -abbrev-lex=FILE       # abbreviation lexicon for dwds_tomasotath tokenizer
+  -abbrev-lex=FILE       # abbreviation lexicon for dwds_tomasotath or waste tokenizer
   -mwe-lex=FILE          # multiword-expression lexicon for dwds_tomasotath tokenizer
+  -stop-lex=FILE         # stopword lexicon for waste tokenizer
+  -conj-lex=FILE         # conjunction lexicon for waste tokenizer
+  -waste-model=FILE      # HMM file for waste tokenizer
   -procopt OPT=VALUE     # set arbitrary subprocessor options
  
  I/O Options:
@@ -111,7 +114,7 @@
  Trace and Debugging Options:
   -dump-xsl PREFIX       # dump generated XSL stylesheets to PREFIX*.xsl and exit
   -dummy , -nodummy      # don't/do actually run any subprocessors (default=do)
-  -tokenizer-class CLASS # specify tokenizer subclass (e.g. http, dummy, tomasotath_04x, ...)
+  -tokenizer-class CLASS # specify tokenizer subclass (e.g. http, waste, dummy, tomasotath_04x, ...)
   -dummy-tokenizer       # alias for -tokenizer-class=dummy
   -http-tokenizer        # alias for -tokenizer-class=http
   -trace , -notrace      # do/don't log trace messages (default: depends on -verbose)
