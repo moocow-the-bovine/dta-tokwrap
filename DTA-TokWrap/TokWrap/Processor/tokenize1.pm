@@ -33,12 +33,14 @@ our @ISA = qw(DTA::TokWrap::Processor::tokenize);
 ##  + static class-dependent defaults
 ##  + %args, %defaults, %$tp:
 ##    fixtok => $bool,                     ##-- attempt to fix common tokenizer errors? (default=true)
+##    tokpp  => $bool,                     ##-- add tokenizer-supplied analyses with Moot::TokPP (default=true)
 ##    fixold => $bool,                     ##-- attempt to fix unexpected and/or obsolete (tomata2) errors? (default=false)
 sub defaults {
   my $that = shift;
   return (
 	  $that->DTA::TokWrap::Processor::defaults(),
 	  fixtok => 1,
+	  tokpp  => 1,
 	  fixold => 0,
 	 );
 }
@@ -49,6 +51,7 @@ sub init {
 
   ##-- defaults
   $tp->{fixtok} = 1 if (!exists($tp->{fixtok}));
+  $tp->{tokpp}  = 1 if (!exists($tp->{tokpp}));
   $tp->{fixold} = 0 if (!exists($tp->{fixold}));
 
   return $tp;
@@ -77,7 +80,7 @@ sub tokenize1 {
 
   ##-- log, stamp
   $tp = $tp->new if (!ref($tp));
-  $tp->vlog($tp->{traceLevel},"tokenize1(): fixtok=".($tp->{fixtok} ? 1 : 0));
+  $tp->vlog($tp->{traceLevel},"tokenize1(): fixtok=".($tp->{fixtok} ? 1 : 0), "; fixold=".($tp->{fixold} ? 1 : 0), "; tokpp=".($tp->{tokpp} ? 1 : 0));
   $doc->{tokenize1_stamp0} = timestamp();
 
   ##-- sanity check(s)
@@ -91,7 +94,7 @@ sub tokenize1 {
   }
 
   ##-- auto-fix?
-  if (!$tp->{fixtok} && !$tp->{fixold}) {
+  if (!$tp->{fixtok} && !$tp->{fixold} && !$tp->{tokpp}) {
     $doc->{tokdata1} = $$tdata0r; ##-- just copy
   }
   else {
@@ -104,34 +107,55 @@ sub tokenize1 {
     my ($nsusp,$nfixed, $i,$j);
 
     ##------------------------------------
-    ## fix: overlap
-    $tp->vlog($tp->{traceLevel},"autofix: token overlap");
-    $nsusp = $nfixed = $off = 0;
-    my $ndel = 0;
-    foreach (@lines) {
-      if (/^([^\t]*)\t([0-9]+) ([0-9]+)(.*)$/) {
-	($s_txt,$s_off,$s_len,$s_rest) = ($1,$2,$3,$4);
-	if ($s_off < $off) {
-	  ($ol_off,$ol_len) = ($s_off,$s_len);
-	  $s_len = $ol_off+$ol_len - $off;
-	  $s_off = $off;
-	  #print STDERR "  - OVERLAP[off=$off]: ($s_txt \@$ol_off.$ol_len :$s_rest) --> ", ($s_len <= 0 ? 'DELETE' : "TRUNCATE"), "\n";
-	  if ($s_len <= 0) {
-	    ++$ndel;
-	    $_ = undef;
-	  } else {
-	    ++$nfixed;
-	    $_ = "$s_txt\t$s_off $s_len$s_rest";
-	  }
+    ## fix/tokpp: pseudo-morpholgy
+    if ($tp->{tokpp}) {
+      $tp->vlog($tp->{traceLevel},"autofix/tokpp: pseudo-morphology");
+      require Moot::TokPP;
+      my $tokpp = Moot::TokPP->new();
+      my $npp   = 0;
+      my ($ppa);
+      foreach (@lines) {
+	next if (/^$/ || /^%%/);
+	($s_txt,$s_off,$s_rest) = split(/\t/,$_,3);
+	if (!$s_rest && defined($ppa=$tokpp->analyze_text($s_txt))) {
+	  $_ .= $ppa;
+	  ++$npp;
 	}
-	$off = $s_off+$s_len;
       }
+      $tp->vlog($tp->{traceLevel},"autofix/tokpp: analyzed $npp token(s)");
     }
-    @lines = grep {defined($_)} @lines if ($ndel);
-    $tp->vlog($tp->{traceLevel},"autofix: token overlap: $nfixed truncation(s), $ndel deletion(s)");
 
     ##------------------------------------
-    ## fix: stupid interjections
+    ## fix: overlap
+    if ($tp->{fixtok}) {
+      $tp->vlog($tp->{traceLevel},"autofix: token overlap");
+      $nsusp = $nfixed = $off = 0;
+      my $ndel = 0;
+      foreach (@lines) {
+	if (/^([^\t]*)\t([0-9]+) ([0-9]+)(.*)$/) {
+	  ($s_txt,$s_off,$s_len,$s_rest) = ($1,$2,$3,$4);
+	  if ($s_off < $off) {
+	    ($ol_off,$ol_len) = ($s_off,$s_len);
+	    $s_len = $ol_off+$ol_len - $off;
+	    $s_off = $off;
+	    #print STDERR "  - OVERLAP[off=$off]: ($s_txt \@$ol_off.$ol_len :$s_rest) --> ", ($s_len <= 0 ? 'DELETE' : "TRUNCATE"), "\n";
+	    if ($s_len <= 0) {
+	      ++$ndel;
+	      $_ = undef;
+	    } else {
+	      ++$nfixed;
+	      $_ = "$s_txt\t$s_off $s_len$s_rest";
+	    }
+	  }
+	  $off = $s_off+$s_len;
+	}
+      }
+      @lines = grep {defined($_)} @lines if ($ndel);
+      $tp->vlog($tp->{traceLevel},"autofix: token overlap: $nfixed truncation(s), $ndel deletion(s)");
+    }
+
+    ##------------------------------------
+    ## fix/old: stupid interjections
     if ($tp->{fixold}) {
       $tp->vlog($tp->{traceLevel},"autofix/old: re/ITJ");
       $nsusp = $nfixed = 0;
@@ -143,7 +167,7 @@ sub tokenize1 {
 
 
     ##------------------------------------
-    ## fix: tokenized $WB$, $SB$ (mantis bug #548)
+    ## fix/old: tokenized $WB$, $SB$ (mantis bug #548)
     if ($tp->{fixold}) {
       $tp->vlog($tp->{traceLevel},"autofix/old: \${WB,SB}\$");
       $nfixed = 0;
@@ -155,7 +179,7 @@ sub tokenize1 {
     }
 
     ##------------------------------------
-    ## fix: bogus trailing underscore (also in mantis bug #548)
+    ## fix/old: bogus trailing underscore (also in mantis bug #548)
     ##  + Thu, 04 Oct 2012 11:09:29 +0200: read line-wise from temporary fh to avoid
     ##    weird perfomance hit from simple regex ($data=~/^[^\t\n_]_\t.*\n/mg)
     if ($tp->{fixold}) {
@@ -175,7 +199,7 @@ sub tokenize1 {
     }
 
     ##------------------------------------
-    ## fix: line-broken tokens, part 1: get list of suspects
+    ## fix/old: line-broken tokens, part 1: get list of suspects
     ## NOTE:
     ##  + we do this fix in 2 passes to allow some fine-grained checks (e.g. %nojoin_txt2)
     ##  + also, at least 1 dta file (kurz_sonnenwirth_1855.xml) caused the original single-regex
@@ -267,68 +291,69 @@ sub tokenize1 {
 
     ##------------------------------------
     ## fix: pre-numeric abbreviations (e.g. biblical books), part 1: collect suspects
-    $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: scan");
-    my %nabbrs   = (map {($_=>undef)}
-		    qw( Bar Dan Deut Esra Eſra Est Eſt Ex Galater Man Hos Hoſ Ijob Job Jak Col Kor Cor Mal Ri Sir ),
-		    #qw( Mark ), ##-- heuristics too dodgy
-		    qw( Art Bon Kim ),
-		    ##-- more bible books
-		    qw( Gall Reg Hos Hoſ Hose Hoſe Rom Reg ),
-		    qw( Johan Johann Malach Eze Esa Eſa Sap ),
-		    ##-- other stuff that fits here
-		    qw( Idiot idiot ),
-		   );
-    my ($offd,$lend);
-    my $nabbr_max_distance = 2; ##-- max number of text bytes between end(w1) and start(w2), including EOS-dot
-    $nsusp=$nfixed=0;
-    for ($i=0; $i <= ($#lines-3); ++$i) {
-      if (
-	  ##-- parse: w1
-	  $lines[$i] =~ m/^([^\t]*)			##-- $1: w1.txt
-			  \t([0-9]+)\ ([0-9]+)		##-- ($2,$3): (w1.off, w1.len)
-			  (.*)				##-- $4: w1.rest
-			  $				##-- w1.EOT
-			 /x
-	  && (($txt1,$off1,$len1,$rest1)=($1,$2,$3,$4))
+    if ($tp->{fixtok}) {
+      $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: scan");
+      my %nabbrs   = (map {($_=>undef)}
+		      qw( Bar Dan Deut Esra Eſra Est Eſt Ex Galater Man Hos Hoſ Ijob Job Jak Col Kor Cor Mal Ri Sir ),
+		      #qw( Mark ), ##-- heuristics too dodgy
+		      qw( Art Bon Kim ),
+		      ##-- more bible books
+		      qw( Gall Reg Hos Hoſ Hose Hoſe Rom Reg ),
+		      qw( Johan Johann Malach Eze Esa Eſa Sap ),
+		      ##-- other stuff that fits here
+		      qw( Idiot idiot ),
+		     );
+      my ($offd,$lend);
+      my $nabbr_max_distance = 2; ##-- max number of text bytes between end(w1) and start(w2), including EOS-dot
+      $nsusp=$nfixed=0;
+      for ($i=0; $i <= ($#lines-3); ++$i) {
+	if (
+	    ##-- parse: w1
+	    $lines[$i] =~ m/^([^\t]*)			##-- $1: w1.txt
+			    \t([0-9]+)\ ([0-9]+)		##-- ($2,$3): (w1.off, w1.len)
+			    (.*)				##-- $4: w1.rest
+			    $				##-- w1.EOT
+			   /x
+	    && (($txt1,$off1,$len1,$rest1)=($1,$2,$3,$4))
 
-	  ##-- parse: dot
-	  && $lines[$i+1] =~ m/^\.			##-- dot:"."
-			       \t([0-9]+)\ ([0-9]+)	##-- ($1,$2): (dot.off, dot.len)
-			       (?:.*)			##-- (-): dot.rest
-			       $			##-- dot.EOT
-			      /x
-	  && (($offd,$lend)=($1,$2))
+	    ##-- parse: dot
+	    && $lines[$i+1] =~ m/^\.			##-- dot:"."
+				 \t([0-9]+)\ ([0-9]+)	##-- ($1,$2): (dot.off, dot.len)
+				 (?:.*)			##-- (-): dot.rest
+				 $			##-- dot.EOT
+				/x
+	    && (($offd,$lend)=($1,$2))
 
-	  ##-- parse: EOS
-	  && $lines[$i+2] =~ m/^$/			##-- EOS
+	    ##-- parse: EOS
+	    && $lines[$i+2] =~ m/^$/ ##-- EOS
 
-	  ##-- parse: w2
-	  && $lines[$i+3] =~ m/^([0-9][^\t]*)		##-- $1: w2.txt (beginning with arabic numeral)
-			       \t([0-9]+)\ ([0-9]+)	##-- ($2,$3): (w2.off, w2.len)
-			       (.*)			##-- $4: w2.rest
-			       $			##-- w2.EOT
-			      /x
-	  && (($txt2,$off2,$len2,$rest2)=($1,$2,$3,$4))
-	 ) {
-	++$nsusp;
+	    ##-- parse: w2
+	    && $lines[$i+3] =~ m/^([0-9][^\t]*)		##-- $1: w2.txt (beginning with arabic numeral)
+				 \t([0-9]+)\ ([0-9]+)	##-- ($2,$3): (w2.off, w2.len)
+				 (.*)			##-- $4: w2.rest
+				 $			##-- w2.EOT
+				/x
+	    && (($txt2,$off2,$len2,$rest2)=($1,$2,$3,$4))
+	   ) {
+	  ++$nsusp;
 
-	##-- check for known pre-numeric abbrevs
-	@repl = qw();
-	if (exists($nabbrs{$txt1}) && ($off2-($off1+$len1)) <= $nabbr_max_distance) {
-	  ++$nfixed;
-	  splice(@lines, $i, 4,
-		 @repl = (
-			  ("$txt1.\t$off1 ".(($offd+$lend)-$off1)."\tXY\t\$ABBREV"),
-			  ("$txt2\t$off2 $len2$rest2"),
-			 ));
+	  ##-- check for known pre-numeric abbrevs
+	  @repl = qw();
+	  if (exists($nabbrs{$txt1}) && ($off2-($off1+$len1)) <= $nabbr_max_distance) {
+	    ++$nfixed;
+	    splice(@lines, $i, 4,
+		   @repl = (
+			    ("$txt1.\t$off1 ".(($offd+$lend)-$off1)."\tXY\t\$ABBREV"),
+			    ("$txt2\t$off2 $len2$rest2"),
+			   ));
+	  }
+
+	  ##-- DEBUG
+	  #print STDERR "  - NABBR: ($txt1 \@$off1.$len1 :$rest1) + . + EOS +  ($txt2 \@$off2.$len2 :$rest2)  -->  ".(@repl ? join(" + ", map {"($_)"} @repl) : "IGNORE")."\n" if (@repl);
 	}
-
-	##-- DEBUG
-	#print STDERR "  - NABBR: ($txt1 \@$off1.$len1 :$rest1) + . + EOS +  ($txt2 \@$off2.$len2 :$rest2)  -->  ".(@repl ? join(" + ", map {"($_)"} @repl) : "IGNORE")."\n" if (@repl);
       }
+      $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: $nsusp suspect(s), $nfixed fix(es)");
     }
-    $tp->vlog($tp->{traceLevel},"autofix: pre-numeric abbreviations: $nsusp suspect(s), $nfixed fix(es)");
-
 
     ##------------------------------------
     ## finalize: write data back to doc (encoded)
