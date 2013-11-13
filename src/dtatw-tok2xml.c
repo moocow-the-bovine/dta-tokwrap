@@ -1,3 +1,4 @@
+//-*- Mode: C; c-basic-offset: 2; -*-
 #include "dtatwCommon.h"
 
 /*======================================================================
@@ -81,14 +82,22 @@ static void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *fi
 
     //-- check for comments
     if (linebuf[0]=='%' && linebuf[1]=='%') {
-      if (strncmp(linebuf,"%% base=",8)!=0) { //-- ... unless it's just an xml:base declaration
-	/*
-	fputs("\n<!--", f_out);
-	put_escaped_str(f_out, linebuf+2, -1);
-	fputs(" -->", f_out);
-	*/
-	fprintf(f_out, "\n<!--%s -->", linebuf+2);
+      /*
+      if (linelen > 4 && linebuf[2]=='$' && linebuf[linelen-1]=='$') {
+	//-- tokenizer hint; treat as 'dtatw' processing instruction
+	fputs("\n<?dtatw ", f_out);
+	put_escaped_str(f_out, linebuf+3, linelen-4);
+	fputs(" ?>", f_out);
+
       }
+      */
+      if (strncmp(linebuf+2," base=",8)!=0) {
+	  //-- xml:base declaration: add a trailing space
+	fprintf(f_out, "\n<!--%s -->", linebuf+2);
+	continue;
+      }
+      //-- any other comment: translate it
+      fprintf(f_out, "\n<!--%s-->", linebuf+2);
       continue;
     }
 

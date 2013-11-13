@@ -248,7 +248,11 @@ static void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *fi
   //-- ye olde loope
   while ( (linelen=getline(&linebuf,&linebuf_alloc,f_in)) >= 0 ) {
     ++tt_linenum;
-    if (linebuf[0]=='%' && linebuf[1]=='%') continue;  //-- skip comments
+    if (linebuf[0]=='%' && linebuf[1]=='%') {
+	//-- comment: just dump
+	fwrite(linebuf, linelen, 1, f_out);
+	continue;
+    }
 
     //-- chomp newline (and maybe carriage return)
     if (linelen>0 && linebuf[linelen-1]=='\n') linebuf[--linelen] = '\0';

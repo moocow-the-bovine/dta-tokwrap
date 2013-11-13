@@ -33,14 +33,14 @@ our @ISA = qw(DTA::TokWrap::Processor::tokenize);
 ##    stopLex => $filename,                ##-- for --stopwords=FILE (default: "${RCDIR}/waste/stop.lex"; '' for none)
 ##    conjLex => $filename,                ##-- for --conjunctions=FILE (default: "${RCDIR}/waste/conj.lex"; '' for none)
 ##    wasteHmm => $filename,               ##-- for --model=FILE (default: "${RCDIR}/waste/model.hmm")
-##    wasteopts => \@options,              ##-- additional options (strings) for tokenizer program (default='-v2')
+##    wasteopts => \@options,              ##-- additional options (strings) for tokenizer program (default=['-v2','-Otext,loc'])
 ##    inplace => $bool,                    ##-- prefer in-place programs for search?
 sub defaults {
   my $that = shift;
   return (
 	  $that->SUPER::defaults(),
 	  waste     => undef,
-	  wasteopts => ['-v2', '-Om,loc'],
+	  wasteopts => ['-v2', '-Otext,loc'],
 	  #abbrLex   => "${RCDIR}/waste/abbr.lex",		##-- gets set in init()
 	  #stopLex   => "${RCDIR}/waste/stop.lex",		##-- gets set in init()
 	  #conjLex   => "${RCDIR}/waste/conj.lex",		##-- gets set in init()

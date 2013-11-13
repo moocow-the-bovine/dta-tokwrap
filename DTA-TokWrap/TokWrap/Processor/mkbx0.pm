@@ -195,6 +195,9 @@ sub defaults {
 				 'choice[./sic and ./corr]/sic',
 				 'choice[./orig and ./reg]/orig',
 				 'choice[./abbr and ./expan]/abbr',
+
+				 ##-- editorial stuff
+				 q(note[@type='editorial']),
 				],
 	  sort_addkey_xpaths => [
 	                         ##-- BE CAREFUL: only add keys (de-serialize) if you're also adding appropriate
