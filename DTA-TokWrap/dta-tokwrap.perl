@@ -956,6 +956,30 @@ Alias for all targets required to generated
 the target's output files (master tokenized file and spliced output)
 from the input document, run in the proper order.
 
+=item tei2t
+
+B<Aliases:> (none)
+
+B<Input(s):> FILE.xml
+
+B<Output(s):> FILE.t
+
+Alias for all targets required to generated
+fixed tokenizer output F<FILE.t> from a TEI-XML file F<FILE.xml>,
+run in the proper order.
+
+=item tei2txml
+
+B<Aliases:> (none)
+
+B<Input(s):> FILE.xml
+
+B<Output(s):> FILE.t.xml
+
+Alias for all targets required to generated
+a flat tokeized XML file F<FILE.t.xml> from a TEI-XML file F<FILE.xml>,
+run in the proper order.
+
 =back
 
 =cut
