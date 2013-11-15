@@ -885,6 +885,18 @@ B<Output(s):> FILE.t.xml
 Creates master tokenized XML output file F<FILE.t.xml>
 for each input document F<FILE.xml>
 
+=item addws
+
+B<Alias(es):> mkcws cwsxml cws
+
+B<Input(s):> FILE.xml FILE.t.xml
+
+B<Output(s):> FILE.cws.xml
+
+Creates "spliced" XML output "Frankenfile" F<FILE.cws.xml>
+for each input document F<FILE.xml> ;
+see also L<dtatw-splice.perl(1)|dtatw-splice.perl>.
+
 =item mksxml
 
 B<Alias(es):> mksos sosxml sosfile sxml
@@ -892,6 +904,8 @@ B<Alias(es):> mksos sosxml sosfile sxml
 B<Input(s):> FILE.t.xml
 
 B<Output(s):> FILE.s.xml
+
+B<DEPRECATED>
 
 Creates sentence-level stand-off XML file FILE.s.xml
 for each input document F<FILE.xml>
@@ -904,6 +918,8 @@ B<Input(s):> FILE.t.xml
 
 B<Output(s):> FILE.w.xml
 
+B<DEPRECATED>
+
 Creates token-level stand-off XML file FILE.w.xml
 for each input document F<FILE.xml>
 
@@ -915,12 +931,16 @@ B<Input(s):> FILE.t.xml
 
 B<Output(s):> FILE.a.xml
 
+B<DEPRECATED>
+
 Creates token-analysis-level stand-off XML file FILE.a.xml
 for each input document F<FILE.xml>
 
 =item mkstandoff
 
 B<Alias(es):> standoff so mkso
+
+B<DEPRECATED>
 
 Alias for L<mksxml>, L<mkwxml>, L<mkaxml>.
 
@@ -930,10 +950,10 @@ B<Alias(es):> (none)
 
 B<Input(s):> FILE.xml
 
-B<Output(s):> FILE.t.xml, FILE.s.xml, FILE.w.xml, FILE.a.xml
+B<Output(s):> FILE.t.xml, FILE.cws.xml
 
 Alias for all targets required to generated
-the target's output files (master tokenized file and stand-off files)
+the target's output files (master tokenized file and spliced output)
 from the input document, run in the proper order.
 
 =back
@@ -950,6 +970,7 @@ L<dtatw-add-c.perl(1)|dtatw-add-c.perl>,
 L<dtatw-add-w.perl(1)|dtatw-add-w.perl>,
 L<dtatw-add-s.perl(1)|dtatw-add-s.perl>,
 L<dtatw-rm-c.perl(1)|dtatw-rm-c.perl>,
+L<dtatw-splice.perl(1)|dtatw-splice.perl>,
 ...
 
 =cut

@@ -566,12 +566,23 @@ for each input document <em class="file">FILE.xml</em></p>
 <p>Creates master tokenized XML output file <em class="file">FILE.t.xml</em>
 for each input document <em class="file">FILE.xml</em></p>
 </dd>
+<dt><strong><a name="addws" class="item">addws</a></strong></dt>
+
+<dd>
+<p><strong>Alias(es):</strong> mkcws cwsxml cws</p>
+<p><strong>Input(s):</strong> FILE.xml FILE.t.xml</p>
+<p><strong>Output(s):</strong> FILE.cws.xml</p>
+<p>Creates &quot;spliced&quot; XML output &quot;Frankenfile&quot; <em class="file">FILE.cws.xml</em>
+for each input document <em class="file">FILE.xml</em> ;
+see also <a href="././dtatw-splice.perl.html">dtatw-splice.perl(1)</a>.</p>
+</dd>
 <dt><strong><a name="mksxml" class="item">mksxml</a></strong></dt>
 
 <dd>
 <p><strong>Alias(es):</strong> mksos sosxml sosfile sxml</p>
 <p><strong>Input(s):</strong> FILE.t.xml</p>
 <p><strong>Output(s):</strong> FILE.s.xml</p>
+<p><strong>DEPRECATED</strong></p>
 <p>Creates sentence-level stand-off XML file FILE.s.xml
 for each input document <em class="file">FILE.xml</em></p>
 </dd>
@@ -581,6 +592,7 @@ for each input document <em class="file">FILE.xml</em></p>
 <p><strong>Alias(es):</strong> mksow sowxml sowfile wxml</p>
 <p><strong>Input(s):</strong> FILE.t.xml</p>
 <p><strong>Output(s):</strong> FILE.w.xml</p>
+<p><strong>DEPRECATED</strong></p>
 <p>Creates token-level stand-off XML file FILE.w.xml
 for each input document <em class="file">FILE.xml</em></p>
 </dd>
@@ -590,6 +602,7 @@ for each input document <em class="file">FILE.xml</em></p>
 <p><strong>Alias(es):</strong> mksoa sowaml soafile axml</p>
 <p><strong>Input(s):</strong> FILE.t.xml</p>
 <p><strong>Output(s):</strong> FILE.a.xml</p>
+<p><strong>DEPRECATED</strong></p>
 <p>Creates token-analysis-level stand-off XML file FILE.a.xml
 for each input document <em class="file">FILE.xml</em></p>
 </dd>
@@ -597,6 +610,7 @@ for each input document <em class="file">FILE.xml</em></p>
 
 <dd>
 <p><strong>Alias(es):</strong> standoff so mkso</p>
+<p><strong>DEPRECATED</strong></p>
 <p>Alias for <a href="#mksxml">mksxml</a>, <a href="#mkwxml">mkwxml</a>, <a href="#mkaxml">mkaxml</a>.</p>
 </dd>
 <dt><strong>all</strong></dt>
@@ -604,9 +618,9 @@ for each input document <em class="file">FILE.xml</em></p>
 <dd>
 <p><strong>Alias(es):</strong> (none)</p>
 <p><strong>Input(s):</strong> FILE.xml</p>
-<p><strong>Output(s):</strong> FILE.t.xml, FILE.s.xml, FILE.w.xml, FILE.a.xml</p>
+<p><strong>Output(s):</strong> FILE.t.xml, FILE.cws.xml</p>
 <p>Alias for all targets required to generated
-the target's output files (master tokenized file and stand-off files)
+the target's output files (master tokenized file and spliced output)
 from the input document, run in the proper order.</p>
 </dd>
 </dl>
@@ -619,6 +633,7 @@ from the input document, run in the proper order.</p>
 <em>dtatw-add-w.perl(1)</em>,
 <em>dtatw-add-s.perl(1)</em>,
 <em>dtatw-rm-c.perl(1)</em>,
+<a href="././dtatw-splice.perl.html">dtatw-splice.perl(1)</a>,
 ...</p>
 <p>
 </p>

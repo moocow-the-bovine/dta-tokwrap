@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "DTA-TOKWRAP.PERL 1"
-.TH DTA-TOKWRAP.PERL 1 "2013-11-12" "dta-tokwrap v0.47" "DTA Tokenization Utilities"
+.TH DTA-TOKWRAP.PERL 1 "2013-11-15" "dta-tokwrap v0.48" "DTA Tokenization Utilities"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -550,6 +550,17 @@ Wrapper for \*(L"mktok0 mktok1\*(R".
 .Sp
 Creates master tokenized \s-1XML\s0 output file \fI\s-1FILE\s0.t.xml\fR
 for each input document \fI\s-1FILE\s0.xml\fR
+.IP "addws" 4
+.IX Item "addws"
+\&\fBAlias(es):\fR mkcws cwsxml cws
+.Sp
+\&\fBInput(s):\fR \s-1FILE\s0.xml \s-1FILE\s0.t.xml
+.Sp
+\&\fBOutput(s):\fR \s-1FILE\s0.cws.xml
+.Sp
+Creates \*(L"spliced\*(R" \s-1XML\s0 output \*(L"Frankenfile\*(R" \fI\s-1FILE\s0.cws.xml\fR
+for each input document \fI\s-1FILE\s0.xml\fR ;
+see also \fIdtatw\-splice.perl\fR\|(1).
 .IP "mksxml" 4
 .IX Item "mksxml"
 \&\fBAlias(es):\fR mksos sosxml sosfile sxml
@@ -557,6 +568,8 @@ for each input document \fI\s-1FILE\s0.xml\fR
 \&\fBInput(s):\fR \s-1FILE\s0.t.xml
 .Sp
 \&\fBOutput(s):\fR \s-1FILE\s0.s.xml
+.Sp
+\&\fB\s-1DEPRECATED\s0\fR
 .Sp
 Creates sentence-level stand-off \s-1XML\s0 file \s-1FILE\s0.s.xml
 for each input document \fI\s-1FILE\s0.xml\fR
@@ -568,6 +581,8 @@ for each input document \fI\s-1FILE\s0.xml\fR
 .Sp
 \&\fBOutput(s):\fR \s-1FILE\s0.w.xml
 .Sp
+\&\fB\s-1DEPRECATED\s0\fR
+.Sp
 Creates token-level stand-off \s-1XML\s0 file \s-1FILE\s0.w.xml
 for each input document \fI\s-1FILE\s0.xml\fR
 .IP "mkaxml" 4
@@ -578,11 +593,15 @@ for each input document \fI\s-1FILE\s0.xml\fR
 .Sp
 \&\fBOutput(s):\fR \s-1FILE\s0.a.xml
 .Sp
+\&\fB\s-1DEPRECATED\s0\fR
+.Sp
 Creates token-analysis-level stand-off \s-1XML\s0 file \s-1FILE\s0.a.xml
 for each input document \fI\s-1FILE\s0.xml\fR
 .IP "mkstandoff" 4
 .IX Item "mkstandoff"
 \&\fBAlias(es):\fR standoff so mkso
+.Sp
+\&\fB\s-1DEPRECATED\s0\fR
 .Sp
 Alias for mksxml, mkwxml, mkaxml.
 .IP "all" 4
@@ -591,10 +610,10 @@ Alias for mksxml, mkwxml, mkaxml.
 .Sp
 \&\fBInput(s):\fR \s-1FILE\s0.xml
 .Sp
-\&\fBOutput(s):\fR \s-1FILE\s0.t.xml, \s-1FILE\s0.s.xml, \s-1FILE\s0.w.xml, \s-1FILE\s0.a.xml
+\&\fBOutput(s):\fR \s-1FILE\s0.t.xml, \s-1FILE\s0.cws.xml
 .Sp
 Alias for all targets required to generated
-the target's output files (master tokenized file and stand-off files)
+the target's output files (master tokenized file and spliced output)
 from the input document, run in the proper order.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
@@ -603,6 +622,7 @@ from the input document, run in the proper order.
 \&\fIdtatw\-add\-w.perl\fR\|(1),
 \&\fIdtatw\-add\-s.perl\fR\|(1),
 \&\fIdtatw\-rm\-c.perl\fR\|(1),
+\&\fIdtatw\-splice.perl\fR\|(1),
 \&...
 .SH "AUTHOR"
 .IX Header "AUTHOR"
