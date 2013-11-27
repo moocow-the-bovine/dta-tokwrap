@@ -348,9 +348,11 @@ sub load_cx {
       ++$pn;
       if (defined($facs = $cxr->[$CX_ATTR_FACS])) {
 	$pb = $facs;
-	warn("$prog: WARNING: invalid \@facs for ${pn}-th <pb> from $cxfile record number $cn") if ($facs == 0xffffffff);
+	warn("$prog: WARNING: invalid \@facs for ${pn}-th <pb> from $cxfile record number $cn")
+	  if ($facs == 0xffffffff && ++$n_warnings{pb_bad_facs}<=10);
       } else {
-	warn("$prog: WARNING: no \@facs attribute for ${pn}-th <pb> at $cxfile record number $cn");
+	warn("$prog: WARNING: no \@facs attribute for ${pn}-th <pb> at $cxfile record number $cn")
+	  if (++$n_warnings{pb_no_facs}<=10);
 	$pb = $pn;
       }
       $lb = 1;
@@ -520,7 +522,7 @@ sub apply_word {
 
   ##-- get xml byte-range
   $wxb = $wnod->getAttribute('xb')||'';
-  if ($wxb eq '' && $verbose >= $vl_warn && ++$n_warnings{empty_xb}) {
+  if ($wxb eq '' && $verbose >= $vl_warn && ++$n_warnings{empty_xb}<=10) {
     no warnings 'uninitialized';
     warn("$prog: WARNING: no xml byte-range attribute \@xb for //w#$wid at $txmlfile line ", $wnod->line_number, "\n");
   }

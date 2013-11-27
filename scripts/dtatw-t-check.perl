@@ -68,7 +68,7 @@ while (<TT>) {
     tokwarn("tokenizer hint appears in token text for $toklabel\n");
     next;
   }
-  if ($text =~ /_$/ && $rest =~ /\[\$ABBREV\]/) {
+  if ($text =~ /_$/ && ($rest//'') =~ /\[\$ABBREV\]/) {
     tokwarn("suspicious final underscore for $toklabel\n");
     next;
   }
