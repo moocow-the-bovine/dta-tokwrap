@@ -171,7 +171,7 @@ sub load_txml {
 ## {
 ##  xoff=>$xoff,
 ##  xlen=>$xlen,
-##  xp=>$xpath,   ##-- xpath without []-indices, and with initial m(^(?:/TEI)?(?:/text)?) removed
+##  xp=>$xpath,   ##-- xpath without []-indices, and with initial m(^(?:/TEI(?\.[0-9])?)?(?:/text)?) removed
 ##  xpp=>$xpath,  ##-- xpath with []-indices
 ##  xr=>$rendition,
 ##  xc=>$context,
@@ -220,7 +220,7 @@ sub load_sx {
     ($xoff,$xlen,$nrest) = split(' ',$cn,3);
     ($xpp = $cnod->nodePath()) =~ s{\/c[^\/]*$}{};
     ($xp = $xpp) =~ s{\[[0-9]+\]}{}g;
-    $xp =~ s{^/(?:(?:TEI/)?(?:text/)?)}{};
+    $xp =~ s{^/(?:(?:TEI(?:\.[0-9])?/)?(?:text/)?)}{};
 
     @xr = @xc = qw();
     foreach (@{$cnod->findnodes('ancestor::*')}) {
