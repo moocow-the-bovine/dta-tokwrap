@@ -339,7 +339,7 @@ dta-tokwrap.perl - top-level tokenizer wrapper for DTA XML documents
  General Options:
   -help                  # show this help message
   -man                   # show complete manpage
-  -verbose LEVEL         # set verbosity level (0<=level<=7; default=0)
+  -verbose LEVEL         # set verbosity level (0<=level<=7; default=1)
  
  Make Emulation Options:
   -targets TARGETS       # set build targets (default='all')
