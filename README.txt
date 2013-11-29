@@ -198,6 +198,10 @@ TOOLS
 
         See "the dtatw-get-header.perl manpage" for more details.
 
+    dtatw-pn2p.perl
+        Script to conver insert <p>...</p> wrappers for "//s/@pn" key
+        attributes in "flat" *.t.xml files.
+
     dtatw-xml2ddc.perl
         Script to convert *.ddc.t.xml files and optional headers to DDC-XML
         format.
