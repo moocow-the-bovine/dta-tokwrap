@@ -56,8 +56,9 @@ my ($text,$pos,$rest, $off,$len, $buftext);
 while (<TT>) {
   chomp;
   next if (/^\s*$/ || /^\%\%/); ##-- skip comments and blank lines
-  ($text,$pos,$rest)=split(/\t/,$_,3);
-  $toklabel = "token '$text\t$pos".($rest ? "\t$rest" : '')."' at $ttfile line $.";
+  ($text,$pos,$rest) = split(/\t/,$_,3);
+  $text //= '';
+  $toklabel = "token '$text\t".($pos//'-undef-').($rest ? "\t$rest" : '')."' at $ttfile line $.";
   if (!defined($pos)) {
     tokwarn("no position defined for $toklabel\n");
     next;

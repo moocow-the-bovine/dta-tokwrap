@@ -177,6 +177,12 @@ static void tt_dump_word(FILE *f_out, ttWordBuffer *w)
   //-- claim all characters
   for (i=0; i < w->w_len; ++i) {
     if ((icx = txtb2cx.data[w->w_off+i])) icx->claimed = 2;
+#ifdef DTATW_DEBUG_OVERLAP
+    //-- "CLAIM" "\t" xoff xlen "\t" wtext "\t" txtoff txtlen "\n"
+    fprintf(stderr, "CLAIM\t%u %u\t%s\t%u %u\n",
+	    (icx ? icx->xoff : 0), (icx ? icx->xlen : 0),
+	    (w ? w->w_text : ""), (w ? (uint)w->w_off : 0), (w ? (uint)w->w_len : 0));
+#endif
   }
 
   //-- dump: bad-flag (comment)
