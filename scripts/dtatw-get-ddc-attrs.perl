@@ -45,7 +45,7 @@ our $do_rendition = 1;
 our $do_xcontext = 1;
 our $do_xpath = 1;
 our $do_xppath= 0;
-our $do_bbox = 1;
+our $do_bbox = 0;
 our $do_unicruft = 1;
 our $do_wsep = 1;
 
@@ -844,7 +844,7 @@ dtatw-get-ddc-attrs.perl - get DDC-relevant attributes from DTA::TokWrap files
   -xcon   , -noxcon      # do/don't extract //w/@xc (xml context; default=do)
   -xpath  , -noxpath     # do/don't extract //w/@xp (trimmed xpath; default=do)
   -xppath , -noxppath    # do/don't extract //w/@xpp (untrimmed xpath; default=don't)
-  -bbox   , -nobbox      # do/don't extract //w/@bb (bbox; default=do)
+  -bbox   , -nobbox      # do/don't extract //w/@bb (bbox; default=don't)
   -xlit   , -noxlit      # do/don't extract //w/@u  (unicruft transliteration; default=do)
   -wsep   , -nowsep	 # do/don't extract //w/@ws (boolean space-separation; default=do)
   -keep-c , -nokeep-c    # do/don't keep existing //w/@c and //w/@cs attributes (default=keep)

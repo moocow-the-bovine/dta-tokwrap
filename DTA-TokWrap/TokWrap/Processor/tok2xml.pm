@@ -30,7 +30,8 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##  + static class-dependent defaults
 ##  + %args, %defaults, %$t2x:
 ##    (
-##    txmlsort => $bool,	     ##-- if true (default), sort output .t.xml data as close to input document-order as sentence boundaries will allow
+##    txmlsort => $bool,	     ##-- if true (default), sort output .t.xml data as close to input document-order as __paragraph__ boundaries will allow
+##    txmlsort_bysentence => $bool,  ##-- use old sentence-level sort (default: false)
 ##    t2x => $path_to_dtatw_tok2xml, ##-- default: search
 ##    b2xb => $path_to_dtatw_b2xb,   ##-- default: search; 'off' to disable
 ##    inplace => $bool,              ##-- prefer in-place programs for search?
@@ -43,6 +44,7 @@ sub defaults {
 
 	  ##-- sorting?
 	  txmlsort => 1,
+	  #txmlsort_bysentence => 0,
 
 	  ##-- programs
 	  t2x => undef,
@@ -123,11 +125,12 @@ sub tok2xml {
   $cmdfh->close();
 
   ##-- re-sort?
-  if ($t2x->{txmlsort}) {
-    $t2x->vlog($t2x->{traceLevel},"sort (native)");
+  if ($t2x->{txmlsort_bysentence}) {
+    ##-- sort by sentence (< v0.49)
+    $t2x->vlog($t2x->{traceLevel},"sort (by sentence)");
     my $data = \$doc->{xtokdata};
     my ($off,$len,$xb);
-    my @s = qw();
+    my @s = qw();  ##-- ([xml_off0, txml_off, txml_len], ...)
     while ($$data =~ m{<s\b[^>]*>.*?</s>\s*}sg) {
       ($off,$len) = ($-[0],$+[0]-$-[0]);
       $xb = substr($$data, $off,$len) =~ m{<w[^>]*\bxb="([0-9]+)}s ? $1 : 1e38;
@@ -136,6 +139,41 @@ sub tok2xml {
     my $prefix = substr($$data,0,$s[0][1]);
     my $suffix = substr($$data,$s[$#s][1]+$s[$#s][2]);
     my $sorted = $prefix.join('',map {substr($$data,$_->[1],$_->[2])} sort {$a->[0]<=>$b->[0]} @s).$suffix;
+    $$data = $sorted;
+  }
+  elsif ($t2x->{txmlsort}) {
+    ##-- sort by paragraph (>= v0.49)
+    $t2x->vlog($t2x->{traceLevel},"sort (by paragraph)");
+    my $data = \$doc->{xtokdata};
+    open(my $fh,"<",$data) or die("could not open string filehandle: $!");
+    my @p   = qw(); ##-- ([xml_off0, txml_off, txml_len], ...)
+    my $pid = '';
+    my $off = 0;
+    my $lasteos = 0;
+    my ($pr,$buf);
+    while (defined($_=<$fh>)) {
+      if (/<s[^>]*\bpn=\"([^\"]*)\"/ && $1 ne $pid) {
+	$pr->[2] = $off-$pr->[1] if ($pr);
+	push(@p,$pr=[undef,$off,undef]);
+	$pid = $1;
+      }
+      elsif (/<\/s>/) {
+	$lasteos = $off + bytes::length($_);
+      }
+    } continue {
+      $off += bytes::length($_);
+    }
+    $pr->[2] = $lasteos-$pr->[1] if ($pr);
+
+    ##-- get original xml offset for each paragraph
+    foreach (@p) {
+      $_->[0] = substr($$data, $_->[1],$_->[2]) =~ m{<w[^>]*\bxb="([0-9]+)}s ? $1 : 1e38;
+    }
+
+    ##-- prefix, suffix, sort: by paragraph
+    my $prefix = substr($$data,0,$p[0][1]);
+    my $suffix = substr($$data,$lasteos);
+    my $sorted = $prefix.join('',map {substr($$data,$_->[1],$_->[2])} sort {$a->[0]<=>$b->[0]} @p).$suffix;
     $$data = $sorted;
   }
 

@@ -45,32 +45,37 @@ push(@ARGV,'-') if (!@ARGV);
 ##======================================================================
 ## Subs: XML::Parser handlers
 
-##-- $_plevel: stack size when last <p> was opened, or -1 for none
-our ($_xp,@stack,$_plevel);
+## $_plevel: stack size when last <p> was opened, or -1 for none
+## $_pn    : active //s/@pn attribute, if any
+our ($_xp,$_elt,%_attrs, @stack,$_plevel,$_pn);
 
 sub p_open {
   $outfh->print("<p>");
   $_plevel = @stack;
+  $_pn = shift // '';
 }
 sub p_close {
   $outfh->print("</p>");
   $_plevel = -1;
+  $_pn = undef;
 }
 
 ## undef = cb_init($expat)
 sub cb_init {
   #($_xp) = @_;
-  $_plevel = -1;
   @stack = qw();
+  $_plevel = -1;
+  $_pn = undef;
 }
 
 ## undef = cb_start($expat, $elt,%attrs)
 sub cb_start {
-  #($_xp,$_elt,%_attrs) = @_;
+  ($_xp,$_elt,%_attrs) = @_;
 
   ##--------------------------
-  if ($_plevel<0 && $_[1] eq 's') {
-    p_open();
+  if ($_elt eq 's' && (!defined($_pn) || $_pn ne ($_attrs{pn}//''))) {
+    p_close() if (defined($_pn));
+    p_open($_attrs{pn});
   }
 
   push(@stack,$_[1]);
@@ -80,7 +85,7 @@ sub cb_start {
 ## undef = cb_end($expat, $elt)
 sub cb_end {
   pop(@stack);
-  p_close() if ($_plevel>=0 && $_plevel > @stack);
+  p_close() if ($_plevel>=0 && $_plevel > @stack); ##-- ensure last <p> gets closed
   $_[0]->default_current();
 }
 
@@ -93,10 +98,7 @@ sub cb_default {
 }
 
 ## undef = cb_comment($expat,$str)
-sub cb_comment {
-  p_close() if ($_plevel>=0 && $_[1] eq '$SB$');
-  $_[0]->default_current();
-}
+#sub cb_comment {}
 
 ## undef = cb_final($expat)
 #sub cb_final {}
@@ -125,7 +127,7 @@ our $xp = XML::Parser->new(
 					Start  => \&cb_start,
 					End    => \&cb_end,
 					Default => \&cb_default,
-					Comment => \&cb_comment,
+					#Comment => \&cb_comment,
 				       },
 			  )
   or die("$prog: couldn't create XML::Parser object");
@@ -140,11 +142,11 @@ __END__
 
 =head1 NAME
 
-dtatw-sb2p.perl - insert <p>-breaks at <!--$SB$--> hints in DTA::TokWrap t.xml files
+dtatw-pn2p.perl - insert <p> elements to wrap //s/@pn attributes in DTA::TokWrap .t.xml files
 
 =head1 SYNOPSIS
 
- dtatw-sb2p.perl [OPTIONS] T_XML_FILE(s)...
+ dtatw-pn2p.perl [OPTIONS] T_XML_FILE(s)...
 
  Options:
   -help                  # this help message
@@ -172,12 +174,7 @@ Not yet written.
 
 =head1 DESCRIPTION
 
-Insert <p>-breaks at <!--$SB$--> hints in DTA::TokWrap t.xml files.
-
-WARNING: this is a first-stab approximation; it fails to correctly assign paragraph
-boundaries whenever DTA::TokWrap has re-sorted serialized data
-(DTA::TokWrap::Processor::tok2xml option C<txmlsort>, true by default),
-e.g. TEI-style (re-)inlined footnotes.
+Insert <p> elements to wrap //s/@pn attributes in DTA::TokWrap .t.xml files.
 
 =cut
 

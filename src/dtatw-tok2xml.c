@@ -27,6 +27,7 @@ const char *indent_a    = "";   //-- pre-indentation for <a> within <toka>
 //-- xml structure constants (should jive with 'mkbx0', 'mkbx')
 const char *docElt = "sentences";  //-- output document element
 const char *sElt   = "s";          //-- output sentence element
+const char *pnAttr = "pn";         //-- output paragraph-number attribute (for sentences)
 const char *wElt   = "w";          //-- output token element
 const char *alElt  = "toka";	   //-- output token-analyses element
 const char *aElt   = "a";          //-- output token-analysis element
@@ -41,7 +42,7 @@ const char *tt_filename = "(?)";
 unsigned int tt_linenum = 1;
 unsigned int s_id_ctr = 0;  //-- counter for generated //s/@(xml:)?id
 unsigned int w_id_ctr = 0;  //-- counter for generated //w/@(xml:)?id
-
+unsigned int s_pn_ctr = 0;  //-- counter for generated //s/@pn (paragraph number ~ preceding number of $SB$ hints)
 
 //--------------------------------------------------------------
 /* process_tt_file()
@@ -82,15 +83,10 @@ static void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *fi
 
     //-- check for comments
     if (linebuf[0]=='%' && linebuf[1]=='%') {
-      /*
-      if (linelen > 4 && linebuf[2]=='$' && linebuf[linelen-1]=='$') {
-	//-- tokenizer hint; treat as 'dtatw' processing instruction
-	fputs("\n<?dtatw ", f_out);
-	put_escaped_str(f_out, linebuf+3, linelen-4);
-	fputs(" ?>", f_out);
-
+      if (strcmp(linebuf+2,"$SB$")==0) {
+	//-- tokenizer $SB$ hint: increment paragraph counter
+	++s_pn_ctr;
       }
-      */
       if (strncmp(linebuf+2," base=",8)!=0) {
 	  //-- xml:base declaration: add a trailing space
 	fprintf(f_out, "\n<!--%s -->", linebuf+2);
@@ -118,7 +114,7 @@ static void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *fi
 
     //-- output: BOS
     if (!s_open) {
-      fprintf(f_out, "%s<%s %s=\"s%x\">", indent_s, sElt, xmlid_name, ++s_id_ctr);
+      fprintf(f_out, "%s<%s %s=\"s%x\" %s=\"p%x\">", indent_s, sElt, xmlid_name, ++s_id_ctr, pnAttr, s_pn_ctr);
       s_open = 1;
     }
 

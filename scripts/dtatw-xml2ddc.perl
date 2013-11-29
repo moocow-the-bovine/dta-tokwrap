@@ -22,10 +22,9 @@ our $xmlfile = undef;  ##-- required
 our $headfile = undef; ##-- default: none
 our $outfile  = "-";   ##-- default: stdout
 
-our $keep_blanks = 0;  ##-- keep input whitespace?
-our $add_dtadir  = 1;  ##-- add 'dtadir' idno to header if not already present?
-our $add_date = 1;     ##-- add 'date' field to header if not already present?
-our $format = 1;       ##-- output format level
+our $keep_blanks = 0;     ##-- keep input whitespace?
+our $format = 1;          ##-- output format level
+our $keep_paragraphs = 1; ##-- keep <p> boundaries if present?
 
 ##-- field selection
 our @fields = qw();
@@ -52,9 +51,8 @@ GetOptions(##-- General
 
 	   ##-- I/O
 	   'keep-blanks|blanks|whitespace|ws!' => \$keep_blanks,
+	   'keep-paragraphs|keep-p|p!' => \$keep_paragraphs,
 	   'header-file|hf=s' => \$headfile,
-	   'dtadir|dirname|dir!' => \$add_dtadir,
-	   'date!' => \$add_date,
 	   'index-field|index|i=s' => \@fields,
 	   'output|out|o=s' => \$outfile,
 	   'format|fmt!' => \$format,
@@ -144,34 +142,32 @@ if ($headdoc) {
   $outroot->appendChild( $headdoc->documentElement->cloneNode(1) );
 }
 
-##==========================================================
-## BEGIN OBSOLETE STUFF: this can go when dta2012 goes live
-
-##-- header: metadata: dtadir
-if ($add_dtadir) {
-  (my $dirname = basename($txmlfile)) =~ s/\..*$//;
-  ensure_xpath($outroot, [qw(teiHeader fileDesc publicationStmt), ['idno', type=>"DTADIR"]],     $dirname); ##-- old (<2012-07)
-  ensure_xpath($outroot, [qw(teiHeader fileDesc publicationStmt), ['idno', type=>"DTADIRNAME"]], $dirname); ##-- new (>=2012-07)
+##-- populate output document: ensure paragraph nodes have ids
+if ($keep_paragraphs) {
+  my $np=0;
+  foreach (@{$indoc->findnodes('//p')}) {
+    $_->setAttribute('id'=>sprintf("p%x",++$np)) if (!$_->hasAttribute('id'));
+  }
 }
-##-- header: metadata: date
-if ($add_date) {
-  my $date = basename($txmlfile) =~ m/^[^\.]*_([0-9]+)\./ ? $1 : 0;
-  #ensure_xpath($outroot, [qw(teiHeader fileDesc), ['sourceDesc',n=>"orig"], qw(biblFull publicationStmt), ['date',type=>"first"]], $date); ##-- old (<2012-07)
-  #ensure_xpath($outroot, [qw(teiHeader fileDesc    sourceDesc                 biblFull publicationStmt     date)], $date);                 ##-- new (>=2012-07)
-  ##
-  ensure_xpath($outroot, [qw(teiHeader fileDesc), ['sourceDesc',n=>"orig"], qw(biblFull publicationStmt), ['date',type=>"first"]], $date); ##-- old|new (<=>2012-07)
-}
-
-## END OBSOLETE STUFF
-##==========================================================
 
 ##-- populate output document: content
 BEGIN { *isa=\&UNIVERSAL::isa; }
 my $text = $outroot->addNewChild(undef,'text');
 my $body = $text->addNewChild(undef,'body');
-my ($s_in,$s_out, $w_in,$w_out, @wf);
+my ($s_in,$s_out, $w_in,$w_out, @wf, $p_in,$p_out, $np,$pid_in,$pid_out);
+my $parent = $keep_paragraphs ? undef : $body;
 foreach $s_in (@{$indoc->findnodes('//s')}) {
-  $s_out = $body->addNewChild(undef,'s');
+  if ($keep_paragraphs) {
+    $p_in = $s_in->findnodes('ancestor::p[1]')->[0];
+    $p_in->setAttribute('id'=>sprintf("p%x",++$np)) if ($p_in && !defined($pid_in=$p_in->getAttribute('id')));
+    $pid_in //= 'null';
+    if (!defined($p_out) || $pid_out ne $pid_in) {
+      $p_out = $body->addNewChild(undef,'p');
+      $pid_out = $pid_in;
+      $parent = $p_out;
+    }
+  }
+  $s_out = $parent->addNewChild(undef,'s');
   foreach $w_in (@{$s_in->findnodes('w')}) {
     @wf = (
 	   map {s/\s/_/g; $_}
