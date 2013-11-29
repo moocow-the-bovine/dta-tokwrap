@@ -120,7 +120,6 @@ int main(int argc, char **argv)
     fprintf(stderr, "Usage:\n");
     fprintf(stderr, " + %s CXFILE [TXFILE [OUTFILE]]\n", prog);
     fprintf(stderr, " + CXFILE : input character-index binary file; default=stdin\n");
-    fprintf(stderr, " + SXFILE : output structure-index XML file; default=none\n");
     fprintf(stderr, " + OUTFILE: output raw cx-file dump; default=stdout\n");
     fprintf(stderr, " + \"-\" may be used in place of any filename to indicate standard (in|out)put\n");
     fprintf(stderr, " + \"\"  may be used in place of any output filename to discard output\n");
