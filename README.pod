@@ -318,6 +318,11 @@ See L<"the dtatw-get-header.perl manpage"|dtatw-get-header.perl> for more detail
 
 See L<"the dtatw-get-header.perl manpage"|dtatw-get-header.perl> for more details.
 
+=item dtatw-pn2p.perl
+
+Script to conver insert E<lt>pE<gt>...E<lt>/pE<gt> wrappers for C<//s/@pn> key attributes
+in "flat" *.t.xml files.
+
 =item dtatw-xml2ddc.perl
 
 Script to convert *.ddc.t.xml files and optional headers to DDC-XML format.

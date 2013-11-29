@@ -123,54 +123,36 @@
 .rm #[ #] #H #V #F C
 .\" ========================================================================
 .\"
-.IX Title "DTATW-GET-DDC-ATTRS.PERL 1"
-.TH DTATW-GET-DDC-ATTRS.PERL 1 "2013-11-29" "dta-tokwrap v0.49" "DTA Tokenization Utilities"
+.IX Title "DTATW-PN2P.PERL 1"
+.TH DTATW-PN2P.PERL 1 "2013-11-29" "dta-tokwrap v0.49" "DTA Tokenization Utilities"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH "NAME"
-dtatw\-get\-ddc\-attrs.perl \- get DDC\-relevant attributes from DTA::TokWrap files
+dtatw\-pn2p.perl \- insert <p> elements to wrap //s/@pn attributes in DTA::TokWrap .t.xml files
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
 .Vb 1
-\& dtatw\-get\-ddc\-attrs.perl [OPTIONS] T_XML_FILE [SX_FILE=T_XML_FILE:.t.xml=.sx [CX_FILE=SX_FILE:.sx=.cx]]
+\& dtatw\-pn2p.perl [OPTIONS] T_XML_FILE(s)...
 \&
-\& General Options:
+\& Options:
 \&  \-help                  # this help message
-\&  \-verbose LEVEL         # set verbosity level (0<=LEVEL<=3)
-\&  \-quiet                 # be silent; alias for \-verbose=0
-\&
-\& I/O Options:
+\&  \-verbose LEVEL         # set verbosity level (0<=LEVEL<=1)
+\&  \-quiet                 # be silent
 \&  \-output FILE           # specify output file (default=\*(Aq\-\*(Aq (STDOUT))
-\&  \-blanks , \-noblanks    # do/don\*(Aqt keep \*(Aqignorable\*(Aq whitespace in T_XML_FILE file (default=don\*(Aqt)
-\&  \-ws     , \-nows        # do/don\*(Aqt keep whitespace in //w/@t (default=don\*(Aqt)
-\&  \-page   , \-nopage      # do/don\*(Aqt extract //w/@pb (page\-break; default=do)
-\&  \-line   , \-noline      # do/don\*(Aqt extract //w/@lb (line\-break; default=do)
-\&  \-rend   , \-norend      # do/don\*(Aqt extract //w/@xr (rendition; default=do)
-\&  \-xcon   , \-noxcon      # do/don\*(Aqt extract //w/@xc (xml context; default=do)
-\&  \-xpath  , \-noxpath     # do/don\*(Aqt extract //w/@xp (trimmed xpath; default=do)
-\&  \-xppath , \-noxppath    # do/don\*(Aqt extract //w/@xpp (untrimmed xpath; default=don\*(Aqt)
-\&  \-bbox   , \-nobbox      # do/don\*(Aqt extract //w/@bb (bbox; default=don\*(Aqt)
-\&  \-xlit   , \-noxlit      # do/don\*(Aqt extract //w/@u  (unicruft transliteration; default=do)
-\&  \-wsep   , \-nowsep      # do/don\*(Aqt extract //w/@ws (boolean space\-separation; default=do)
-\&  \-keep\-c , \-nokeep\-c    # do/don\*(Aqt keep existing //w/@c and //w/@cs attributes (default=keep)
-\&  \-keep\-b , \-nokeep\-b    # do/don\*(Aqt keep existing //w/@b attributes (default=keep)
-\&  \-keep\-xb, \-nokeep\-xb   # do/don\*(Aqt keep existing //w/@xb attributes (default=keep)
-\&  \-formula\-text TEXT     # output text for //formula elements (default=\*(Aq\*(Aq (no change))
 .Ve
 .SH "OPTIONS AND ARGUMENTS"
 .IX Header "OPTIONS AND ARGUMENTS"
 Not yet written.
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
-Splice DDC-relevant attributes from \s-1DTA\s0 *.chr.xml files into DTA::TokWrap *.t.xml files.
+Insert <p> elements to wrap //s/@pn attributes in DTA::TokWrap .t.xml files.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fIdtatw\-add\-c.perl\fR\|(1),
 \&\fIdta\-tokwrap.perl\fR\|(1),
 \&\fIdtatw\-add\-ws.perl\fR\|(1),
-\&\fIdtatw\-splice.perl\fR\|(1),
 \&\fIdtatw\-rm\-c.perl\fR\|(1),
 \&...
 .SH "AUTHOR"

@@ -40,7 +40,7 @@ pkgxsl_DATA = \
 	dtatw-txmlsort.xsl
 
 bin_SCRIPTS = \
-	dtatw-sb2p.perl \
+	dtatw-pn2p.perl \
 	dtatw-add-c.perl \
 	dtatw-cids2local.perl \
 	dtatw-mkpx.perl \

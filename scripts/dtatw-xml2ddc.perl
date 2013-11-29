@@ -22,9 +22,9 @@ our $xmlfile = undef;  ##-- required
 our $headfile = undef; ##-- default: none
 our $outfile  = "-";   ##-- default: stdout
 
-our $keep_blanks = 0;     ##-- keep input whitespace?
-our $format = 1;          ##-- output format level
-our $keep_paragraphs = 1; ##-- keep <p> boundaries if present?
+our $keep_blanks = 0;       ##-- keep input whitespace?
+our $format = 1;            ##-- output format level
+our $wrap_paragraphs = 0;   ##-- insert <p> wrappers for //s/@pn ?
 
 ##-- field selection
 our @fields = qw();
@@ -51,7 +51,7 @@ GetOptions(##-- General
 
 	   ##-- I/O
 	   'keep-blanks|blanks|whitespace|ws!' => \$keep_blanks,
-	   'keep-paragraphs|keep-p|p!' => \$keep_paragraphs,
+	   'wrap-paragraphs|wrap-p|paragraphs|para|pwrap|p!' => \$wrap_paragraphs,
 	   'header-file|hf=s' => \$headfile,
 	   'index-field|index|i=s' => \@fields,
 	   'output|out|o=s' => \$outfile,
@@ -142,29 +142,19 @@ if ($headdoc) {
   $outroot->appendChild( $headdoc->documentElement->cloneNode(1) );
 }
 
-##-- populate output document: ensure paragraph nodes have ids
-if ($keep_paragraphs) {
-  my $np=0;
-  foreach (@{$indoc->findnodes('//p')}) {
-    $_->setAttribute('id'=>sprintf("p%x",++$np)) if (!$_->hasAttribute('id'));
-  }
-}
-
 ##-- populate output document: content
 BEGIN { *isa=\&UNIVERSAL::isa; }
 my $text = $outroot->addNewChild(undef,'text');
 my $body = $text->addNewChild(undef,'body');
-my ($s_in,$s_out, $w_in,$w_out, @wf, $p_in,$p_out, $np,$pid_in,$pid_out);
-my $parent = $keep_paragraphs ? undef : $body;
+my ($s_in,$s_out, $w_in,$w_out, @wf, $np,$pn_in,$pn_out);
+my $parent = $wrap_paragraphs ? undef : $body;
+
 foreach $s_in (@{$indoc->findnodes('//s')}) {
-  if ($keep_paragraphs) {
-    $p_in = $s_in->findnodes('ancestor::p[1]')->[0];
-    $p_in->setAttribute('id'=>sprintf("p%x",++$np)) if ($p_in && !defined($pid_in=$p_in->getAttribute('id')));
-    $pid_in //= 'null';
-    if (!defined($p_out) || $pid_out ne $pid_in) {
-      $p_out = $body->addNewChild(undef,'p');
-      $pid_out = $pid_in;
-      $parent = $p_out;
+  if ($wrap_paragraphs) {
+    $pn_in = $s_in->getAttribute('pn')//'';
+    if (!defined($pn_out) || $pn_out ne $pn_in) {
+      $parent = $body->addNewChild(undef,'p');
+      $pn_out = $pn_in;
     }
   }
   $s_out = $parent->addNewChild(undef,'s');
@@ -208,9 +198,8 @@ dtatw-xml2ddc.perl - convert DTA::TokWrap ddc-t-xml files to DDC-parseable forma
 
  I/O Options:
   -header HEADERFILE     # splice in teiHeader from HEADERFILE (default=none)
-  -dtadir , -nodtadir    # do/don't add an <idno type="dtadir"> if not already present (default=do)
-  -date   , -nodate      # do/don't add an <idno type="dtadir"> if not already present (default=do)
   -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in DDC_TXML_FILE file (default=don't)
+  -pwrap  , -nopwrap     # do/don't insert <p> elements to wrap //s/@pn keys (default=don't)
   -index XPATH           # set XPATH source for an output index field, relative to //w (overrides DTA defaults)
   -output FILE           # specify output file (default='-' (STDOUT))
 

@@ -159,7 +159,9 @@ AC_CONFIG_LINKS([doc/programs/dtatw-txml2uxml.perl.pod:scripts/dtatw-txml2uxml.p
 AC_CONFIG_LINKS([doc/programs/dtatw-splice.perl.pod:scripts/dtatw-splice.perl])
 AC_CONFIG_LINKS([doc/programs/dtatw-get-ddc-attrs.perl.pod:scripts/dtatw-get-ddc-attrs.perl])
 AC_CONFIG_LINKS([doc/programs/dtatw-get-header.perl.pod:scripts/dtatw-get-header.perl])
+AC_CONFIG_LINKS([doc/programs/dtatw-pn2p.perl.pod:scripts/dtatw-pn2p.perl])
 AC_CONFIG_LINKS([doc/programs/dtatw-xml2ddc.perl.pod:scripts/dtatw-xml2ddc.perl])
+##
 AC_CONFIG_LINKS([doc/README.pod:README.pod])
 ##
 ## /Documentation
