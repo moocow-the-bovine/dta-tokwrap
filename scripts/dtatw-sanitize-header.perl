@@ -424,7 +424,7 @@ dtatw-sanitize-header.perl - make DDC/DTA-friendly TEI-headers
   -quiet                 # be silent
 
  I/O Options:
-  -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in DDC_TXML_FILE file (default=don't)
+  -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in XML_HEADER_FILE file (default=don't)
   -base BASENAME	 # use BASENAME to auto-compute field names (default=basename(XML_HEADER_FILE))
   -output FILE           # specify output file (default='-' (STDOUT))
 
