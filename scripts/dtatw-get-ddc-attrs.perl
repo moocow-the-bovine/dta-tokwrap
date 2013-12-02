@@ -9,6 +9,7 @@ use File::Basename qw(basename);
 use Time::HiRes qw(gettimeofday tv_interval);
 use Unicruft;
 use Algorithm::BinarySearch::Vec qw(:default);
+use Fcntl qw(SEEK_SET);
 use Pod::Usage;
 
 use lib qw(.);
@@ -260,24 +261,32 @@ sub load_sx {
 ##--------------------------------------------------------------
 ## cx stuff: cx-character record packing
 
-## @cn2packed : $c_packed = $cn2packed[$cn]
-## + with  $cdata_packed = c_pack(%cdata)
-## + and  \%cdata        = c_unpack($cdata_packed)
-our @cn2packed = qw();
-
-## $cn2xoffv : $xoff == c_unpack($cn2packed[$cn])->{xoff} == vec($cn2xoffv,$cn,32)
+## $cn2xoffv : $xoff == c_unpack(cn2packed($cn))->{xoff} == vec($cn2xoffv,$cn,32)
 our $cn2xoffv = '';
 
-## $Ncx : number of cx-records : $Nc == scalar(@cn2packed) == bytes::length($cn2xoffv)/4
+## $Ncx     : number of cx-records : bytes::length($c_packed)/$c_pack_size == bytes::length($cn2xoffv)/4
+## $Ncx_est : estimated number of cx-records, for pre-allocation
 our $Ncx = 0;
+our $Ncx_est = 0;
 
-## cx-bin (v0.39): source constants [see dtatwCommon.h, DTA::TokWrap::CxData]
-
+## cx-bin (v0.49): source constants [see dtatwCommon.h, DTA::TokWrap::CxData]
 ## @c_pkeys : \%c keys for local (un)packing
-our @c_pkeys = qw(cn typ   xo xl   pb lb   xr   ulx uly lrx lry);
+our @c_pkeys = qw(cn typ   xo xl   pb lb   ulx uly lrx lry);
 
 ## $c_pack : pack format for local c_pack(), c_unpack()
-our $c_pack = 'lC(lC)(ss)(Z*)(llll)';
+our $c_pack = 'lC(lC)(ss)(llll)';
+
+## $c_pack_size
+our $c_pack_size = bytes::length(pack($c_pack, map {0} @c_pkeys));
+
+## $c_packed : $c_packed = bytes::substr($cn2packed, $cn*$c_pack_size, $c_pack_size)
+our $cn2packed = '';
+
+## $c_packed = cn2packed($cn)
+sub cn2packed {
+  use bytes;
+  return substr($cn2packed, $_[0]*$c_pack_size, $c_pack_size);
+}
 
 ## $c_packed_or_undef = c_pack(\%c)
 sub c_pack {
@@ -285,7 +294,6 @@ sub c_pack {
   return undef if (!defined($_[0]));
   return pack($c_pack, @{$_[0]}{@c_pkeys});
 }
-
 ## \%c_or_undef = c_unpack($c_packed)
 sub c_unpack {
   return undef if (!defined($_[0]));
@@ -295,9 +303,9 @@ sub c_unpack {
 }
 
 ## \%c_or_undef = c_get($cn)
-##  + wrapper for c_unpack($cn2packed[$cn])
+##  + wrapper for c_unpack(cn2packed($cn))
 sub c_get {
-  return c_unpack($cn2packed[$_[0]]);
+  return c_unpack( substr($cn2packed, $_[0]*$c_pack_size, $c_pack_size) );
 }
 
 ##======================================================================
@@ -309,8 +317,9 @@ sub c_get {
 
 ## $bool = load_cx($cxfile)
 ##  + loads cx data from $cxfile
-##  + populates globals @cn2packed, $cn2xoffv
+##  + populates globals $cn2packed, $cn2xoffv
 sub load_cx {
+  use bytes;
   my $cxfile = shift;
   open(CX,"<$cxfile") or die("$prog: FATAL: open failed for .cx-file $cxfile: $!");
   binmode(CX,":raw");
@@ -325,8 +334,13 @@ sub load_cx {
   my %c =qw();
   my %unescape = ('t'=>"\t",'n'=>"\n",'r'=>"\r",'\\'=>'\\');
 
-  @cn2packed = qw();
+  $cn2packed = '';
   $cn2xoffv  = '';
+
+  ##-- pre-allocate (guesstimate)
+  $Ncx_est = int( (-s CX) / 2 );
+  vec($cn2xoffv,  $Ncx_est, 32)=0;
+  vec($cn2packed, $Ncx_est*$c_pack_size, 8)=0;
 
   my $xmlOffset = 0;
   my ($cxr,$typ,$facs);
@@ -339,7 +353,7 @@ sub load_cx {
       ##-- text element: treat it as a logical character
       @c{qw(cn typ xo xl pb lb xr)} = ($cn,$typ, @$cxr[$CX_XOFF,$CX_XLEN], $pb,$lb, ''); ##-- no "rendition" attribute saved!
       @c{qw(ulx uly lrx lry)} = map {defined($_) ? $_ : -1} @$cxr[$CX_ATTR_ULX..$CX_ATTR_LRY];
-      $cn2packed[$cn] = c_pack(\%c);
+      substr($cn2packed, $cn*$c_pack_size, $c_pack_size) = c_pack(\%c);
       vec($cn2xoffv,$cn,32) = $cxr->[$CX_XOFF];
       ++$cn;
       ++$lb if ($typ == $cxrLb);
@@ -364,8 +378,12 @@ sub load_cx {
   }
   close(CX);
 
-  ##-- get number of //c records
-  $Ncx = bytes::length($cn2xoffv)/4;
+  ##-- get number of //c records, and truncate vectors
+  $Ncx = $cn;
+  if ($Ncx < $Ncx_est) {
+    substr($cn2xoffv, $Ncx*4) = '';
+    substr($cn2packed, $Ncx*$c_pack_size) = '';
+  }
 
   ##-- return true
   return 1;
@@ -390,9 +408,10 @@ sub xb2cns {
 }
 
 ## \@cs = xb2cs($xb)
-##  + wrapper for [map {c_unpack($_)} @cn2packed[@{xb2cns($xb)}]]
+##  + wrapper for [map {c_get($_)} @{xb2cns($_[0])}]
 sub xb2cs {
-  return [ map {c_unpack($_)} @cn2packed[@{xb2cns($_[0])}] ];
+  #return [ map {c_unpack($_)} @cn2packed[@{xb2cns($_[0])}] ];
+  return [ map {c_get($_)} @{xb2cns($_[0])} ];
 }
 
 
@@ -409,6 +428,7 @@ sub apply_ddc_attrs {
 
   ##--------------------------------------
   ## apply: pass=1: the "easy" stuff
+  print STDERR "$prog: apply(pass=1) ... \n" if ($verbose>=$vl_progress);
   $wnods = $xdoc->findnodes('//w');  ##-- all //w nodes
   @wnoc  = qw();                     ##-- indices in @$wnods: //w nodes with no //c/@id list
   @wfml  = qw();                     ##-- indices in @$wnods: formula //w nodes
@@ -420,6 +440,7 @@ sub apply_ddc_attrs {
 
   ##--------------------------------------
   ## apply: pass=2: formulae
+  print STDERR "$prog: apply(pass=2): ", ($do_bbox ? "bbox" : "DISABLED"), " ...\n" if ($verbose>=$vl_progress);
   if ($do_bbox) {
     my ($c0,$wnod,@cs,@lprev_cs,@lnext_cs,$yprev,$ynext);
     my @clist_context = (1..1);
@@ -478,6 +499,7 @@ sub apply_ddc_attrs {
 
   ##--------------------------------------
   ## apply: pass=3: remove 'c','b','xb' attributes if requested
+  print STDERR "$prog: apply(pass=3): remove attrs ...\n" if ($verbose>=$vl_progress);
   if (!$do_keep_c) {
     foreach (@$wnods) {
       $_->removeAttribute('c');
@@ -589,7 +611,7 @@ sub apply_word {
   if ($do_rendition) {
     $wrend = join('|',
 		   map {s/^\#//;$_}
-		   llintersect(map {[luniq (split(' ',$_->{xr}),($_->{blk} ? split(' ',$_->{blk}{xr}) : qw()))]} @cs));
+		   llintersect(map {[luniq (split(' ',($_->{xr}//'')),($_->{blk} ? split(' ',($_->{blk}{xr}//'')) : qw()))]} @cs));
     $wnod->setAttribute($rendition_attr, $wrend ? "|$wrend|" : '-');
   }
 
@@ -723,14 +745,14 @@ sub clist_byline {
   my (@cs);
   ##-- stupid linear scan: backwards until $cn <= FIRST_CHAR($page,$line)
   for ($cn=$cn0; $cn > 0 && $cn < $Ncx; $cn--) {
-    next if (!defined($c = c_unpack($cn2packed[$cn])));
+    next if (!defined($c = c_get($cn)));
     last if ($c->{pb} < $pb || ($c->{pb}==$pb && $c->{lb} <  $lb));
     next if ($c->{pb} > $pb || ($c->{pb}==$pb && $c->{lb} >= $lb));
   }
 
   ##-- stupid linear scan: forwards until $cn >= LAST_CHAR($page,$line), pushing onto @cs
   for ( ; $cn >= 0 && $cn < $Ncx; $cn++) {
-    next if (!defined($c = c_unpack($cn2packed[$cn])));
+    next if (!defined($c = c_get($cn)));
     push(@cs,$c) if ($c->{pb}==$pb && $c->{lb}==$lb);
     last if ($c->{pb} >$pb || ($c->{pb}==$pb && $c->{lb} > $lb));
   }
@@ -798,7 +820,7 @@ print STDERR "$prog: loaded $Nsx block record(s) from '$sxfile'.\n"
 print STDERR "$prog: loading .cx-file '$cxfile'...\n"
 if ($verbose>=$vl_progress);
 load_cx($cxfile) or die("$prog: FATAL: failed to load .cx-file '$cxfile'");
-print STDERR "$prog: loaded $Ncx character record(s) from '$cxfile'.\n"
+print STDERR "$prog: loaded $Ncx character record(s) from '$cxfile' ".sprintf("[est = %d = %d%%]\n", $Ncx_est, 100*$Ncx_est/$Ncx)
   if ($verbose>=$vl_info);
 
 ##-- apply attributes from .chr.xml file to .t.xml file
