@@ -40,7 +40,7 @@ sub defaults {
   return (
 	  $that->SUPER::defaults(),
 	  waste     => undef,
-	  wasteopts => ['-v2', '-Otext,loc'],
+	  wasteopts => ['-v2', '-Omr,loc'],
 	  #abbrLex   => "${RCDIR}/waste/abbr.lex",		##-- gets set in init()
 	  #stopLex   => "${RCDIR}/waste/stop.lex",		##-- gets set in init()
 	  #conjLex   => "${RCDIR}/waste/conj.lex",		##-- gets set in init()

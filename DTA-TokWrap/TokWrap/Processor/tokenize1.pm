@@ -33,14 +33,14 @@ our @ISA = qw(DTA::TokWrap::Processor::tokenize);
 ##  + static class-dependent defaults
 ##  + %args, %defaults, %$tp:
 ##    fixtok => $bool,                     ##-- attempt to fix common tokenizer errors? (default=true)
-##    tokpp  => $bool,                     ##-- add tokenizer-supplied analyses with Moot::TokPP (default=true)
+##    tokpp  => $bool,                     ##-- add tokenizer-supplied analyses with Moot::TokPP (default=false)
 ##    fixold => $bool,                     ##-- attempt to fix unexpected and/or obsolete (tomata2) errors? (default=false)
 sub defaults {
   my $that = shift;
   return (
 	  $that->DTA::TokWrap::Processor::defaults(),
 	  fixtok => 1,
-	  tokpp  => 1,
+	  tokpp  => 0,
 	  fixold => 0,
 	 );
 }
@@ -51,7 +51,7 @@ sub init {
 
   ##-- defaults
   $tp->{fixtok} = 1 if (!exists($tp->{fixtok}));
-  $tp->{tokpp}  = 1 if (!exists($tp->{tokpp}));
+  $tp->{tokpp}  = 0 if (!exists($tp->{tokpp}));
   $tp->{fixold} = 0 if (!exists($tp->{fixold}));
 
   return $tp;
