@@ -562,6 +562,7 @@ sub hint_autotune {
 ##  + required in order for XML::LibXML XPath id() function to work properly (also for XML::LibXSLT)
 sub sanitize_xmlid {
   my ($mbx0,$xmldoc) = @_;
+  $mbx0->vlog('trace',"sanitize_xmlid()");
 
   ##-- sanitize: map 'id' -> 'xml:id'
   foreach (@{$xmldoc->findnodes('//*[@id and not(@xml:id)]')}) {
@@ -581,6 +582,7 @@ sub sanitize_xmlid {
 ##  + requires a working XML::LibXML XPath id() function (see method sanitize_xmlid())
 sub sanitize_chains {
   my ($mbx0,$xmldoc,$pass) = @_;
+  $mbx0->vlog('trace',"sanitize_chains()");
 
   $pass ||= 1;
   my $flabel  = "sanitize_chains(pass=$pass)";
@@ -607,7 +609,7 @@ sub sanitize_chains {
 
     if (defined($refid = $nod->getAttribute('prev'))) {
       ##-- sanitize @prev
-      $refid  =~ s/^\#//;
+      $nod->setAttribute(prev=>$refid) if ($refid =~ s/^\#//);
       $refnod = $xmldoc->findnodes("id('$refid')")->[0];
       if (!$refnod) {
 	$mbx0->vlog('warn',"$flabel: pruning dangling \@prev=$refid for chain node $nodlabel");
@@ -623,7 +625,7 @@ sub sanitize_chains {
     }
     if (defined($refid = $nod->getAttribute('next'))) {
       ##-- sanitize @next
-      $refid  =~ s/^\#//;
+      $nod->setAttribute(next=>$refid) if ($refid =~ s/^\#//);
       $refnod = $xmldoc->findnodes("id('$refid')")->[0];
       if (!$refnod) {
 	$mbx0->vlog('warn',"$flabel: pruning dangling \@next=$refid for chain node $nodlabel");
@@ -700,6 +702,7 @@ sub sanitize_chains {
 ##  + converts //seg coding to @prev|@next
 sub sanitize_segs {
   my ($mbx0,$xmldoc) = @_;
+  $mbx0->vlog('trace',"sanitize_segs()");
 
   my ($nod,$nodid,$part,$refid,$refnod, $nodlabel);
   my $id=0;
