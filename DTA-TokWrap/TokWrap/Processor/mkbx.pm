@@ -268,7 +268,7 @@ sub mkbx {
   my $txtlen= bytes::length($$txtbufr);
   my $quot  = "\x{201c}-\x{201f}\x{275d}-\x{275e}\x{301d}-\x{301f}\x{ab}\x{bb}\"";
   $$txtbufr =~ s/ (\n[^${quot}\n]+\n\ *)([${quot}]) / $1."\$QKEEP:$2\$"              /ogxe;
-  $$txtbufr =~ s/ \n(\ *[${quot}])                  / "\n".(" " x bytes::length($1)) /ogxe;
+  $$txtbufr =~ s/ \n(\ *(?:[${quot}]|\&q(?:uot)?;)) / "\n".(" " x bytes::length($1)) /ogxe;
   $$txtbufr =~ s/ \$QKEEP:([^\$]+)\$	            / $1                             /ogxe;
   $mbx->logconfess("mkbx(): line-initial quote heuristics changed text length") if (bytes::length($$txtbufr) != $txtlen);
   ##
