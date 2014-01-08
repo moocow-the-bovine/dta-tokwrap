@@ -378,7 +378,7 @@ my @avail_xpaths = (
 		    'fileDesc/publicationStmt/availability[@type="ddc_dwds"]',
 		    'fileDesc/publicationStmt/availability/@n',
 		   );
-my $avail       = xpgrepval($hroot,@avail_xpaths) // "";
+my $avail       = xpgrepval($hroot,@avail_xpaths) || "-";
 ensure_xpath($hroot, $avail_xpaths[0], $avail, 0);
 
 ##-- meta: text-class: dta
