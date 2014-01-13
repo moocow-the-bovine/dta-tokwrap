@@ -160,9 +160,9 @@ sub tokenize1 {
       $tp->vlog($tp->{traceLevel},"autofix: trailing commas");
       $nsusp = $nfixed = 0;
       foreach (@lines) {
-	if (/^(\d+)\,\t([0-9]+) ([0-9]+)\t.*$/) {
+	if (/^(\d+)\,\t([0-9]+) ([0-9]+)(?:\t.*)?$/) {
 	  ($s_txt,$s_off,$s_len) = ($1,$2,$3);
-	  $_ = ("$s_txt\t$off ".($len-1)."\t[CARD]\n"
+	  $_ = ("$s_txt\t$s_off ".($s_len-1)."\t[CARD]\n"
 		.",\t".($s_off+$s_len-1)." 1\t[\$,]");
 	  ++$nfixed;
 	}
