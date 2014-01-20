@@ -439,7 +439,7 @@ Offset2CxIndex  *tx2cxIndex(Offset2CxIndex *txo2cx, cxData *cxd)
   cxRecord *cx;
   ByteOffset ntxb, cxi, txi, t_end;
   assert(cxd != NULL && cxd->data != NULL /* require loaded cx data */);
-  assert(cxd->len > 0 /* require non-empty cx index */);
+  /*assert(cxd->len > 0 "require non-empty cx index"); */
 
   //-- maybe allocate top-level index struct
   if (txo2cx==NULL) {
@@ -450,8 +450,8 @@ Offset2CxIndex  *tx2cxIndex(Offset2CxIndex *txo2cx, cxData *cxd)
   }
 
   //-- get number of required records, maybe (re-)allocate index vector
-  cx     = &cxd->data[cxd->len-1];
-  ntxb   = cx->toff + cx->tlen;
+  cx   = cxd->len > 0 ? (&cxd->data[cxd->len-1]) : NULL;
+  ntxb = cx           ? (cx->toff + cx->tlen)    : 0;
   if (txo2cx->len < ntxb) {
     if (txo2cx->data) free(txo2cx->data);
     txo2cx->data = (cxRecord**)malloc(ntxb*sizeof(cxRecord*));

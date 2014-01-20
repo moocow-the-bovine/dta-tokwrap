@@ -171,10 +171,12 @@ sub tok2xml {
     }
 
     ##-- prefix, suffix, sort: by paragraph
-    my $prefix = substr($$data,0,$p[0][1]);
-    my $suffix = substr($$data,$lasteos);
-    my $sorted = $prefix.join('',map {substr($$data,$_->[1],$_->[2])} sort {$a->[0]<=>$b->[0]} @p).$suffix;
-    $$data = $sorted;
+    if (@p) {
+      my $prefix = substr($$data,0,$p[0][1]);
+      my $suffix = substr($$data,$lasteos);
+      my $sorted = $prefix.join('',map {substr($$data,$_->[1],$_->[2])} sort {$a->[0]<=>$b->[0]} @p).$suffix;
+      $$data = $sorted;
+    }
   }
 
   ##-- finalize
