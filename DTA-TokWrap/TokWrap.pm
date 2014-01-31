@@ -48,6 +48,7 @@ our $VERSION = $DTA::TokWrap::Version::VERSION;
 ##     mkbx0    => $mkbx0,     ##-- DTA::TokWrap::Processor::mkbx0 object, or option-hash
 ##     mkbx     => $mkbx,      ##-- DTA::TokWrap::Processor::mkbx object, or option-hash
 ##     tokenize => $tok,       ##-- DTA::TokWrap::Processor::tokenize object, subclass object, or option-hash
+##     tokenizeClass => $cls,  ##-- ${DTA::TokWrap::Document::TOKENIZE_CLASS} proxy
 ##     tokenize1 => $tok1,     ##-- DTA::TokWrap::Processor::tokenize1 object or option-hash
 ##     tok2xml  => $tok2xml,   ##-- DTA::TokWrap::Processor::tok2xml object, or option-hash
 ##     #standoff => $standoff,  ##-- DTA::TokWrap::Processor::standoff object, or option-hash [OBSOLETE]
@@ -85,6 +86,7 @@ sub defaults {
 	  mkbx0 => undef,
 	  mkbx => undef,
 	  tokenize => undef,
+	  tokenizeClass => $DTA::TokWrap::Document::TOKENIZE_CLASS,
 	  tokenize1 => undef,
 	  tok2xml => undef,
 	  addws => undef,
@@ -111,7 +113,7 @@ sub init {
   my ($class,%newopts);
   foreach (qw(mkindex mkbx0 mkbx tokenize tokenize1 tok2xml addws idsplice)) { #standoff
     next if (UNIVERSAL::isa($tw->{$_},"DTA::TokWrap::Processor::$_"));
-    $class   = $_ eq 'tokenize' ? "DTA::TokWrap::Processor::tokenize::${DTA::TokWrap::Document::TOKENIZE_CLASS}" : "DTA::TokWrap::Processor::$_";
+    $class   = $_ eq 'tokenize' ? "DTA::TokWrap::Processor::tokenize::".($tw->{tokenizeClass}//${DTA::TokWrap::Document::TOKENIZE_CLASS}) : "DTA::TokWrap::Processor::$_";
     %newopts = (%{$key2opts{ALL}}, ($key2opts{$_} ? %{$key2opts{$_}} : qw()));
     if (UNIVERSAL::isa($tw->{$_},'ARRAY')) {
       $tw->{$_} = $class->new(%newopts, @{$tw->{$_}});

@@ -577,11 +577,11 @@ sub mkbx {
 ## $doc_or_undef = $doc->tokenize($tokenize)
 ## $doc_or_undef = $doc->tokenize()
 ##  + see DTA::TokWrap::Processor::tokenize::tokenize()
-##  + default tokenizer class is given by package-global $TOKENIZE_CLASS
+##  + default tokenizer class is given by package-global $doc->{tokenizeClass}//$TOKENIZE_CLASS
 sub tokenize {
   $_[0]->setLogContext();
   $_[0]->vlog($_[0]{traceProc},"tokenize()") if ($_[0]{traceProc});
-  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tokenize}) || "$TOKENIZE_CLASS")->tokenize($_[0]);
+  return ($_[1] || ($_[0]{tw} && ($_[0]{tw}{tokenize}||$_[0]{tw}{tokenizeClass})) || $_[0]{tokenizeClass} || "$TOKENIZE_CLASS")->tokenize($_[0]);
 }
 BEGIN {
   *tokenize0 = \&tokenize;
