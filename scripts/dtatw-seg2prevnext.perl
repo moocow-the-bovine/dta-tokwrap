@@ -132,8 +132,8 @@ foreach my $seg (@$all_segs) {
   foreach $nxt (@chain) {
     ##-- convert to @prev|@next
     $nxt->{nod}->setAttribute('xml:id' => $nxt->{id});
-    $nxt->{nod}->setAttribute('prev'   => $cur->{id}) if ($cur);
-    $cur->{nod}->setAttribute('next'   => $nxt->{id}) if ($cur);
+    $nxt->{nod}->setAttribute('prev'   => '#'.$cur->{id}) if ($cur);
+    $cur->{nod}->setAttribute('next'   => '#'.$nxt->{id}) if ($cur);
 
     ##-- remove parent //seg nodes
     $nxt->{nod}->parentNode->replaceNode($nxt->{nod});
@@ -149,6 +149,12 @@ print STDERR sprintf("$prog: INFO: removed %d of %d <seg> node(s) (%.2f %%)\n",
 ## dump
 $xmlbuf = $xmldoc->toString(0);
 $xmlbuf =~ s|(<[^>]*\s)XMLNS=|${1}xmlns=|g;  ##-- restore default namespaces
+
+##-- FW 2014-03-03: entity-encode all unicode characters beyond latin-1
+utf8::decode( $xmlbuf );
+$xmlbuf =~ s{([^\x{01}-\x{ff}])}{ sprintf "&#x%04X;", ord($1) }eg;
+$xmlbuf =~ s{&#x017F;}{\x{017f}}g; ##-- ... except for long-s (U+017F)
+utf8::encode( $xmlbuf );
 
 my $outfile = @ARGV ? shift : '-';
 open(OUT,">$outfile") or die("$prog: ERROR: open failed for '$outfile': $!");
