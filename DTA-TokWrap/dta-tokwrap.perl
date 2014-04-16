@@ -63,11 +63,12 @@ our $logFile     = undef;  ##-- log to file?
 our $logProfile  = 'info'; ##-- log-level for profiling information?
 
 ##-- make/generate options
-our $makeKeyAct = 'make';   ##-- one of 'make', 'gen'
+our $makeKeyAct = 'make';   ##-- one of 'make', 'gen', 'list'
 our @targets = qw();
 our @defaultTargets = qw(all);
 
 ##-- debugging options
+our $listTargets = 0;
 our $dump_xsl_prefix = undef;
 our $traceLevel = 'trace'; ##-- trace level for '-trace' options
 our @traceOptions = (
@@ -114,6 +115,7 @@ GetOptions(
 	   'nomake|M' => sub { $docopts{class}='DTA::TokWrap::Document'; },
 	   'remake|r!' => sub { $docopts{class}='DTA::TokWrap::Document::Maker'; $makeKeyAct='remake'; },
 	   'targets|target|t=s' => \@targets,
+	   'list-targets|list|lt!' => \$listTargets,
 	   'force-target|ft=s' => sub { push(@{$twopts{force}},$_[1]) },
 	   'force|f' => sub { push(@{$twopts{force}},'all') },
 	   'noforce|nof' => sub { $twopts{force} = [] },
@@ -187,12 +189,8 @@ if ($version) {
 
 pod2usage({-exitval=>0, -verbose=>0}) if ($help);
 pod2usage({-exitval=>0, -verbose=>1}) if ($man);
-pod2usage({
-	   -message => 'No XML source file(s) specified!',
-	   -exitval => 1,
-	   -verbose => 0,
-	  }) if (@ARGV < 1);
-
+pod2usage({-exitval=>1, -verbose=>0, -message=>'No XML source file(s) specified!'})
+  if (@ARGV < 1 && !$dump_xsl_prefix && !$listTargets);
 
 
 ##==============================================================================
@@ -293,6 +291,31 @@ if (defined($dump_xsl_prefix)) {
   exit(0);
 }
 
+##-- debug: list targets
+if ($listTargets) {
+  my $gen = \%DTA::TokWrap::Document::KEYGEN;
+  my ($key,$val, $type,$details);
+  foreach $key (sort keys %$gen) {
+    $val = $gen->{$key};
+    $type    = 'UNKNOWN';
+    $details = '';
+    if (UNIVERSAL::isa($val,'CODE')) {
+      ($type,$details) = ("CODE",$val);
+    }
+    elsif (UNIVERSAL::can('DTA::TokWrap::Document',$key)) {
+      ($type,$details) = ("METHOD",$key);
+    }
+    elsif (!ref($val) && UNIVERSAL::can('DTA::TokWrap::Document',$val)) {
+      ($type,$details) = ("METHOD",$val);
+    }
+    elsif (UNIVERSAL::isa($val,'ARRAY')) {
+      ($type,$details) = ("CHAIN",join(' ',@$val));
+    }
+    printf("%-15s\t%s\t%s\n",$key,$type,$details);
+  }
+  exit 0;
+}
+
 ##-- options: pseudo-make: make|gen
 our $makeKeySub = $docopts{class}->can("${makeKeyAct}Key")
   or die("$prog: no method for $docopts{class}->${makeKeyAct}Key()");
@@ -342,6 +365,7 @@ dta-tokwrap.perl - top-level tokenizer wrapper for DTA XML documents
   -verbose LEVEL         # set verbosity level (0<=level<=7; default=1)
  
  Make Emulation Options:
+  -list-targets		 # just list known targets
   -targets TARGETS       # set build targets (default='all')
   -make , -nomake        # do/don't emulate make-style dependency tracking (default=don't)
   -remake                # force rebuilding of all targets (implies -make)

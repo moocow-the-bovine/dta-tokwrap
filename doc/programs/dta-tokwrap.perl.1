@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "DTA-TOKWRAP.PERL 1"
-.TH DTA-TOKWRAP.PERL 1 "2013-11-26" "dta-tokwrap v0.48" "DTA Tokenization Utilities"
+.TH DTA-TOKWRAP.PERL 1 "2014-04-16" "dta-tokwrap v0.54" "DTA Tokenization Utilities"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -139,9 +139,10 @@ dta\-tokwrap.perl \- top\-level tokenizer wrapper for DTA XML documents
 \& General Options:
 \&  \-help                  # show this help message
 \&  \-man                   # show complete manpage
-\&  \-verbose LEVEL         # set verbosity level (0<=level<=7; default=0)
+\&  \-verbose LEVEL         # set verbosity level (0<=level<=7; default=1)
 \& 
 \& Make Emulation Options:
+\&  \-list\-targets          # just list known targets
 \&  \-targets TARGETS       # set build targets (default=\*(Aqall\*(Aq)
 \&  \-make , \-nomake        # do/don\*(Aqt emulate make\-style dependency tracking (default=don\*(Aqt)
 \&  \-remake                # force rebuilding of all targets (implies \-make)
