@@ -3,6 +3,8 @@
 use bytes;
 use Getopt::Long ':config'=>'no_ignore_case';
 use File::Basename qw(basename);
+use Encode qw(encode_utf8 decode_utf8);
+use utf8;
 
 our ($help);
 our $prog = basename($0);
@@ -52,7 +54,7 @@ sub tokwarn {
 
 ##-- process .t file
 open(TT,"<$ttfile") or die("$0: $ttfile: ERROR: open failed for '$ttfile': $!");
-my ($text,$pos,$rest, $off,$len, $buftext);
+my ($text,$pos,$rest, $off,$len, $buftext,$tokre);
 while (<TT>) {
   chomp;
   next if (/^\s*$/ || /^\%\%/); ##-- skip comments and blank lines
@@ -83,11 +85,13 @@ while (<TT>) {
 
   ##-- check content
   $buftext = substr($txtbuf, $off,$len);
-  $tokre   = join('', map {($_ eq '_' ? '[_\s]' : "\Q$_\E")."(?:(?:[ \n\r\t\-]|(?:¬)|(?:—)|(?:–))*)"} split(//,$text));
-  if ($buftext !~ $tokre) {
-    $buftext =~ s/\n/\\n/g;
-    $buftext =~ s/\r/\\r/g;
-    tokwarn("buffer text=\"$buftext\" doesn't match token text for $toklabel\n");
+  if ($buftext ne $text) {
+    $tokre = join('', map {($_ eq '_' ? '[_\s]' : "\Q$_\E").'(?:[\s\n\r\t]| |\-|¬|—|–)*'} split(//,$text));
+    if ($buftext !~ $tokre) {
+      $buftext =~ s/\n/\\n/g;
+      $buftext =~ s/\r/\\r/g;
+      tokwarn("buffer text=\"$buftext\" doesn't match token text for $toklabel\n");
+    }
   }
 
   ##-- check max warnings?
