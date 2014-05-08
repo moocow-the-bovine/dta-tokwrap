@@ -271,6 +271,8 @@ ensure_xpath($hroot, 'fileDesc/titleStmt/title[@type="ddc"]', $title, 0);
 my @date_xpaths = (
 		   'fileDesc/sourceDesc[@n="ddc"]/biblFull/publicationStmt/date[@type="pub"]', ##-- ddc
 		   'fileDesc/sourceDesc[@n="scan"]/biblFull/publicationStmt/date', ##-- old:publDate
+		   'fileDesc/sourceDesc/biblFull/publicationStmt/date[@type="creation"]/supplied',
+		   'fileDesc/sourceDesc/biblFull/publicationStmt/date[@type="creation"]',
 		   'fileDesc/sourceDesc/biblFull/publicationStmt/date[@type="publication"]/supplied', ##-- new:date (published, supplied)
 		   'fileDesc/sourceDesc/biblFull/publicationStmt/date[@type="publication"]', ##-- new:date (published)
 		   'fileDesc/sourceDesc/biblFull/publicationStmt/date/supplied', ##-- new:date (generic, supplied)
