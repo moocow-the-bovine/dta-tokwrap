@@ -205,9 +205,10 @@ DTA::TokWrap::CxData - DTA tokenizer wrappers: utilities for binary cx-file I/O
 =head1 SYNOPSIS
 
  use DTA::TokWrap::CxData;
-
- # ... use the source luke ...
  
+ # ... use the source luke ...
+
+
 =cut
 
 ##========================================================================
