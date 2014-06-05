@@ -88,6 +88,8 @@ See L<DTA::TokWrap::Document(3pm)|DTA::TokWrap::Document> for more details.
 
 =head3 DTA::TokWrap::Document::Maker
 
+B<***DEPRECATED***>
+
 DTA::TokWrap::Document::Maker provides an experimental
 L<DTA::TokWrap::Document|/DTA::TokWrap::Document>
 subclass which attempts to perform C<make>-like dependency
@@ -144,11 +146,16 @@ for details.
 
 =head3 DTA::TokWrap::Processor::tokenize
 
-B<WARNING>: this class is currently just a placeholder for the
-"official" low-level tokenizer (ToMaSoTaTh).  Until such time
-as the official tokenizer is functional, please use the
-L<DTA::TokWrap::Processor::tokenize::dummy|DTA::TokWrap::Processor::tokenize::dummy>
-sub-class, which uses a simple locally-built low-level tokenizer.
+This class is just an abstract placeholder for a
+low-level tokenizer. By default, it attempts automatically detect
+a supported tokenizer on your system (preferably moot/WASTE).
+Depending on your needs, you may wish to use e.g.
+L<DTA::TokWrap::Processor::tokenize::waste|DTA::TokWrap::Processor::tokenize::waste>
+or
+L<DTA::TokWrap::Processor::tokenize::http|DTA::TokWrap::Processor::tokenize::http>
+directly, or to set the package variable
+L<DTA::TokWrap::Processor::tokenize|$DTA::TokWrap::Processor::tokenize::DEFAULT_SUBCLASS>
+to the default tokenizer subclass name for your system.
 
 DTA::TokWrap::Processor::tokenize provides an object-oriented
 L<DTA::TokWrap::Processor|/DTA::TokWrap::Processor> wrapper
@@ -202,6 +209,29 @@ for L<DTA::TokWrap::Document|/DTA::TokWrap::Document> objects.
 See L<DTA::TokWrap::Processor::standoff(3pm)|DTA::TokWrap::Processor::standoff>
 for details.
 
+=head3 DTA::TokWrap::Processor::addws
+
+DTA::TokWrap::Processor::standoff provides an object-oriented
+L<DTA::TokWrap::Processor|/DTA::TokWrap::Processor> wrapper
+for splicing tokenization data (word- and sentence-boundaries)
+back into a source TEI-XML file, potentially fragmenting
+words and/or sentences in the process.  Each segment is assigned
+a unique id, and fragmented segments are associated using the TEI
+C<prev> and C<next> attributes.
+
+See L<DTA::TokWrap::Processor::addws(3pm)|DTA::TokWrap::Processor::addws>
+for details.
+
+=head3 DTA::TokWrap::Processor::idsplice
+
+DTA::TokWrap::Processor::standoff provides an object-oriented
+L<DTA::TokWrap::Processor|/DTA::TokWrap::Processor> wrapper
+for splicing stand-off data into a base XML file by matching ids.
+
+See L<DTA::TokWrap::Processor::idsplice(3pm)|DTA::TokWrap::Processor::idsplice>
+for details.
+
+
 =cut
 
 ##--------------------------------------------------------------
@@ -214,6 +244,14 @@ in the
 DTA::TokWrap distribution
 
 See L<DTA::TokWrap::Base(3pm)|DTA::TokWrap::Base>
+for details.
+
+=head2 DTA::TokWrap::CxData
+
+DTA::TokWrap::CxData provides utilities for binary I/O on dta-tokwrap *.cx
+files.
+
+See L<DTA::TokWrap::CxData(3pm)|DTA::TokWrap::CxData>
 for details.
 
 =head2 DTA::TokWrap::Logger

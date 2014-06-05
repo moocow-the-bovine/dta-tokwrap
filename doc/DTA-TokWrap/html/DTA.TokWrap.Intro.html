@@ -45,9 +45,12 @@
 			<li><a href="#dta__tokwrap__processor__tokenize1">DTA::TokWrap::Processor::tokenize1</a></li>
 			<li><a href="#dta__tokwrap__processor__tok2xml">DTA::TokWrap::Processor::tok2xml</a></li>
 			<li><a href="#dta__tokwrap__processor__standoff">DTA::TokWrap::Processor::standoff</a></li>
+			<li><a href="#dta__tokwrap__processor__addws">DTA::TokWrap::Processor::addws</a></li>
+			<li><a href="#dta__tokwrap__processor__idsplice">DTA::TokWrap::Processor::idsplice</a></li>
 		</ul>
 
 		<li><a href="#dta__tokwrap__base">DTA::TokWrap::Base</a></li>
+		<li><a href="#dta__tokwrap__cxdata">DTA::TokWrap::CxData</a></li>
 		<li><a href="#dta__tokwrap__logger">DTA::TokWrap::Logger</a></li>
 		<li><a href="#dta__tokwrap__utils">DTA::TokWrap::Utils</a></li>
 		<li><a href="#dta__tokwrap__version">DTA::TokWrap::Version</a></li>
@@ -135,6 +138,7 @@ class comprises the top-level API of the DTA::TokWrap distribution.</p>
 <p>
 </p>
 <h3><a name="dta__tokwrap__document__maker">DTA::TokWrap::Document::Maker</a></h3>
+<p><strong>***DEPRECATED***</strong></p>
 <p>DTA::TokWrap::Document::Maker provides an experimental
 <a href="#dta__tokwrap__document">DTA::TokWrap::Document</a>
 subclass which attempts to perform <code>make</code>-like dependency
@@ -178,11 +182,16 @@ for details.</p>
 <p>
 </p>
 <h3><a name="dta__tokwrap__processor__tokenize">DTA::TokWrap::Processor::tokenize</a></h3>
-<p><strong>WARNING</strong>: this class is currently just a placeholder for the
-&quot;official&quot; low-level tokenizer (ToMaSoTaTh).  Until such time
-as the official tokenizer is functional, please use the
-<a href="DTA.TokWrap.Processor.tokenize.dummy.html">DTA::TokWrap::Processor::tokenize::dummy</a>
-sub-class, which uses a simple locally-built low-level tokenizer.</p>
+<p>This class is just an abstract placeholder for a
+low-level tokenizer. By default, it attempts automatically detect
+a supported tokenizer on your system (preferably moot/WASTE).
+Depending on your needs, you may wish to use e.g.
+<a href="DTA.TokWrap.Processor.tokenize.waste.html">DTA::TokWrap::Processor::tokenize::waste</a>
+or
+<a href="DTA.TokWrap.Processor.tokenize.http.html">DTA::TokWrap::Processor::tokenize::http</a>
+directly, or to set the package variable
+<a href="$DTA.TokWrap.Processor.tokenize.DEFAULT_SUBCLASS.html">DTA::TokWrap::Processor::tokenize</a>
+to the default tokenizer subclass name for your system.</p>
 <p>DTA::TokWrap::Processor::tokenize provides an object-oriented
 <a href="#dta__tokwrap__processor">DTA::TokWrap::Processor</a> wrapper
 for the tokenization of serialized text files
@@ -228,11 +237,38 @@ for <a href="#dta__tokwrap__document">DTA::TokWrap::Document</a> objects.</p>
 for details.</p>
 <p>
 </p>
+<h3><a name="dta__tokwrap__processor__addws">DTA::TokWrap::Processor::addws</a></h3>
+<p>DTA::TokWrap::Processor::standoff provides an object-oriented
+<a href="#dta__tokwrap__processor">DTA::TokWrap::Processor</a> wrapper
+for splicing tokenization data (word- and sentence-boundaries)
+back into a source TEI-XML file, potentially fragmenting
+words and/or sentences in the process.  Each segment is assigned
+a unique id, and fragmented segments are associated using the TEI
+<code>prev</code> and <code>next</code> attributes.</p>
+<p>See <a href="DTA.TokWrap.Processor.addws.html">DTA::TokWrap::Processor::addws(3pm)</a>
+for details.</p>
+<p>
+</p>
+<h3><a name="dta__tokwrap__processor__idsplice">DTA::TokWrap::Processor::idsplice</a></h3>
+<p>DTA::TokWrap::Processor::standoff provides an object-oriented
+<a href="#dta__tokwrap__processor">DTA::TokWrap::Processor</a> wrapper
+for splicing stand-off data into a base XML file by matching ids.</p>
+<p>See <a href="DTA.TokWrap.Processor.idsplice.html">DTA::TokWrap::Processor::idsplice(3pm)</a>
+for details.</p>
+<p>
+</p>
 <h2><a name="dta__tokwrap__base">DTA::TokWrap::Base</a></h2>
 <p>DTA::TokWrap::Base provides an abstract base class for all object classes
 in the
 DTA::TokWrap distribution</p>
 <p>See <a href="DTA.TokWrap.Base.html">DTA::TokWrap::Base(3pm)</a>
+for details.</p>
+<p>
+</p>
+<h2><a name="dta__tokwrap__cxdata">DTA::TokWrap::CxData</a></h2>
+<p>DTA::TokWrap::CxData provides utilities for binary I/O on dta-tokwrap *.cx
+files.</p>
+<p>See <a href="DTA.TokWrap.CxData.html">DTA::TokWrap::CxData(3pm)</a>
 for details.</p>
 <p>
 </p>
