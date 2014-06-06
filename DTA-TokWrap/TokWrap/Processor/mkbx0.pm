@@ -178,6 +178,9 @@ sub defaults {
 				  ##-- formulae
 				  #'formula' => '<ws/><w/><c text="FORMEL"/><w/><ws/>',
 				  'formula' => '<w/>',
+
+				  ##-- whiespace as element
+				  'space' => '<ws/>',
 				 },
 	  hint_stylestr => undef,
 	  hint_stylesheet => undef,

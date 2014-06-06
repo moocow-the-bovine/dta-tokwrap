@@ -315,7 +315,7 @@ sub tokenize1 {
 		      qw( Art Bon Kim ),
 		      ##-- more bible books
 		      qw( Gall Reg Hos Hoſ Hose Hoſe Rom Reg ),
-		      qw( Johan Johann Malach Eze Esa Eſa Sap ),
+		      qw( Joel Johan Johann Malach Eze Esa Eſa Sap ),
 		      ##-- other stuff that fits here
 		      qw( Idiot idiot ),
 		     );
