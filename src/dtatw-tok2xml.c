@@ -9,6 +9,15 @@
 //#define VERBOSE_IO 1
 #undef VERBOSE_IO
 
+// SUPPRESS_HEADER_COMMENTS : define this to suppress header comments into output file
+//  + non-suppression can lead to errors of the form:
+//     :10: parser error : Double hyphen within comment:
+//      <!-- base=1949%_%27%_%wenn-zelluloidgoetter-reden
+//      <!-- base=1949%_%27%_%wenn-zelluloidgoetter-reden--_TEIexport.xml -->
+//    in subsequent processing steps (example from dwds)
+//  + errors should disappear now with put_escaped_cmt_str() in dta-tokwrap v0.55
+#undef SUPPRESS_HEADER_COMMENTS
+
 //-- want_profile: if true, some profiling information will be printed to stderr
 //int want_profile = 1;
 int want_profile = 0;
@@ -87,13 +96,11 @@ static void process_tt_file(FILE *f_in, FILE *f_out, char *filename_in, char *fi
 	//-- tokenizer $SB$ hint: increment paragraph counter
 	++s_pn_ctr;
       }
-      if (strncmp(linebuf+2," base=",8)!=0) {
-	  //-- xml:base declaration: add a trailing space
-	fprintf(f_out, "\n<!--%s -->", linebuf+2);
-	continue;
-      }
-      //-- any other comment: translate it
-      fprintf(f_out, "\n<!--%s-->", linebuf+2);
+      //-- other comment (e.g "base=\"BASE\"),
+      fputs("\n<!--", f_out);
+      put_escaped_cmt_str(f_out, linebuf+2, -1);
+      if (linebuf[2]==' ') fputc(' ', f_out);		//-- add a trailing space for leading-space tt-comments
+      fputs("-->", f_out);
       continue;
     }
 
@@ -182,7 +189,6 @@ int main(int argc, char **argv)
   char *xmlsuff = "";    //-- additional suffix for root @xml:base
   FILE *f_in  = stdin;   //-- input .t file
   FILE *f_out = stdout;  //-- output .xml file
-  int i;
 
   //-- initialize: globals
   prog = file_basename(NULL,argv[0],"",-1,0);
@@ -237,13 +243,20 @@ int main(int argc, char **argv)
 
   //-- print basic XML header
   fprintf(f_out, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-  fprintf(f_out, "<!--\n");
-  fprintf(f_out, " ! File created by %s (%s version %s)\n", prog, PACKAGE, PACKAGE_VERSION);
-  fprintf(f_out, " ! Command-line: %s", argv[0]);
-  for (i=1; i < argc; i++) {
-    fprintf(f_out, " '%s'", (argv[i][0] ? argv[i] : ""));
+#ifdef VERBOSE_HEADER_COMMENTS
+  {
+    int i;
+    fprintf(f_out, "<!--\n");
+    fprintf(f_out, " ! File created by %s (%s version %s)\n", prog, PACKAGE, PACKAGE_VERSION);
+    fprintf(f_out, " ! Command-line: %s", argv[0]);
+    for (i=1; i < argc; i++) {
+      fputs(" '", f_out);
+      put_escaped_cmt_string(f_out, (argv[i][0] ? argv[i] : ""), -1);
+      fputc('\'', f_out);
+    }
+    fputs("\n !-->\n", f_out);
   }
-  fprintf(f_out, "\n !-->\n");
+#endif
 
   //-- print XML root element
   fprintf(f_out,"<%s",docElt);

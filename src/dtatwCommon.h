@@ -112,6 +112,30 @@ void put_escaped_str(FILE *f, const char *str, int len)
 }
 
 /*======================================================================
+ * Utils: XML-comments
+ */
+
+/*--------------------------------------------------------------
+ * put_escaped_cmt_str(f,str,len)
+ *  + escapes double-hypens "--" as "-\-"
+ */
+static inline
+void put_escaped_cmt_str(FILE *f, const char *str, int len)
+{
+  int i;
+  int last_was_hyphen = 0;
+  for (i=0; str[i] && (len < 0 || i < len); i++) {
+    if (str[i]=='-') {
+      if (last_was_hyphen) fputc('\\', f);
+      last_was_hyphen = 1;
+    } else {
+      last_was_hyphen = 0;
+    }
+    fputc(str[i], f);
+  }
+}
+
+/*======================================================================
  * Utils: basename
  */
 
