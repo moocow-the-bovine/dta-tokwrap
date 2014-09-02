@@ -565,7 +565,7 @@ sub hint_autotune {
 ##  + required in order for XML::LibXML XPath id() function to work properly (also for XML::LibXSLT)
 sub sanitize_xmlid {
   my ($mbx0,$xmldoc) = @_;
-  $mbx0->vlog('trace',"sanitize_xmlid()");
+  $mbx0->vlog($mbx0->{traceLevel},"sanitize_xmlid()");
 
   ##-- sanitize: map 'id' -> 'xml:id'
   foreach (@{$xmldoc->findnodes('//*[@id and not(@xml:id)]')}) {
@@ -585,7 +585,7 @@ sub sanitize_xmlid {
 ##  + requires a working XML::LibXML XPath id() function (see method sanitize_xmlid())
 sub sanitize_chains {
   my ($mbx0,$xmldoc,$pass) = @_;
-  $mbx0->vlog('trace',"sanitize_chains()");
+  $mbx0->vlog($mbx0->{traceLevel},"sanitize_chains()");
 
   $pass ||= 1;
   my $flabel  = "sanitize_chains(pass=$pass)";
@@ -705,7 +705,7 @@ sub sanitize_chains {
 ##  + converts //seg coding to @prev|@next
 sub sanitize_segs {
   my ($mbx0,$xmldoc) = @_;
-  $mbx0->vlog('trace',"sanitize_segs()");
+  $mbx0->vlog($mbx0->{traceLevel},"sanitize_segs()");
 
   my ($nod,$nodid,$part,$refid,$refnod, $nodlabel);
   my $id=0;
