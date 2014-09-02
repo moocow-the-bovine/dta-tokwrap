@@ -26,6 +26,7 @@ our $outfile = "-";   ##-- default: stdout
 
 our $keep_blanks = 0;  ##-- keep input whitespace?
 our $format = 1;       ##-- output format level
+our $strict_dta = 1;   ##-- complain about missing dta-only attributes?
 
 ##-- constants: verbosity levels
 our $vl_warn     = 1;
@@ -47,9 +48,13 @@ GetOptions(##-- General
 	   'verbose|v=i' => \$verbose,
 	   'quiet|q' => sub { $verbose=!$_[1]; },
 
-	   ##-- I/O
+	   ##-- behavior
 	   'basename|base|b|dirname|dir|d=s' => \$basename,
 	   'keep-blanks|blanks|whitespace|ws!' => \$keep_blanks,
+	   'dta!' => \$strict_dta,
+	   'foreign|extern!' => sub { $strict_dta=!$_[1]; },
+
+	   ##-- I/O
 	   'output|out|o=s' => \$outfile,
 	   'format|fmt!' => \$format,
 	  );
@@ -348,7 +353,7 @@ my @dirname_xpaths = (
 		      'fileDesc/publicationStmt/idno[@type="DTADIR"]',     ##-- old (<2012-07)
 		     );
 my $dirname = xpgrepval($hroot,@dirname_xpaths) || $basename;
-ensure_xpath($hroot,$dirname_xpaths[0],$dirname,1);
+ensure_xpath($hroot, $dirname_xpaths[0], $dirname, $strict_dta);
 
 ##-- meta: dtaid
 my @dtaid_xpaths = (
@@ -356,7 +361,7 @@ my @dtaid_xpaths = (
 		    'fileDesc/publicationStmt/idno[@type="DTAID"]',
 		   );
 my $dtaid = xpgrepval($hroot,@dtaid_xpaths) || "0";
-ensure_xpath($hroot,$dtaid_xpaths[0],$dtaid,1);
+ensure_xpath($hroot, $dtaid_xpaths[0], $dtaid, $strict_dta);
 
 ##-- meta: timestamp: ISO
 my $timestamp_xpath = 'fileDesc/publicationStmt/date';
