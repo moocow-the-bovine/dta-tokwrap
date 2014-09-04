@@ -26,7 +26,7 @@ our $outfile = "-";   ##-- default: stdout
 
 our $keep_blanks = 0;  ##-- keep input whitespace?
 our $format = 1;       ##-- output format level
-our $strict_dta = 1;   ##-- complain about missing dta-only attributes?
+our $foreign = 0;      ##-- relaxed (non-dta) mode?
 
 ##-- constants: verbosity levels
 our $vl_warn     = 1;
@@ -51,8 +51,8 @@ GetOptions(##-- General
 	   ##-- behavior
 	   'basename|base|b|dirname|dir|d=s' => \$basename,
 	   'keep-blanks|blanks|whitespace|ws!' => \$keep_blanks,
-	   'dta!' => \$strict_dta,
-	   'foreign|extern!' => sub { $strict_dta=!$_[1]; },
+	   'dta!' => sub { $foreign=!$_[1]; },
+	   'foreign|extern!' => \$foreign,
 
 	   ##-- I/O
 	   'output|out|o=s' => \$outfile,
@@ -257,7 +257,7 @@ if (!defined($author)) {
 ensure_xpath($hroot, 'fileDesc/titleStmt/author[@n="ddc"]', $author);
 
 ##-- meta: title
-my $title       = ($basename =~ m/^[^_]+_([^_]+)_/ ? ucfirst($1) : '');
+my $title       = $foreign ? '' : ($basename =~ m/^[^_]+_([^_]+)_/ ? ucfirst($1) : '');
 my $title_xpath = 'fileDesc/titleStmt/title[@type="main" or @type="sub" or @type="vol"]';
 my $title_nods  = $hroot->findnodes($title_xpath);
 if (@$title_nods) {
@@ -288,6 +288,7 @@ if (!$date) {
   $date = ($basename =~ m/^[^\.]*_([0-9]+)$/ ? $1 : 0);
   warn("$prog: $basename: WARNING: missing date XPath $date_xpaths[$#date_xpaths] defaults to \"$date\"") if ($verbose >= $vl_warn);
 }
+$date =~ s/(?:^\s*)|(?:\s*$)//g;
 if ($date =~ /[^0-9\-]/) {
   warn("$prog: $basename: WARNING: trimming non-digits from parsed date '$date'") if ($verbose >= $vl_warn);
   $date =~ s/[^0-9\-]//g;
@@ -353,7 +354,7 @@ my @dirname_xpaths = (
 		      'fileDesc/publicationStmt/idno[@type="DTADIR"]',     ##-- old (<2012-07)
 		     );
 my $dirname = xpgrepval($hroot,@dirname_xpaths) || $basename;
-ensure_xpath($hroot, $dirname_xpaths[0], $dirname, $strict_dta);
+ensure_xpath($hroot, $dirname_xpaths[0], $dirname, !$foreign);
 
 ##-- meta: dtaid
 my @dtaid_xpaths = (
@@ -361,7 +362,7 @@ my @dtaid_xpaths = (
 		    'fileDesc/publicationStmt/idno[@type="DTAID"]',
 		   );
 my $dtaid = xpgrepval($hroot,@dtaid_xpaths) || "0";
-ensure_xpath($hroot, $dtaid_xpaths[0], $dtaid, $strict_dta);
+ensure_xpath($hroot, $dtaid_xpaths[0], $dtaid, !$foreign);
 
 ##-- meta: timestamp: ISO
 my $timestamp_xpath = 'fileDesc/publicationStmt/date';
