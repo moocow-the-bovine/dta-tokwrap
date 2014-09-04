@@ -80,6 +80,7 @@ our $verbose = $vl_progress;     ##-- print progress messages by default
 our $warn_on_empty_clist = 1;       ##-- warn on empty //c list for //w in txmlfile?
 our $warn_on_empty_blist = 1;       ##-- warn on empty sx-block list for //w in txmlfile?
 our $warn_on_bad_page   = 1;        ##-- warn on bad //w/@pb attribute?
+our $warn_on_bad_facs   = 1;        ##-- warn on missing pb/@facs?
 our %n_warnings = qw();
 
 ##------------------------------------------------------------------------------
@@ -112,6 +113,8 @@ GetOptions(##-- General
 	   'keep-b|keepb|kb!' => \$do_keep_b,
 	   'keep-xb|keepxb|kxb!' => \$do_keep_xb,
 	   'formula-text|ft=s' => \$formula_text,
+	   'foreign!' => sub { $warn_on_bad_facs=!$_[1]; },
+	   'dta!'     => sub { $warn_on_bad_facs=$_[1]; },
 	  );
 
 pod2usage({-exitval=>0,-verbose=>0}) if ($help);
@@ -363,10 +366,10 @@ sub load_cx {
       if (defined($facs = $cxr->[$CX_ATTR_FACS])) {
 	$pb = $facs;
 	warn("$prog: WARNING: invalid \@facs for ${pn}-th <pb> from $cxfile record number $cn")
-	  if ($facs == 0xffffffff && ++$n_warnings{pb_bad_facs}<=10);
+	  if ($facs == 0xffffffff && $warn_on_bad_facs && ++$n_warnings{pb_bad_facs}<=10);
       } else {
 	warn("$prog: WARNING: no \@facs attribute for ${pn}-th <pb> at $cxfile record number $cn")
-	  if (++$n_warnings{pb_no_facs}<=10);
+	  if ($warn_on_bad_facs && ++$n_warnings{pb_no_facs}<=10);
 	$pb = $pn;
       }
       $lb = 1;

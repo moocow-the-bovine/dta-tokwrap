@@ -288,9 +288,9 @@ if (!$date) {
   $date = ($basename =~ m/^[^\.]*_([0-9]+)$/ ? $1 : 0);
   warn("$prog: $basename: WARNING: missing date XPath $date_xpaths[$#date_xpaths] defaults to \"$date\"") if ($verbose >= $vl_warn);
 }
-if ($date =~ /\D/) {
+if ($date =~ /[^0-9\-]/) {
   warn("$prog: $basename: WARNING: trimming non-digits from parsed date '$date'") if ($verbose >= $vl_warn);
-  $date =~ s/\D//g;
+  $date =~ s/[^0-9\-]//g;
 }
 #ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="scan"]/biblFull/publicationStmt/date[@type="first"]', $date); ##-- old (<2012-07)
 ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="ddc"]/biblFull/publicationStmt/date[@type="pub"]', $date);  ##-- new (>=2012-07)
