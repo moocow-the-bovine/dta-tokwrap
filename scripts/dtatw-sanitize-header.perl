@@ -250,7 +250,7 @@ elsif ($author_nod && $author_nod->nodeName =~ /^(?:author|editor)$/ && ($author
 }
 if (!defined($author)) {
   ##-- guess author from basename
-  warn("$prog: $basename: WARNING: missing author XPath(s) ", join('|', @author_xpaths)) if ($verbose >= $vl_warn);
+  warn("$prog: $basename: WARNING: missing author XPath(s) ", join('|', @author_xpaths)) if (!$foreign && $verbose >= $vl_warn);
   $author = ($basename =~ m/^([^_]+)_/ ? $1 : '');
   $author =~ s/\b([[:lower:]])/\U$1/g; ##-- implicitly upper-case
 }
@@ -268,7 +268,7 @@ if (@$title_nods) {
   $title =~ s/^ //;
   $title =~ s/ $//;
 } else {
-  warn("$prog: $basename: WARNING: missing title XPath(s) $title_xpath defaults to '$title'") if ($verbose >= $vl_warn);
+  warn("$prog: $basename: WARNING: missing title XPath(s) $title_xpath defaults to '$title'") if (!$foreign && $verbose >= $vl_warn);
 }
 ensure_xpath($hroot, 'fileDesc/titleStmt/title[@type="ddc"]', $title, 0);
 
