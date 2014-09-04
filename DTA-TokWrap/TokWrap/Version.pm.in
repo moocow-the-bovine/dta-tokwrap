@@ -2,7 +2,7 @@
 ## AUTO-GENERATED from Version.pm.in : DO NOT EDIT ###
 
 ## File: DTA::TokWrap::Version.pm
-## Author: Bryan Jurish <moocow@ling.uni-potsdam.de>
+## Author: Bryan Jurish <jurish@bbaw.de>
 ## Descript: DTA tokenizer wrappers: package version
 
 package DTA::TokWrap::Version;
@@ -19,7 +19,7 @@ our $PACKAGE_VERSION = "@PACKAGE_VERSION@";  ##-- usually == $VERSION
 our $prefix = "@prefix@";
 our $datadir ="@datadir@";
 our $rcdir = "@rcdir@";
-our $RCDIR = $rcdir;
+our $RCDIR = $ENV{TOKWRAP_RCDIR} || $rcdir;
 
 our @ISA = qw(Exporter);
 
