@@ -121,6 +121,7 @@ GetOptions(
 	   'noforce|nof' => sub { $twopts{force} = [] },
 
 	   ##-- DTA::TokWrap::Processor options
+	   'resource-directory|rcdir|rcd|rd=s' => \$DTA::TokWrap::Version::RCDIR,
 	   'inplacePrograms|inplace|i!' => \$twopts{inplacePrograms},
 	   'sentence-break-xpath|sb-xpath|sbx|sb=s@' => $twopts{procOpts}{hint_sb_xpaths},
 	   'word-break-xpath|wb-xpath|wbx|wb=s@' => $twopts{procOpts}{hint_wb_xpaths},
@@ -374,6 +375,7 @@ dta-tokwrap.perl - top-level tokenizer wrapper for DTA XML documents
   -noforce               # overrides all preceeding -force and -force-target flags
  
  Subprocessor Options:
+  -rcdir RCDIR           # resource directory (default=/usr/local/share/dta-resources)
   -inplace , -noinplace  # do/don't use locally built programs if available (default=do)
   -sb-xpath XPATH        # add sentence-break hints on XPATH (element) open and close
   -wb-xpath XPATH        # add word-break hints on XPATH (element) open and close
