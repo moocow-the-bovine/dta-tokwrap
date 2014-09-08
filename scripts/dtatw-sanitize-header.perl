@@ -378,7 +378,7 @@ ensure_xpath($hroot, $timestamp_xpaths[0], $timestamp, !$foreign);
 
 ##-- meta: availability (text)
 my @availability_xpaths = (
-			   'fileDesc/publicationStmt/availability[@type="ddc"]',
+			   'fileDesc/publicationStmt/availability[@type="ddc-timestamp"]',
 			   'fileDesc/publicationStmt/availability',
 			  );
 my $availability        = xpgrepval($hroot,@availability_xpaths) || "-";
