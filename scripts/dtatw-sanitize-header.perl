@@ -365,13 +365,16 @@ my $dtaid = xpgrepval($hroot,@dtaid_xpaths) || "0";
 ensure_xpath($hroot, $dtaid_xpaths[0], $dtaid, !$foreign);
 
 ##-- meta: timestamp: ISO
-my $timestamp_xpath = 'fileDesc/publicationStmt/date';
-my $timestamp = xpval($timestamp_xpath);
+my @timestamp_xpaths = (
+			'fileDesc/publicationStmt/date[@type="ddc"]',
+			($foreign ? qw() : 'fileDesc/publicationStmt/date'),
+		       );
+my $timestamp = xpgrepval($hroot, @timestamp_xpaths);
 if (!$timestamp) {
   my $time = $infile eq '-' ? time() : (stat($infile))[9];
   $timestamp = POSIX::strftime("%FT%H:%M:%SZ",gmtime($time));
-  ensure_xpath($hroot,$timestamp_xpath,$timestamp,1);
 }
+ensure_xpath($hroot, $timestamp_xpaths[0], $timestamp, !$foreign);
 
 ##-- meta: availability (text)
 my @availability_xpaths = (
