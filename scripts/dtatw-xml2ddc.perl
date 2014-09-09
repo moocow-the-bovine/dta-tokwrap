@@ -84,39 +84,10 @@ sub loadxml {
 ##======================================================================
 ## X-Path utilities
 
-## $node          = get_xpath($root,\@xpspec)      ##-- scalar context
-## ($node,$isnew) = get_xpath($root,\@xpspec)      ##-- array context
-##  + gets or creates node corresponding to \@xpspec
-##  + each \@xpspec element is either
-##    - a SCALAR ($tagname), or
-##    - an ARRAY [$tagname, %attrs ]
-sub get_xpath {
-  my ($root,$xpspec) = @_;
-  my ($step,$xp,$tag,%attrs,$next);
-  my $isnew = 0;
-  foreach $step (@$xpspec) {
-    ($tag,%attrs) = ref($step) ? @$step : ($step);
-    $xp = $tag;
-    $xp .= "[".join(' and ', map {"\@$_='$attrs{$_}'"} sort keys %attrs)."]" if (%attrs);
-    if (!defined($next = $root->findnodes($xp)->[0])) {
-      $next = $root->addNewChild(undef,$tag);
-      $next->setAttribute($_,$attrs{$_}) foreach (sort keys %attrs);
-      $isnew = 1;
-    }
-    $root = $next;
-  }
-  return wantarray ? ($root,$isnew) : $root;
-}
-
-## $nod = ensure_xpath($root,\@xpspec,$default_value)
-sub ensure_xpath {
-  my ($root,$xpspec,$val) = @_;
-  my ($elt,$isnew) = get_xpath($root, $xpspec);
-  if ($isnew) {
-    $elt->appendText($val);
-    $elt->appendChild(XML::LibXML::Comment->new("added by $prog"));
-  }
-  return $elt;
+## $val = nodval($nod)
+sub nodval {
+  return undef if (!defined($_[0]));
+  return isa($_[0],'XML::LibXML::Attribute') ? $_[0]->nodeValue : $_[0]->textContent;
 }
 
 ##======================================================================
@@ -148,7 +119,7 @@ if ($headdoc) {
 BEGIN { *isa=\&UNIVERSAL::isa; }
 my $text = $outroot->addNewChild(undef,'text');
 my $body = $text->addNewChild(undef,'body');
-my ($s_in,$s_out, $w_in,$w_out, @wf, $np,$pn_in,$pn_out, $pb_in,$pb_out);
+my ($s_in,$s_out, $w_in,$w_out, @wf, $np,$pn_in,$pn_out, $page_in,$pb_out);
 my $parent = $wrap_paragraphs ? undef : $body;
 my $page   = -1;
 
@@ -162,8 +133,8 @@ foreach $s_in (@{$indoc->findnodes('//s')}) {
   }
   $s_out = $parent->addNewChild(undef,'s');
   foreach $w_in (@{$s_in->findnodes('w')}) {
-    if ($pb_xpath && defined($pb_in = $w_in->findnodes($pb_xpath)->[0]) && $pb_in ne $page) {
-      $page = $pb_in;
+    if ($pb_xpath && defined($page_in=nodval($w_in->findnodes($pb_xpath)->[0])) && $page_in ne $page) {
+      $page = $page_in;
       $pb_out = $s_out->addNewChild(undef, 'pb');
       $pb_out->setAttribute('n'=>$page);
     }

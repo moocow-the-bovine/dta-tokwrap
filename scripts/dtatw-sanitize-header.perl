@@ -349,7 +349,6 @@ ensure_xpath($hroot, $library_xpaths[0], $library, 0);
 my @dirname_xpaths = (
 		      'fileDesc/publicationStmt/idno/idno[@type="DTADirName"]', ##-- (>=2013-09-04)
 		      'fileDesc/publicationStmt/idno[@type="DTADirName"]', ##-- (>=2013-09-04)
-		      'fileDesc/publicationStmt/idno[@type="DTADirName"]', ##-- (>=2012-09)
 		      'fileDesc/publicationStmt/idno[@type="DTADIRNAME"]', ##-- new (>=2012-07)
 		      'fileDesc/publicationStmt/idno[@type="DTADIR"]',     ##-- old (<2012-07)
 		     );
