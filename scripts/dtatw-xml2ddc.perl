@@ -25,6 +25,7 @@ our $outfile  = "-";   ##-- default: stdout
 our $keep_blanks = 0;       ##-- keep input whitespace?
 our $format = 1;            ##-- output format level
 our $wrap_paragraphs = 0;   ##-- insert <p> wrappers for //s/@pn ?
+our $pb_xpath = '';         ##-- inert <pb> elements whenever $pb_xpath changes (relative to //w)?
 
 ##-- field selection
 our @fields = qw();
@@ -52,6 +53,7 @@ GetOptions(##-- General
 	   ##-- I/O
 	   'keep-blanks|blanks|whitespace|ws!' => \$keep_blanks,
 	   'wrap-paragraphs|wrap-p|paragraphs|para|pwrap|p!' => \$wrap_paragraphs,
+	   'pagebreak-xpath|pb-xpath|pbx|pb=s' => \$pb_xpath,
 	   'header-file|hf=s' => \$headfile,
 	   'index-field|index|i=s' => \@fields,
 	   'output|out|o=s' => \$outfile,
@@ -146,8 +148,9 @@ if ($headdoc) {
 BEGIN { *isa=\&UNIVERSAL::isa; }
 my $text = $outroot->addNewChild(undef,'text');
 my $body = $text->addNewChild(undef,'body');
-my ($s_in,$s_out, $w_in,$w_out, @wf, $np,$pn_in,$pn_out);
+my ($s_in,$s_out, $w_in,$w_out, @wf, $np,$pn_in,$pn_out, $pb_in,$pb_out);
 my $parent = $wrap_paragraphs ? undef : $body;
+my $page   = -1;
 
 foreach $s_in (@{$indoc->findnodes('//s')}) {
   if ($wrap_paragraphs) {
@@ -159,6 +162,11 @@ foreach $s_in (@{$indoc->findnodes('//s')}) {
   }
   $s_out = $parent->addNewChild(undef,'s');
   foreach $w_in (@{$s_in->findnodes('w')}) {
+    if ($pb_xpath && defined($pb_in = $w_in->findnodes($pb_xpath)->[0]) && $pb_in ne $page) {
+      $page = $pb_in;
+      $pb_out = $s_out->addNewChild(undef, 'pb');
+      $pb_out->setAttribute('n'=>$page);
+    }
     @wf = (
 	   map {s/\s/_/g; $_}
 	   map {utf8::is_utf8($_) ? $_ : decode_utf8($_)}
@@ -200,6 +208,7 @@ dtatw-xml2ddc.perl - convert DTA::TokWrap ddc-t-xml files to DDC-parseable forma
   -header HEADERFILE     # splice in teiHeader from HEADERFILE (default=none)
   -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in DDC_TXML_FILE file (default=don't)
   -pwrap  , -nopwrap     # do/don't insert <p> elements to wrap //s/@pn keys (default=don't)
+  -pb XPATH              # insert <pb n="$XPATH"/> milestones on $XPATH change, relative to //w (default:don't)
   -index XPATH           # set XPATH source for an output index field, relative to //w (overrides DTA defaults)
   -output FILE           # specify output file (default='-' (STDOUT))
 
