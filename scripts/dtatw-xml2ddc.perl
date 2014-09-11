@@ -121,7 +121,7 @@ my $text = $outroot->addNewChild(undef,'text');
 my $body = $text->addNewChild(undef,'body');
 my ($s_in,$s_out, $w_in,$w_out, @wf, $np,$pn_in,$pn_out, $page_in,$pb_out);
 my $parent = $wrap_paragraphs ? undef : $body;
-my $page   = -1;
+my $page   = 0;
 
 foreach $s_in (@{$indoc->findnodes('//s')}) {
   if ($wrap_paragraphs) {
@@ -133,7 +133,7 @@ foreach $s_in (@{$indoc->findnodes('//s')}) {
   }
   $s_out = $parent->addNewChild(undef,'s');
   foreach $w_in (@{$s_in->findnodes('w')}) {
-    if ($pb_xpath && defined($page_in=nodval($w_in->findnodes($pb_xpath)->[0])) && $page_in ne $page) {
+    if ($pb_xpath && defined($page_in=nodval($w_in->findnodes($pb_xpath)->[0])) && $page_in ne $page && $page_in=~/^[0-9]+$/ && $page_in != 0) {
       $page = $page_in;
       $pb_out = $s_out->addNewChild(undef, 'pb');
       $pb_out->setAttribute('n'=>$page);
