@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TEI XMLNS="http://www.tei-c.org/ns/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.tei-c.org/ns/1.0 http://www.dwds.de/schema/dwds_tei_p5.xsd">
+   <teiHeader type="text">
+      <fileDesc>
+         <titleStmt>
+            <title>
+</title>
+            <author>Kraus, Karl
+</author>
+            <funder>DWDS
+</funder>
+            <respStmt>
+               <resp n="1">conversion to XML/TEI- conformant markup
+</resp>
+               <name n="1">Alexander Geyken, Gerald Neumann, Arnd Rattmann, Ralf Wolz, Christiane Fritze
+</name>
+            </respStmt>
+         </titleStmt>
+         <extent>234</extent>
+         <publicationStmt>
+            <publisher id="DWDS-Corpus-Publisher">BBAW - AG Digitales Wörterbuch
+
+</publisher>
+            <address>
+               <addrLine>Jägerstr. 22, 10117 Berlin
+</addrLine>
+               <addrLine>dwds@bbaw.de
+</addrLine>
+            </address>
+            <pubPlace>Berlin
+</pubPlace>
+            <date>2004-06-01
+</date>
+            <authority>
+               <date/>
+               <name>K. G. Saur Verlag</name>
+            </authority>
+            <availability n="MR3S" status="restricted">
+               <p>Mit eingeschraenkten Nutzungsrechten vom Verlag, Kontextanzeige max. 3 Saetze</p>
+            </availability>
+         </publicationStmt>
+         <notesStmt>
+            <note type="source" anchored="true">V
+</note>
+         </notesStmt>
+         <sourceDesc id="orig" default="false">
+            <bibl default="false">Kraus, Karl, o. T. [Seit ich über], in: Die Fackel 2 (1899) Nr. 24, S. 25-26
+</bibl>
+            <biblFull default="false">
+               <titleStmt>
+                  <title level="a" type="main">
+</title>
+                  <title level="a" type="sub">
+</title>
+                  <title level="j" type="main">Die Fackel
+</title>
+                  <title level="j" type="sub">
+</title>
+                  <author>Kraus, Karl
+</author>
+               </titleStmt>
+               <publicationStmt>
+                  <publisher id="Rechtsinhaber">Verl. Die Fackel
+</publisher>
+                  <pubPlace>Wien
+</pubPlace>
+                  <date id="first">1899-11-25
+</date>
+               </publicationStmt>
+               <seriesStmt>
+                  <title level="j" type="main">Die Fackel
+</title>
+                  <idno type="volume">2
+</idno>
+                  <idno type="number">24
+</idno>
+                  <idno type="page">25-26
+</idno>
+                  <respStmt>
+                     <resp n="1">herausgegeben von
+</resp>
+                     <name n="1" type="person">Karl Kraus
+</name>
+                  </respStmt>
+               </seriesStmt>
+            </biblFull>
+         </sourceDesc>
+         <sourceDesc id="scan" default="false">
+            <bibl default="false">Kraus, Karl, o. T. [Seit ich über], in: Die Fackel [Elektronische Ressource], München: Saur 2002
+</bibl>
+            <biblFull default="false">
+               <titleStmt>
+                  <title level="a" type="main">
+</title>
+                  <title level="a" type="sub">
+</title>
+                  <title level="m" type="main">Die Fackel [Elektronische Ressource]
+</title>
+                  <title level="m" type="sub">Volltextausgabe
+</title>
+                  <author>Kraus, Karl
+</author>
+               </titleStmt>
+               <editionStmt>
+                  <edition>CD-ROM-Edition
+</edition>
+               </editionStmt>
+               <publicationStmt>
+                  <publisher>K. G. Saur Verlag
+</publisher>
+                  <pubPlace>München
+</pubPlace>
+                  <date>2002
+</date>
+                  <idno type="ISBN">3-8953-006-x
+</idno>
+               </publicationStmt>
+               <seriesStmt>
+                  <title level="j" type="main">
+</title>
+                  <idno type="volume">
+</idno>
+                  <idno type="number">
+</idno>
+                  <idno type="page">
+</idno>
+               </seriesStmt>
+            </biblFull>
+         </sourceDesc>
+      <filename>fackel_Bd02_Nr024_1899_12.xml</filename>
+</fileDesc>
+      <encodingDesc>
+         <classDecl>
+            <taxonomy id="dwds">
+               <bibl>
+					Digitales Woerterbuch der deutschen Sprache
+				</bibl>
+            </taxonomy>
+         </classDecl>
+         <projectDesc default="false">
+            <p>text collected by the Berlin-Brandenburgische Akademie der Wissenschaften for the project 'Digitales Wörterbuch der deutschen Sprache des 20. Jahrhunderts'.
+</p>
+         </projectDesc>
+         <samplingDecl default="false">
+            <p>linebreaks in paragraphs have been omitted (except for poems etc.)</p>
+            <p>heading lines and footers have been omitted.</p>
+            <p>blank lines and multiple blank spaces, including paragraph indents, have not been preserved.</p>
+            <p>marginal notes have been omitted.</p>
+            <p>font format (size, type) have not been preserved.</p>
+            <p>no reproduction of front and back matters.</p>
+            <p>preface(s), appendix(ices), index(es) and epilogues (of the author / editor) have been omitted.</p>
+            <p>figures and tables have not been preserved.</p>
+         </samplingDecl>
+      </encodingDesc>
+      <profileDesc>
+         <textClass default="false">
+            <keywords scheme="#dwds">
+               <term n="1" type="main">Zeitung
+</term>
+            </keywords>
+         </textClass>
+      </profileDesc>
+      <revisionDesc>
+         <change>RT
+</change>
+         <change when="2005-03-21">Setzliste</change>
+         <change when="2007-08-10">
+            <name>Marko Drotschmann</name>
+            <name>Wolfgang Seeker</name>
+				Konvertierung zu P5
+			</change>
+        <change when="2014-07-01"><name>Jörg Didakowski</name>Reparatur der Metadaten</change>
+    </revisionDesc>
+   <ddc_info><bibl>Die Fackel [Elektronische Ressource], 2002 [1899]</bibl><bibl_lex>Die Fackel [Elektronische Ressource], 2002. Zitiert nach: Die Fackel, Bd. 2, Nr. 24, 1899.</bibl_lex><orig>Die Fackel, Bd. 2, Nr. 24, 1899</orig><scan>Die Fackel [Elektronische Ressource], 2002</scan><date>1899-11-25</date><page_first>25</page_first><page_range>25-26</page_range><corpus>Kernkorpus-Basis</corpus><orig_volume></orig_volume><orig_number></orig_number><orig_series></orig_series><orig_category>Sammelband - periodisch - manuell</orig_category><orig_page_visible>no</orig_page_visible><scan_volume></scan_volume><scan_number></scan_number><scan_series></scan_series><scan_category>Sammelband - periodisch - manuell</scan_category><scan_page_visible>no</scan_page_visible></ddc_info></teiHeader>
+   <text>
+      <body>
+         <div n="1" part="N">
+            <div n="2" part="N">
+               <pb n="25"/>
+               <div n="3" part="N">
+                  <p>Seit ich über die Inserate in unseren »unabhängigen« Blättern meine Meinung ausgesprochen habe, erhalte ich zahlreiche Briefe, deren freundschaftlicher Bekehrungseifer mir beweist, dass immer noch viele nicht verstehen, worum es sich handelt. Ich <pb n="26"/>behaupte nicht, dass diese Blätter sich durch Inserate in ihrer Kritik beeinflussen lassen; aber ich constatiere, dass die Inserate mit der Absicht, solche Beeinflussung zu üben, angeboten werden. Und diese <hi rend="g">Absicht</hi> muss man zurückweisen. Ob die 'Zeit' Herrn Krupps Annoncen aufnimmt und ihn trotzdem angreift, oder ob sie dies - was ein Briefsteller auffällig findet - neuestens unterlässt, thut nichts zur Sache. Und dass sie jüngst ihre Unbefangenheit zu beweisen wünschte, indem sie nach Herrn Sonnemanns ('Frankfurter Zeitung') bewährtem Muster in derselben Nummer, die eine Annonce des »Janus« brachte, diese Gesellschaft heftig angriff, imponiert mir durchaus nicht. Vielmehr will ich klarstellen, dass solche Unbefangenheit höchst unanständig ist. Eine Annonce bedeutet eine Empfehlung. Wer sich für diese bezahlen lässt, gleichzeitig aber den Inserenten angreift, den Wert der Empfehlung also vernichtet, empfängt den Lohn für eine Leistung, die er von vornherein nicht zu erfüllen entschlossen ist. Ueberdies: was dächte man von einem Beamten, der Bestechungsgelder annimmt, dann aber gleichwohl unparteiisch seine amtliche Entscheidung fällt, also seine Unbefangenheit und doch auch seinen materiellen Vortheil wahren will? Die Antwort lese man im § 104 des Strafgesetzes. Nun denn, jene, die zwar kein Amt, aber berufsmäßig eine Meinung haben, unterliegen nicht der gleichen strafgesetzlichen, sicherlich aber der gleichen moralischen Verantwortlichkeit.</p>
+               </div>
+            </div>
+         </div>
+      </body>
+   </text>
+</TEI>
