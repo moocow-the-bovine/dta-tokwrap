@@ -125,6 +125,14 @@ void put_record_lb(TokWrapData *data, const XML_Char **attrs)
 }
 
 //--------------------------------------------------------------
+inline uint32_t pbfacs2n(const XML_Char *s)
+{
+  if (*s=='#') ++s; 
+  if (*s=='f') ++s;
+  return strtoul(s,NULL,10);
+}
+
+//--------------------------------------------------------------
 void put_record_pb(TokWrapData *data, const XML_Char **attrs)
 {
   ByteOffset my_xoff = XML_GetCurrentByteIndex(data->xp);
@@ -135,12 +143,14 @@ void put_record_pb(TokWrapData *data, const XML_Char **attrs)
   memset(data->cx_attrs,0,16);
   for ( ; *attrs; attrs += 2) {
     if (strcmp(attrs[0],"facs")==0) {
-      const XML_Char *s = attrs[1];
-      if (*s=='#') ++s; 
-      if (*s=='f') ++s;
-      data->cx_attrs[0] = strtoul(s,NULL,10);
+      data->cx_attrs[0] = pbfacs2n(attrs[1]);
       cx_attrs = data->cx_attrs;
       break;
+    }
+    else if (strcmp(attrs[0],"n")==0) {
+      //-- fallback: use pb/@n if available (but allow pb/@facs to override it)
+      data->cx_attrs[0] = pbfacs2n(attrs[1]);
+      cx_attrs = data->cx_attrs;
     }
   }
 
