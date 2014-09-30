@@ -94,7 +94,7 @@ sub cb_end {
 my ($str);
 sub cb_default {
   return if (!$is_header);
-  ($str = $_[0]->original_string) =~ s/^(<\/)?\w+:(\w+)/$1$2/;
+  ($str = $_[0]->original_string) =~ s/^(<\/?)\w+:(\w+)/$1$2/;
   $outfh->print($str);
 }
 
