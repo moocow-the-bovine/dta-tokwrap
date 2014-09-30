@@ -68,10 +68,11 @@ sub cb_xmldecl {
 #}
 
 ## undef = cb_start($expat, $elt,%attrs)
-our (%attrs);
+our (%attrs,$elt);
 sub cb_start {
   %attrs = @_[2..$#_];
-  ++$is_header if ($is_header || ($_[1] eq $want_elt && !grep {($attrs{$_}||'') ne $want_attrs{$_}} keys %want_attrs));
+  ($elt=$_[1]) =~ s/^\w+://;
+  ++$is_header if ($is_header || ($elt eq $want_elt && !grep {($attrs{$_}||'') ne $want_attrs{$_}} keys %want_attrs));
   $_[0]->default_current();
 }
 
