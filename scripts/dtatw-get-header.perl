@@ -90,8 +90,12 @@ sub cb_end {
 }
 
 ## undef = cb_default($expat, $str)
+##  + removes namespace prefixes on element tags
+my ($str);
 sub cb_default {
-  $outfh->print($_[0]->original_string) if ($is_header);
+  return if (!$is_header);
+  ($str = $_[0]->original_string) =~ s/^(<\/)?\w+:(\w+)/$1$2/;
+  $outfh->print($str);
 }
 
 ##======================================================================
