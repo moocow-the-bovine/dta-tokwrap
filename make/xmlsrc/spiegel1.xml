@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt>
+        <title type="main">Druckversion - Die Ölpest: Eine Chronik in Bildern - SPIEGEL ONLINE - Nachrichten - Panorama</title>
+        <editor>
+          <persName>
+            <surname>Adrien</surname>
+            <forename>Barbaresi</forename>
+          </persName>
+        </editor>
+        <respStmt>
+          <resp/>
+          <orgName>Berlin-Brandenburgische Akademie der Wissenschaften</orgName>
+        </respStmt>
+      </titleStmt>
+      <publicationStmt>
+        <publisher>Berlin-Brandenburgische Akademie der Wissenschaften</publisher>
+      </publicationStmt>
+      <sourceDesc>
+        <biblFull>
+          <titleStmt>
+            <title type="main">Die Ölpest: Eine Chronik in Bildern</title>
+            <author>
+              <persName></persName>
+            </author>
+          </titleStmt>
+          <publicationStmt>
+            <publisher>SPIEGEL ONLINE GmbH</publisher>
+            <date type="publication">1999-12-29</date>
+            <idno type="URL">http://www.spiegel.de/panorama/die-oelpest-eine-chronik-in-bildern-a-57988.html</idno>
+            <idno type="ID">57988</idno>
+            <idno type="RUBRIC-ID">76</idno>
+          </publicationStmt>
+          <seriesStmt>
+            <title>Spiegel Online</title>
+            <biblScope unit="year">1999</biblScope>
+            <biblScope unit="ressort"/>
+          </seriesStmt>
+        </biblFull>
+      </sourceDesc>
+    </fileDesc>
+    <profileDesc>
+      <textClass>
+        <classCode scheme="">panorama/artikel</classCode>
+      </textClass>
+    </profileDesc>
+  </teiHeader>
+  <text>
+    <body/>
+  </text>
+</TEI>
