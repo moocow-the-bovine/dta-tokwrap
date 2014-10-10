@@ -247,7 +247,7 @@ sub load_sx {
   ##-- populate block index
   $Nsx = scalar(@sx_blocks);
   $sx_blockv = '';
-  vec($sx_blockv,$Nsx-1,32) = 0; ##-- allocate
+  vec($sx_blockv,$Nsx-1,32) = 0 if ($Nsx>0); ##-- allocate
   my $blki = 0;
   foreach (@sx_blocks) {
     vec($sx_blockv,$blki,32) = $_->{xoff};
@@ -823,7 +823,7 @@ print STDERR "$prog: loaded $Nsx block record(s) from '$sxfile'.\n"
 print STDERR "$prog: loading .cx-file '$cxfile'...\n"
 if ($verbose>=$vl_progress);
 load_cx($cxfile) or die("$prog: FATAL: failed to load .cx-file '$cxfile'");
-print STDERR "$prog: loaded $Ncx character record(s) from '$cxfile' ".sprintf("[est = %d = %d%%]\n", $Ncx_est, 100*$Ncx_est/$Ncx)
+print STDERR "$prog: loaded $Ncx character record(s) from '$cxfile' ".sprintf("[est = %d = %.0f%%]\n", $Ncx_est, ($Ncx ? (100*$Ncx_est/$Ncx) : 'nan'))
   if ($verbose>=$vl_info);
 
 ##-- apply attributes from .chr.xml file to .t.xml file
