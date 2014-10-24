@@ -493,6 +493,20 @@ L<dta-tokwrap.perl(1)|dta-tokwrap.perl>,
 =cut
 
 ##======================================================================
+## See Also
+##======================================================================
+
+=pod
+
+=head1 SEE ALSO
+
+L<DTA::TokWrap::Intro(3pm)|DTA::TokWrap::Intro>,
+L<dta-tokwrap.perl(1)|dta-tokwrap.perl>,
+...
+
+=cut
+
+##======================================================================
 ## Footer
 ##======================================================================
 
@@ -504,10 +518,12 @@ Bryan Jurish E<lt>jurish@bbaw.deE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Bryan Jurish
+Copyright (C) 2009-2014 by Bryan Jurish
 
 This package is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.8.7 or,
+it under the same terms as Perl itself, either Perl version 5.14.2 or,
 at your option, any later version of Perl 5 you may have available.
 
 =cut
+
+
