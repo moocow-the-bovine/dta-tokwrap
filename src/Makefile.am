@@ -17,7 +17,7 @@ bin_PROGRAMS = \
 	dtatw-b2xb \
 	dtatw-tok2xml
 
-EXTRA_PROGRAMS = dtatw-cxlexer \
+EXTRA_PROGRAMS_OLD = dtatw-cxlexer \
 	dtatw-txml2master \
 	dtatw-txml2wxml \
 	dtatw-txml2sxml \
@@ -25,7 +25,7 @@ EXTRA_PROGRAMS = dtatw-cxlexer \
 
 common_deps = dtatwCommon.c dtatwCommon.h config.h dtatwConfig.h dtatwConfigAuto.h dtatwConfigNoAuto.h
 expat_deps = dtatwExpat.c dtatwExpat.h
-utf8_deps = dtatwUtf8.h h dtatwUtf8.c
+utf8_deps = dtatwUtf8.h dtatwUtf8.c
 
 dtatw_mkindex_SOURCES = dtatw-mkindex.c $(common_deps) $(expat_deps) $(utf8_deps)
 dtatw_mkindex_LDADD = $(EXPAT_LIBS)

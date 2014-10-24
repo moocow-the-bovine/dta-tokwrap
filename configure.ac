@@ -170,8 +170,23 @@ AC_CONFIG_LINKS([doc/README.pod:README.pod])
 ##-- no-autoheader stuff
 AC_CONFIG_LINKS(src/dtatwConfigNoAuto.h:src/dtatwConfigAuto.h.in)
 
+##----------------------------------------------------------------------
+## output
+##
+AC_CONFIG_FILES(DTA-TokWrap/TokWrap/Version.pm)
+AC_CONFIG_FILES(doc/DTA-TokWrap/Makefile)
+AC_CONFIG_FILES(doc/programs/Makefile)
+AC_CONFIG_FILES(doc/dot/Makefile)
+AC_CONFIG_FILES(doc/Makefile)
+AC_CONFIG_FILES(scripts/Makefile)
+AC_CONFIG_FILES(src/Makefile)
+AC_CONFIG_FILES(Makefile)
+AC_OUTPUT
+
+
 ##vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 ## Subdirs:perl
+##  + must be *AFTER* AC_OUTPUT call so that Version.pm exists for distcheck
 ##
 AC_MSG_NOTICE([(re-)configuring perl module DTA::TokWrap])
 AC_MSG_NOTICE([+ ignore any warnings from Makefile.PL about missing Version.pm])
@@ -192,16 +207,3 @@ AC_MSG_NOTICE([cd DTA-TokWrap; $PERL Makefile.PL $MAKEPLFLAGS])
 ## /subdirs:perl
 ##^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-
-##----------------------------------------------------------------------
-## output
-##
-AC_CONFIG_FILES(DTA-TokWrap/TokWrap/Version.pm)
-AC_CONFIG_FILES(doc/DTA-TokWrap/Makefile)
-AC_CONFIG_FILES(doc/programs/Makefile)
-AC_CONFIG_FILES(doc/dot/Makefile)
-AC_CONFIG_FILES(doc/Makefile)
-AC_CONFIG_FILES(scripts/Makefile)
-AC_CONFIG_FILES(src/Makefile)
-AC_CONFIG_FILES(Makefile)
-AC_OUTPUT
