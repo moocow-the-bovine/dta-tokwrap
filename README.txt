@@ -353,3 +353,15 @@ SEE ALSO
 AUTHOR
     Bryan Jurish <jurish@bbaw.de>
 
+COPYRIGHT AND LICENSE
+    Copyright (C) 2009-2014 by Bryan Jurish
+
+    This package is free software. Redistribution and modification of C
+    portions of this package are subject to the terms of the version 3 or
+    greater of the GNU Lesser General Public License; see the files COPYING
+    and COPYING.LESSER which came with the distribution for details.
+
+    Redistribution and/or modification of the Perl portions of this package
+    are subject to the same terms as Perl itself, either Perl version 5.14.2
+    or, at your option, any later version of Perl 5 you may have available.
+
