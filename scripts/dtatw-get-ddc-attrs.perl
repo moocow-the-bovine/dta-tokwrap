@@ -39,6 +39,7 @@ our $NOKEY = $Algorithm::BinarySearch::Vec::KEY_NOT_FOUND;
 
 ##-- selection
 our $keep_blanks = 0;  ##-- libxml parser attribute
+our $do_ext_dtd = 0;   ##-- libxml parser option
 our $keep_ws = 0;      ##-- whether to keep word text-internal whitespace
 our $do_page = 1;
 our $do_line = 1;
@@ -95,6 +96,7 @@ GetOptions(##-- General
 	   'cxfile|cxf|cx=s' => \$cxfile,
 	   'sxfile|sxf|sx=s' => \$sxfile,
 	   'keep-blanks|blanks!' => \$keep_blanks,
+	   'external-dtd|ext-dtd|edtd|dtd!' => \$do_ext_dtd,
 	   'output|out|o=s' => \$outfile,
 	   'format|f!' => \$format,
 
@@ -153,6 +155,7 @@ sub load_txml {
   my $parser = XML::LibXML->new();
   $parser->keep_blanks($keep_blanks ? 1 : 0);
   $parser->line_numbers(1);
+  $parser->load_ext_dtd($do_ext_dtd);
 
   ##-- load xml
   my $xdoc = $xmlfile eq '-' ? $parser->parse_fh(\*STDIN) : $parser->parse_file($xmlfile);
@@ -205,6 +208,7 @@ sub load_sx {
   my $parser = XML::LibXML->new();
   $parser->keep_blanks(0);
   $parser->line_numbers(1);
+  $parser->load_ext_dtd($do_ext_dtd);
 
   ##-- load xml
   my $xdoc = $parser->parse_string($xmlbuf)
@@ -862,6 +866,7 @@ dtatw-get-ddc-attrs.perl - get DDC-relevant attributes from DTA::TokWrap files
  I/O Options:
   -output FILE           # specify output file (default='-' (STDOUT))
   -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in T_XML_FILE file (default=don't)
+  -dtd    , -nodtd       # do/don't load external DTDs (default=don't)
   -ws     , -nows        # do/don't keep whitespace in //w/@t (default=don't)
   -page   , -nopage      # do/don't extract //w/@pb (page-break; default=do)
   -line   , -noline      # do/don't extract //w/@lb (line-break; default=do)
