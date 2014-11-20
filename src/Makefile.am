@@ -45,14 +45,14 @@ dtatw_tok2xml_SOURCES = dtatw-tok2xml.c $(common_deps)
 
 dtatw_b2xb_SOURCES = dtatw-b2xb.c $(common_deps)
 
-dtatw_txml2wxml_SOURCES = dtatw-txml2wxml.c $(common_deps) $(expat_deps)
-dtatw_txml2wxml_LDADD   = $(EXPAT_LIBS)
-
-dtatw_txml2sxml_SOURCES = dtatw-txml2sxml.c $(common_deps) $(expat_deps)
-dtatw_txml2sxml_LDADD   = $(EXPAT_LIBS)
-
-dtatw_txml2axml_SOURCES = dtatw-txml2axml.c $(common_deps) $(expat_deps)
-dtatw_txml2axml_LDADD   = $(EXPAT_LIBS)
+#dtatw_txml2wxml_SOURCES = dtatw-txml2wxml.c $(common_deps) $(expat_deps)
+#dtatw_txml2wxml_LDADD   = $(EXPAT_LIBS)
+#
+#dtatw_txml2sxml_SOURCES = dtatw-txml2sxml.c $(common_deps) $(expat_deps)
+#dtatw_txml2sxml_LDADD   = $(EXPAT_LIBS)
+#
+#dtatw_txml2axml_SOURCES = dtatw-txml2axml.c $(common_deps) $(expat_deps)
+#dtatw_txml2axml_LDADD   = $(EXPAT_LIBS)
 
 extra: $(EXTRA_PROGRAMS)
 

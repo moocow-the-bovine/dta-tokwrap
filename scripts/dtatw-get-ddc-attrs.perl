@@ -82,6 +82,7 @@ our $warn_on_empty_clist = 1;       ##-- warn on empty //c list for //w in txmlf
 our $warn_on_empty_blist = 1;       ##-- warn on empty sx-block list for //w in txmlfile?
 our $warn_on_bad_page   = 1;        ##-- warn on bad //w/@pb attribute?
 our $warn_on_bad_facs   = 1;        ##-- warn on missing pb/@facs?
+our $foreign = 0;		    ##-- "foreign" (non-dta) mode?
 our %n_warnings = qw();
 
 ##------------------------------------------------------------------------------
@@ -115,8 +116,8 @@ GetOptions(##-- General
 	   'keep-b|keepb|kb!' => \$do_keep_b,
 	   'keep-xb|keepxb|kxb!' => \$do_keep_xb,
 	   'formula-text|ft=s' => \$formula_text,
-	   'foreign!' => sub { $warn_on_bad_facs=!$_[1]; },
-	   'dta!'     => sub { $warn_on_bad_facs=$_[1]; },
+	   'foreign!' => sub { $warn_on_bad_facs=!$_[1]; $foreign=1; },
+	   'dta!'     => sub { $warn_on_bad_facs=$_[1];  $foreign=0; },
 	  );
 
 pod2usage({-exitval=>0,-verbose=>0}) if ($help);
@@ -138,6 +139,12 @@ $prog  = "$prog: ".basename($txmlfile);
 ##-- sanity checks
 $do_page = 1 if ($do_bbox);
 $do_line = 1 if ($do_bbox);
+
+##-- foreign-mode
+our ($rend_left,$rend_right,$rend_sep) = ('|','|','|');
+if ($foreign) {
+  ($rend_left,$rend_right,$rend_sep) = ('','',':');
+}
 
 ##======================================================================
 ## Subs: t-xml stuff (*.t.xml)
@@ -616,10 +623,13 @@ sub apply_word {
 
   ##-- compute & assign: rendition (undef -> '-')
   if ($do_rendition) {
-    $wrend = join('|',
-		   map {s/^\#//;$_}
-		   llintersect(map {[luniq (split(' ',($_->{xr}//'')),($_->{blk} ? split(' ',($_->{blk}{xr}//'')) : qw()))]} @cs));
-    $wnod->setAttribute($rendition_attr, $wrend ? "|$wrend|" : '-');
+    $wrend = join($rend_sep,
+		  map {s/^\#//;$_}
+		  llintersect(map {[luniq (split(' ',($_->{xr}//'')),($_->{blk} ? split(' ',($_->{blk}{xr}//'')) : qw()))]} @cs),
+		  ($foreign
+		   ? (grep {$_ eq 'head'} map {split(' ',$_->{xc})} @blks) ? 'head' : qw()) ##-- include 'head' context for non-DTA rendition lists
+		   : qw());
+    $wnod->setAttribute($rendition_attr, $wrend ? "${rend_left}${wrend}${rend_right}" : '-');
   }
 
   ##-- compute & assign: structural context: xcontext (undef -> '-')

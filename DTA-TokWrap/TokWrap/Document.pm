@@ -26,6 +26,7 @@ use DTA::TokWrap::Processor::tok2xml;
 #use DTA::TokWrap::Processor::standoff::xsl;
 use DTA::TokWrap::Processor::addws;
 use DTA::TokWrap::Processor::idsplice;
+use DTA::TokWrap::Processor::tei2tcf;
 
 use File::Basename qw(basename dirname);
 use IO::File;
@@ -71,7 +72,7 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    ##-- Source data
 ##    xmlfile => $xmlfile,  ##-- source filename
 ##    xmlbase => $xmlbase,  ##-- xml:base for generated files (default=basename($xmlfile))
-##    xmldata => $xmldata,  ##-- source buffer (for addws)
+##    xmldata => $xmldata,  ##-- source buffer (for addws, tei2tcf)
 ##
 ##    ##-- pseudo-make options
 ##    traceMake => $level,  ##-- log-level for makeKey() trace (e.g. 'debug'; default=undef (none))
@@ -90,6 +91,8 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    outdir => $outdir,    ##-- output directory for generated data (default=.)
 ##    tmpdir => $tmpdir,    ##-- temporary directory for generated data (default=$ENV{DTATW_TMP}||$outdir)
 ##    keeptmp => $bool,     ##-- if true, temporary document-local files will be kept on $doc->close()
+##    notmpre => $regex,    ##-- non-temporary file regex
+##    notmpkeys => $keys,   ##-- non-temporary keys, space-separated list
 ##    outbase => $filebase, ##-- output basename (default=`basename $xmlbase .xml`)
 ##    format => $level,     ##-- default formatting level for XML output
 ##
@@ -107,6 +110,7 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    bxdata  => \@bxdata,  ##-- block-list, see DTA::TokWrap::mkbx::mkbx() for details
 ##    bxfile  => $bxfile,   ##-- serialized block-index CSV file (default="$tmpdir/$outbase.bx"; optional)
 ##    txtfile => $txtfile,  ##-- serialized & hinted text file (default="$tmpdir/$outbase.txt"; optional)
+##    txtdata => $txtdata,  ##-- serialized & hinted text file (used by tei2tcf, must be loaded explicitly with loadTxtData())
 ##
 ##    ##-- tokenize data (see DTA::TokWrap::Processor::tokenize, DTA::TokWrap::Processor::tokenize::dummy)
 ##    tokdata0 => $tokdata0,  ##-- tokenizer output data (slurped string)
@@ -137,6 +141,12 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    #sosfile => $sosfile,   ##-- sentence standoff file (default="$outdir/$outbase.s.xml")
 ##    #sowfile => $sowfile,   ##-- token standoff file (default="$outdir/$outbase.w.xml")
 ##    #soafile => $soafile,   ##-- token-analysis standoff file (default="$outdir/$outbase.a.xml")
+##
+##    ##-- tcf codec data (see DTA::TokWrap::Processor::tei2tcf)
+##    tcfdoc => \$doc,        ##-- XML::LibXML::Document representing TCF-encoded data
+##    tcfbufr => \$tcfbufr,   ##-- TCF-encoded buffer
+##    tcffile => $tcffile,    ##-- TCF file
+##    tcflang => $lang,       ##-- TCF language attribute (default: 'de')
 ##   )
 sub new {
   my ($that,%opts) = @_;
@@ -222,6 +232,10 @@ sub defaults {
 	  #sosfile => undef,
 	  #sowfile => undef,
 	  #soafile => undef,
+
+	  ##-- tcf encoding
+	  tcffile => undef,
+	  tcflang => 'de',
 	 );
 }
 
@@ -283,7 +297,6 @@ sub init {
   $doc->{cwstsofile} = $doc->{xtokfile} if (!$doc->{cwstsofile});
   $doc->{cwstfile} = $doc->{outdir}.'/'.$doc->{outbase}.".cwst.xml" if (!$doc->{cwstfile});
 
-
   ##-- defaults: standoff data (standoff)
   #$doc->{sosdoc} = undef;
   #$doc->{sowdoc} = undef;
@@ -292,6 +305,9 @@ sub init {
   #$doc->{sosfile} = $doc->{outdir}.'/'.$doc->{outbase}.".s.xml" if (!$doc->{sosfile});
   #$doc->{sowfile} = $doc->{outdir}.'/'.$doc->{outbase}.".w.xml" if (!$doc->{sowfile});
   #$doc->{soafile} = $doc->{outdir}.'/'.$doc->{outbase}.".a.xml" if (!$doc->{soafile});
+
+  ##-- defaults: tcf encoding (tei2tcf)
+  $doc->{tcffile} = $doc->{outdir}.'/'.$doc->{outbase}.".tcf" if (!$doc->{tcffile});
 
   ##-- return
   return $doc;
@@ -346,6 +362,7 @@ sub close {
   my $rc = 1;
   foreach ($doc->tempfiles()) {
     ##-- unlink temp files
+    $doc->vlog($doc->{traceSave},"unlink $_") if ($doc->{traceSave} && $doc->logInitialized);
     $rc=0 if (!unlink($_));
   }
 
@@ -391,7 +408,8 @@ sub close {
 ##  + returns list of document keys ending 'file' which are not considered "temporary"
 ##  + used by $doc->tempfiles()
 sub notempkeys {
-  return qw(xmlfile xtokfile sosfile sowfile soafile);
+  return (qw(xmlfile xtokfile sosfile sowfile soafile tcffile), (defined($_[0]{notmpkeys}) ? split(' ',$_[0]{notmpkeys}) : qw()))
+
 }
 
 ## @tempfiles = $doc->tempfiles()
@@ -407,7 +425,9 @@ sub tempfiles {
   return qw() if (!ref($doc) || $doc->{keeptmp});
 
   my %notempkeys = map {$_=>undef} $doc->notempkeys();
+  my $notempre   = $doc->{notmpre} ? qr{$doc->{notmpre}} : undef;
   return (
+	  grep { !defined($notempre) || $_ !~ m/$notempre/ }
 	  grep { $_ =~ m/^$doc->{tmpdir}\// }
 	  map { $doc->{$_} }
 	  grep { m/file[01]?$/ && defined($doc->{"${_}_stamp"}) && $doc->{"${_}_stamp"} >= 0 && !exists($notempkeys{$_}) }
@@ -459,13 +479,8 @@ BEGIN {
      #(map {$_=>[qw(loadXtokFile standoff)]} qw(mkstandoff standoff so mkso)),
 
      'tei2txt' =>[qw(mkindex),
-		  qw(mkbx0 saveBx0File),
-		  qw(mkbx saveBxFile saveTxtFile),
-		  #qw(tokenize0 saveTokFile0),
-		  #qw(tokenize1 saveTokFile1),
-		  #qw(loadCxFile)
-		  #qw(tok2xml saveXtokFile),
-		  #qw(standoff),
+		  qw(mkbx0), #saveBx0File
+		  qw(mkbx saveTxtFile), #saveBxFile saveTxtFile
 		 ],
 
      'tei2t' =>[qw(mkindex),
@@ -473,9 +488,6 @@ BEGIN {
 		qw(mkbx saveBxFile saveTxtFile),
 		qw(tokenize0 saveTokFile0),
 		qw(tokenize1 saveTokFile1),
-		#qw(loadCxFile)
-		#qw(tok2xml saveXtokFile),
-		#qw(standoff),
                ],
 
      'tei2txml' => [qw(mkindex),
@@ -483,10 +495,14 @@ BEGIN {
 		    qw(mkbx saveBxFile saveTxtFile),
 		    qw(tokenize0 saveTokFile0),
 		    qw(tokenize1 saveTokFile1),
-		    #qw(loadCxFile)
 		    qw(tok2xml saveXtokFile),
-		    #qw(standoff),
 		   ],
+
+     'tei2tcf' =>[qw(mkindex),
+		  qw(mkbx0), #saveBx0File
+		  qw(mkbx), #saveBxFile saveTxtFile
+		  qw(tei2tcf saveTcfFile),
+		 ],
 
      all => [qw(mkindex),
 	     qw(mkbx0 saveBx0File),
@@ -632,6 +648,16 @@ sub idsplice {
   $_[0]->vlog($_[0]{traceProc},"idsplice()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{idsplice}) || 'DTA::TokWrap::Processor::idsplice')->idsplice($_[0]);
 }
+
+## $doc_or_undef = $doc->tei2tcf($tei2tcf)
+## $doc_or_undef = $doc->tei2tcf()
+##  + see DTA::TokWrap::Processor::tei2tcf::tei2tcf()
+sub tei2tcf {
+  $_[0]->setLogContext();
+  $_[0]->vlog($_[0]{traceProc},"tei2tcf()") if ($_[0]{traceProc});
+  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tei2tcf}) || 'DTA::TokWrap::Processor::tei2tcf')->tei2tcf($_[0]);
+}
+
 
 ##==============================================================================
 ## Methods: Member I/O
@@ -815,8 +841,8 @@ sub xtokDoc {
   return $doc->{xtokdoc};
 }
 
-## \$xmlbuf_or_undef = $doc->loadXtokFile($filename_or_fh)
-## \$xmlbuf_or_undef = $doc->loadXtokFile()
+## \$xmlbuf_or_undef = $doc->loadXmlData($filename_or_fh)
+## \$xmlbuf_or_undef = $doc->loadXmlData()
 ##  + loads $doc->{xmldata} from $filename_or_fh (default=$doc->{xmlfile})
 sub loadXmlData {
   my ($doc,$file) = @_;
@@ -851,6 +877,25 @@ sub loadCwsData {
 
   $doc->{cwsdata_stamp} = file_mtime($file);
   return \$doc->{cwsdata};
+}
+
+## \$txtbuf_or_undef = $doc->loadTxtData($filename_or_fh)
+## \$txtbuf_or_undef = $doc->loadTxtData()
+##  + loads $doc->{txtdata} from $filename_or_fh (default=$doc->{txtfile})
+sub loadTxtData {
+  my ($doc,$file) = @_;
+  $doc->setLogContext();
+
+  ##-- get file
+  $file = $doc->{txtfile} if (!$file);
+  $doc->logconfess("loadTxtData(): no serialized-text file defined") if (!defined($file));
+  $doc->vlog($doc->{traceLoad}, "loadTxtData($file)") if ($doc->{traceLoad});
+
+  slurp_file($file,\$doc->{txtdata})
+    or $doc->logconfess("slurp_file() failed for serialized-text file '$file': $!");
+
+  $doc->{txtdata_stamp} = file_mtime($file);
+  return \$doc->{txtdata};
 }
 
 
@@ -1062,6 +1107,41 @@ sub saveXtokFile {
   return $file;
 }
 
+## $file_or_undef = $doc->saveTcfFile($filename_or_fh,$tcfdoc,%opts)
+## $file_or_undef = $doc->saveTcfFile($filename_or_fh)
+## $file_or_undef = $doc->saveTcfFile()
+##  + %opts:
+##    format => $level, ##-- formatting level (default=1)
+##  + $filename_or_fh defaults to $doc->{tcffile}="$doc->{outdir}/$doc->{outbase}.t.xml"
+##  + $tcfdoc defaults to $doc->{tcfdoc}
+##  + sets $doc->{tcffile_stamp}
+sub saveTcfFile {
+  my ($doc,$file,$tcfdoc,%opts) = @_;
+  $doc->setLogContext();
+
+  ##-- get data
+  $tcfdoc = $doc->{tcfdoc} if (!$tcfdoc);
+  $doc->logconfess("saveTcfFile(): no 'tcfdoc' key defined") if (!$tcfdoc);
+
+  ##-- get file
+  $file = $doc->{tcffile} if (!defined($file));
+  $file = "$doc->{outdir}/$doc->{outbase}.tcf" if (!defined($file));
+  $doc->{tcffile} = $file if (!ref($file));
+  $doc->vlog($doc->{traceSave}, "saveTcfFile($file)") if ($doc->{traceSave});
+
+  ##-- get filehandle
+  if (ref($file)) {
+    $tcfdoc->toFH($opts{format}//1)
+      or $doc->logconfess("saveTcfFile() failed to filehandle '$file': $!");
+  } else {
+    $tcfdoc->toFile($file, $opts{format}//1)
+      or $doc->logconfess("saveTcfFile() failed to file '$file': $!");
+  }
+
+  $doc->{tcffile_stamp} = timestamp(); ##-- stamp
+  return $file;
+}
+
 ##==============================================================================
 ## Methods: Profiling
 ##==============================================================================
@@ -1137,12 +1217,15 @@ DTA::TokWrap::Document - DTA tokenizer wrappers: document wrapper
  \$tokdata_or_undef  = $doc->loadTokFile();
  \$xtokdata_or_undef = $doc->loadXtokFile();
  $xtokDoc            = $doc->xtokDoc();
+ \$xmlbuf_or_undef   = $doc->loadXmlData();
+ \$txtbuf_or_undef   = $doc->loadTxtData();
  
  $file_or_undef = $doc->saveBx0File();
  $file_or_undef = $doc->saveBxFile();
  $file_or_undef = $doc->saveTxtFile();
  $file_or_undef = $doc->saveTokFile();
  $file_or_undef = $doc->saveXtokFile();
+ $file_or_undef = $doc->saveTcfFile();
   
  ##========================================================================
  ## Methods: Profiling
