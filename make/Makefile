@@ -537,6 +537,15 @@ CLEAN_FILES += *.wst.xml
 #CWS_XML_FILES = $(XML:.xml=.cws.xml) $(XML:.ws.xml)
 CWS_XML_FILES = $(XML:.xml=.cws.xml) $(XML:.wst.xml)
 
+##======================================================================
+## Rules: tcf (text only)
+
+tcf: $(XML:.xml=.tcf)
+
+%.tcf: %.xml
+	$(TOKWRAP) -t=tei2tcf $(xmldir)/$*.xml
+
+CLEAN_FILES += *.tcf
 
 ##======================================================================
 ## Rules: tokenized: extended output (.u.xml) :: PROBABLY BROKEN
