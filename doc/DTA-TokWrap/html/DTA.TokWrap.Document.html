@@ -98,12 +98,15 @@
  \$tokdata_or_undef  = $doc-&gt;loadTokFile();
  \$xtokdata_or_undef = $doc-&gt;loadXtokFile();
  $xtokDoc            = $doc-&gt;xtokDoc();
+ \$xmlbuf_or_undef   = $doc-&gt;loadXmlData();
+ \$txtbuf_or_undef   = $doc-&gt;loadTxtData();
  
  $file_or_undef = $doc-&gt;saveBx0File();
  $file_or_undef = $doc-&gt;saveBxFile();
  $file_or_undef = $doc-&gt;saveTxtFile();
  $file_or_undef = $doc-&gt;saveTokFile();
  $file_or_undef = $doc-&gt;saveXtokFile();
+ $file_or_undef = $doc-&gt;saveTcfFile();
   
  ##========================================================================
  ## Methods: Profiling

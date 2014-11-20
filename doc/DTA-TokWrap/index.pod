@@ -63,6 +63,10 @@ L<DTA::TokWrap::Processor::standoff::xsl|DTA::TokWrap::Processor::standoff::xsl>
 
 =item *
 
+L<DTA::TokWrap::Processor::tei2tcf|DTA::TokWrap::Processor::tei2tcf> - DTA tokenizer wrappers: TEI-E<gt>TCF encoding
+
+=item *
+
 L<DTA::TokWrap::Processor::tok2xml|DTA::TokWrap::Processor::tok2xml> - DTA tokenizer wrappers: t -> t.xml
 
 =item *
