@@ -63,6 +63,18 @@ L<DTA::TokWrap::Processor::standoff::xsl|DTA::TokWrap::Processor::standoff::xsl>
 
 =item *
 
+L<DTA::TokWrap::Processor::tcfalign|DTA::TokWrap::Processor::tcfalign> - DTA tokenizer wrappers: textE<lt>-E<gt>token alignment for decoded TCF
+
+=item *
+
+L<DTA::TokWrap::Processor::tcfdecode|DTA::TokWrap::Processor::tcfdecode> - DTA tokenizer wrappers: TCF[tei,text,tokens,sentences]-E<gt>TEI,text decoding
+
+=item *
+
+L<DTA::TokWrap::Processor::tcfencode|DTA::TokWrap::Processor::tcfencode> - DTA tokenizer wrappers: TEI-E<gt>TCF encoding
+
+=item *
+
 L<DTA::TokWrap::Processor::tei2tcf|DTA::TokWrap::Processor::tei2tcf> - DTA tokenizer wrappers: TEI-E<gt>TCF encoding
 
 =item *

@@ -1,17 +1,16 @@
 ## -*- Mode: CPerl -*-
 
-## File: DTA::TokWrap::Processor::tei2tcf.pm
+## File: DTA::TokWrap::Processor::tcfencode.pm
 ## Author: Bryan Jurish <jurish@bbaw.de>
-## Description: DTA tokenizer wrappers: TEI->TCF encoding
+## Description: DTA tokenizer wrappers: TEI->TCF[tei,text] encoding
 
-package DTA::TokWrap::Processor::tei2tcf;
+package DTA::TokWrap::Processor::tcfencode;
 
 use DTA::TokWrap::Version;  ##-- imports $VERSION, $RCDIR
 use DTA::TokWrap::Base;
-use DTA::TokWrap::Utils qw(:progs :slurp :time :libxml :xmlutils);
+use DTA::TokWrap::Utils qw(:slurp :time :libxml);
 use DTA::TokWrap::Processor;
 
-use Encode qw(encode decode);
 use Carp;
 use strict;
 
@@ -24,7 +23,7 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ## Constructors etc.
 ##==============================================================================
 
-## $mi = CLASS_OR_OBJ->new(%args)
+## $enc = CLASS_OR_OBJ->new(%args)
 ##  + %args: (none)
 
 ## %defaults = CLASS_OR_OBJ->defaults()
@@ -40,27 +39,27 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ## Methods
 ##==============================================================================
 
-## $doc_or_undef = $CLASS_OR_OBJECT->tei2tcf($doc)
+## $doc_or_undef = $CLASS_OR_OBJECT->tcfencode($doc)
 ## + $doc is a DTA::TokWrap::Document object
 ## + %$doc keys:
 ##    xmlfile => $xmlfile, ##-- (input) source TEI-XML file
+##    xmldata => $xmldata, ##-- (input,alternate) source TXT-XML buffer
 ##    txtfile => $txtfile, ##-- (input) serialized text file
-##    xmldata => $xmldata, ##-- (input,alternate) source TXT-XML buffer; may be utf8::decode()d by this method
-##    txtdata => $txtdata, ##-- (input,alternate) serialized text data; may be utf8::decode()d by this method
+##    txtdata => $txtdata, ##-- (input,alternate) serialized text data
 ##    tcflang => $lang,    ##-- (input) tcf language (default="de")
 ##    ##
 ##    tcfdoc  => $tcfdoc,   ##-- (output) TCF output document
-##    tei2tcf_stamp0 => $f, ##-- (output) timestamp of operation begin
-##    tei2tcf_stamp  => $f, ##-- (output) timestamp of operation end
+##    tcfencode_stamp0 => $f, ##-- (output) timestamp of operation begin
+##    tcfencode_stamp  => $f, ##-- (output) timestamp of operation end
 ##    tcfdoc_stamp   => $f, ##-- (output) timestamp of operation end
-sub tei2tcf {
+sub tcfencode {
   my ($enc,$doc) = @_;
   $enc = $enc->new if (!ref($enc));
   $doc->setLogContext();
 
   ##-- log, stamp
-  $enc->vlog($enc->{traceLevel},"tei2tcf()");
-  $doc->{tei2tcf_stamp0} = timestamp(); ##-- stamp
+  $enc->vlog($enc->{traceLevel},"tcfencode()");
+  $doc->{tcfencode_stamp0} = timestamp(); ##-- stamp
 
   ##-- create TCF document (lifted from DTA::CAB::Format::TCF::putDocument())
   my $xdoc = $doc->{tcfdoc} = XML::LibXML::Document->new("1.0","UTF-8");
@@ -87,9 +86,8 @@ sub tei2tcf {
   #$xtei->setAttribute('type'=>'text/tei+xml');
   ##
   my $xmldata_is_tmp = !defined($doc->{xmldata});
-  $enc->logconfess("tei2tcf(): could not load TEI-XML source file '$doc->{xmlfile}' and {xmldata} key undefined")
+  $enc->logconfess("tcfencode(): could not load TEI-XML source file '$doc->{xmlfile}' and {xmldata} key undefined")
     if ($xmldata_is_tmp && !$doc->loadXmlData());
-  #utf8::decode($doc->{xmldata}) if (!utf8::is_utf8($doc->{xmldata}));
   $xtei->appendText( $doc->{xmldata} );
   delete($doc->{xmldata}) if ($xmldata_is_tmp);
 
@@ -98,15 +96,14 @@ sub tei2tcf {
   $xtxt = $xcorpus->addNewChild(undef,'text');
   ##
   my $txtdata_is_tmp = !defined($doc->{txtdata});
-  $enc->logconfess("tei2tcf(): could not load serialized text file '$doc->{txtfile}' and {txtdata} key undefined")
+  $enc->logconfess("tcfencode(): could not load serialized text file '$doc->{txtfile}' and {txtdata} key undefined")
     if ($txtdata_is_tmp && !$doc->loadTxtData());
-  #utf8::decode($doc->{txtdata}) if (!utf8::is_utf8($doc->{txtdata}));
   $xtxt->appendText( $doc->{txtdata} );
   ##
   delete($doc->{txtdata}) if ($txtdata_is_tmp);
 
   ##-- finalize
-  $doc->{tei2tcf_stamp} = $doc->{tcfdoc_stamp} = timestamp(); ##-- stamp
+  $doc->{tcfencode_stamp} = $doc->{tcfdoc_stamp} = timestamp(); ##-- stamp
   return $doc;
 }
 
@@ -127,7 +124,7 @@ __END__
 
 =head1 NAME
 
-DTA::TokWrap::Processor::tei2tcf - DTA tokenizer wrappers: TEI-E<gt>TCF encoding
+DTA::TokWrap::Processor::tcfencode - DTA tokenizer wrappers: TEI-E<gt>TCF encoding
 
 =cut
 
@@ -137,10 +134,10 @@ DTA::TokWrap::Processor::tei2tcf - DTA tokenizer wrappers: TEI-E<gt>TCF encoding
 
 =head1 SYNOPSIS
 
- use DTA::TokWrap::Processor::tei2tcf;
+ use DTA::TokWrap::Processor::tcfencode;
  
- $mi = DTA::TokWrap::Processor::tei2tcf->new(%opts);
- $doc_or_undef = $mi->tei2tcf($doc);
+ $enc = DTA::TokWrap::Processor::tcfencode->new(%opts);
+ $doc_or_undef = $dec->tcfencode($doc);
 
 =cut
 
@@ -150,7 +147,7 @@ DTA::TokWrap::Processor::tei2tcf - DTA tokenizer wrappers: TEI-E<gt>TCF encoding
 
 =head1 DESCRIPTION
 
-DTA::TokWrap::Processor::tei2tcf provides an object-oriented
+DTA::TokWrap::Processor::tcfencode provides an object-oriented
 L<DTA::TokWrap::Processor|DTA::TokWrap::Processor> wrapper
 for encoding (serialized) TEI-XML as TCF ("Text Corpus Format",
 cf. http://weblicht.sfs.uni-tuebingen.de/weblichtwiki/index.php/The_TCF_Format)
@@ -159,7 +156,7 @@ using L<DTA::TokWrap::Document|DTA::TokWrap::Document> objects.
 =cut
 
 ##----------------------------------------------------------------
-## DESCRIPTION: DTA::TokWrap::Processor::tei2tcf: Constants
+## DESCRIPTION: DTA::TokWrap::Processor::tcfencode: Constants
 =pod
 
 =head2 Constants
@@ -168,7 +165,7 @@ using L<DTA::TokWrap::Document|DTA::TokWrap::Document> objects.
 
 =item @ISA
 
-DTA::TokWrap::Processor::tei2tcf
+DTA::TokWrap::Processor::tcfencode
 inherits from
 L<DTA::TokWrap::Processor|DTA::TokWrap::Processor>.
 
@@ -177,7 +174,7 @@ L<DTA::TokWrap::Processor|DTA::TokWrap::Processor>.
 =cut
 
 ##----------------------------------------------------------------
-## DESCRIPTION: DTA::TokWrap::Processor::tei2tcf: Constructors etc.
+## DESCRIPTION: DTA::TokWrap::Processor::tcfencode: Constructors etc.
 =pod
 
 =head2 Constructors etc.
@@ -201,16 +198,16 @@ Static class-dependent defaults.
 =cut
 
 ##----------------------------------------------------------------
-## DESCRIPTION: DTA::TokWrap::Processor::tei2tcf: Methods
+## DESCRIPTION: DTA::TokWrap::Processor::tcfencode: Methods
 =pod
 
 =head2 Methods
 
 =over 4
 
-=item tei2tcf
+=item tcfencode
 
- $doc_or_undef = $CLASS_OR_OBJECT->tei2tcf($doc);
+ $doc_or_undef = $CLASS_OR_OBJECT->tcfencode($doc);
 
 Converts the
 L<DTA::TokWrap::Document|DTA::TokWrap::Document> object
@@ -226,8 +223,8 @@ Relevant %$doc keys:
  txtdata => $txtdata, ##-- (input,alternate) serialized text data
  ##
  tcfdoc  => $tcfdoc,   ##-- (output) TCF output document
- tei2tcf_stamp0 => $f, ##-- (output) timestamp of operation begin
- tei2tcf_stamp  => $f, ##-- (output) timestamp of operation end
+ tcfencode_stamp0 => $f, ##-- (output) timestamp of operation begin
+ tcfencode_stamp  => $f, ##-- (output) timestamp of operation end
  tcfdoc_stamp   => $f, ##-- (output) timestamp of operation end
 
 =back

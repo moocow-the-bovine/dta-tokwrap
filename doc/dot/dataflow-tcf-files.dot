@@ -3,11 +3,24 @@ digraph dataflow_perl_files {
   node [shape=rectangle,style=filled,fillcolor=pink,height=0.25,fontname="Courier"];
   edge [decorate=0,fontname="Courier"];
 
-  //teifile [label="teifile: *.tei.xml",fillcolor=PowderBlue];
-  //add_c  [label="dtatw-add-c.perl",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
-  //teifile -> add_c;
+  //-- tcf stuff
+  tcffile [label="tcffile: *.tcf",fillcolor=PowderBlue];
 
-  xmlfile [label="xmlfile: *.xml",fillcolor=PowderBlue];
+  tcfdecode [label="tcfdecode",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
+  tcffile -> tcfdecode;
+
+  tcftokfile [label="tcftokfile: *.tcf.t (-bytes)",fillcolor=yellow];
+  tcfdecode -> txtfile;
+  tcfdecode -> xmlfile;
+  tcfdecode -> tcftokfile;
+
+  tokalign [label="tokalign",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
+  tcftokfile -> tokalign;
+  txtfile -> tokalign;
+  tokalign -> tokfile;
+
+  //-- inherited
+  xmlfile [label="xmlfile: *.xml",fillcolor=yellow]; //fillcolor=PowderBlue
   //add_c -> xmlfile;
 
   mkindex [label="mkindex",shape=diamond,fillcolor=PaleGreen,fontname="Courier-Bold"];
@@ -32,19 +45,18 @@ digraph dataflow_perl_files {
   txfile  -> mkbx;
 
   bxfile [label="bxfile: *.bx"];
-  txtfile [label="txtfile: *.txt"];
+  txtfile [label="txtfile: *.txt",fillcolor=yellow];
   mkbx -> bxfile;
-  mkbx -> txtfile;
+  mkbx -> txtfile [style="dashed",color="grey"];
   {rank=same; bxfile txtfile}
 
-  tokenize [label="tokenize(::dummy)",shape=diamond,fillcolor=PaleGreen,fontname="Courier-Bold",justify="left"];
-  txtfile -> tokenize;
+  tokenize [label="tokenize",shape=diamond,fillcolor=grey,fontname="Courier-Bold",justify="left"];
+  txtfile -> tokenize [style="dashed",color="grey"];
 
-  tokfile [label="tokfile: *.t"];
-  tokenize -> tokfile;
-  //{rank=same; tokdata tokfile;}
+  tokfile [label="tokfile: *.t (+bytes)"];
+  tokenize -> tokfile [style="dashed",color="grey"];
 
-  xtokfile [label="xtokfile: *.t.xml",fillcolor=PowderBlue];
+  xtokfile [label="xtokfile: *.t.xml"]; //fillcolor=PowderBlue
 
   //-- tok2xml via c prog
   tok2xml[label="tok2xml",shape=diamond,fillcolor=PaleGreen,fontname="Courier-Bold"];
@@ -52,20 +64,6 @@ digraph dataflow_perl_files {
   cxfile -> tok2xml;
   tokfile -> tok2xml;
   tok2xml -> xtokfile;
-
-  /*
-  //-- standoff via C progs (basically obsolete)
-  standoff [label="standoff",shape=diamond,fillcolor=PaleGreen,style=dotted,fontname="Courier-Bold"];
-  xtokfile -> standoff;
-
-  sosfile [label="sosfile: *.s.xml",fillcolor=PowderBlue,style=dotted];
-  sowfile [label="sowfile: *.w.xml",fillcolor=PowderBlue,style=dotted];
-  soafile [label="soafile: *.a.xml",fillcolor=PowderBlue,style=dotted];
-  standoff -> sosfile;
-  standoff -> sowfile;
-  standoff -> soafile;
-  { rank=same; sosfile sowfile soafile; }
-  */
 
   //-- splice-in: w,s: addws module
   add_ws  [label="addws",shape=diamond,fillcolor=PaleGreen,fontname="Courier-Bold"];
@@ -75,6 +73,7 @@ digraph dataflow_perl_files {
   cwsfile [label="cwsfile: *.cws.xml",fillcolor=PowderBlue];
 
   //-- splice-in: generic id-based splice (e.g. cab)
+  /*
   cab [label="dta-cab",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
   xtokfile -> cab;
 
@@ -87,4 +86,5 @@ digraph dataflow_perl_files {
 
   cwstfile [label="cwstfile: *.cwst.xml",fillcolor=PowderBlue];
   idsplice -> cwstfile;
+  */
 }

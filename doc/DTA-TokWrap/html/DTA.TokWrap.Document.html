@@ -167,10 +167,12 @@ instead of calling this constructor directly.</p>
  ##-- Source data
  xmlfile =&gt; $xmlfile,  ##-- source filename
  xmlbase =&gt; $xmlbase,  ##-- xml:base for generated files (default=basename($xmlfile))
+ xmldata =&gt; $xmldata,  ##-- source buffer (for addws, tcfencode)
  ##
  ##-- pseudo-make options
  traceMake =&gt; $level,  ##-- log-level for makeKey() trace (e.g. 'debug'; default=undef (none))
  traceGen  =&gt; $level,  ##-- log-level for genKey() trace (e.g. 'trace'; default=undef (none))
+ traceProc =&gt; $level,  ##-- log-level for document-called processor calls (default=none)
  traceLoad =&gt; $level,  ##-- log-level for load* trace (default=none)
  traceSave =&gt; $level,  ##-- log-level for save* trace (default=none)
  genDummy  =&gt; $bool,   ##-- if true, generator will not actually run (a la `make -n`)
@@ -184,6 +186,8 @@ instead of calling this constructor directly.</p>
  outdir =&gt; $outdir,    ##-- output directory for generated data (default=.)
  tmpdir =&gt; $tmpdir,    ##-- temporary directory for generated data (default=$ENV{DTATW_TMP}||$outdir)
  keeptmp =&gt; $bool,     ##-- if true, temporary document-local files will be kept on $doc-&gt;close()
+ notmpre =&gt; $regex,    ##-- non-temporary filename regex
+ notmpkeys =&gt; $keys,   ##-- non-temporary keys, space-separated list
  outbase =&gt; $filebase, ##-- output basename (default=`basename $xmlbase .xml`)
  format =&gt; $level,     ##-- default formatting level for XML output
  ##
@@ -201,10 +205,15 @@ instead of calling this constructor directly.</p>
  bxdata  =&gt; \@bxdata,  ##-- block-list, see DTA::TokWrap::mkbx::mkbx() for details
  bxfile  =&gt; $bxfile,   ##-- serialized block-index CSV file (default=&quot;$tmpdir/$outbase.bx&quot;; optional)
  txtfile =&gt; $txtfile,  ##-- serialized &amp; hinted text file (default=&quot;$tmpdir/$outbase.txt&quot;; optional)
+ txtdata =&gt; $txtdata,  ##-- serialized &amp; hinted text file (used by tcfencode, must be loaded explicitly with loadTxtData())
  ##
  ##-- tokenize data (see DTA::TokWrap::Processor::tokenize, DTA::TokWrap::Processor::tokenize::dummy)
- tokdata =&gt; $tokdata,  ##-- tokenizer output data (slurped string)
- tokfile =&gt; $tokfile,  ##-- tokenizer output file (default=&quot;$tmpdir/$outbase.t&quot;; optional)
+ tokdata0 =&gt; $tokdata0,  ##-- tokenizer output data (slurped string)
+ tokfile0 =&gt; $tokfile0,  ##-- tokenizer output file (default=&quot;$tmpdir/$outbase.t0&quot;; optional)
+ ##
+ ##-- post-tokenize data (see DTA::TokWrap::Processor::tokenize1)
+ tokdata1 =&gt; $tokdata1,  ##-- post-tokenizer output data (slurped string)
+ tokfile1 =&gt; $tokfile1,  ##-- post-tokenizer output file (default=&quot;$tmpdir/$outbase.t1&quot;; optional)
  ##
  ##-- tokenizer xml data (see DTA::TokWrap::Processor::tok2xml)
  xtokdata =&gt; $xtokdata,  ##-- XML-ified tokenizer output data
@@ -221,7 +230,13 @@ instead of calling this constructor directly.</p>
  ## cwstsobufr   =&gt; \$sodata, ##-- standoff data-ref for idsplice (xml with //*/@id, additional attributes and content) [default=\$xtokdata]
  ## cwstsofile   =&gt; $sofile,  ##-- source file for $sodata [default=$xtokfile]
  ## cwstbufr     =&gt; $wstbufr, ##-- idsplice output buffer (base + id-spliced attributes, content) -- available for override, not used by default
- ## cwstfile     =&gt; $wstfile, ##-- idsplice output file [default=&quot;$outdir/$outbase.cwst.xml&quot;]</pre>
+ ## cwstfile     =&gt; $wstfile, ##-- idsplice output file [default=&quot;$outdir/$outbase.cwst.xml&quot;]
+ ##
+ ##-- tcf codec data (see DTA::TokWrap::Processor::tcfencode)
+ tcfdoc  =&gt; \$doc,       ##-- XML::LibXML::Document representing TCF-encoded data
+ tcfbufr =&gt; \$tcfbufr,   ##-- TCF-encoded buffer (reference)
+ tcffile =&gt; $tcffile,    ##-- TCF file (default=&quot;$outdir/$outbase.tcf&quot;)
+ tcflang =&gt; $lang,       ##-- TCF language attribute (default: 'de')</pre>
 </dd>
 <dt><strong><a name="defaults" class="item">defaults</a></strong></dt>
 
@@ -401,6 +416,14 @@ for a more sophisticated implementation</p>
  $doc_or_undef = $doc-&gt;idsplice();</pre>
 <p>see <a href="DTA.TokWrap.Processor.idsplice.html#idsplice">DTA::TokWrap::Processor::idsplice::idsplice()</a>.</p>
 </dd>
+<dt><strong><a name="tcfencode" class="item">tcfencode</a></strong></dt>
+
+<dd>
+<pre>
+ $doc_or_undef = $doc-&gt;tcfencode($tcfencode)
+ $doc_or_undef = $doc-&gt;tcfencode()</pre>
+<p>see <a href="DTA.TokWrap.Processor.tcfencode.html#tcfencode">DTA::TokWrap::Processor::tcfencode::tcfencode()</a>.</p>
+</dd>
 </dl>
 <p>
 </p>
@@ -480,6 +503,31 @@ for a more sophisticated implementation</p>
 <p>parse \$xtokdata (default: \$doc-&gt;{xtokdata}) string into $doc-&gt;{xtokdoc}</p>
 <p><strong>warning</strong>: may call $doc-&gt;tok2xml()</p>
 </dd>
+<dt><strong><a name="loadxmldata" class="item">loadXmlData</a></strong></dt>
+
+<dd>
+<pre>
+ $xmlbuf_or_undef = $doc-E&lt;gt&gt;loadXmlData($filename_or_fh)
+ $xmlbuf_or_undef = $doc-E&lt;gt&gt;loadXmlData()</pre>
+<p>loads $doc-&gt;{xmldata} from $filename_or_fh (default=$doc-&gt;{xmlfile}).</p>
+</dd>
+<dt><strong><a name="loadcwsdata" class="item">loadCwsData</a></strong></dt>
+
+<dd>
+<pre>
+ \$xmlbuf_or_undef = $doc-&gt;loadCwsData($filename_or_fh)
+ \$xmlbuf_or_undef = $doc-&gt;LoadCwsData()</pre>
+<p><strong>DEPRECATED</strong></p>
+<p>loads $doc-&gt;{cwsdata} from $filename_or_fh (default=$doc-&gt;{cwsfile}).</p>
+</dd>
+<dt><strong><a name="loadtxtdata" class="item">loadTxtData</a></strong></dt>
+
+<dd>
+<pre>
+ \$txtbuf_or_undef = $doc-&gt;loadTxtData($filename_or_fh)
+ \$txtbuf_or_undef = $doc-&gt;loadTxtData()</pre>
+<p>loads $doc-&gt;{txtdata} from $filename_or_fh (default=$doc-&gt;{txtfile})</p>
+</dd>
 <dt><strong><a name="savebx0file" class="item">saveBx0File</a></strong></dt>
 
 <dd>
@@ -554,6 +602,20 @@ and sets both $doc-&gt;{&quot;tokfile${n}&quot;} and $doc-&gt;{&quot;tokfile_sta
 <p>Saves XML-ified master tokenizer data string $xtokdata (default=$doc-&gt;{xtokdata})
 to $filename_or_fh (default=$doc-&gt;{xtokfile}=&quot;$doc-&gt;{outdir}/$doc-&gt;{outbase}.t.xml&quot;),
 and sets both $doc-&gt;{xtokfile} and $doc-&gt;{xtokfile_stamp}.</p>
+</dd>
+<dt><strong><a name="savetcffile" class="item">saveTcfFile</a></strong></dt>
+
+<dd>
+<pre>
+ $file_or_undef = $doc-&gt;saveTcfFile($filename_or_fh,$tcfdoc,%opts)
+ $file_or_undef = $doc-&gt;saveTcfFile($filename_or_fh)
+ $file_or_undef = $doc-&gt;saveTcfFile()</pre>
+<p>known %opts:</p>
+<pre>
+ format =&gt; $level, ##-- formatting level (default=1)</pre>
+<p>Saves TCF-encoded document $tcfdoc (default=$doc-&gt;{tcfdoc}) to $filename_or_fh
+(default=$doc-&gt;{tcffile}=&quot;$doc-&gt;{outdir}/$doc-&gt;{outbase}.t.xml&quot;),
+and sets $doc-&gt;{tcffile_stamp}.</p>
 </dd>
 </dl>
 <p>

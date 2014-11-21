@@ -12,6 +12,7 @@ use XML::LibXML;
 use XML::LibXSLT;
 use Time::HiRes;
 use File::Basename qw(basename dirname);
+use File::Temp qw(tempfile);
 use Cwd; ##-- for abs_path()
 use IO::File;
 use Exporter;
@@ -26,7 +27,7 @@ our @ISA = qw(Exporter DTA::TokWrap::Logger);
 our @EXPORT = qw();
 our %EXPORT_TAGS = (
 		    files => [qw(file_mtime file_is_newer  file_try_open abs_path str2file ref2file)],
-		    slurp => [qw(slurp_file slurp_fh)],
+		    slurp => [qw(slurp_file slurp_fh tempbuf)],
 		    progs => ['path_prog','runcmd','opencmd','$TRACE_RUNCMD'],
 		    libxml => [qw(libxml_parser)],
 		    xmlutils => [qw(xmlesc xmlesc_bytes)],
@@ -34,6 +35,7 @@ our %EXPORT_TAGS = (
 		    time => [qw(timestamp)],
 		    si => [qw(sistr)],
 		    numeric => [qw(sistr pctstr)],
+		    diff => [qw(gdiff2)],
 		   );
 $EXPORT_TAGS{all} = [map {@$_} values(%EXPORT_TAGS)];
 our @EXPORT_OK = @{$EXPORT_TAGS{all}};
@@ -289,6 +291,79 @@ sub ref2file {
   $fh->print($$ref) || return undef;
   if (!ref($file)) { $fh->close() || return undef; }
   return 1;
+}
+
+## $tmpfilename = tempbuf(\$bufr, $template, %tempfileopts)
+sub tempbuf {
+  my ($bufr,$template,%opts) = @_;
+  $template ||= "tmpXXXXX";
+  my ($fh,$filename);
+  if ($opts{filename}) {
+    $filename = $opts{filename};
+    open($fh,">$filename") or die("$0: open failed for tempfile '$filename': $!");
+  } else {
+    ($fh,$filename) = tempfile($template, SUFFIX=>'.buf', UNLINK=>1, %opts);
+  }
+  $fh->print($$bufr);
+  $fh->close();
+  return $filename;
+}
+
+##==============================================================================
+## Utils: Diff
+##==============================================================================
+
+## \$mapvec = gdiff2($file_or_bufref1, $file_or_bufref2, %opts)
+##   + returns map vector-reference $mapvr s.t. $i1==vec($mapvr, $i2, 32) iff either
+##     - $i1 == 0 and character substr($buf2,$i2,1) is un-aligned OR
+##     - $i1 >  0 and character substr($buf2,$i2,1) is aligned to substr($buf1,$i1-1,1)
+##   + %opts
+##      diffcmd => $cmd,   ##-- diff command-name; default 'diff'
+##      file1   => $file1, ##-- temporary filename for $file_or_bufref1
+##      file2   => $file2, ##-- temporary filename for $file_or_bufref2
+sub gdiff2 {
+  my ($src1,$src2,%opts) = @_;
+  my ($diffcmd,$filename1,$filename2) = @opts{qw(diffcmd file1 file2)};
+  delete(@opts{qw(diffcmd file1 file2)});
+  ##
+  my $file1 = ref($src1) ? tempbuf($src1, undef, SUFFIX=>'.buf1', ($filename1 ? (filename=>$filename1) : qw())) : $src1;
+  my $file2 = ref($src2) ? tempbuf($src2, undef, SUFFIX=>'.buf2', ($filename2 ? (filename=>$filename2) : qw())) : $src2;
+  my $len1 = `wc -l<$file1`+0;
+  my $len2 = `wc -l<$file2`+0;
+
+  $diffcmd ||= 'diff';
+  open(my $diff,'-|',$diffcmd,$file1,$file2)
+    or die("$0: open failed for pipe from diff $file1 $file2: $!");
+  my $mapv = '';
+  vec($mapv,$len2-1,32) = 0; ##-- pre-allocate vector
+  my ($i1,$i2) = (0,0);
+  my ($min1,$max1,$op,$min2,$max2);
+  while (defined($_=<$diff>)) {
+    if (m/^(\d+)(?:\,(\d+))?([acd])(\d+)(?:\,(\d+))?$/) {
+      ($min1,$max1, $op, $min2,$max2) = ($1,$2, $3, $4,$5);
+      ##
+      if    ($op eq 'a') { $max1=$min1++; }
+      elsif ($op eq 'd') { $max2=$min2++; }
+      $max1 = $min1 if (!defined($max1));
+      $max2 = $min2 if (!defined($max2));
+      --$_ foreach ($min1,$max1,$min2,$max2);  ##-- count offsets from 0
+      ##
+      for (; $i1<$min1 && $i2<$min2; ++$i1,++$i2) {
+	vec($mapv,$i2,32) = $i1+1;
+      }
+      for (; $op ne 'd' && $i2 <= $max2; ++$i2) {
+	vec($mapv,$i2,32) = 0;
+      }
+      $i1 = $max1+1;
+    }
+  }
+  ##-- map any shared trailing context
+  for (; $i1<$len1 && $i2<$len2; ++$i1,++$i2) {
+    vec($mapv,$i2,32) = $i1+1;
+  }
+
+  close($diff)<2 or die("$0: close failed for pipe from diff: $!");
+  return \$mapv;
 }
 
 ##==============================================================================
