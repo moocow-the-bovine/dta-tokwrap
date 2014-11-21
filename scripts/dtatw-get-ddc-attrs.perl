@@ -622,12 +622,13 @@ sub apply_word {
   }
 
   ##-- compute & assign: rendition (undef -> '-')
+  my $xrhead = "head"; ##-- avoid 'Modification of a read-only value attempted at /usr/local/bin/dtatw-get-ddc-attrs.perl line 626.' errors
   if ($do_rendition) {
     $wrend = join($rend_sep,
 		  map {s/^\#//;$_}
 		  llintersect(map {[luniq (split(' ',($_->{xr}//'')),($_->{blk} ? split(' ',($_->{blk}{xr}//'')) : qw()))]} @cs),
 		  ($foreign
-		   ? ((grep {$_ eq 'head'} map {split(' ',$_->{xc})} @blks) ? 'head' : qw()) ##-- include 'head' context for non-DTA rendition lists
+		   ? ((grep {$_ eq 'head'} map {split(' ',$_->{xc})} @blks) ? $xrhead : qw()) ##-- include 'head' context for non-DTA rendition lists
 		   : qw()));
     $wnod->setAttribute($rendition_attr, $wrend ? "${rend_left}${wrend}${rend_right}" : '-');
   }
