@@ -77,9 +77,10 @@ sub runcmd {
 }
 
 ## $fh_or_undef = PACKAGE::opencmd($cmd)
+## $fh_or_undef = PACKAGE::opencmd($mode,@argv)
 ##  + does log trace at level $TRACE_RUNCMD
 sub opencmd {
-  my $cmd = shift;
+  my ($cmd) = shift;
   __PACKAGE__->vlog($TRACE_RUNCMD,"opencmd(): ", $cmd) if ($TRACE_RUNCMD);
   return IO::File->new($cmd);
 }
@@ -260,6 +261,7 @@ sub file_is_newer {
 ##  + tries to open() $filename; returns true if successful
 sub file_try_open {
   my $file = shift;
+  return 0 if (!defined($file));
   my ($fh);
   eval { $fh = IO::File->new("<$file"); };
   $fh->close() if (defined($fh));
@@ -332,12 +334,13 @@ sub gdiff2 {
   my $len2 = `wc -l<$file2`+0;
 
   $diffcmd ||= 'diff';
-  open(my $diff,'-|',$diffcmd,$file1,$file2)
+  my $diff = opencmd("$diffcmd $file1 $file2|")
     or die("$0: open failed for pipe from diff $file1 $file2: $!");
   my $mapv = '';
   vec($mapv,$len2-1,32) = 0; ##-- pre-allocate vector
   my ($i1,$i2) = (0,0);
   my ($min1,$max1,$op,$min2,$max2);
+  local $_;
   while (defined($_=<$diff>)) {
     if (m/^(\d+)(?:\,(\d+))?([acd])(\d+)(?:\,(\d+))?$/) {
       ($min1,$max1, $op, $min2,$max2) = ($1,$2, $3, $4,$5);

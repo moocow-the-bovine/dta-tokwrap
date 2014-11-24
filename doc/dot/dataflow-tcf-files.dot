@@ -9,18 +9,18 @@ digraph dataflow_perl_files {
   tcfdecode [label="tcfdecode",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
   tcffile -> tcfdecode;
 
-  tcftokfile [label="tcftokfile: *.tcf.t (-bytes)",fillcolor=yellow];
+  tcfwfile [label="tcfwfile: *.tcfw (-bytes)",fillcolor=yellow];
   tcfdecode -> txtfile;
   tcfdecode -> xmlfile;
-  tcfdecode -> tcftokfile;
+  tcfdecode -> tcfwfile;
 
-  tokalign [label="tokalign",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
-  tcftokfile -> tokalign;
-  txtfile -> tokalign;
-  tokalign -> tokfile;
+  tcfalign [label="tcfalign",shape=diamond,fillcolor=orange,fontname="Courier-Bold"];
+  tcfwfile -> tcfalign;
+  txtfile -> tcfalign;
+  tcfalign -> tokfile;
 
   //-- inherited
-  xmlfile [label="xmlfile: *.xml",fillcolor=yellow]; //fillcolor=PowderBlue
+  xmlfile [label="xmlfile: *.xml\ntcfxfile: *.tcfx",fillcolor=yellow]; //fillcolor=PowderBlue
   //add_c -> xmlfile;
 
   mkindex [label="mkindex",shape=diamond,fillcolor=PaleGreen,fontname="Courier-Bold"];
@@ -45,7 +45,7 @@ digraph dataflow_perl_files {
   txfile  -> mkbx;
 
   bxfile [label="bxfile: *.bx"];
-  txtfile [label="txtfile: *.txt",fillcolor=yellow];
+  txtfile [label="txtfile: *.txt\ntcftfile: *.tcft",fillcolor=yellow];
   mkbx -> bxfile;
   mkbx -> txtfile [style="dashed",color="grey"];
   {rank=same; bxfile txtfile}
@@ -70,7 +70,7 @@ digraph dataflow_perl_files {
   xtokfile -> add_ws;
   xmlfile  -> add_ws;
   add_ws   -> cwsfile;
-  cwsfile [label="cwsfile: *.cws.xml",fillcolor=PowderBlue];
+  cwsfile [label="cwsfile: *.cws.xml\ntcfcwsfile: *.tcfws.xml",fillcolor=yellow]; //fillcolor=PowderBlue
 
   //-- splice-in: generic id-based splice (e.g. cab)
   /*

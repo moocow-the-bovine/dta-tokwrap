@@ -354,44 +354,52 @@ sub splice_segments {
 ## Methods: Document Processing
 ##==============================================================================
 
-## $doc_or_undef = $CLASS_OR_OBJECT->addws($doc)
+## $doc_or_undef = $CLASS_OR_OBJECT->addws($doc,%opts)
 ## + $doc is a DTA::TokWrap::Document object
+## + %opts : document-key overrides
+##    xmlkey  => $xmldatakey, ##-- override 'xmldata', 'xmlfile' keys (default='xml')
+##    xtokkey => $xtokkey,    ##-- override 'xtokdata', 'xtokfile' keys
+##    cwskey  => $cwskey,     ##-- override 'cwsfile', 'cwsfh' keys
 ## + %$doc keys:
 ##    xmldata => $xmldata,   ##-- (input) source xml file
 ##    xtokdata => $xtokdata, ##-- (input) standoff xml-ified tokenizer output: data
 ##    xtokfile => $xtokfile, ##-- (input) standoff xml-ified tokenizer output: file (only if $xtokdata is missing)
-##    #cwsdata  => $cwsdata,  ##-- (output) back-spliced xml data
 ##    cwsfile  => $cwsfile,  ##-- (output) back-spliced xml file
 ##    cwsfh    => $cwsfh,    ##-- (output) back-spliced xml handle (overrides $cwsfile)
 ##    addws_stamp0 => $f,    ##-- (output) timestamp of operation begin
 ##    addws_stamp  => $f,    ##-- (output) timestamp of operation end
 ##    cwsdata_stamp => $f,   ##-- (output) timestamp of operation end
 sub addws {
-  my ($p,$doc) = @_;
+  my ($p,$doc,%opts) = @_;
   $doc->setLogContext();
 
+  ##-- defaults
+  my $xmlkey  = $opts{xmlkey} // $p->{xmlkey} // 'xml';
+  my $xtokkey = $opts{xtokkey} // $p->{xtokkey} // 'xtok';
+  my $cwskey = $opts{cwskey} // $p->{cwskey} // 'cws';
+
   ##-- log, stamp
-  $p->vlog($p->{traceLevel},"addws()");
+  $p->vlog($p->{traceLevel},"addws(): xmlkey=$xmlkey, xtokkey=$xtokkey, cwskey=$cwskey");
   $doc->{addws_stamp0} = timestamp();
 
   ##-- sanity check(s)
   $p = $p->new() if (!ref($p));
   ##
-  $doc->loadXmlData() if (!$doc->{xmldata}); ##-- slurp source buffer
-  $p->logconfess("addws(): no xmldata key defined") if (!$doc->{xmldata});
+  $doc->loadFileData($xmlkey,'') if (!$doc->{"${xmlkey}data"}); ##-- slurp xml source buffer
+  $p->logconfess("addws(): no ${xmlkey}data key defined") if (!$doc->{"${xmlkey}data"});
   my $xprs = $p->xmlParser() or $p->logconfes("addws(): could not get XML parser");
 
   ##-- splice: parse standoff
   $p->vlog($p->{traceLevel},"addws(): parse standoff xml");
-  if (defined($doc->{xtokdata})) {
-    $xprs->parse($doc->{xtokdata});
+  if (defined($doc->{"${xtokkey}data"})) {
+    $xprs->parse($doc->{"${xtokkey}data"});
   } else {
-    $xprs->parsefile($doc->{xtokfile});
+    $xprs->parsefile($doc->{"${xtokkey}file"});
   }
 
   ##-- compute //s segments
   $p->vlog($p->{traceLevel},"addws(): search for //s segments");
-  $p->{srcbufr} = \$doc->{xmldata};
+  $p->{srcbufr} = \$doc->{"${xmlkey}data"};
   $p->find_s_segments();
 
   ##-- reprt final assignment
@@ -410,9 +418,10 @@ sub addws {
   }
 
   ##-- output: splice in <w> and <s> segments
-  $p->vlog($p->{traceLevel},"addws(): creating $doc->{cwsfile}");
-  my $cwsfh = defined($doc->{cwsfh}) ? $doc->{cwsfh} : IO::File->new(">$doc->{cwsfile}");
-  $p->logconfess("could not open cwsfile '$doc->{cwsfile}' for write: $!") if (!defined($cwsfh));
+  my $cwsfile = $doc->{"${cwskey}file"} // '/dev/null';
+  $p->vlog($p->{traceLevel},"addws(): creating $cwsfile");
+  my $cwsfh = defined($doc->{"${cwskey}fh"}) ? $doc->{"${cwskey}fh"} : IO::File->new(">$cwsfile");
+  $p->logconfess("could not open cwsfile '$cwsfile' for write: $!") if (!defined($cwsfh));
   $p->splice_segments($cwsfh);
   $cwsfh->close();
 

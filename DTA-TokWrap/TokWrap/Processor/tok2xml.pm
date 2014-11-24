@@ -32,6 +32,7 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##    (
 ##    txmlsort => $bool,	     ##-- if true (default), sort output .t.xml data as close to input document-order as __paragraph__ boundaries will allow
 ##    txmlsort_bysentence => $bool,  ##-- use old sentence-level sort (default: false)
+##    txmlextids => $bool,           ##-- if true, attempt to parse "<a>$SID/$WID</a>" pseudo-analyses as IDs (default:false; uses regex hack)
 ##    t2x => $path_to_dtatw_tok2xml, ##-- default: search
 ##    b2xb => $path_to_dtatw_b2xb,   ##-- default: search; 'off' to disable
 ##    inplace => $bool,              ##-- prefer in-place programs for search?
@@ -45,6 +46,7 @@ sub defaults {
 	  ##-- sorting?
 	  txmlsort => 1,
 	  #txmlsort_bysentence => 0,
+	  txmlextids => 1,
 
 	  ##-- programs
 	  t2x => undef,
@@ -81,54 +83,63 @@ sub init {
 ##==============================================================================
 
 ## $doc_or_undef = $CLASS_OR_OBJECT->tok2xml($doc)
+## $doc_or_undef = $CLASS_OR_OBJECT->tok2xml($doc,%opts)
 ## + $doc is a DTA::TokWrap::Document object
+## + %opts:
+##     tokfilekey => $tokfilekey,   ##-- document key for tokenized file (default='tokfile1')
+##     xtokdatakey => $xtokdatakey, ##-- document key for tokenized data (default='xtokdata')
+##     %t2x_options,                ##-- ... other options override %$t2x sort defaults
 ## + %$doc keys:
-##    tokfile1  => $tokfile1,  ##-- (input) tokenizer output file, must already be populated
-##    cxfile    => $cxfile,    ##-- (input) character index file, must already be populated
-##    bxfile    => $bxfile,    ##-- (input) block index data file, must already be populated
-##    xtokdata  => $xtokdata,  ##-- (output) tokenizer output as XML (string)
-##    tok2xml_stamp0 => $f,  ##-- (output) timestamp of operation begin
-##    tok2xml_stamp  => $f,  ##-- (output) timestamp of operation end
-##    xtokdata_stamp => $f,  ##-- (output) timestamp of operation end
+##    $tokfilekey  => $tokfile1,  ##-- (input) tokenizer output file, must already be populated
+##    cxfile       => $cxfile,    ##-- (input) character index file, must already be populated
+##    bxfile       => $bxfile,    ##-- (input) block index data file, must already be populated
+##    $xtokdatakey => $xtokdata,  ##-- (output) tokenizer output as XML (string)
+##    tok2xml_stamp0 => $f,       ##-- (output) timestamp of operation begin
+##    tok2xml_stamp  => $f,       ##-- (output) timestamp of operation end
+##    xtokdata_stamp => $f,       ##-- (output) timestamp of operation end
 sub tok2xml {
-  my ($t2x,$doc) = @_;
+  my ($t2x,$doc,%opts) = @_;
   $doc->setLogContext();
 
   ##-- log, stamp
   $t2x->vlog($t2x->{traceLevel},"tok2xml()");
   $doc->{tok2xml_stamp0} = timestamp();
 
+  ##-- defaults
+  my $tokfilekey  = $opts{tokfilekey} // $t2x->{tokfilekey} // 'tokfile1';
+  my $xtokdatakey = $opts{xtokdatakey} // $t2x->{xtokdatakey} // 'xtokdata';
+
   ##-- sanity check(s)
   $t2x = $t2x->new() if (!ref($t2x));
   ##
   $t2x->logconfess("tok2xml(): no cxfile key defined") if (!$doc->{cxfile});
   $t2x->logconfess("tok2xml(): no bxfile key defined") if (!$doc->{bxfile});
-  $t2x->logconfess("tok2xml(): no tokfile1 key defined") if (!$doc->{tokfile1});
+  $t2x->logconfess("tok2xml(): no tokfilekey {$tokfilekey} key defined") if (!$doc->{$tokfilekey});
   ##
   file_try_open($doc->{cxfile}) || $t2x->logconfess("tok2xml(): could not open .cx file '$doc->{cxfile}': $!");
   file_try_open($doc->{bxfile}) || $t2x->logconfess("tok2xml(): could not open .bx file '$doc->{bxfile}': $!");
-  file_try_open($doc->{tokfile1}) || $t2x->logconfess("tok2xml(): could not open .t1 file '$doc->{tokfile1}': $!");
+  file_try_open($doc->{$tokfilekey}) || $t2x->logconfess("tok2xml(): could not open .t1 file '$doc->{$tokfilekey}': $!");
 
   ##-- run client program(s)
   my ($cmd);
   if ($t2x->{b2xb} ne 'off') {
     $t2x->vlog($t2x->{traceLevel},"command: $t2x->{b2xb} | $t2x->{t2x}");
-    $cmd = "'$t2x->{b2xb}' '$doc->{tokfile1}' '$doc->{cxfile}' '$doc->{bxfile}' - | '$t2x->{t2x}' - - '$doc->{xmlbase}' |";
+    $cmd = "'$t2x->{b2xb}' '$doc->{$tokfilekey}' '$doc->{cxfile}' '$doc->{bxfile}' - | '$t2x->{t2x}' - - '$doc->{xmlbase}' |";
   } else {
     $t2x->vlog($t2x->{traceLevel},"command: $t2x->{t2x}");
-    $cmd = "'$t2x->{t2x}' '$doc->{tokfile1}' - '$doc->{xmlbase}' |";
+    $cmd = "'$t2x->{t2x}' '$doc->{$tokfilekey}' - '$doc->{xmlbase}' |";
   }
   my $cmdfh = opencmd("$cmd")
     or $t2x->logconfess("tok2xml(): open failed for pipe '$t2x->{b2xb}'|'$t2x->{t2x}'|: $!");
-  $doc->{xtokdata} = undef;
-  slurp_fh($cmdfh,\$doc->{xtokdata});
+  $doc->{$xtokdatakey} = undef;
+  slurp_fh($cmdfh,\$doc->{$xtokdatakey});
   $cmdfh->close();
 
   ##-- re-sort?
-  if ($t2x->{txmlsort_bysentence}) {
+  if ($opts{txmlsort_bysentence}//$t2x->{txmlsort_bysentence}) {
     ##-- sort by sentence (< v0.49)
     $t2x->vlog($t2x->{traceLevel},"sort (by sentence)");
-    my $data = \$doc->{xtokdata};
+    my $data = \$doc->{$xtokdatakey};
     my ($off,$len,$xb);
     my @s = qw();  ##-- ([xml_off0, txml_off, txml_len], ...)
     while ($$data =~ m{<s\b[^>]*>.*?</s>\s*}sg) {
@@ -141,10 +152,10 @@ sub tok2xml {
     my $sorted = $prefix.join('',map {substr($$data,$_->[1],$_->[2])} sort {$a->[0]<=>$b->[0]} @s).$suffix;
     $$data = $sorted;
   }
-  elsif ($t2x->{txmlsort}) {
+  elsif ($opts{txmlsort}//$t2x->{txmlsort}) {
     ##-- sort by paragraph (>= v0.49)
     $t2x->vlog($t2x->{traceLevel},"sort (by paragraph)");
-    my $data = \$doc->{xtokdata};
+    my $data = \$doc->{$xtokdatakey};
     open(my $fh,"<",$data) or die("could not open string filehandle: $!");
     my @p   = qw(); ##-- ([xml_off0, txml_off, txml_len], ...)
     my $pid = '';
@@ -179,8 +190,39 @@ sub tok2xml {
     }
   }
 
+  ##-- parse external IDs
+  if ($opts{txmlextids}//$t2x->{txmlextids}) {
+    $t2x->vlog($t2x->{traceLevel},"parse external IDs");
+    my $data = \$doc->{$xtokdatakey};
+
+    ##-- split into sentences
+    my ($off,$len);
+    my @sloc = qw();  ##-- ([txml_off, txml_len], ...)
+    while ($$data =~ m{<s\b[^\>]*>.*?</s>\s*}sg) {
+      push(@sloc,[$-[0], $+[0]-$-[0]]);
+    }
+    my $prefix = substr($$data,0,$sloc[0][0]);
+    my $suffix = substr($$data,$sloc[$#sloc][0]+$sloc[$#sloc][1]);
+
+    ##-- parse IDs
+    my ($s,$sid);
+    my $parsed = ($prefix
+		  .join('',
+			map {
+			  ($off,$len) = @$_;
+			  $s = substr($$data,$off,$len);
+			  $s =~ s{<s([^>]*)id="[^"]*"(.*?)<a>(\w*)/(\w*)</a>}{<s${1}id="${3}"${2}<a>${3}/${4}</a>}s;
+			  $s =~ s{<w(.*?)\bid="[^"]*"(.*?)<a>\w*/(\w*)</a>}{<w${1}id="${3}"${2}}g;
+			  $s =~ s{<toka></toka>}{}g;
+			  $s =~ s{<w([^>]*)></w>}{<w$1/>}g;
+			  $s
+			} @sloc)
+		  .$suffix);
+    $$data = $parsed;
+  }
+
   ##-- finalize
-  $doc->{tok2xml_stamp} = $doc->{xtokdata_stamp} = timestamp(); ##-- stamp
+  $doc->{tok2xml_stamp} = $doc->{"${xtokdatakey}_stamp"} = timestamp(); ##-- stamp
   return $doc;
 }
 
@@ -274,13 +316,12 @@ Constructor.
 
 %args, %$t2x:
 
- ##-- output document structure
- docElt   => $elt,  ##-- output document element
- sElt     => $elt,  ##-- output sentence element
- wElt     => $elt,  ##-- output token element
- aElt     => $elt,  ##-- output token-analysis element
- posAttr  => $attr, ##-- output byte-position attribute
- textAttr => $attr, ##-- output token-text attribute
+  txmlsort => $bool,             ##-- if true (default), sort output .t.xml data as close to input document-order as __paragraph__ boundaries will allow
+  txmlsort_bysentence => $bool,  ##-- use old sentence-level sort (default: false)
+  txmlextids => $bool,           ##-- if true, attempt to parse "<a>$SID/$WID</a>" pseudo-analyses as IDs (default:false; uses regex hack)
+  t2x => $path_to_dtatw_tok2xml, ##-- default: search
+  b2xb => $path_to_dtatw_b2xb,   ##-- default: search; 'off' to disable
+  inplace => $bool,              ##-- prefer in-place programs for search?
 
 You probably should B<NOT> change any of the default output document
 structure options (unless this is the final module in your
@@ -301,66 +342,36 @@ Static class-dependent defaults.
 ## DESCRIPTION: DTA::TokWrap::Processor::tok2xml: Methods: tok2xml (bx0doc, txfile) => bxdata
 =pod
 
-=head2 Methods: tok2xml (bx0doc, txfile) => bxdata
+=head2 Methods: tok2xml (bxdata, tokdata1, cxdata) =E<gt> xtokdata
 
 =over 4
 
 =item tok2xml
 
  $doc_or_undef = $CLASS_OR_OBJECT->tok2xml($doc);
+ $doc_or_undef = $CLASS_OR_OBJECT->tok2xml($doc,%opts);
 
 Converts "raw" CSV-format (.t) low-level tokenizer output
 to a "master" tokenized XML (.t.xml) format
 in the
 L<DTA::TokWrap::Document|DTA::TokWrap::Document> object
 $doc.
+If specified, %opts override $CLASS_OR_OBJECT sorting and parsing defaults.
 
 Relevant %$doc keys:
 
- bxdata   => \@bxdata,   ##-- (input) block index data
- tokdata1  => $tokdata1, ##-- (input) tokenizer output data (string)
- cxdata   => \@cxchrs,   ##-- (input) character index data (array of arrays)
- cxfile   => $cxfile,    ##-- (input) character index file
- xtokdata => $xtokdata,  ##-- (output) tokenizer output as XML
- nchrs    => $nchrs,     ##-- (output) number of character index records
- ntoks    => $ntoks,     ##-- (output) number of tokens parsed
+ bxdata        => \@bxdata,   ##-- (input) block index data
+ $tokfile_key  => $tokfile,  ##-- (input) tokenizer output filename (default='tokfile1')
+ cxdata        => \@cxchrs,   ##-- (input) character index data (array of arrays)
+ cxfile        => $cxfile,    ##-- (input) character index file
+ $xtokdata_key => $xtokdata,  ##-- (output) tokenizer output as XML (default='xtokdata')
+ nchrs         => $nchrs,     ##-- (output) number of character index records
+ ntoks         => $ntoks,     ##-- (output) number of tokens parsed
  ##
  tok2xml_stamp0 => $f,   ##-- (output) timestamp of operation begin
  tok2xml_stamp  => $f,   ##-- (output) timestamp of operation end
  xtokdata_stamp => $f,   ##-- (output) timestamp of operation end
 
-$%t2x keys (temporary, for debugging):
-
- tb2ci   => $tb2ci,     ##-- (temp) s.t. vec($tb2ci, $txbyte, 32) = $char_index_of_txbyte
- ntb     => $ntb,       ##-- (temp) number of text bytes
-
-may implicitly call $doc-E<gt>mkbx(), $doc-E<gt>loadCxFile(), $doc-E<gt>tokenize()
-(but shouldn't!)
-
-=item txbyte_to_ci
-
- \$tb2ci = $t2x->txbyte_to_ci(\@cxdata);
-
-Low-level utility method.
-
-Sets %$t2x keys: tb2ci, ntb, nchr
-
-=item txtbyte_to_ci
-
- \$ob2ci = $t2x->txtbyte_to_ci(\@cxdata,\@bxdata,\$tb2ci);
-
-Low-level utility method
-
-Sets %$t2x keys: ob2ci
-
-=item process_tt_data
-
- \$tokxmlr = $t2x->process_tt_data($doc);
-
-Low-level utility method.
-
-Actually populates $doc-E<gt>{xtokdata} by parsing $doc-E<gt>{tokdata1},
-referring to $t2x-E<gt>{ob2ci} for character-index lookup.
 
 =back
 

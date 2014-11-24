@@ -1,10 +1,10 @@
 ## -*- Mode: CPerl -*-
 
-## File: DTA::TokWrap::Processor::tcfdecode.pm
+## File: DTA::TokWrap::Processor::tcfdecode0.pm
 ## Author: Bryan Jurish <jurish@bbaw.de>
-## Description: DTA tokenizer wrappers: TCF[tei,text,tokens,sentences]->TEI,text,tokdata1 decoding
+## Description: DTA tokenizer wrappers: TCF[?tei,?text,tokens,sentences]->?TEI,?text,tokdata decoding
 
-package DTA::TokWrap::Processor::tcfdecode;
+package DTA::TokWrap::Processor::tcfdecode0;
 
 use DTA::TokWrap::Version;  ##-- imports $VERSION, $RCDIR
 use DTA::TokWrap::Base;
@@ -39,53 +39,58 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ## Methods
 ##==============================================================================
 
-## $doc_or_undef = $CLASS_OR_OBJECT->tcfdecode($doc)
+## $doc_or_undef = $CLASS_OR_OBJECT->tcfdecode0($doc)
 ## + $doc is a DTA::TokWrap::Document object
 ## + %$doc keys:
 ##    tcfdoc   => $tcfdoc,   ##-- (input) TCF input document
 ##    ##
-##    tcfxdata => $tcfxdata, ##-- (output) TEI-XML decoded from TCF
-##    tcftdata => $tcftdata, ##-- (output) text data decoded from TCF
-##    tcfwdata => $tcfwdata, ##-- (output) tokenized data decoded from TCF, without byte-offsets, with "SID/WID" attributes
+##    tcfxdata => $tcfxdata, ##-- (output) TEI-XML decode0d from TCF
+##    tcftdata => $tcftdata, ##-- (output) text data decode0d from TCF
+##    tcfwdata => $tcfwdata, ##-- (output) tokenized data decode0d from TCF, without byte-offsets, with "SID/WID" attributes
 ##    ##
-##    tcfdecode_stamp0 => $f, ##-- (output) timestamp of operation begin
-##    tcfdecode_stamp  => $f, ##-- (output) timestamp of operation end
+##    tcfdecode0_stamp0 => $f, ##-- (output) timestamp of operation begin
+##    tcfdecode0_stamp  => $f, ##-- (output) timestamp of operation end
 ##    tcfxdata_stamp   => $f, ##-- (output) timestamp of operation end
 ##    tcftdata_stamp   => $f, ##-- (output) timestamp of operation end
 ##    tcfwdata_stamp   => $f, ##-- (output) timestamp of operation end
 ## + code lifted in part from DTA::CAB::Format::TCF::parseDocument()
-sub tcfdecode {
+sub tcfdecode0 {
   my ($dec,$doc) = @_;
   $dec = $dec->new if (!ref($dec));
   $doc->setLogContext();
 
   ##-- log, stamp
-  $dec->vlog($dec->{traceLevel},"tcfdecode()");
-  $doc->{tcfdecode_stamp0} = timestamp(); ##-- stamp
+  $dec->vlog($dec->{traceLevel},"tcfdecode0()");
+  $doc->{tcfdecode0_stamp0} = timestamp(); ##-- stamp
 
   ##-- sanity check(s)
-  $dec->logconfess("tcfdecode(): no {tcfdoc} defined") if (!$doc->{tcfdoc});
+  $dec->logconfess("tcfdecode0(): no {tcfdoc} defined") if (!$doc->{tcfdoc});
 
-  ##-- decode: corpus: /D-Spin/TextCorpus
+  ##-- decode0: corpus: /D-Spin/TextCorpus
   my $xdoc    = $doc->{tcfdoc};
-  my $xcorpus = $xdoc->findnodes('/*[local-name()="D-Spin"]/*[local-name()="TextCorpus"]')->[0]
-    or $dec->logconfess("tcfdecode(): no /D-Spin/TextCorpus node found in TCF document");
+  my $xroot   = $xdoc->documentElement;
+  $dec->logconfess("tcfdecode0(): no document element found in TCF document") if (!$xroot);
+  my $xcorpus = [$xroot->getChildrenByLocalName('TextCorpus')]->[0]
+    or $dec->logconfess("tcfdecode0(): no /*/TextCorpus node found in TCF document");
 
-  ##-- decode: xmldata: /D-Spin/TextCorpus/tei
-  my $xtei = $xcorpus->findnodes('*[local-name()="tei"]')->[0];
-  $doc->{tcfxdata} = $xtei ? $xtei->textContent : undef;
+  ##-- decode0: xmldata: /D-Spin/TextCorpus/tei
+  $dec->vlog($dec->{traceLevel},"tcfdecode0(): tei");
+  my ($xtei) = $xcorpus->getChildrenByLocalName('tei');
+  $doc->{tcfxdata} = $xtei ? $xtei->textContent : '';
   utf8::encode($doc->{tcfxdata}) if (utf8::is_utf8($doc->{tcfxdata}));
 
-  ##-- decode: txtdata: /D-Spin/TextCorpus/text
-  my $xtext = $xcorpus->findnodes('*[local-name()="text"]')->[0];
-  $doc->{tcftdata} = $xtext ? $xtext->textContent : undef;
+  ##-- decode0: txtdata: /D-Spin/TextCorpus/text
+  $dec->vlog($dec->{traceLevel},"tcfdecode0(): text");
+  my ($xtext) = $xcorpus->getChildrenByLocalName('text');
+  $doc->{tcftdata} = $xtext ? $xtext->textContent : '';
   utf8::encode($doc->{tcftdata}) if (utf8::is_utf8($doc->{tcftdata}));
 
   ##-- parse: /D-Spin/TextCorpus/tokens
-  my $xtokens = $xcorpus->findnodes('*[local-name()="tokens"]')->[0]
-    or $dec->logconfess("tcfdecode(): no TextCorpus/tokens node found in TCF document");
+  $dec->vlog($dec->{traceLevel},"tcfdecode0(): tokens");
+  my ($xtokens) = $xcorpus->getChildrenByLocalName('tokens');
+  $dec->logconfess("tcfdecode0(): no TextCorpus/tokens node found in TCF document") if (!$xtokens);
   my (@wids,%id2w,$wid);
-  foreach (@{$xtokens->findnodes('*[local-name()="token"]')}) {
+  foreach ($xtokens->getChildrenByLocalName('token')) {
     if (!defined($wid=$_->getAttribute('ID'))) {
       $wid = sprintf("w%x", $#wids);
       $_->setAttribute('ID'=>$wid);
@@ -95,17 +100,18 @@ sub tcfdecode {
   }
 
   ##-- parse: /D-Spin/TextCorpus/sentences
+  $dec->vlog($dec->{traceLevel},"tcfdecode0(): sentences");
   my @sents = qw();
-  my $xsents = $xcorpus->findnodes('*[local-name()="sentences"]')->[0];
+  my ($xsents) = $xcorpus->getChildrenByLocalName('sentences');
   if (defined($xsents)) {
     my ($s,$sid,$swids);
-    foreach (@{$xsents->findnodes('*[local-name()="sentence"]')}) {
+    foreach ($xsents->getChildrenByLocalName('sentence')) {
       if (!defined($sid=$_->getAttribute('ID'))) {
 	$sid = sprintf("s%x", $#sents);
 	$_->setAttribute(ID=>$sid);
       }
       if (!defined($swids=$_->getAttribute('tokenIDs'))) {
-	$dec->logwarn("tcfdecode(): no tokenIDs attribute for sentence #$sid, skipping");
+	$dec->logwarn("tcfdecode0(): no tokenIDs attribute for sentence #$sid, skipping");
 	next;
       }
       push(@sents, [map {$id2w{$_}."\t$sid/$_\n"} split(' ',$swids)]);
@@ -114,12 +120,14 @@ sub tcfdecode {
     @sents = map {$id2w{$_}."\ts0/$_\n"} @wids;
   }
 
-  ##-- decode: tcfwdata
+  ##-- decode0: tcfwdata
+  $dec->vlog($dec->{traceLevel},"tcfdecode0(): tcfwdata");
   $doc->{tcfwdata} = join('', map {join('',@$_)."\n"} @sents);
   utf8::encode($doc->{tcfwdata}) if (utf8::is_utf8($doc->{tcfwdata}));
 
   ##-- finalize
-  $doc->{tcfdecode_stamp} = $doc->{tcfxdata_stamp} = $doc->{tcftdata_stamp} = $doc->{tcfwdata_stamp} = timestamp(); ##-- stamp
+  $dec->vlog($dec->{traceLevel},"tcfdecode0(): finalize");
+  $doc->{tcfdecode0_stamp} = $doc->{tcfxdata_stamp} = $doc->{tcftdata_stamp} = $doc->{tcfwdata_stamp} = timestamp(); ##-- stamp
   return $doc;
 }
 
@@ -140,7 +148,7 @@ __END__
 
 =head1 NAME
 
-DTA::TokWrap::Processor::tcfdecode - DTA tokenizer wrappers: TCF[tei,text,tokens,sentences]-E<gt>TEI,text decoding
+DTA::TokWrap::Processor::tcfdecode0 - DTA tokenizer wrappers: TCF[tei,text,tokens,sentences]-E<gt>TEI,text extraction
 
 =cut
 
@@ -150,10 +158,10 @@ DTA::TokWrap::Processor::tcfdecode - DTA tokenizer wrappers: TCF[tei,text,tokens
 
 =head1 SYNOPSIS
 
- use DTA::TokWrap::Processor::tcfdecode;
+ use DTA::TokWrap::Processor::tcfdecode0;
  
- $dec = DTA::TokWrap::Processor::tcfdecode->new(%opts);
- $doc_or_undef = $dec->tcfdecode($doc);
+ $dec = DTA::TokWrap::Processor::tcfdecode0->new(%opts);
+ $doc_or_undef = $dec->tcfdecode0($doc);
 
 =cut
 
@@ -163,10 +171,10 @@ DTA::TokWrap::Processor::tcfdecode - DTA tokenizer wrappers: TCF[tei,text,tokens
 
 =head1 DESCRIPTION
 
-DTA::TokWrap::Processor::tcfdecode provides an object-oriented
+DTA::TokWrap::Processor::tcfdecode0 provides an object-oriented
 L<DTA::TokWrap::Processor|DTA::TokWrap::Processor> wrapper
-for decoding the C<tei>,C<text>,C<tokens>, and C<sentences> layers
-of a tokenized TCF ("Text Corpus Format", cf. http://weblicht.sfs.uni-tuebingen.de/weblichtwiki/index.php/The_TCF_Format) document
+for extracting the C<tei>,C<text>,C<tokens>, and C<sentences> layers
+from a tokenized TCF ("Text Corpus Format", cf. http://weblicht.sfs.uni-tuebingen.de/weblichtwiki/index.php/The_TCF_Format) document
 as originally encoded by
 a L<DTA::TokWrap::Processor::tcfencode|DTA::TokWrap::Processor::tcfencode> ("tcfencoder") object.
 The encoded TCF document should have the following layers:
@@ -198,7 +206,7 @@ Document order of sentences must correspond B<exactly> to the serial order of th
 =cut
 
 ##----------------------------------------------------------------
-## DESCRIPTION: DTA::TokWrap::Processor::tcfdecode: Constants
+## DESCRIPTION: DTA::TokWrap::Processor::tcfdecode0: Constants
 =pod
 
 =head2 Constants
@@ -207,7 +215,7 @@ Document order of sentences must correspond B<exactly> to the serial order of th
 
 =item @ISA
 
-DTA::TokWrap::Processor::tcfdecode
+DTA::TokWrap::Processor::tcfdecode0
 inherits from
 L<DTA::TokWrap::Processor|DTA::TokWrap::Processor>.
 
@@ -216,7 +224,7 @@ L<DTA::TokWrap::Processor|DTA::TokWrap::Processor>.
 =cut
 
 ##----------------------------------------------------------------
-## DESCRIPTION: DTA::TokWrap::Processor::tcfdecode: Constructors etc.
+## DESCRIPTION: DTA::TokWrap::Processor::tcfdecode0: Constructors etc.
 =pod
 
 =head2 Constructors etc.
@@ -240,18 +248,18 @@ Static class-dependent defaults.
 =cut
 
 ##----------------------------------------------------------------
-## DESCRIPTION: DTA::TokWrap::Processor::tcfdecode: Methods
+## DESCRIPTION: DTA::TokWrap::Processor::tcfdecode0: Methods
 =pod
 
 =head2 Methods
 
 =over 4
 
-=item tcfdecode
+=item tcfdecode0
 
- $doc_or_undef = $CLASS_OR_OBJECT->tcfdecode($doc);
+ $doc_or_undef = $CLASS_OR_OBJECT->tcfdecode0($doc);
 
-Decodes the {tcfdoc} key of the
+Decode0s the {tcfdoc} key of the
 L<DTA::TokWrap::Document|DTA::TokWrap::Document> object
 to TCF, storing the result in
 C<$doc-E<gt>{tcfxdata}>, C<$doc-E<gt>{tcftdata}>, and C<$doc-E<gt>{tcfwdata}>.
@@ -260,12 +268,12 @@ Relevant %$doc keys:
 
  tcfdoc   => $tcfdoc,   ##-- (input) TCF input document
  ##
- tcfxdata => $tcfxdata, ##-- (output) TEI-XML decoded from TCF
- tcftdata => $tcftdata, ##-- (output) text data decoded from TCF
- tcfwdata => $tcfwdata, ##-- (output) tokenized data decoded from TCF, without byte-offsets, with "SID/WID" attributes
+ tcfxdata => $tcfxdata, ##-- (output) TEI-XML decode0d from TCF
+ tcftdata => $tcftdata, ##-- (output) text data decode0d from TCF
+ tcfwdata => $tcfwdata, ##-- (output) tokenized data decode0d from TCF, without byte-offsets, with "SID/WID" attributes
  ##
- tcfdecode_stamp0 => $f, ##-- (output) timestamp of operation begin
- tcfdecode_stamp  => $f, ##-- (output) timestamp of operation end
+ tcfdecode0_stamp0 => $f, ##-- (output) timestamp of operation begin
+ tcfdecode0_stamp  => $f, ##-- (output) timestamp of operation end
  tcfxdata_stamp   => $f, ##-- (output) timestamp of operation end
  tcftdata_stamp   => $f, ##-- (output) timestamp of operation end
  tcfwdata_stamp   => $f, ##-- (output) timestamp of operation end

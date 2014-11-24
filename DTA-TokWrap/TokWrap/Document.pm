@@ -27,8 +27,9 @@ use DTA::TokWrap::Processor::tok2xml;
 use DTA::TokWrap::Processor::addws;
 use DTA::TokWrap::Processor::idsplice;
 use DTA::TokWrap::Processor::tcfencode;
-use DTA::TokWrap::Processor::tcfdecode;
+use DTA::TokWrap::Processor::tcfdecode0;
 use DTA::TokWrap::Processor::tcfalign;
+use DTA::TokWrap::Processor::tcfdecode;
 
 use File::Basename qw(basename dirname);
 use IO::File;
@@ -86,7 +87,7 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##
 ##    ##-- generator data (optional)
 ##    tw => $tw,              ##-- a DTA::TokWrap object storing individual generators
-##    traceOpen  => $leve,    ##-- log-lvel for open() trace (e.g. 'info'; default=undef (none))
+##    traceOpen  => $level,   ##-- log-lvel for open() trace (e.g. 'info'; default=undef (none))
 ##    traceClose => $level,   ##-- log-level for close() trace (e.g. 'trace'; default=undef (none))
 ##
 ##    ##-- generated data (common)
@@ -149,7 +150,7 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    tcffile  => $tcffile,    ##-- TCF file
 ##    tcflang  => $lang,       ##-- TCF language attribute (default: 'de')
 ##
-##    ##-- tcfdecode data (see DTA::TokWrap::Processor::tcfdecode)
+##    ##-- tcfdecode0 data (see DTA::TokWrap::Processor::tcfdecode0)
 ##    tcfxfile => $tcfxfile,   ##-- tcf-decoded base xml file [default="$tmpdir/$outbase.tcfx"]
 ##    tcfxdata => $tcfxdata,   ##-- tcf-decoded base xml data
 ##    tcftfile => $tcftfile,   ##-- tcf-decoded serial text file [default="$tmpdir/$outbase.tcft"]
@@ -157,9 +158,10 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    tcfwdata => $tcfwdata,   ##-- tcf-decoded token data, tt-format: "TEXT\tSID/WID\n"
 ##    tcfwfile => $tcfwfile,   ##-- tcf-decoded token file, tt-format [default="$tmpdir/$outbase.tcfw"]
 ##
-##    ##-- tcfalign data (see DTA::TokWrap::Processor::tcfalign)
-##    tcfvdata => $tcfvdata,   ##-- tcf-decoded token data + offsets, tt-format: "TEXT\tOFFSET LEN\tSID/WID\n"
-##    tcfvfile => $tcfvfile,   ##-- tcf-decoded token file + offsets, tt-format [default="$tmpdir/$outbase.tcfw"]
+##    ##-- tcfalign data (PROXIED, see DTA::TokWrap::Processor::tcfalign : uses tokdata1,tokfile1)
+##    ##-- tcf2txml data (PROXIED, see DTA::TokWrap::Processor::tok2xml : uses tokfile1,cxfile,bxfile,xtokdata)
+##    ##-- tcfdecode data
+##    tcfcwsfile => $tcfcwsfile, ##-- tcf-decoded+aligned+ws-spliced output file (default="$outdir/$outbase.tcfws.xml")
 ##   )
 sub new {
   my ($that,%opts) = @_;
@@ -255,8 +257,8 @@ sub defaults {
 	  tcftfile => undef,
 	  tcfwfile => undef,
 
-	  ##-- tcf alignment
-	  tcfvfile => undef,
+	  ##-- tcf addws
+	  tcfcwsfile => undef,
 	 );
 }
 
@@ -330,13 +332,13 @@ sub init {
   ##-- defaults: tcf encoding (tcfencode)
   $doc->{tcffile} = $doc->{outdir}.'/'.$doc->{outbase}.".tcf" if (!$doc->{tcffile});
 
-  ##-- defaults: tcf decoding (tcfdecode)
+  ##-- defaults: tcf decoding (tcfdecode0, tcfdecode)
   $doc->{tcfxfile} = $doc->{tmpdir}.'/'.$doc->{outbase}.".tcfx" if (!$doc->{tcfxfile});
   $doc->{tcftfile} = $doc->{tmpdir}.'/'.$doc->{outbase}.".tcft" if (!$doc->{tcftfile});
   $doc->{tcfwfile} = $doc->{tmpdir}.'/'.$doc->{outbase}.".tcfw" if (!$doc->{tcfwfile});
 
-  ##-- defaults: tcf text<->token alignment (tcfalign)
-  $doc->{tcfvfile} = $doc->{tmpdir}.'/'.$doc->{outbase}.".tcfv" if (!$doc->{tcfvfile});
+  ##-- defaults: tcf-decoded .cws.xml data
+  $doc->{tcfcwsfile} = $doc->{outdir}.'/'.$doc->{outbase}.".tcfws.xml" if (!$doc->{tcfcwsfile});
 
   ##-- return
   return $doc;
@@ -490,7 +492,7 @@ BEGIN {
      (map {$_=>[qw(mkbx0 saveBx0File)]} qw(mkbx0 bx0)),
      (map {$_=>[qw(loadBx0File mkbx saveBxFile saveTxtFile)]} qw(mkbx mktxt bx txt)),
      ##
-     (map {$_=>[qw(tokenize saveTokFile0)]} qw(mktok0 tokenize0 tok0 t0 tt0)),
+     (map {$_=>[qw(tokenize saveTokFile0)]} qw(mktok0 tokenize0 tok0 t0 tt0)), 
      (map {$_=>[qw(tokenize1 saveTokFile1)]} qw(mktok1 tokenize1 tok1 t1 tt1)),
      (map {$_=>[qw(tokenize saveTokFile0 tokenize1 saveTokFile1)]} qw(mktok tokenize tok t tt)),
 
@@ -533,14 +535,21 @@ BEGIN {
 		  qw(tcfencode saveTcfFile),
 		 ],
 
-     'tcfdecode' => [qw(loadTcfFile),
-		     qw(tcfdecode saveTcfxFile saveTcftFile saveTcfwFile),
+     'tcfencode' => [qw(tcfencode saveTcfFile)],
+
+     'tcfdecode0' => [qw(loadTcfFile),
+		     qw(tcfdecode0 saveTcfxFile saveTcftFile saveTcfwFile),
 		    ],
      'tcfalign' => [qw(loadTcfFile),
-		    qw(tcfdecode saveTcfxFile saveTcftFile saveTcfwFile),
+		    qw(tcfdecode0 saveTcfxFile saveTcftFile saveTcfwFile),
 		    qw(loadTxtData),
-		    qw(tcfalign saveTcfvFile),
+		    qw(tcfalign saveTokFile1),
 		   ],
+     'tcfdecode' => [
+		     qw(loadTcfFile),
+		     qw(tcfdecode0 saveTcfxFile saveTcftFile saveTcfwFile),
+		     qw(tcfdecode),
+		    ],
 
      all => [qw(mkindex),
 	     qw(mkbx0 saveBx0File),
@@ -696,13 +705,13 @@ sub tcfencode {
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tcfencode}) || 'DTA::TokWrap::Processor::tcfencode')->tcfencode($_[0]);
 }
 
-## $doc_or_undef = $doc->tcfdecode($tcfdecode)
+## $doc_or_undef = $doc->tcfdecode0($tcfdecode0)
 ## $doc_or_undef = $doc->tcfdecode()
-##  + see DTA::TokWrap::Processor::tcfdecode::tcfdecode()
-sub tcfdecode {
+##  + see DTA::TokWrap::Processor::tcfdecode::tcfdecode0()
+sub tcfdecode0 {
   $_[0]->setLogContext();
-  $_[0]->vlog($_[0]{traceProc},"tcfdecode()") if ($_[0]{traceProc});
-  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tcfdecode}) || 'DTA::TokWrap::Processor::tcfdecode')->tcfdecode($_[0]);
+  $_[0]->vlog($_[0]{traceProc},"tcfdecode0()") if ($_[0]{traceProc});
+  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tcfdecode0}) || 'DTA::TokWrap::Processor::tcfdecode0')->tcfdecode0($_[0]);
 }
 
 ## $doc_or_undef = $doc->tcfalign($tcfalign)
@@ -712,6 +721,15 @@ sub tcfalign {
   $_[0]->setLogContext();
   $_[0]->vlog($_[0]{traceProc},"tcfalign()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tcfalign}) || 'DTA::TokWrap::Processor::tcfalign')->tcfalign($_[0]);
+}
+
+## $doc_or_undef = $doc->tcfdecode($tcfdecode0)
+## $doc_or_undef = $doc->tcfdecode()
+##  + see DTA::TokWrap::Processor::tcfdecode::tcfdecode()
+sub tcfdecode {
+  $_[0]->setLogContext();
+  $_[0]->vlog($_[0]{traceProc},"tcfdecode()") if ($_[0]{traceProc});
+  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tcfdecode}) || 'DTA::TokWrap::Processor::tcfdecode')->tcfdecode($_[0]);
 }
 
 
@@ -1169,16 +1187,6 @@ sub saveTcftFile {
 ##  + sets $doc->{tcfwfile_stamp}
 sub saveTcfwFile {
   return $_[0]->saveFileData('tcfw','',@_[1..$#_]);
-}
-
-## $file_or_undef = $doc->saveTcfvFile($filename_or_fh,\$tcfvdata)
-## $file_or_undef = $doc->saveTcfvFile($filename_or_fh)
-## $file_or_undef = $doc->saveTcfvFile()
-##  + $filename_or_fh defaults to $doc->{tcfvfile}="$doc->{tmpdir}/$doc->{outbase}.tcfv"
-##  + \$tcfvdata defaults to \$doc->{tcfvdata}
-##  + sets $doc->{tcfvfile_stamp}
-sub saveTcfvFile {
-  return $_[0]->saveFileData('tcfv','',@_[1..$#_]);
 }
 
 
