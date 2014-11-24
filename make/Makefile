@@ -548,6 +548,17 @@ tcf: $(XML:.xml=.tcf)
 CLEAN_FILES += *.tcf
 
 ##======================================================================
+## Rules: tcfws.xml (tcf->tei)
+
+tcfws: $(XML:.xml=.tcfws)
+
+%.tcfws: %.tcf %.t1
+	$(TOKWRAP) -t=tcfdecode $(xmldir)/$*.xml
+
+CLEAN_FILES += *.tcf *.tcfws
+
+
+##======================================================================
 ## Rules: tokenized: extended output (.u.xml) :: PROBABLY BROKEN
 ## + //w/@u  : unicruft text
 ## + //w/@t0 : raw text
