@@ -29,7 +29,7 @@
 
 		<li><a href="#constants">Constants</a></li>
 		<li><a href="#constructors_etc_">Constructors etc.</a></li>
-		<li><a href="#methods__tok2xml__bx0doc__txfile_____bxdata">Methods: tok2xml (bx0doc, txfile) =&gt; bxdata</a></li>
+		<li><a href="#methods__tok2xml__bxdata__tokdata1__cxdata_____xtokdata">Methods: tok2xml (bxdata, tokdata1, cxdata) =&gt; xtokdata</a></li>
 	</ul>
 
 	<li><a href="#see_also">SEE ALSO</a></li>
@@ -102,13 +102,12 @@ should be equivalent in value to the C code:</p>
 <p>Constructor.</p>
 <p>%args, %$t2x:</p>
 <pre>
- ##-- output document structure
- docElt   =&gt; $elt,  ##-- output document element
- sElt     =&gt; $elt,  ##-- output sentence element
- wElt     =&gt; $elt,  ##-- output token element
- aElt     =&gt; $elt,  ##-- output token-analysis element
- posAttr  =&gt; $attr, ##-- output byte-position attribute
- textAttr =&gt; $attr, ##-- output token-text attribute</pre>
+  txmlsort =&gt; $bool,             ##-- if true (default), sort output .t.xml data as close to input document-order as __paragraph__ boundaries will allow
+  txmlsort_bysentence =&gt; $bool,  ##-- use old sentence-level sort (default: false)
+  txmlextids =&gt; $bool,           ##-- if true, attempt to parse &quot;&lt;a&gt;$SID/$WID&lt;/a&gt;&quot; pseudo-analyses as IDs (default:false; uses regex hack)
+  t2x =&gt; $path_to_dtatw_tok2xml, ##-- default: search
+  b2xb =&gt; $path_to_dtatw_b2xb,   ##-- default: search; 'off' to disable
+  inplace =&gt; $bool,              ##-- prefer in-place programs for search?</pre>
 <p>You probably should <strong>NOT</strong> change any of the default output document
 structure options (unless this is the final module in your
 processing pipeline), since their values have ramifications beyond
@@ -124,62 +123,33 @@ this module.</p>
 </dl>
 <p>
 </p>
-<h2><a name="methods__tok2xml__bx0doc__txfile_____bxdata">Methods: tok2xml (bx0doc, txfile) =&gt; bxdata</a></h2>
+<h2><a name="methods__tok2xml__bxdata__tokdata1__cxdata_____xtokdata">Methods: tok2xml (bxdata, tokdata1, cxdata) =&gt; xtokdata</a></h2>
 <dl>
 <dt><strong><a name="tok2xml" class="item">tok2xml</a></strong></dt>
 
 <dd>
 <pre>
- $doc_or_undef = $CLASS_OR_OBJECT-&gt;tok2xml($doc);</pre>
+ $doc_or_undef = $CLASS_OR_OBJECT-&gt;tok2xml($doc);
+ $doc_or_undef = $CLASS_OR_OBJECT-&gt;tok2xml($doc,%opts);</pre>
 <p>Converts &quot;raw&quot; CSV-format (.t) low-level tokenizer output
 to a &quot;master&quot; tokenized XML (.t.xml) format
 in the
 <a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> object
-$doc.</p>
+$doc.
+If specified, %opts override $CLASS_OR_OBJECT sorting and parsing defaults.</p>
 <p>Relevant %$doc keys:</p>
 <pre>
- bxdata   =&gt; \@bxdata,   ##-- (input) block index data
- tokdata1  =&gt; $tokdata1, ##-- (input) tokenizer output data (string)
- cxdata   =&gt; \@cxchrs,   ##-- (input) character index data (array of arrays)
- cxfile   =&gt; $cxfile,    ##-- (input) character index file
- xtokdata =&gt; $xtokdata,  ##-- (output) tokenizer output as XML
- nchrs    =&gt; $nchrs,     ##-- (output) number of character index records
- ntoks    =&gt; $ntoks,     ##-- (output) number of tokens parsed
+ bxdata        =&gt; \@bxdata,   ##-- (input) block index data
+ $tokfile_key  =&gt; $tokfile,  ##-- (input) tokenizer output filename (default='tokfile1')
+ cxdata        =&gt; \@cxchrs,   ##-- (input) character index data (array of arrays)
+ cxfile        =&gt; $cxfile,    ##-- (input) character index file
+ $xtokdata_key =&gt; $xtokdata,  ##-- (output) tokenizer output as XML (default='xtokdata')
+ nchrs         =&gt; $nchrs,     ##-- (output) number of character index records
+ ntoks         =&gt; $ntoks,     ##-- (output) number of tokens parsed
  ##
  tok2xml_stamp0 =&gt; $f,   ##-- (output) timestamp of operation begin
  tok2xml_stamp  =&gt; $f,   ##-- (output) timestamp of operation end
  xtokdata_stamp =&gt; $f,   ##-- (output) timestamp of operation end</pre>
-<p>$%t2x keys (temporary, for debugging):</p>
-<pre>
- tb2ci   =&gt; $tb2ci,     ##-- (temp) s.t. vec($tb2ci, $txbyte, 32) = $char_index_of_txbyte
- ntb     =&gt; $ntb,       ##-- (temp) number of text bytes</pre>
-<p>may implicitly call $doc-&gt;<code>mkbx()</code>, $doc-&gt;<code>loadCxFile()</code>, $doc-&gt;<code>tokenize()</code>
-(but shouldn't!)</p>
-</dd>
-<dt><strong><a name="txbyte_to_ci" class="item">txbyte_to_ci</a></strong></dt>
-
-<dd>
-<pre>
- \$tb2ci = $t2x-&gt;txbyte_to_ci(\@cxdata);</pre>
-<p>Low-level utility method.</p>
-<p>Sets %$t2x keys: tb2ci, ntb, nchr</p>
-</dd>
-<dt><strong><a name="txtbyte_to_ci" class="item">txtbyte_to_ci</a></strong></dt>
-
-<dd>
-<pre>
- \$ob2ci = $t2x-&gt;txtbyte_to_ci(\@cxdata,\@bxdata,\$tb2ci);</pre>
-<p>Low-level utility method</p>
-<p>Sets %$t2x keys: ob2ci</p>
-</dd>
-<dt><strong><a name="process_tt_data" class="item">process_tt_data</a></strong></dt>
-
-<dd>
-<pre>
- \$tokxmlr = $t2x-&gt;process_tt_data($doc);</pre>
-<p>Low-level utility method.</p>
-<p>Actually populates $doc-&gt;{xtokdata} by parsing $doc-&gt;{tokdata1},
-referring to $t2x-&gt;{ob2ci} for character-index lookup.</p>
 </dd>
 </dl>
 <p>

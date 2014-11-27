@@ -67,7 +67,11 @@ L<DTA::TokWrap::Processor::tcfalign|DTA::TokWrap::Processor::tcfalign> - DTA tok
 
 =item *
 
-L<DTA::TokWrap::Processor::tcfdecode|DTA::TokWrap::Processor::tcfdecode> - DTA tokenizer wrappers: TCF[tei,text,tokens,sentences]-E<gt>TEI,text decoding
+L<DTA::TokWrap::Processor::tcfdecode|DTA::TokWrap::Processor::tcfdecode> - DTA tokenizer wrappers: TCF-E<gt>TEI+ws decoding via proxy document
+
+=item *
+
+L<DTA::TokWrap::Processor::tcfdecode0|DTA::TokWrap::Processor::tcfdecode0> - DTA tokenizer wrappers: TCF[tei,text,tokens,sentences]-E<gt>TEI,text extraction
 
 =item *
 

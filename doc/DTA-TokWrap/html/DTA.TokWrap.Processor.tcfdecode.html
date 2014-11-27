@@ -2,7 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>DTA::TokWrap::Processor::tcfdecode - DTA tokenizer wrappers: TCF[tei,text,tokens,sentences]-E&lt;gt&gt;TEI,text decoding</title>
+<title>DTA::TokWrap::Processor::tcfdecode - DTA tokenizer wrappers: TCF-E&lt;gt&gt;TEI+ws decoding via proxy document</title>
 <link rel="stylesheet" href="dtatw.css" type="text/css" />
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
@@ -11,7 +11,7 @@
 <body>
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
 <tr><td class="block" valign="middle">
-<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::tcfdecode - DTA tokenizer wrappers: TCF[tei,text,tokens,sentences]-E&lt;gt&gt;TEI,text decoding</span></strong></big>
+<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::tcfdecode - DTA tokenizer wrappers: TCF-E&lt;gt&gt;TEI+ws decoding via proxy document</span></strong></big>
 </td></tr>
 </table>
 
@@ -45,7 +45,7 @@
 <p>
 </p>
 <h1><a name="name">NAME</a></h1>
-<p>DTA::TokWrap::Processor::tcfdecode - DTA tokenizer wrappers: TCF[tei,text,tokens,sentences]-&gt;TEI,text decoding</p>
+<p>DTA::TokWrap::Processor::tcfdecode - DTA tokenizer wrappers: TCF-&gt;TEI+ws decoding via proxy document</p>
 <p>
 <a href="#__index__"><small>(Back to Top)</small></a>
 </p>
@@ -63,37 +63,10 @@
 <h1><a name="description">DESCRIPTION</a></h1>
 <p>DTA::TokWrap::Processor::tcfdecode provides an object-oriented
 <a href="DTA.TokWrap.Processor.html">DTA::TokWrap::Processor</a> wrapper
-for decoding the <a href="#tei"><code>tei</code></a>,<a href="#text"><code>text</code></a>,<a href="#tokens"><code>tokens</code></a>, and <a href="#sentences"><code>sentences</code></a> layers
-of a tokenized TCF (&quot;Text Corpus Format&quot;, cf. <a href="http:..weblicht.sfs.uni-tuebingen.de.weblichtwiki.index.php.The_TCF_Format)">http://weblicht.sfs.uni-tuebingen.de/weblichtwiki/index.php/The_TCF_Format)</a> document
-as originally encoded by
-a <a href="DTA.TokWrap.Processor.tcfencode.html">DTA::TokWrap::Processor::tcfencode</a> (&quot;tcfencoder&quot;) object.
-The encoded TCF document should have the following layers:</p>
-<dl>
-<dt><strong><a name="tei" class="item">tei</a></strong></dt>
-
-<dd>
-<p>Source TEI-XML encoded as an XML text node; should be identical to the source XML
-{xmlfile} or {xmldata} passed to the tcfencoder.</p>
-</dd>
-<dt><strong><a name="text" class="item">text</a></strong></dt>
-
-<dd>
-<p>Serialized text encoded as an XML text node; should be identical to the serialized
-text {txtfile} or {txtdata} passed to the tcfencoder.</p>
-</dd>
-<dt><strong><a name="tokens" class="item">tokens</a></strong></dt>
-
-<dd>
-<p>Tokens returned by the tokenizer for the <a href="#text"><code>text</code></a> layer.
-Document order of tokens should correspond <strong>exactly</strong> to the serial order of the associated text in the <a href="#text"><code>text</code></a> layer.</p>
-</dd>
-<dt><strong><a name="sentences" class="item">sentences</a></strong></dt>
-
-<dd>
-<p>Sentences returned by the tokenizer for the tokens in the <a href="#tokens"><code>tokens</code></a> layer.
-Document order of sentences must correspond <strong>exactly</strong> to the serial order of the associated text in the <a href="#text"><code>text</code></a> layer.</p>
-</dd>
-</dl>
+for decoding the
+<code>tokens</code> and <code>sentences</code>
+layers as extracted from a TCF document by the <a href="DTA.TokWrap.Processor.tcfdecode0.html">DTA::TokWrap::Processor::tcfdecode0</a> processor
+into the decoded <code>tei</code> layer as <code>w</code> and <code>s</code> elements.</p>
 <p>
 </p>
 <h2><a name="constants">Constants</a></h2>
@@ -134,23 +107,19 @@ inherits from
 <dd>
 <pre>
  $doc_or_undef = $CLASS_OR_OBJECT-&gt;tcfdecode($doc);</pre>
-<p>Decodes the {tcfdoc} key of the
-<a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> object
-to TCF, storing the result in
-<code>$doc-&gt;{tcfxdata}</code>, <code>$doc-&gt;{tcftdata}</code>, and <code>$doc-&gt;{tcfwdata}</code>.</p>
+<p>Decodes the token- and sentence-structure extracted from a TCF document
+and merges the results into the original TEI, assuming that the original encoding
+was done by TokWrap.  Uses a proxy <a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a>
+object to perform the decoding.</p>
 <p>Relevant %$doc keys:</p>
 <pre>
- tcfdoc   =&gt; $tcfdoc,   ##-- (input) TCF input document
+ tcfxfile =&gt; $tcfxfile,     ##-- (input) TEI-XML decoded from TCF
+ tcftfile =&gt; $tcftfile,     ##-- (input) text data decoded from TCF
+ tcfwfile =&gt; $tcfwfile,     ##-- (input) tokenized data decoded from TCF, without byte-offsets, with &quot;SID/WID&quot; attributes
  ##
- tcfxdata =&gt; $tcfxdata, ##-- (output) TEI-XML decoded from TCF
- tcftdata =&gt; $tcftdata, ##-- (output) text data decoded from TCF
- tcfwdata =&gt; $tcfwdata, ##-- (output) tokenized data decoded from TCF, without byte-offsets, with &quot;SID/WID&quot; attributes
- ##
- tcfdecode_stamp0 =&gt; $f, ##-- (output) timestamp of operation begin
- tcfdecode_stamp  =&gt; $f, ##-- (output) timestamp of operation end
- tcfxdata_stamp   =&gt; $f, ##-- (output) timestamp of operation end
- tcftdata_stamp   =&gt; $f, ##-- (output) timestamp of operation end
- tcfwdata_stamp   =&gt; $f, ##-- (output) timestamp of operation end</pre>
+ tcfcwsfile =&gt; $tcfcwsfile, ##-- (output) tcf-decoded+aligned+ws-spliced output file
+ tcfdecode_stamp0 =&gt; $f,    ##-- (output) timestamp of operation begin
+ tcfdecode_stamp  =&gt; $f,    ##-- (output) timestamp of operation end</pre>
 </dd>
 </dl>
 <p>
@@ -187,7 +156,7 @@ at your option, any later version of Perl 5 you may have available.</p>
 <p><a href="#__index__"><small>(Back to Top)</small></a></p>
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
 <tr><td class="block" valign="middle">
-<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::tcfdecode - DTA tokenizer wrappers: TCF[tei,text,tokens,sentences]-E&lt;gt&gt;TEI,text decoding</span></strong></big>
+<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::tcfdecode - DTA tokenizer wrappers: TCF-E&lt;gt&gt;TEI+ws decoding via proxy document</span></strong></big>
 </td></tr>
 </table>
 

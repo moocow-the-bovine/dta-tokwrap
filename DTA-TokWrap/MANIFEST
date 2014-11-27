@@ -22,6 +22,10 @@ TokWrap/Processor/addws.pm
 TokWrap/Processor/idsplice.pm
 TokWrap/Processor/standoff.pm
 TokWrap/Processor/standoff/xsl.pm
+TokWrap/Processor/tcfalign.pm
+TokWrap/Processor/tcfdecode0.pm
+TokWrap/Processor/tcfdecode.pm
+TokWrap/Processor/tcfencode.pm
 TokWrap/Processor/tok2xml.pm
 TokWrap/Processor/tok2xml/perl.pm
 TokWrap/Processor/tokenize.pm
