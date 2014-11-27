@@ -537,17 +537,17 @@ BEGIN {
 
      'tcfencode' => [qw(tcfencode saveTcfFile)],
 
-     'tcfdecode0' => [qw(loadTcfFile),
-		     qw(tcfdecode0 saveTcfxFile saveTcftFile saveTcfwFile),
-		    ],
-     'tcfalign' => [qw(loadTcfFile),
+     'tcfsplit' => [
+		    qw(loadTcfFile),
 		    qw(tcfdecode0 saveTcfxFile saveTcftFile saveTcfwFile),
+		   ],
+     'tcfalign' => [
+		    #qw(loadTcfFile),
+		    #qw(tcfdecode0 saveTcfxFile saveTcftFile saveTcfwFile),
 		    qw(loadTxtData),
 		    qw(tcfalign saveTokFile1),
 		   ],
      'tcfdecode' => [
-		     #qw(loadTcfFile),
-		     #qw(tcfdecode0 saveTcfxFile saveTcftFile saveTcfwFile),
 		     qw(tcfdecode),
 		    ],
 

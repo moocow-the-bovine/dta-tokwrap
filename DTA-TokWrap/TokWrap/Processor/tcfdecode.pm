@@ -92,7 +92,7 @@ sub tcfdecode {
     if ($ddoc->{tw});
 
   ##-- run tcf-decoding processors on proxy document
-  foreach (qw(tei2txt saveBxFile tcfalign tok2xml addws)) {
+  foreach (qw(tcfsplit tei2txt saveBxFile tcfalign tok2xml addws)) {
     $ddoc->genKey($_)
       or $dec->logconfess("failed to generate target '$_' for proxy document");
   }
