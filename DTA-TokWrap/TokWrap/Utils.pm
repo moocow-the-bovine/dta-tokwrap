@@ -323,13 +323,14 @@ sub tempbuf {
 ##      diffcmd => $cmd,   ##-- diff command-name; default 'diff'
 ##      file1   => $file1, ##-- temporary filename for $file_or_bufref1
 ##      file2   => $file2, ##-- temporary filename for $file_or_bufref2
+##      #...    => ...     ##-- other opts passed to tempbuf()
 sub gdiff2 {
   my ($src1,$src2,%opts) = @_;
   my ($diffcmd,$filename1,$filename2) = @opts{qw(diffcmd file1 file2)};
   delete(@opts{qw(diffcmd file1 file2)});
   ##
-  my $file1 = ref($src1) ? tempbuf($src1, undef, SUFFIX=>'.buf1', ($filename1 ? (filename=>$filename1) : qw())) : $src1;
-  my $file2 = ref($src2) ? tempbuf($src2, undef, SUFFIX=>'.buf2', ($filename2 ? (filename=>$filename2) : qw())) : $src2;
+  my $file1 = ref($src1) ? tempbuf($src1, undef, SUFFIX=>'.buf1', ($filename1 ? (filename=>$filename1) : qw()), %opts) : $src1;
+  my $file2 = ref($src2) ? tempbuf($src2, undef, SUFFIX=>'.buf2', ($filename2 ? (filename=>$filename2) : qw()), %opts) : $src2;
   my $len1 = `wc -l<$file1`+0;
   my $len2 = `wc -l<$file2`+0;
 
