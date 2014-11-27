@@ -1,0 +1,9 @@
+<text>
+  Hello world!
+  This is a <hi rendition="#i">Test</hi>-Document.
+  It contains a note<note place="foot">This is the note.</note> embedded in running text.
+  It also has an embedded quote: <q>This is the quote.</q>
+  There are <pb facs="#0001"/>
+  <fw>This is a running header; it should be ignored by the tokenizer</fw>
+  page-breaks, which are ignored by the tokenizer too.
+</text>

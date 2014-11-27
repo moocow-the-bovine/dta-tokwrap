@@ -543,7 +543,7 @@ CWS_XML_FILES = $(XML:.xml=.cws.xml) $(XML:.wst.xml)
 tcf: $(XML:.xml=.tcf)
 
 %.tcf: %.xml
-	$(TOKWRAP) -t=tei2tcf $(xmldir)/$*.xml
+	$(TOKWRAP) -t=tei2tcf -weak-hints $(xmldir)/$*.xml
 
 CLEAN_FILES += *.tcf
 
@@ -555,7 +555,7 @@ tcfws: $(XML:.xml=.tcfws)
 %.tcfws: %.tcf %.t1
 	$(TOKWRAP) -t=tcfdecode $(xmldir)/$*.xml
 
-CLEAN_FILES += *.tcf *.tcfws
+CLEAN_FILES += *.tcf *.tcf[twx] *.tcfws *.tcfws.xml
 
 
 ##======================================================================

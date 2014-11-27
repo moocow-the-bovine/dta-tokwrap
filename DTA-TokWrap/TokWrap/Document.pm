@@ -546,8 +546,8 @@ BEGIN {
 		    qw(tcfalign saveTokFile1),
 		   ],
      'tcfdecode' => [
-		     qw(loadTcfFile),
-		     qw(tcfdecode0 saveTcfxFile saveTcftFile saveTcfwFile),
+		     #qw(loadTcfFile),
+		     #qw(tcfdecode0 saveTcfxFile saveTcftFile saveTcfwFile),
 		     qw(tcfdecode),
 		    ],
 
