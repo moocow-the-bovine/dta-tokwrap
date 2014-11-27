@@ -999,6 +999,7 @@ sub saveFileData {
 
   ##-- get filehandle & print
   my $fh = ref($file) ? $file : IO::File->new(">$file");
+  $doc->logconfess("saveFileData($key,$suff): failed to open file '$file'") if (!$fh);
   $fh->binmode() if (!ref($file));
   $fh->print( $$datar );
   $fh->close() if (!ref($file));
