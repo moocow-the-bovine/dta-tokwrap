@@ -80,8 +80,9 @@ sub tcfdecode0 {
   utf8::encode($doc->{tcfxdata}) if (utf8::is_utf8($doc->{tcfxdata}));
 
   ##-- decode0: txtdata: /D-Spin/TextCorpus/text
+  ## + annoying hack: we grep for elements here b/c libxml getChildrenByLocalName('text') also returns text-nodes!
   $dec->vlog($dec->{traceLevel},"tcfdecode0(): text");
-  my ($xtext) = $xcorpus->getChildrenByLocalName('text');
+  my ($xtext) = grep {UNIVERSAL::isa($_,'XML::LibXML::Element')} $xcorpus->getChildrenByLocalName('text');
   $doc->{tcftdata} = $xtext ? $xtext->textContent : '';
   utf8::encode($doc->{tcftdata}) if (utf8::is_utf8($doc->{tcftdata}));
 

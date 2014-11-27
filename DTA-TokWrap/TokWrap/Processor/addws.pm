@@ -47,6 +47,8 @@ our $SEG_SEND  = 8;
 ##     ##-- configuration options
 ##     wIdAttr => $attr,	##-- attribute in which to place literal id for <w>-fragments
 ##     sIdAttr => $attr,	##-- attribute in which to place literal id for <s>-fragments
+##     wExtAttrs => $regex,     ##-- //w attributes to include (default='^(?:t|b)=')
+##     sExtAttrs => $regex,     ##-- //s attributes to include (default='^(?:pn)=')
 ##     addwsInfo => $level, 	##-- log-level for summary (default='debug')
 ##
 ##     ##-- low-level data
@@ -77,6 +79,8 @@ sub defaults {
 	  ##-- user attributes
 	  sIdAttr => 'id',
 	  wIdAttr => 'id',
+	  sExtAttrs => '^(?:pn)=',
+	  wExtAttrs => '^(?:t|b)=',
 	  addwsInfo => 'debug',
 
 	  ##-- low-level
@@ -112,6 +116,8 @@ sub xmlParser {
   my ($ns);	   ##-- number of sentences (//s elements) parsed
   my ($w_segs,$wid2nsegs,$sid2nsegs) = @$p{qw(w_segs wid2nsegs sid2nsegs)} = ([],{},{});
   my ($sid2attrs,$wid2attrs,$wid2content) = @$p{qw(sid2attrs wid2attrs wid2content)} = ({},{},{});
+  my $wattrs_re = $p->{wExtAttrs} ? qr{$p->{wExtAttrs}} : undef;
+  my $sattrs_re = $p->{sExtAttrs} ? qr{$p->{sExtAttrs}} : undef;
 
   ##----------------------------
   ## undef = cb_init($expat)
@@ -147,7 +153,9 @@ sub xmlParser {
 	  }
 	}
 	$wid2nsegs->{$wid} = $xbi;
-	($wid2attrs->{$wid} = $_[0]->original_string) =~ s/(?:^<w\b|\/?>$|(?:\s+(?:c|xb|id|xml:id)=\"[^\"]*\"))//g;
+	$wid2attrs->{$wid} = ($wattrs_re
+			      ? join(' ', grep {$_ =~ m{$wattrs_re}} ($_[0]->original_string =~ m{(?<=\s)\w+=\"[^\"]*\"}g))
+			      : '');
       }
       else {
 	$_[0]->xpcroak("$prog: no //w/\@xb attribute defined (do you have DTA::TokWrap >= v0.34-1?)");
@@ -155,7 +163,9 @@ sub xmlParser {
     }
     elsif ($_[1] eq 's') {
       $sid = $_attrs{'id'} || $_attrs{'xml:id'};
-      ($sid2attrs->{$sid} = $_[0]->original_string) =~ s/(?:^<s\b|\/?>$|(?:\s+(?:id|xml:id)=\"[^\"]*\"))//g;
+      $sid2attrs->{$sid} = ($sattrs_re
+			    ? join(' ', grep {$_ =~ m{$sattrs_re}} ($_[0]->original_string =~ m{(?<=\s)\w+=\"[^\"]*\"}g))
+			    : '');
       ++$ns;
     }
     else {
@@ -298,13 +308,13 @@ sub splice_segments {
 
 	if (!$sprvi) {
 	  ##-- //s-start-tag: multi-segment item: initial segment
-	  $outfh->print("<s $sIdAttr=\"$xref_this\" next=\"$xref_next\"", ($sid2attrs->{$sid}||''), ">"); #." part=\"I\""
+	  $outfh->print("<s $sIdAttr=\"$xref_this\" next=\"#$xref_next\"", ($sid2attrs->{$sid}||''), ">"); #." part=\"I\""
 	} elsif (!$snxti) {
 	  ##-- //s-start-tag: multi-segment item: final segment
-	  $outfh->print("<s $sIdAttr=\"$xref_this\" prev=\"$xref_prev\">"); #." part=\"F\" $s_refAttr=\"#$xref\""
+	  $outfh->print("<s $sIdAttr=\"$xref_this\" prev=\"#$xref_prev\">"); #." part=\"F\" $s_refAttr=\"#$xref\""
 	} else {
 	  ##-- //s-start-tag: multi-segment item: middle segment
-	  $outfh->print("<s $sIdAttr=\"$xref_this\" prev=\"$xref_prev\" next=\"$xref_next\">"); #."part=\"M\" $s_refAttr=\"#$xref\""
+	  $outfh->print("<s $sIdAttr=\"$xref_this\" prev=\"#$xref_prev\" next=\"#$xref_next\">"); #."part=\"M\" $s_refAttr=\"#$xref\""
 	}
       }
     }
@@ -324,15 +334,15 @@ sub splice_segments {
 
       if ($segi==1) {
 	##-- //w-start-tag: multi-segment item: initial segment
-	$outfh->print("<w $wIdAttr=\"$xref_this\" next=\"$xref_next\"", ($wid2attrs->{$xref}||''), ">",  #." part=\"I\""
+	$outfh->print("<w $wIdAttr=\"$xref_this\" next=\"#$xref_next\"", ($wid2attrs->{$xref}||''), ">",  #." part=\"I\""
 		      (defined($wid2content->{$xref}) ? $wid2content->{$xref} : qw()),
 		     );
       } elsif ($segi==$nwsegs) {
 	##-- //w-start-tag: multi-segment item: final segment
-	$outfh->print("<w $wIdAttr=\"$xref_this\" prev=\"$xref_prev\">"); #." part=\"F\" $w_refAttr=\"#$xref\""
+	$outfh->print("<w $wIdAttr=\"$xref_this\" prev=\"#$xref_prev\">"); #." part=\"F\" $w_refAttr=\"#$xref\""
       } else {
 	##-- //w-start-tag: multi-segment item: middle segment
-	$outfh->print("<w $wIdAttr=\"$xref_this\" prev=\"$xref_prev\" next=\"$xref_next\">"); #." part=\"M\" $w_refAttr=\"#$xref\""
+	$outfh->print("<w $wIdAttr=\"$xref_this\" prev=\"#$xref_prev\" next=\"#$xref_next\">"); #." part=\"M\" $w_refAttr=\"#$xref\""
       }
     }
 
