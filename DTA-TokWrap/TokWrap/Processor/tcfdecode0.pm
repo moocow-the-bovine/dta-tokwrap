@@ -73,9 +73,11 @@ sub tcfdecode0 {
   my $xcorpus = [$xroot->getChildrenByLocalName('TextCorpus')]->[0]
     or $dec->logconfess("tcfdecode0(): no /*/TextCorpus node found in TCF document");
 
-  ##-- decode0: xmldata: /D-Spin/TextCorpus/tei
-  $dec->vlog($dec->{traceLevel},"tcfdecode0(): tei");
-  my ($xtei) = $xcorpus->getChildrenByLocalName('tei');
+  ##-- decode0: xmldata: /D-Spin/TextCorpus/textSource[@type="application/tei+xml"]
+  $dec->vlog($dec->{traceLevel},"tcfdecode0(): textSource");
+  my ($xtei) = $xcorpus->getChildrenByLocalName('textSource');
+  my $xtype  = $xtei ? ($xtei->getAttribute('type')//'') : '';
+  undef ($xtei) if ($xtype !~ m{^(?:text|application)/tei\+xml\b}); # || $xtype =~ m{\btokenized=(?![0n])});
   $doc->{tcfxdata} = $xtei ? $xtei->textContent : '';
   utf8::encode($doc->{tcfxdata}) if (utf8::is_utf8($doc->{tcfxdata}));
 
@@ -182,7 +184,7 @@ The encoded TCF document should have the following layers:
 
 =over 4
 
-=item tei
+=item textSource[@type="application/tei+xml"]
 
 Source TEI-XML encoded as an XML text node; should be identical to the source XML
 {xmlfile} or {xmldata} passed to the tcfencoder.

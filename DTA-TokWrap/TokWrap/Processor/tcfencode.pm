@@ -69,21 +69,18 @@ sub tcfencode {
   $xroot->setAttribute('version'=>'0.4');
 
   ##-- document structure: metadata
-  my $xmeta = $xroot->findnodes('*[local-name()="MetaData"]')->[0];
-  $xmeta = $xroot->addNewChild(undef,'MetaData');
+  my $xmeta = $xroot->addNewChild(undef,'MetaData');
   $xmeta->setNamespace('http://www.dspin.de/data/metadata');
   $xmeta->appendTextChild('source', $doc->{source}) if (defined($doc->{source}));
 
   ##-- document structure: TextCorpus
-  my $xcorpus = $xroot->findnodes('*[local-name()="TextCorpus"]')->[0];
-  $xcorpus = $xroot->addNewChild(undef,'TextCorpus');
+  my $xcorpus = $xroot->addNewChild(undef,'TextCorpus');
   $xcorpus->setNamespace('http://www.dspin.de/data/textcorpus');
   $xcorpus->setAttribute('lang'=>($doc->{tcflang}//'de'));
 
   ##-- document structure: TextCorpus/tei
-  my $xtei = $xcorpus->findnodes('*[local-name()="tei"]')->[0];
-  $xtei = $xcorpus->addNewChild(undef,'tei');
-  #$xtei->setAttribute('type'=>'text/tei+xml');
+  my $xtei = $xcorpus->addNewChild(undef,'textSource');
+  $xtei->setAttribute('type'=>'application/tei+xml');
   ##
   my $xmldata_is_tmp = !defined($doc->{xmldata});
   $enc->logconfess("tcfencode(): could not load TEI-XML source file '$doc->{xmlfile}' and {xmldata} key undefined")
@@ -92,8 +89,7 @@ sub tcfencode {
   delete($doc->{xmldata}) if ($xmldata_is_tmp);
 
   ##-- document structure: TextCorpus/text
-  my $xtxt = $xcorpus->findnodes('*[local-name()="text"]')->[0];
-  $xtxt = $xcorpus->addNewChild(undef,'text');
+  my $xtxt = $xcorpus->addNewChild(undef,'text');
   ##
   my $txtdata_is_tmp = !defined($doc->{txtdata});
   $enc->logconfess("tcfencode(): could not load serialized text file '$doc->{txtfile}' and {txtdata} key undefined")

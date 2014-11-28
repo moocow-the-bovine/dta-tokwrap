@@ -151,7 +151,7 @@ L<DTA::TokWrap::Processor|DTA::TokWrap::Processor> wrapper
 for decoding the
 C<tokens> and C<sentences>
 layers as extracted from a TCF document by the L<DTA::TokWrap::Processor::tcfdecode0|DTA::TokWrap::Processor::tcfdecode0> processor
-into the decoded C<tei> layer as C<w> and C<s> elements.
+into the decoded TEI C<textSource> layer as C<w> and C<s> elements.
 
 =cut
 
