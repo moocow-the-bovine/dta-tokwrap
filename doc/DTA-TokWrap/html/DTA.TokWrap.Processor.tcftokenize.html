@@ -2,7 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>DTA::TokWrap::Processor::tcfencode - DTA tokenizer wrappers: TEI-E&lt;gt&gt;TCF encoding</title>
+<title>DTA::TokWrap::Processor::tcftokenize - DTA tokenizer wrappers: TCF text layer tokenization</title>
 <link rel="stylesheet" href="dtatw.css" type="text/css" />
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
@@ -11,7 +11,7 @@
 <body>
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
 <tr><td class="block" valign="middle">
-<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::tcfencode - DTA tokenizer wrappers: TEI-E&lt;gt&gt;TCF encoding</span></strong></big>
+<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::tcftokenize - DTA tokenizer wrappers: TCF text layer tokenization</span></strong></big>
 </td></tr>
 </table>
 
@@ -45,27 +45,26 @@
 <p>
 </p>
 <h1><a name="name">NAME</a></h1>
-<p>DTA::TokWrap::Processor::tcfencode - DTA tokenizer wrappers: TEI-&gt;TCF encoding</p>
+<p>DTA::TokWrap::Processor::tcftokenize - DTA tokenizer wrappers: TCF text layer tokenization</p>
 <p>
 <a href="#__index__"><small>(Back to Top)</small></a>
 </p>
 <hr />
 <h1><a name="synopsis">SYNOPSIS</a></h1>
 <pre>
- use DTA::TokWrap::Processor::tcfencode;
+ use DTA::TokWrap::Processor::tcftokenize;
  
- $enc = DTA::TokWrap::Processor::tcfencode-&gt;new(%opts);
- $doc_or_undef = $dec-&gt;tcfencode($doc);</pre>
+ $ttok = DTA::TokWrap::Processor::tcftokenize-&gt;new(%opts);
+ $doc_or_undef = $ttok-&gt;tcftokenize($doc);</pre>
 <p>
 <a href="#__index__"><small>(Back to Top)</small></a>
 </p>
 <hr />
 <h1><a name="description">DESCRIPTION</a></h1>
-<p>DTA::TokWrap::Processor::tcfencode provides an object-oriented
+<p>DTA::TokWrap::Processor::tcftokenize provides an object-oriented
 <a href="DTA.TokWrap.Processor.html">DTA::TokWrap::Processor</a> wrapper
-for encoding (serialized) TEI-XML as TCF (&quot;Text Corpus Format&quot;,
-cf. <a href="http:..weblicht.sfs.uni-tuebingen.de.weblichtwiki.index.php.The_TCF_Format)">http://weblicht.sfs.uni-tuebingen.de/weblichtwiki/index.php/The_TCF_Format)</a>
-using <a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> objects.</p>
+for tokenizing the TCF <code>text</code> layer with the selected tokenizer
+and encoding the result in the TCF <code>tokens</code> and <code>sentences</code> layers.</p>
 <p>
 </p>
 <h2><a name="constants">Constants</a></h2>
@@ -73,7 +72,7 @@ using <a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> objects.</p
 <dt><strong><a name="_isa" class="item">@ISA</a></strong></dt>
 
 <dd>
-<p>DTA::TokWrap::Processor::tcfencode
+<p>DTA::TokWrap::Processor::tcftokenize
 inherits from
 <a href="DTA.TokWrap.Processor.html">DTA::TokWrap::Processor</a>.</p>
 </dd>
@@ -101,27 +100,25 @@ inherits from
 </p>
 <h2><a name="methods">Methods</a></h2>
 <dl>
-<dt><strong><a name="tcfencode" class="item">tcfencode</a></strong></dt>
+<dt><strong><a name="tcftokenize" class="item">tcftokenize</a></strong></dt>
 
 <dd>
 <pre>
- $doc_or_undef = $CLASS_OR_OBJECT-&gt;tcfencode($doc);</pre>
-<p>Converts the
-<a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> object
-to TCF, storing the result as an
-XML::LibXML::Document in
-<code>$doc-&gt;{tcfdoc}</code>.</p>
+ $doc_or_undef = $CLASS_OR_OBJECT-&gt;tcftokenize($doc);</pre>
+<p>Tokenizes the <code>text</code> layer extracted from a TCF document
+and encodes the result in new TCF <code>tokens</code> and <code>sentences</code> layers.</p>
 <p>Relevant %$doc keys:</p>
 <pre>
- xmlfile =&gt; $xmlfile, ##-- (input) source TEI-XML file
- txtfile =&gt; $txtfile, ##-- (input) serialized text file
- xmldata =&gt; $xmldata, ##-- (input,alternate) source TXT-XML buffer
- txtdata =&gt; $txtdata, ##-- (input,alternate) serialized text data
+ tcfdoc    =&gt; $tcfdoc,       ##-- (input,output) TCF input document with &lt;text&gt; layer
  ##
- tcfdoc  =&gt; $tcfdoc,   ##-- (output) TCF output document
- tcfencode_stamp0 =&gt; $f, ##-- (output) timestamp of operation begin
- tcfencode_stamp  =&gt; $f, ##-- (output) timestamp of operation end
- tcfdoc_stamp   =&gt; $f, ##-- (output) timestamp of operation end</pre>
+ txtfile   =&gt; $txtfile,      ##-- (temp,output) text file used for TCF extraction
+ tokdata0  =&gt; $tokdata,      ##-- (temp,output) raw tokenization data
+ tokdata1  =&gt; $tokdata1,     ##-- (temp,output) tweaked tokenization data
+ ##
+ tcftokdoc =&gt; $tcftokdoc,    ##-- (output) output TCF file with &lt;sentences&gt;,&lt;tokens&gt; layers (==$tcfdoc)
+ tcftokenize_stamp0 =&gt; $f,   ##-- (output) timestamp of operation begin
+ tcftokenize_stamp  =&gt; $f,   ##-- (output) timestamp of operation end
+ tcftokdoc_stamp    =&gt; $f,   ##-- (output) timestamp of operation end</pre>
 </dd>
 </dl>
 <p>
@@ -158,7 +155,7 @@ at your option, any later version of Perl 5 you may have available.</p>
 <p><a href="#__index__"><small>(Back to Top)</small></a></p>
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
 <tr><td class="block" valign="middle">
-<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::tcfencode - DTA tokenizer wrappers: TEI-E&lt;gt&gt;TCF encoding</span></strong></big>
+<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::tcftokenize - DTA tokenizer wrappers: TCF text layer tokenization</span></strong></big>
 </td></tr>
 </table>
 

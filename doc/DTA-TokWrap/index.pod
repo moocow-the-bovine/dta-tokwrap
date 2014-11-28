@@ -79,6 +79,10 @@ L<DTA::TokWrap::Processor::tcfencode|DTA::TokWrap::Processor::tcfencode> - DTA t
 
 =item *
 
+L<DTA::TokWrap::Processor::tcftokenize|DTA::TokWrap::Processor::tcftokenize> - DTA tokenizer wrappers: TCF text layer tokenization
+
+=item *
+
 L<DTA::TokWrap::Processor::tei2tcf|DTA::TokWrap::Processor::tei2tcf> - DTA tokenizer wrappers: TEI-E<gt>TCF encoding
 
 =item *
