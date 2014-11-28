@@ -154,7 +154,7 @@ sub xmlParser {
 	}
 	$wid2nsegs->{$wid} = $xbi;
 	$wid2attrs->{$wid} = ($wattrs_re
-			      ? join(' ', grep {$_ =~ m{$wattrs_re}} ($_[0]->original_string =~ m{(?<=\s)\w+=\"[^\"]*\"}g))
+			      ? join('', map {m{$wattrs_re} ? " $_" : qw()} ($_[0]->original_string =~ m{(?<=\s)\w+=\"[^\"]*\"}g))
 			      : '');
       }
       else {
@@ -164,7 +164,7 @@ sub xmlParser {
     elsif ($_[1] eq 's') {
       $sid = $_attrs{'id'} || $_attrs{'xml:id'};
       $sid2attrs->{$sid} = ($sattrs_re
-			    ? join(' ', grep {$_ =~ m{$sattrs_re}} ($_[0]->original_string =~ m{(?<=\s)\w+=\"[^\"]*\"}g))
+			    ? join('', map {m{$sattrs_re} ? " $_" : qw()} ($_[0]->original_string =~ m{(?<=\s)\w+=\"[^\"]*\"}g))
 			    : '');
       ++$ns;
     }
@@ -299,7 +299,7 @@ sub splice_segments {
     if ($sbegi) {
       if (!$sprvi && !$snxti) {
 	##-- //s-start-tag: single-element item
-	$outfh->print("<s $sIdAttr=\"$sid\" ", ($sid2attrs->{$sid}||''), ">");
+	$outfh->print("<s $sIdAttr=\"$sid\"", ($sid2attrs->{$sid}//''), ">");
       } else {
 	##-- //s-start-tag: multi-segment item
 	$xref_this = "${sid}".($sprvi ? "_$sbegi" : '');
@@ -308,7 +308,7 @@ sub splice_segments {
 
 	if (!$sprvi) {
 	  ##-- //s-start-tag: multi-segment item: initial segment
-	  $outfh->print("<s $sIdAttr=\"$xref_this\" next=\"#$xref_next\" ", ($sid2attrs->{$sid}||''), ">"); #." part=\"I\""
+	  $outfh->print("<s $sIdAttr=\"$xref_this\" next=\"#$xref_next\"", ($sid2attrs->{$sid}//''), ">"); #." part=\"I\""
 	} elsif (!$snxti) {
 	  ##-- //s-start-tag: multi-segment item: final segment
 	  $outfh->print("<s $sIdAttr=\"$xref_this\" prev=\"#$xref_prev\">"); #." part=\"F\" $s_refAttr=\"#$xref\""
@@ -325,7 +325,7 @@ sub splice_segments {
     ##    - keep old @part attributes for compatibility (but throw out $w_refAttr ("n"))
     if ($nwsegs==1) {
       ##-- //w-start-tag: single-segment item
-      $outfh->print("<w $wIdAttr=\"$xref\" ", ($wid2attrs->{$xref}||''), ">", (defined($wid2content->{$xref}) ? $wid2content->{$xref} : qw()));
+      $outfh->print("<w $wIdAttr=\"$xref\"", ($wid2attrs->{$xref}//''), ">", (defined($wid2content->{$xref}) ? $wid2content->{$xref} : qw()));
     } else {
       ##-- //w-start-tag: multi-segment item
       $xref_this = "${xref}".($segi>1 ? ("_".($segi-1)) : '');
@@ -334,7 +334,7 @@ sub splice_segments {
 
       if ($segi==1) {
 	##-- //w-start-tag: multi-segment item: initial segment
-	$outfh->print("<w $wIdAttr=\"$xref_this\" next=\"#$xref_next\" ", ($wid2attrs->{$xref}||''), ">",  #." part=\"I\""
+	$outfh->print("<w $wIdAttr=\"$xref_this\" next=\"#$xref_next\"", ($wid2attrs->{$xref}//''), ">",  #." part=\"I\""
 		      (defined($wid2content->{$xref}) ? $wid2content->{$xref} : qw()),
 		     );
       } elsif ($segi==$nwsegs) {

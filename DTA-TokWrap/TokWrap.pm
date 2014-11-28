@@ -95,6 +95,7 @@ sub defaults {
 	  ##
 	  ##-- TCF-codec objects
 	  tcfencode=>undef,
+	  tcftokenize=>undef,
 	  tcfdecode=>undef,
 	  tcfalign=>undef,
 	 );
@@ -116,7 +117,7 @@ sub init {
 		  ALL => ($tw->{procOpts}||{}),
 		 );
   my ($class,%newopts);
-  foreach (qw(mkindex mkbx0 mkbx tokenize tokenize1 tok2xml addws idsplice tcfencode tcfdecode0 tcfalign tcfdecode)) { #standoff
+  foreach (qw(mkindex mkbx0 mkbx tokenize tokenize1 tok2xml addws idsplice tcfencode tcftokenize tcfdecode0 tcfalign tcfdecode)) { #standoff
     next if (UNIVERSAL::isa($tw->{$_},"DTA::TokWrap::Processor::$_"));
     $class   = $_ eq 'tokenize' ? "DTA::TokWrap::Processor::tokenize::".($tw->{tokenizeClass}//${DTA::TokWrap::Document::TOKENIZE_CLASS}) : "DTA::TokWrap::Processor::$_";
     %newopts = (%{$key2opts{ALL}}, ($key2opts{$_} ? %{$key2opts{$_}} : qw()));

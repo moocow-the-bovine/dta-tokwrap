@@ -29,7 +29,13 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ## %defaults = CLASS_OR_OBJ->defaults()
 ##  + called by constructor
 ##  + inherited dummy method
-#sub defaults { qw() }
+sub defaults {
+  return (
+	  decode_tcfx => 1,
+	  decode_tcft => 1,
+	  decode_tcfw => 1,
+	 );
+}
 
 ## $dec = $dec->init()
 ##  + inherited dummy method
@@ -39,7 +45,11 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ## Methods
 ##==============================================================================
 
-## $doc_or_undef = $CLASS_OR_OBJECT->tcfdecode0($doc)
+## $doc_or_undef = $CLASS_OR_OBJECT->tcfdecode0($doc, %opts)
+## + %opts: overrides %$dec
+##     decode_tcfx => $bool,  ##-- whether to decode $tcfxdata (default=1)
+##     decode_tcft => $bool,  ##-- whether to decode $tcftdata (default=1)
+##     decode_tcfw => $bool,  ##-- whether to decode $tcfwdata (default=1)
 ## + $doc is a DTA::TokWrap::Document object
 ## + %$doc keys:
 ##    tcfdoc   => $tcfdoc,   ##-- (input) TCF input document
@@ -55,8 +65,9 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##    tcfwdata_stamp   => $f, ##-- (output) timestamp of operation end
 ## + code lifted in part from DTA::CAB::Format::TCF::parseDocument()
 sub tcfdecode0 {
-  my ($dec,$doc) = @_;
+  my ($dec,$doc,%opts) = @_;
   $dec = $dec->new if (!ref($dec));
+  @$dec{keys %opts} = values %opts;
   $doc->setLogContext();
 
   ##-- log, stamp
@@ -73,63 +84,70 @@ sub tcfdecode0 {
   my $xcorpus = [$xroot->getChildrenByLocalName('TextCorpus')]->[0]
     or $dec->logconfess("tcfdecode0(): no /*/TextCorpus node found in TCF document");
 
-  ##-- decode0: xmldata: /D-Spin/TextCorpus/textSource[@type="application/tei+xml"]
-  $dec->vlog($dec->{traceLevel},"tcfdecode0(): textSource");
-  my ($xtei) = $xcorpus->getChildrenByLocalName('textSource');
-  my $xtype  = $xtei ? ($xtei->getAttribute('type')//'') : '';
-  undef ($xtei) if ($xtype !~ m{^(?:text|application)/tei\+xml\b}); # || $xtype =~ m{\btokenized=(?![0n])});
-  $doc->{tcfxdata} = $xtei ? $xtei->textContent : '';
-  utf8::encode($doc->{tcfxdata}) if (utf8::is_utf8($doc->{tcfxdata}));
+  ##-- decode0: tcfxdata: /D-Spin/TextCorpus/textSource[@type="application/tei+xml"]
+  if ($dec->{decode_tcfx}) {
+    $dec->vlog($dec->{traceLevel},"tcfdecode0(): textSource");
+    my ($xtei) = $xcorpus->getChildrenByLocalName('textSource');
+    my $xtype  = $xtei ? ($xtei->getAttribute('type')//'') : '';
+    undef ($xtei) if ($xtype !~ m{^(?:text|application)/tei\+xml\b}); # || $xtype =~ m{\btokenized=(?![0n])});
+    $doc->{tcfxdata} = $xtei ? $xtei->textContent : '';
+    utf8::encode($doc->{tcfxdata}) if (utf8::is_utf8($doc->{tcfxdata}));
+  }
 
-  ##-- decode0: txtdata: /D-Spin/TextCorpus/text
+  ##-- decode0: tcftdata: /D-Spin/TextCorpus/text
   ## + annoying hack: we grep for elements here b/c libxml getChildrenByLocalName('text') also returns text-nodes!
-  $dec->vlog($dec->{traceLevel},"tcfdecode0(): text");
-  my ($xtext) = grep {UNIVERSAL::isa($_,'XML::LibXML::Element')} $xcorpus->getChildrenByLocalName('text');
-  $doc->{tcftdata} = $xtext ? $xtext->textContent : '';
-  utf8::encode($doc->{tcftdata}) if (utf8::is_utf8($doc->{tcftdata}));
-
-  ##-- parse: /D-Spin/TextCorpus/tokens
-  $dec->vlog($dec->{traceLevel},"tcfdecode0(): tokens");
-  my ($xtokens) = $xcorpus->getChildrenByLocalName('tokens');
-  $dec->logconfess("tcfdecode0(): no TextCorpus/tokens node found in TCF document") if (!$xtokens);
-  my (@wids,%id2w,$wid);
-  foreach ($xtokens->getChildrenByLocalName('token')) {
-    if (!defined($wid=$_->getAttribute('ID'))) {
-      $wid = sprintf("w%x", $#wids);
-      $_->setAttribute('ID'=>$wid);
-    }
-    $id2w{$wid} = $_->textContent;
-    push(@wids,$wid);
+  if ($dec->{decode_tcft}) {
+    $dec->vlog($dec->{traceLevel},"tcfdecode0(): text");
+    my ($xtext) = grep {UNIVERSAL::isa($_,'XML::LibXML::Element')} $xcorpus->getChildrenByLocalName('text');
+    $doc->{tcftdata} = $xtext ? $xtext->textContent : '';
+    utf8::encode($doc->{tcftdata}) if (utf8::is_utf8($doc->{tcftdata}));
   }
 
-  ##-- parse: /D-Spin/TextCorpus/sentences
-  $dec->vlog($dec->{traceLevel},"tcfdecode0(): sentences");
-  my @sents = qw();
-  my ($xsents) = $xcorpus->getChildrenByLocalName('sentences');
-  if (defined($xsents)) {
-    my ($s,$sid,$swids);
-    foreach ($xsents->getChildrenByLocalName('sentence')) {
-      if (!defined($sid=$_->getAttribute('ID'))) {
-	$sid = sprintf("s%x", $#sents);
-	$_->setAttribute(ID=>$sid);
+    ##-- decode0: tcfwdata
+  if ($dec->{decode_tcfw}) {
+    ##-- parse: /D-Spin/TextCorpus/tokens
+    $dec->vlog($dec->{traceLevel},"tcfdecode0(): tokens");
+    my ($xtokens) = $xcorpus->getChildrenByLocalName('tokens');
+    $dec->logconfess("tcfdecode0(): no TextCorpus/tokens node found in TCF document") if (!$xtokens);
+    my (@wids,%id2w,$wid);
+    foreach ($xtokens->getChildrenByLocalName('token')) {
+      if (!defined($wid=$_->getAttribute('ID'))) {
+	$wid = sprintf("w%x", $#wids);
+	$_->setAttribute('ID'=>$wid);
       }
-      if (!defined($swids=$_->getAttribute('tokenIDs'))) {
-	$dec->logwarn("tcfdecode0(): no tokenIDs attribute for sentence #$sid, skipping");
-	next;
-      }
-      push(@sents, [map {$id2w{$_}."\t$sid/$_\n"} split(' ',$swids)]);
+      $id2w{$wid} = $_->textContent;
+      push(@wids,$wid);
     }
-  } else {
-    @sents = map {$id2w{$_}."\ts0/$_\n"} @wids;
-  }
 
-  ##-- decode0: tcfwdata
-  $dec->vlog($dec->{traceLevel},"tcfdecode0(): tcfwdata");
-  $doc->{tcfwdata} = join('', map {join('',@$_)."\n"} @sents);
-  utf8::encode($doc->{tcfwdata}) if (utf8::is_utf8($doc->{tcfwdata}));
+    ##-- parse: /D-Spin/TextCorpus/sentences
+    $dec->vlog($dec->{traceLevel},"tcfdecode0(): sentences");
+    my @sents = qw();
+    my ($xsents) = $xcorpus->getChildrenByLocalName('sentences');
+    if (defined($xsents)) {
+      my ($s,$sid,$swids);
+      foreach ($xsents->getChildrenByLocalName('sentence')) {
+	if (!defined($sid=$_->getAttribute('ID'))) {
+	  $sid = sprintf("s%x", $#sents);
+	  $_->setAttribute(ID=>$sid);
+	}
+	if (!defined($swids=$_->getAttribute('tokenIDs'))) {
+	  $dec->logwarn("tcfdecode0(): no tokenIDs attribute for sentence #$sid, skipping");
+	  next;
+	}
+	push(@sents, [map {$id2w{$_}."\t$sid/$_\n"} split(' ',$swids)]);
+      }
+    } else {
+      @sents = map {$id2w{$_}."\ts0/$_\n"} @wids;
+    }
+
+    ##-- decode0: tcfwdata: final
+    $dec->vlog($dec->{traceLevel},"tcfdecode0(): tcfwdata");
+    $doc->{tcfwdata} = join('', map {join('',@$_)."\n"} @sents);
+    utf8::encode($doc->{tcfwdata}) if (utf8::is_utf8($doc->{tcfwdata}));
+  }
 
   ##-- finalize
-  $dec->vlog($dec->{traceLevel},"tcfdecode0(): finalize");
+  #$dec->vlog($dec->{traceLevel},"tcfdecode0(): finalize");
   $doc->{tcfdecode0_stamp} = $doc->{tcfxdata_stamp} = $doc->{tcftdata_stamp} = $doc->{tcfwdata_stamp} = timestamp(); ##-- stamp
   return $doc;
 }
@@ -328,7 +346,7 @@ Bryan Jurish E<lt>jurish@bbaw.deE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2014 by Bryan Jurish
+Copyright (C) 2014 by Bryan Jurish
 
 This package is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.14.2 or,
