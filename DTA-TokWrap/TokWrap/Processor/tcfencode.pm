@@ -24,12 +24,19 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##==============================================================================
 
 ## $enc = CLASS_OR_OBJ->new(%args)
-##  + %args: (none)
+##  + %args, %deaults, %$enc:
+##    (
+##     textSourceType => $type, ##-- attribute value for encoded //textSource/@type (default="text/tei+xml; tokenized=0")
+##    )
 
 ## %defaults = CLASS_OR_OBJ->defaults()
 ##  + called by constructor
 ##  + inherited dummy method
-#sub defaults { qw() }
+sub defaults {
+  return (
+	  textSourceType => 'text/tei+xml; tokenized=0',
+	 );
+}
 
 ## $enc = $enc->init()
 ##  + inherited dummy method
@@ -78,9 +85,9 @@ sub tcfencode {
   $xcorpus->setNamespace('http://www.dspin.de/data/textcorpus');
   $xcorpus->setAttribute('lang'=>($doc->{tcflang}//'de'));
 
-  ##-- document structure: TextCorpus/tei
+  ##-- document structure: TextCorpus/textSource
   my $xtei = $xcorpus->addNewChild(undef,'textSource');
-  $xtei->setAttribute('type'=>'application/tei+xml');
+  $xtei->setAttribute('type'=>$enc->{textSourceType}) if ($enc->{textSourceType});
   ##
   my $xmldata_is_tmp = !defined($doc->{xmldata});
   $enc->logconfess("tcfencode(): could not load TEI-XML source file '$doc->{xmlfile}' and {xmldata} key undefined")
