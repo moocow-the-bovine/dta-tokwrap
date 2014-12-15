@@ -188,6 +188,18 @@ sub ensure_xpath {
 }
 
 ##======================================================================
+## string utils: normalize
+
+sub normalize_space {
+  my $s = shift;
+  $s =~ s/\s+/ /sg;
+  $s =~ s/^\s+//;
+  $s =~ s/\s+$//;
+  return $s;
+}
+
+
+##======================================================================
 ## MAIN
 
 ##-- default: basename
@@ -393,7 +405,7 @@ ensure_xpath($hroot, $avail_xpaths[0], $avail, 0);
 
 ##-- meta: text-class: dta
 my $tcdta = join('::',
-		 map {$_->textContent}
+		 map {normalize_space($_->textContent)}
 		 @{xpnods($hroot,join('|',
 				      'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtamain"]',
 				      'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtasub"]',
@@ -403,7 +415,7 @@ ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassDTA"]
 
 ##-- meta: text-class: dwds
 my $tcdwds = join('::',
-		  map {$_->textContent}
+		  map {normalize_space($_->textContent)}
 		  @{xpnods($hroot,join('|',
 				       'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds1main"]',
 				       'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds1sub"]',
@@ -416,7 +428,7 @@ ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassDWDS"
 
 ##-- meta: text-class: dta-corpus (ocr|mts|cn|...)
 my $tccorpus = join('::',
-		    map {$_->textContent}
+		    map {normalize_space($_->textContent)}
 		    @{xpnods($hroot,join('|',
 					 'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#DTACorpus"]',
 					))}
