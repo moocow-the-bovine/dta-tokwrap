@@ -47,7 +47,7 @@ ALL_LOCAL_DEPS =
 
 if HAVE_POD2TEXT
 .pod.txt:
-	pod2text $< $@
+	-pod2text $< $@
 
 ALL_LOCAL_DEPS += $(PODS:.pod=.txt)
 endif
@@ -57,7 +57,7 @@ endif
 if HAVE_POD2HTML
 CSS ?= $(top_srcdir)/programs/dtatw.css
 .pod.html:
-	pod2html -css=$(CSS) $< --outfile=$@
+	-pod2html -css=$(CSS) $< --outfile=$@
 endif
 
 ##-----------------------------------------------------------------------
