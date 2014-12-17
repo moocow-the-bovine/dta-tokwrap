@@ -2,7 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>dtatw-add-c.perl - add &lt;c&gt; elements to DTA XML documents</title>
+<title></title>
 <link rel="stylesheet" href="dtatw.css" type="text/css" />
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
@@ -11,70 +11,55 @@
 <body>
 
 
-<!-- INDEX BEGIN -->
-<div name="index">
-<p><a name="__index__"></a></p>
 
-<ul>
-
-	<li><a href="#name">NAME</a></li>
-	<li><a href="#synopsis">SYNOPSIS</a></li>
-	<li><a href="#options_and_arguments">OPTIONS AND ARGUMENTS</a></li>
-	<li><a href="#description">DESCRIPTION</a></li>
-	<li><a href="#see_also">SEE ALSO</a></li>
-	<li><a href="#author">AUTHOR</a></li>
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#OPTIONS-AND-ARGUMENTS">OPTIONS AND ARGUMENTS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#AUTHOR">AUTHOR</a></li>
 </ul>
 
-<hr name="index" />
-</div>
-<!-- INDEX END -->
+<h1 id="NAME">NAME</h1>
 
-<p>
-</p>
-<hr />
-<h1><a name="name">NAME</a></h1>
 <p>dtatw-add-c.perl - add &lt;c&gt; elements to DTA XML documents</p>
-<p>
-</p>
-<hr />
-<h1><a name="synopsis">SYNOPSIS</a></h1>
-<pre>
- dtatw-add-c.perl [OPTIONS] [XMLFILE(s)...]</pre>
-<pre>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> dtatw-add-c.perl [OPTIONS] [XMLFILE(s)...]
+
  General Options:
-  -help                  # this help message</pre>
-<pre>
+  -help                  # this help message
+
  I/O Options:
-  -output FILE           # specify output file (default='-' (STDOUT))
-  -cids  , -nocids       # do/don't assign ids for auto-generated &lt;c&gt; elements (default=-nocids)
+  -output FILE           # specify output file (default=&#39;-&#39; (STDOUT))
+  -cids  , -nocids       # do/don&#39;t assign ids for auto-generated &lt;c&gt; elements (default=-nocids)
   -idns=NAMESPACE        # namespace prefix for id attributes, e.g. &quot;xml:&quot; (default=none)
-  -rmns   , -keepns      # do/don't encode default namespaces as for dtatw-nsdefault-encode.perl (default=do)
-  -profile, -noprofile   # output profiling information? (default=no)</pre>
-<p>
-</p>
-<hr />
-<h1><a name="options_and_arguments">OPTIONS AND ARGUMENTS</a></h1>
+  -rmns   , -keepns      # do/don&#39;t encode default namespaces as for dtatw-nsdefault-encode.perl (default=do)
+  -profile, -noprofile   # output profiling information? (default=no)</code></pre>
+
+<h1 id="OPTIONS-AND-ARGUMENTS">OPTIONS AND ARGUMENTS</h1>
+
 <p>Not yet written.</p>
-<p>
-</p>
-<hr />
-<h1><a name="description">DESCRIPTION</a></h1>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
 <p>Adds &lt;c&gt; elements to DTA XML files and/or assign <code>xml:id</code>s to existing &lt;c&gt;s.</p>
+
 <p>Pretty much useless as of dta-tokwrap v0.38.</p>
-<p>
-</p>
-<hr />
-<h1><a name="see_also">SEE ALSO</a></h1>
-<p><a href="././dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a>,
-<em>dtatw-cids2local.perl(1)</em>,
-<em>dtatw-rm-c.perl(1)</em>,
-...</p>
-<p>
-</p>
-<hr />
-<h1><a name="author">AUTHOR</a></h1>
-<p>Bryan Jurish &lt;<a href="mailto:jurish@bbaw.de">jurish@bbaw.de</a>&gt;</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="./dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a>, <a href="http://man.he.net/man1/dtatw-cids2local.perl">dtatw-cids2local.perl(1)</a>, <a>dtatw-rm-c.perl(1)</a>, ...</p>
+
+<h1 id="AUTHOR">AUTHOR</h1>
+
+<p>Bryan Jurish &lt;jurish@bbaw.de&gt;</p>
+
 
 </body>
 
 </html>
+
+

@@ -211,25 +211,25 @@ POD2HTMLFLAGS = --podpath="$(srcdir):." --htmlroot="." --css="$(HTML_CSS_LOCAL)"
 
 if HAVE_POD2MAN
 .pod.1:
-	$(POD2MAN) $(POD2MANFLAGS) --section=1 $< $@
+	-$(POD2MAN) $(POD2MANFLAGS) --section=1 $< $@
 
 .pod.5:
-	$(POD2MAN) $(POD2MANFLAGS) --section=5 $< $@
+	-$(POD2MAN) $(POD2MANFLAGS) --section=5 $< $@
 endif
 
 if HAVE_POD2TEXT
 .pod.txt:
-	$(POD2TEXT) $< $@
+	-$(POD2TEXT) $< $@
 endif
 
 if HAVE_POD2HTML
 .pod.html:
-	$(POD2HTML) $(POD2HTMLFLAGS) --infile=$< --outfile=$@
+	-$(POD2HTML) $(POD2HTMLFLAGS) --infile=$< --outfile=$@
 endif
 
 if HAVE_POD2LATEX
 .pod.tex:
-	$(POD2LATEX) --full --out $@ $<
+	-$(POD2LATEX) --full --out $@ $<
 endif
 
 ##-----------------------------------------------------------------------
