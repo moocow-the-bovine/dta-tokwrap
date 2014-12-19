@@ -269,20 +269,34 @@ if (!defined($author)) {
 ensure_xpath($hroot, 'fileDesc/titleStmt/author[@n="ddc"]', $author);
 
 ##-- meta: title
-my $title       = $foreign ? '' : ($basename =~ m/^[^_]+_([^_]+)_/ ? ucfirst($1) : '');
-my $title_xpath = 'fileDesc/titleStmt/title[@type="main" or @type="sub" or @type="vol"]';
-my $title_nods  = $hroot->findnodes($title_xpath);
-if (@$title_nods) {
-  $title  = join(' / ', map {$_->textContent} grep {$_->getAttribute('type') eq 'main'} @$title_nods);
-  $title .= join('', map {": ".$_->textContent} grep {$_->getAttribute('type') eq 'sub'} @$title_nods);
-  $title .= join('', map {" (".($_->textContent =~ m/\S/ ? $_->textContent : ($_->getAttribute('n')||'?')).")"} grep {$_->getAttribute('type') eq 'vol'} @$title_nods);
-  $title =~ s/\s+/ /g;
-  $title =~ s/^ //;
-  $title =~ s/ $//;
-} else {
-  warn("$prog: $basename: WARNING: missing title XPath(s) $title_xpath defaults to '$title'") if (!$foreign && $verbose >= $vl_warn);
+my $title           = $foreign ? '' : ($basename =~ m/^[^_]+_([^_]+)_/ ? ucfirst($1) : '');
+my $dta_title_xpath = 'fileDesc/titleStmt/title[@type="main" or @type="sub" or @type="vol"]';
+my $dta_title_nods  = $hroot->findnodes($dta_title_xpath);
+my @other_title_xpaths = (
+			  'fileDesc/titleStmt/title[@type="ddc"]',
+			  'fileDesc/titleStmt/title[not(@type)]',
+			  'sourceDesc[@id="orig"]/biblFull/titleStmt/title',
+			  'sourceDesc[@id="scan"]/biblFull/titleStmt/title',
+			  'sourceDesc[not(@id)]/biblFull/titleStmt/title',
+			 );
+my $other_title_nod  = xpgrepnod($hroot,@other_title_xpaths);
+if (@$dta_title_nods) {
+  $title  = join(' / ', map {$_->textContent} grep {$_->getAttribute('type') eq 'main'} @$dta_title_nods);
+  $title .= join('', map {": ".$_->textContent} grep {$_->getAttribute('type') eq 'sub'} @$dta_title_nods);
+  $title .= join('', map {" (".($_->textContent =~ m/\S/ ? $_->textContent : ($_->getAttribute('n')||'?')).")"} grep {$_->getAttribute('type') eq 'vol'} @$dta_title_nods);
 }
-ensure_xpath($hroot, 'fileDesc/titleStmt/title[@type="ddc"]', $title, 0);
+elsif ($other_title_nod) {
+  $title = $other_title_nod->textContent();
+}
+else {
+  warn("$prog: $basename: WARNING: missing title XPath(s) $other_title_xpaths[0] defaults to '$title'") if (!$foreign && $verbose >= $vl_warn);
+}
+
+##-- sanitize title
+$title =~ s/\s+/ /g;
+$title =~ s/^ //;
+$title =~ s/ $//;
+ensure_xpath($hroot, $other_title_xpaths[0], $title, 0);
 
 ##-- meta: date (published)
 my @date_xpaths = (
