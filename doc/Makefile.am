@@ -34,7 +34,7 @@ pkgdoc_DATA = dtatw.css
 DOC_PODS = README.pod
 
 #POD2HTMLFLAGS = --css=dtatw.css --podroot="$(top_srcdir)/DTA-TokWrap/blib" --podpath="script" --header --backlink="(Back to Top)"
-POD2HTMLFLAGS = --css=dtatw.css --podroot="$(top_srcdir)/DTA-TokWrap/blib" --podpath="script" --header --backlink
+POD2HTMLFLAGS = --css=dtatw.css --podroot="$(top_srcdir)/DTA-TokWrap/blib" --podpath="script" --header
 
 SUFFIXES = .pod .txt .html
 
