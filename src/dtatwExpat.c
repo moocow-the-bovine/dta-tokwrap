@@ -40,9 +40,9 @@ ByteOffset expat_parse_file(XML_Parser xp, FILE *f_in, const char *filename_in)
       ctx_buf = get_error_context(xp, 64, &ctx_offset, &ctx_len);
       fprintf(stderr, "%s: Error Context:\n%.*s%s%.*s\n",
 	      prog,
-	      ctx_offset, ctx_buf,
+	      (int)ctx_offset, ctx_buf,
 	      "\n---HERE---\n",
-	      (ctx_len-ctx_offset), ctx_buf+ctx_offset);
+	      (int)(ctx_len-ctx_offset), ctx_buf+ctx_offset);
       exit(3);
     }
   } while (!is_final);
@@ -67,9 +67,9 @@ ByteOffset expat_parse_string(XML_Parser xp, const char *buf, int buflen, const 
     ctx_buf = get_error_context(xp, 64, &ctx_offset, &ctx_len);
     fprintf(stderr, "%s: Error Context:\n%.*s%s%.*s\n",
 	    prog,
-	    ctx_offset, ctx_buf,
+	    (int)ctx_offset, ctx_buf,
 	    "\n---HERE---\n",
-	    (ctx_len-ctx_offset), ctx_buf+ctx_offset);
+	    (int)(ctx_len-ctx_offset), ctx_buf+ctx_offset);
     exit(3);
   }
 

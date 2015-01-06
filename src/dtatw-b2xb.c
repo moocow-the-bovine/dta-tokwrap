@@ -169,7 +169,7 @@ static void tt_dump_word(FILE *f_out, ttWordBuffer *w)
   else {
 #if WARN_ON_NOCX
     fprintf(stderr, "%s: WARNING: `%s' line %u: no cx-records for word `%s' at txt-byte %u\n",
-	    prog, tt_filename, tt_linenum, w->w_text, w->w_off);
+	    prog, tt_filename, (uint)tt_linenum, w->w_text, (uint)w->w_off);
 #endif
     w->w_flags |= ttwNoCx; //-- no cx-record(s) for this word: wtf?
   }
@@ -180,8 +180,9 @@ static void tt_dump_word(FILE *f_out, ttWordBuffer *w)
 #ifdef DTATW_DEBUG_OVERLAP
     //-- "CLAIM" "\t" xoff xlen "\t" wtext "\t" txtoff txtlen "\n"
     fprintf(stderr, "CLAIM\t%u %u\t%s\t%u %u\n",
-	    (icx ? icx->xoff : 0), (icx ? icx->xlen : 0),
-	    (w ? w->w_text : ""), (w ? (uint)w->w_off : 0), (w ? (uint)w->w_len : 0));
+	    (uint)(icx ? icx->xoff : 0), (uint)(icx ? icx->xlen : 0),
+	    (w ? w->w_text : ""),
+	    (uint)(w ? w->w_off : 0), (uint)(w ? w->w_len : 0));
 #endif
   }
 
@@ -399,7 +400,7 @@ int main(int argc, char **argv)
   if (f_cx != stdin) fclose(f_cx);
   f_cx = NULL;
 #ifdef VERBOSE_IO
-  fprintf(stderr, "%s: parsed %lu records from .cx file '%s'\n", prog, cxdata.len, filename_cx);
+  fprintf(stderr, "%s: parsed %zu records from .cx file '%s'\n", prog, (size_t)cxdata.len, filename_cx);
 #endif
   
 
@@ -408,22 +409,22 @@ int main(int argc, char **argv)
   if (f_bx != stdin) fclose(f_bx);
   f_bx = NULL;
 #ifdef VERBOSE_IO
-  fprintf(stderr, "%s: parsed %lu records from .bx file '%s'\n", prog, bxdata.len, filename_bx);
+  fprintf(stderr, "%s: parsed %zu records from .bx file '%s'\n", prog, (size_t)bxdata.len, filename_bx);
   assert(cxdata != NULL && cxdata->data != NULL /* require cxdata */);
   assert(cxdata.len > 0 /* require non-empty cxdata */);
-  fprintf(stderr, "%s: number of source XML-bytes ~= %lu\n", prog, cxdata->data[cxdata.len-1].xoff+cxdata->data[cxdata.len-1].xlen);
+  fprintf(stderr, "%s: number of source XML-bytes ~= %zu\n", prog, (size_t)(cxdata->data[cxdata.len-1].xoff+cxdata->data[cxdata.len-1].xlen));
 #endif
 
   //-- create (tx_byte_index => cx_record) lookup vector
   tx2cxIndex(&txb2cx, &cxdata);
 #ifdef VERBOSE_IO
-  fprintf(stderr, "%s: initialized %lu-element .tx-byte => .cx-record index\n", prog, txb2cx.len);
+  fprintf(stderr, "%s: initialized %zu-element .tx-byte => .cx-record index\n", prog, (size_t)txb2cx.len);
 #endif
 
   //-- create (txt_byte_index => cx_record_or_NULL) lookup vector
  txt2cxIndex(&txtb2cx, &bxdata, &txb2cx);
 #ifdef VERBOSE_IO
-  fprintf(stderr, "%s: initialized %lu-element .txt-byte => .cx-record index\n", prog, txtb2cx.len);
+ fprintf(stderr, "%s: initialized %zu-element .txt-byte => .cx-record index\n", prog, (size_t)txtb2cx.len);
 #endif
 
   //-- doc header: comments

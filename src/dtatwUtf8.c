@@ -21,6 +21,7 @@
 #else
 #include <alloca.h>
 #endif
+#include <inttypes.h> //-- for printf-formats e.g. PRIu32, PRIX32
 
 #include "dtatwUtf8.h"
 
@@ -419,7 +420,7 @@ int u8_escape_wchar(char *buf, int sz, uint32_t ch)
     else if (ch < 32 || ch == 0x7f)
         return snprintf(buf, sz, "\\x%hhX", (unsigned char)ch);
     else if (ch > 0xFFFF)
-        return snprintf(buf, sz, "\\U%.8X", (uint32_t)ch);
+        return snprintf(buf, sz, "\\U%.8"PRIX32, (uint32_t)ch);
     else if (ch >= 0x80 && ch <= 0xFFFF)
         return snprintf(buf, sz, "\\u%.4hX", (unsigned short)ch);
 

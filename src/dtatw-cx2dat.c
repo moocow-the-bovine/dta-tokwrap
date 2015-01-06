@@ -10,6 +10,9 @@ cxStoredRecord cxr;
 uint32_t xmlOffset = 0; //-- current xml byte offset
 uint32_t txOffset = 0; //-- current tx-file offset
 
+//-- suppress gcc warnings of the form "ignoring return value of `fread', declared with attribute warn_unused_result [-Wunused-result]"
+#pragma GCC diagnostic ignored "-Wunused-result"
+
 /*======================================================================
  * Utils
  */

@@ -23,6 +23,9 @@ static void print_eos(void);
 #undef yywrap
 static int yywrap(void);
 
+//-- suppress gcc warnings of the form "ignoring return value of `fread', declared with attribute warn_unused_result [-Wunused-result]"
+#pragma GCC diagnostic ignored "-Wunused-function"
+
 %}
 
 /*======================================================================
@@ -119,7 +122,7 @@ static void print_token(const char *typ)
       fputc(yytext[i],yyout);
     }
   }
-  fprintf(yyout, "\t%lu %d", (long unsigned int)thebyte, yyleng);
+  fprintf(yyout, "\t%"ByteOffsetF" %d", thebyte, yyleng);
   if (typ != NULL) { fputc('\t',yyout); fputs(typ,yyout); }
   fputc('\n',yyout);
   lastWasEOS = 0;

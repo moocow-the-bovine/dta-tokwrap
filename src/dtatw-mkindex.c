@@ -344,13 +344,17 @@ void cb_char(TokWrapData *data, const XML_Char *s, int len)
 }
 
 //--------------------------------------------------------------
+// location printf format: xoff xlen toff tlen
+#define LOC_FMT "%"ByteOffsetF" %"ByteOffsetF" %"ByteOffsetF" %"ByteOffsetF
+
+//--------------------------------------------------------------
 //#define TW_DEBUG_LOC
 #ifdef TW_DEBUG_LOC
-static const char *LOC_FMT_PRE  = "<c type=\"pre\" n=\"%lu %lu %lu %lu\"/>";  //-- xoff xlen toff tlen
-static const char *LOC_FMT_POST = "<c type=\"post\" n=\"%lu %lu %lu %lu\"/>"; //-- xoff xlen toff tlen
+static const char *LOC_FMT_PRE  = "<c type=\"pre\" n=\""LOC_FMT"\"/>";
+static const char *LOC_FMT_POST = "<c type=\"post\" n=\""LOC_FMT"\"/>";
 #else
-static const char *LOC_FMT_PRE  = "<c n=\"%lu %lu %lu %lu\"/>"; //-- xoff xlen toff tlen
-static const char *LOC_FMT_POST = "<c n=\"%lu %lu %lu %lu\"/>"; //-- xoff xlen toff tlen
+static const char *LOC_FMT_PRE  = "<c n=\""LOC_FMT"\"/>";
+static const char *LOC_FMT_POST = "<c n=\""LOC_FMT"\"/>";
 #endif
 
 void cb_default(TokWrapData *data, const XML_Char *s, int len)

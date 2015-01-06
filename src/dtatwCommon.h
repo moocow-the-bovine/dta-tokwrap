@@ -16,6 +16,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <time.h>
+#include <inttypes.h>  /* for printf format macros, e.g. PRIu32 */
 
 /*======================================================================
  * Globals
@@ -24,6 +25,9 @@
 #define FILE_BUFSIZE 8192 //-- file input buffer size
 typedef uint32_t ByteOffset;
 typedef uint32_t ByteLen;
+
+#define ByteOffsetF PRIu32
+#define ByteLenF    PRIu32
 
 extern char *prog;
 
