@@ -22,6 +22,7 @@ WriteMakefile
 		    'File::Basename'=>undef,
 		    'Cwd'=>undef,
 		    'Log::Log4perl'=>1.20,
+		    'Algorithm::BinarySearch::Vec'=>0.05, ##-- only really required for for dtatw-get-ddc-attrs.perl
 		    ##--
 		    #'Tie::Cache'=>undef,
 		    #'File::Basename'=>undef,
