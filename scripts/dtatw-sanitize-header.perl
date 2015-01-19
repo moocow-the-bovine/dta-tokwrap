@@ -203,8 +203,11 @@ sub normalize_space {
 ## MAIN
 
 ##-- default: basename
-$basename = basename($infile) if (!defined($basename));
-$basename =~ s/\..*$//;
+if (!defined($basename)) {
+  $basename = basename($infile);
+  $basename =~ s/\..*$//;
+}
+$basename =~ s{^./}{};
 
 ##-- grab header file
 my $hdoc = loadxml($infile);
