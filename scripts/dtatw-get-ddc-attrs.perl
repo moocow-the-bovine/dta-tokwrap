@@ -224,7 +224,7 @@ sub load_sx {
   ##-- descendants of these elements get marked in their 'xc' attribute
   my %xcontext_elts = (map {($_=>undef)}
 		       qw(text front body back head left foot end argument hi cit fw lg stage speaker formula table),
-		       qw(note),
+		       qw(div note), ##-- specially handled hacked elements
 		      );
 
   ##-- populate sx-blocks
@@ -243,6 +243,10 @@ sub load_sx {
       if ( ($aname=$_->nodeName) eq 'note' ) {
 	##-- context: note: mark @place attribute
 	push(@xc, "note_".($_->getAttribute('place')||'other'));
+      }
+      elsif ( ($aname=$_->nodeName) eq 'div' ) {
+	##-- context: div: mark @type attribute
+	push(@xc, "div_".($_->getAttribute('type')||'other'));
       }
       elsif (exists($xcontext_elts{$aname})) {
 	##-- context: element-based
