@@ -351,7 +351,7 @@ sub hint_stylestr {
   <!-- templates: implicit sentence breaks -->'.join('',
 						     map { "
   <xsl:template match=\"$_\">
-    <w/><!-- formerly 'ws' -->
+    <!--<ws/>-->
     <xsl:copy>
       <xsl:apply-templates select=\"@*\"/>
       <s/>
@@ -365,7 +365,7 @@ sub hint_stylestr {
   <!-- templates: implicit token breaks -->'.join('',
 						     map { "
   <xsl:template match=\"$_\">
-    <w/><!-- formerly 'ws' -->
+    <!--<ws/>-->
     <xsl:copy>
       <xsl:apply-templates select=\"@*\"/>
       <w/>
