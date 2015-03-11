@@ -119,6 +119,7 @@ sub defaults {
 			     #'item[ref]',
 			     'list|item|trailer',
 			     'head',
+			     'metamark',
 
 			     ##-- drama-specific
 			     ## + e.g. goethe_iphegenie, schiller_kabale, hauptman_sonnenaufgang
@@ -172,7 +173,7 @@ sub defaults {
 			     'pb',
 
 			     ##-- other things
-			     #map { "$_\[not(parent::seg)\]" } qw(table note argument figure),
+			     #map { "$_\[not(parent::seg)\]" } qw(table note argument figure metamark),
 			    ],
 	  hint_replace_xpaths => {
 				  ##-- formulae
@@ -211,7 +212,7 @@ sub defaults {
 				 #(map {"$_\[not(parent::seg or ancestor::*\[\@next or \@prev\])\]"} qw(table note argument figure)),
 				 ##--
 				 (map {"$_\[not(parent::seg)\]"} qw(table note argument figure)),
-				 qw(text|front|body|back),
+				 qw(text|front|body|back|metamark),
 				 qw(fw|list|castList),
 				 'head[not(parent::list or parent::castList)]',  ##-- extract these from running text
 				],

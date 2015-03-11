@@ -1,0 +1,43 @@
+<TEI xmlns="http://www.tei-c.org/ns/1.0"><text xml:id="Ms_germ_qu_1711"><hi rendition="#keep-last">
+</hi> <pb facs="#f0007" n="2r"/>
+<body>  			<fw type="sig" place="top">1.</fw>  			<lb/>
+<figure type="stamp"><p>acc. ms.</p></figure><note resp="#SBB" type="editorial"> 1921. 144.</note><lb/>
+<div n="1">  				<head>Physikalische Geographie bei <persName ref="http://d-nb.info/gnd/118554700">Al. v. Humboldt</persName>.</head><lb/>
+<milestone rendition="#hr" unit="section"/><lb/>
+<div type="session" n="1">  					<head type="rightMargin"><hi rendition="#b">1.</hi><space dim="horizontal"/> 3. <choice><abbr>Nov.</abbr><expan resp="#CT">November</expan></choice> 1827.</head><lb/>
+<p>Als Einleitung in die <choice><abbr>physik.</abbr><expan resp="#CT">physikalische</expan></choice> <choice><abbr>Geogr.</abbr><expan resp="#CT">Geographie</expan></choice> gebe ich eine Übersicht<lb/>
+der Zustände im allgemeinen, in welchen die Materie uns<lb/>
+im Weltraume erscheint, und fange daher mit denjenigen<lb/>
+Körpern an<del rendition="#s">,</del> welche in der Lichtbildung begriffen scheinen.<lb/>
+Durch Herschelsche und Frauenhofersche Teleskope bemerkt<lb/>
+man nämlich Nebelflekke, welche einen mehr oder minder<lb/>
+hellen Kern mit einer Lichthülle umgeben zeigen: in dieser<lb/>
+Lichthülle nimt man <metamark/><add place="superlinear">ein </add>Ab- und Zunehmen <metamark/><add place="superlinear">der Lichtstärke </add>wahr, eine Ebbe<lb/>
+und Flut; diese mögen zu den primitiven Formazionen, zu<lb/>
+den Uranfängen des Aggregatzustandes gehören. Ihre Ent-<lb/>
+fernung ist unermeslich: durch die Verfinsterungen der Jupi-<lb/>
+tertrabanten sind wir im Stande, die Geschwindigkeit des<lb/>
+Lichtes zu berechnen, welches von Rösel <metamark>(?)</metamark> zuerst geschah.<note place="right">Olaf Römer, ein Däne<lb/>
+1676 mit dem ältern<lb/>
+Caſsini zu Paris —<lb/>
+</note><lb/>
+<choice><sic>das</sic><corr resp="#CT">Das</corr></choice> Licht braucht von der Sonne bis zu uns 8 Min. 13 Sek.<lb/>
+von <subst><del rendition="#s">di</del><add place="intralinear">jenen</add></subst> entferntesten Nebelflekken aber 20–30,000 Jahre.<lb/>
+<hi rendition="#to-be-removed">
+Dies ist alles, was wir von jenen entfernten Weltkörpern
+wissen können, wir gehn zu solchen über, welche uns näher
+stehn, und in der linsenförmigen Sternschicht selbst liegen,
+in der unser Planetensystem sich befindet. Hier finden wir
+nun die Doppelsterne, deren man bis jezt 700 entdekt hat:
+einige davon drehen sich, wie Bessel gezeigt hat, um einen
+gemeinsamen Schwerpunkt, haben sich also noch nicht
+selbstständig auf konstituiren können: man findet deren
+3–4 zusammen; ja im Sigma des Orion laufen 16 Sterne
+um eEinen Schwerpunkt. Auch scheinen hieher diejenigen
+zu gehören, welche nur auf der einen Seite leuchten, und
+daher in gewissen Perioden der Umdrehung verschwinden und wieder-
+kehren, wovon wir in der Kassiopeia und sonst Bei-
+spiele finden.
+Bei der ungemein grossen Menge von Sternen müssen
+wir annehmen, dass die Himmelsräume mit einer licht-
+</hi></p></div></div></body></text></TEI>
