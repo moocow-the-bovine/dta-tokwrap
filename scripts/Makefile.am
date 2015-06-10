@@ -55,6 +55,7 @@ bin_SCRIPTS = \
 	dtatw-splice.perl \
 	dtatw-get-ddc-attrs.perl \
 	dtatw-get-header.perl \
+	dtatw-insert-header.perl \
 	dtatw-xml2ddc.perl \
 	dtatw-sanitize-header.perl \
 	dtatw-t-check.perl \
