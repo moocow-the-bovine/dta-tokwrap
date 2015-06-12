@@ -384,6 +384,7 @@ my @dirname_xpaths = (
 		     );
 my $dirname = xpgrepval($hroot,@dirname_xpaths) || $basename;
 ensure_xpath($hroot, $dirname_xpaths[0], $dirname, !$foreign);
+ensure_xpath($hroot, $dirname_xpaths[1], $dirname, !$foreign) if (!$foreign); ##-- dta compat
 
 ##-- meta: dtaid
 my @dtaid_xpaths = (
@@ -393,6 +394,7 @@ my @dtaid_xpaths = (
 		   );
 my $dtaid = xpgrepval($hroot,@dtaid_xpaths) || "0";
 ensure_xpath($hroot, $dtaid_xpaths[0], $dtaid, !$foreign);
+ensure_xpath($hroot, $dtaid_xpaths[1], $dirname, !$foreign) if (!$foreign); ##-- dta compat
 
 ##-- meta: timestamp: ISO
 my @timestamp_xpaths = (
