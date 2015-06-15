@@ -383,8 +383,8 @@ my @dirname_xpaths = (
 		      'fileDesc/publicationStmt/idno[@type="DTADIR"]',     ##-- old (<2012-07)
 		     );
 my $dirname = xpgrepval($hroot,@dirname_xpaths) || $basename;
-ensure_xpath($hroot, $dirname_xpaths[0], $dirname, !$foreign);
-ensure_xpath($hroot, $dirname_xpaths[1], $dirname, !$foreign) if (!$foreign); ##-- dta compat
+ensure_xpath($hroot, $dirname_xpaths[0], $dirname, 0);
+ensure_xpath($hroot, $dirname_xpaths[1], $dirname, 1) if (!$foreign); ##-- dta compat
 
 ##-- meta: dtaid
 my @dtaid_xpaths = (
@@ -393,8 +393,8 @@ my @dtaid_xpaths = (
 		    'fileDesc/publicationStmt/idno[@type="DTAID"]',
 		   );
 my $dtaid = xpgrepval($hroot,@dtaid_xpaths) || "0";
-ensure_xpath($hroot, $dtaid_xpaths[0], $dtaid, !$foreign);
-ensure_xpath($hroot, $dtaid_xpaths[1], $dirname, !$foreign) if (!$foreign); ##-- dta compat
+ensure_xpath($hroot, $dtaid_xpaths[0], $dtaid, 0);
+ensure_xpath($hroot, $dtaid_xpaths[1], $dtaid, 1) if (!$foreign); ##-- dta compat
 
 ##-- meta: timestamp: ISO
 my @timestamp_xpaths = (
