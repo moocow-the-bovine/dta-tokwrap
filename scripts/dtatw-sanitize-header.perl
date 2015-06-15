@@ -376,7 +376,7 @@ ensure_xpath($hroot, $library_xpaths[0], $library, 0);
 
 ##-- meta: dtadir
 my @dirname_xpaths = (
-		      'fileDesc/publicatiomStmt[@n="ddc"]/idno[@type="basename"]', ##-- new:canonical
+		      'fileDesc/publicationStmt[@n="ddc"]/idno[@type="basename"]', ##-- new:canonical
 		      'fileDesc/publicationStmt/idno/idno[@type="DTADirName"]', ##-- (>=2013-09-04)
 		      'fileDesc/publicationStmt/idno[@type="DTADirName"]', ##-- (>=2013-09-04)
 		      'fileDesc/publicationStmt/idno[@type="DTADIRNAME"]', ##-- new (>=2012-07)
@@ -388,7 +388,7 @@ ensure_xpath($hroot, $dirname_xpaths[1], $dirname, 1) if (!$foreign); ##-- dta c
 
 ##-- meta: dtaid
 my @dtaid_xpaths = (
-		    'fileDesc/publicatiomStmt[@n="ddc"]/idno[@type="dtaid"]', ##-- new:canonical
+		    'fileDesc/publicationStmt[@n="ddc"]/idno[@type="dtaid"]', ##-- new:canonical
 		    'fileDesc/publicationStmt/idno/idno[@type="DTAID"]',
 		    'fileDesc/publicationStmt/idno[@type="DTAID"]',
 		   );
