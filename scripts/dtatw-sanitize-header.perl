@@ -406,7 +406,7 @@ if (!$timestamp) {
   my $time = $infile eq '-' ? time() : (stat($infile))[9];
   $timestamp = POSIX::strftime("%FT%H:%M:%SZ",gmtime($time));
 }
-ensure_xpath($hroot, $timestamp_xpaths[0], $timestamp, !$foreign);
+ensure_xpath($hroot, $timestamp_xpaths[0], $timestamp, 0);
 
 ##-- meta: availability (text)
 my @availability_xpaths = (
