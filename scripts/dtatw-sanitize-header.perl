@@ -9,6 +9,11 @@ use POSIX; ##-- for strftime()
 #use Encode qw(encode decode encode_utf8 decode_utf8);
 #use Time::HiRes qw(gettimeofday tv_interval);
 #use Unicruft;
+
+use DB_File;
+use Fcntl;
+use JSON;
+
 use Pod::Usage;
 
 use strict;
@@ -27,6 +32,10 @@ our $outfile = "-";   ##-- default: stdout
 our $keep_blanks = 0;  ##-- keep input whitespace?
 our $format = 1;       ##-- output format level
 our $foreign = 0;      ##-- relaxed (non-dta) mode?
+
+##-- var: aux db
+our $aux_dbfile = undef;    ##-- auxilliary db (Berkeley DB, ($basename => $metadata_json)
+our $aux_xpath  = 'fileDesc[@n="ddc-aux"]';
 
 ##-- constants: verbosity levels
 our $vl_warn     = 1;
@@ -53,6 +62,10 @@ GetOptions(##-- General
 	   'keep-blanks|blanks|whitespace|ws!' => \$keep_blanks,
 	   'dta!' => sub { $foreign=!$_[1]; },
 	   'foreign|extern!' => \$foreign,
+
+	   ##-- auxilliary data
+	   'aux-db|auxdb|adb|a=s' => \$aux_dbfile,
+	   'aux-xpath|aux-xp|auxpath|axp|ap=s' => \$aux_xpath,
 
 	   ##-- I/O
 	   'output|out|o=s' => \$outfile,
@@ -208,6 +221,13 @@ if (!defined($basename)) {
   $basename =~ s/\..*$//;
 }
 $basename =~ s{^./}{};
+
+##-- maybe open aux db
+my %auxdb;
+if ($aux_xpath && defined($aux_dbfile)) {
+  tie(%auxdb, 'DB_File', $aux_dbfile, O_RDONLY, (0666&~umask), $DB_BTREE)
+    or die("$prog: $infile ($basename): failed to tie aux-db file $aux_dbfile: $!");
+}
 
 ##-- grab header file
 my $hdoc = loadxml($infile);
@@ -456,9 +476,25 @@ my $tccorpus = join('::',
 		   );
 ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassCorpus"]', ($tccorpus||''), 0);
 
+##-- apply aux-db
+my ($aux_buf);
+if ( $aux_xpath && ($aux_buf = $auxdb{$basename}) ) {
+  my $meta = from_json($aux_buf, {utf8=>!utf8::is_utf8($aux_buf), relaxed=>1, allow_nonref=>1, allow_unknown=>1})
+    or die("$prog: $basename: ERROR: failed to parse aux-db JSON metatdata '$aux_buf'");
+  die("$prog: $basename: ERROR: JSON metadata is not a HASH-ref") if (!UNIVERSAL::isa($meta,'HASH'));
+
+  my $auxnod = ensure_xpath($hroot, $aux_xpath, undef,0);
+  my ($key,$val,$nod);
+  while (($key,$val)=each(%$meta)) {
+    $nod = $auxnod->addNewChild(undef, 'idno');
+    $nod->setAttribute('type'=>$key);
+    $nod->appendText($val);
+  }
+}
+
 ##-- dump
 ($outfile eq '-' ? $hdoc->toFH(\*STDOUT,$format) : $hdoc->toFile($outfile,$format))
-  or die("$0: ERROR: failed to write output file '$outfile': $!");
+  or die("$prog: ERROR: failed to write output file '$outfile': $!");
 
 
 __END__
@@ -476,7 +512,12 @@ dtatw-sanitize-header.perl - make DDC/DTA-friendly TEI-headers
  General Options:
   -help                  # this help message
   -verbose LEVEL         # set verbosity level (0<=LEVEL<=1)
-  -quiet                 # be silent
+  -quiet                 # alias for -verbose=0
+  -dta , -foreign        # do/don't warn about strict DTA header compliance (default=do)
+
+ Auxilliary DB Options:  # optional BASENAME-keyed JSON-metata Berkeley DB
+  -aux-db DBFILE         # read auxilliary DB from DBFILE (default=none)
+  -aux-xpath XPATH       # append <idno type="KEY"> elements to XPATH (default='fileDesc[@n="ddc-aux"]')
 
  I/O Options:
   -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in XML_HEADER_FILE file (default=don't)
