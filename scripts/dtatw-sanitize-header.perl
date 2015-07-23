@@ -210,6 +210,7 @@ sub normalize_space {
   $s =~ s/\s+$//;
   return $s;
 }
+BEGIN { *wsnorm = \&normalize_space; }
 
 
 ##======================================================================
@@ -289,7 +290,7 @@ if (!defined($author)) {
   $author = ($basename =~ m/^([^_]+)_/ ? $1 : '');
   $author =~ s/\b([[:lower:]])/\U$1/g; ##-- implicitly upper-case
 }
-ensure_xpath($hroot, 'fileDesc/titleStmt/author[@n="ddc"]', $author);
+ensure_xpath($hroot, 'fileDesc/titleStmt/author[@n="ddc"]', wsnorm($author));
 
 ##-- meta: title
 my $title           = $foreign ? '' : ($basename =~ m/^[^_]+_([^_]+)_/ ? ucfirst($1) : '');
@@ -314,12 +315,7 @@ elsif ($other_title_nod) {
 else {
   warn("$prog: $basename: WARNING: missing title XPath(s) $other_title_xpaths[0] defaults to '$title'") if (!$foreign && $verbose >= $vl_warn);
 }
-
-##-- sanitize title
-$title =~ s/\s+/ /g;
-$title =~ s/^ //;
-$title =~ s/ $//;
-ensure_xpath($hroot, $other_title_xpaths[0], $title, 0);
+ensure_xpath($hroot, $other_title_xpaths[0], wsnorm($title), 0);
 
 ##-- meta: date (published)
 my @date_xpaths = (
@@ -343,7 +339,7 @@ if ($date =~ /[^0-9\-]/) {
   $date =~ s/[^0-9\-]//g;
 }
 #ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="scan"]/biblFull/publicationStmt/date[@type="first"]', $date); ##-- old (<2012-07)
-ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="ddc"]/biblFull/publicationStmt/date[@type="pub"]', $date);  ##-- new (>=2012-07)
+ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="ddc"]/biblFull/publicationStmt/date[@type="pub"]', wsnorm($date));  ##-- new (>=2012-07)
 
 ##-- meta: date (first)
 foreach (@date_xpaths) {
@@ -357,7 +353,7 @@ if (!$date1) {
   warn("$prog: $basename: WARNING: missing original-date XPath $date_xpaths[$#date_xpaths] defaults to \"$date1\"") if (0 && $verbose >= $vl_warn);
 }
 #ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="orig"]/biblFull/publicationStmt/date[@type="first"]', $date1); ##-- old (<2012-07)
-ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="ddc"]/biblFull/publicationStmt/date[@type="first"]', $date1);  ##-- new (>=2012-11)
+ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="ddc"]/biblFull/publicationStmt/date[@type="first"]', wsnorm($date1));  ##-- new (>=2012-11)
 
 ##-- meta: bibl
 my @bibl_xpaths = (
@@ -371,8 +367,8 @@ if (!defined($bibl)) {
   $bibl = "$author: $title. $date";
   warn("$prog: $basename: WARNING: missing bibl XPath(s) ".join('|',@bibl_xpaths)) if ($verbose >= $vl_warn);
 }
-ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="orig"]/bibl', $bibl); ##-- old (<2012-07)
-ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="ddc"]/bibl', $bibl); ##-- new (>=2012-07)
+ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="orig"]/bibl', wsnorm($bibl)); ##-- old (<2012-07)
+ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="ddc"]/bibl', wsnorm($bibl)); ##-- new (>=2012-07)
 
 ##-- meta: shelfmark
 my @shelfmark_xpaths = (
@@ -383,7 +379,7 @@ my @shelfmark_xpaths = (
 			'fileDesc/sourceDesc/biblFull/notesStmt/note[@type="location"]/ident[@type="shelfmark"]', ##-- old (<2012-07)
 		       );
 my $shelfmark = xpgrepval($hroot,@shelfmark_xpaths) || '-';
-ensure_xpath($hroot, $shelfmark_xpaths[0], $shelfmark, 0);
+ensure_xpath($hroot, $shelfmark_xpaths[0], wsnorm($shelfmark), 0);
 
 ##-- meta: library
 my @library_xpaths = (
@@ -392,7 +388,7 @@ my @library_xpaths = (
 		      'fileDesc/sourceDesc/biblFull/notesStmt/note[@type="location"]/name[@type="repository"]', ##-- old
 		     );
 my $library = xpgrepval($hroot, @library_xpaths) || '-';
-ensure_xpath($hroot, $library_xpaths[0], $library, 0);
+ensure_xpath($hroot, $library_xpaths[0], wsnorm($library), 0);
 
 ##-- meta: dtadir
 my @dirname_xpaths = (
@@ -403,8 +399,8 @@ my @dirname_xpaths = (
 		      'fileDesc/publicationStmt/idno[@type="DTADIR"]',     ##-- old (<2012-07)
 		     );
 my $dirname = xpgrepval($hroot,@dirname_xpaths) || $basename;
-ensure_xpath($hroot, $dirname_xpaths[0], $dirname, 0);
-ensure_xpath($hroot, $dirname_xpaths[1], $dirname, 1) if (!$foreign); ##-- dta compat
+ensure_xpath($hroot, $dirname_xpaths[0], wsnorm($dirname), 0);
+ensure_xpath($hroot, $dirname_xpaths[1], wsnorm($dirname), 1) if (!$foreign); ##-- dta compat
 
 ##-- meta: dtaid
 my @dtaid_xpaths = (
@@ -413,8 +409,8 @@ my @dtaid_xpaths = (
 		    'fileDesc/publicationStmt/idno[@type="DTAID"]',
 		   );
 my $dtaid = xpgrepval($hroot,@dtaid_xpaths) || "0";
-ensure_xpath($hroot, $dtaid_xpaths[0], $dtaid, 0);
-ensure_xpath($hroot, $dtaid_xpaths[1], $dtaid, 1) if (!$foreign); ##-- dta compat
+ensure_xpath($hroot, $dtaid_xpaths[0], wsnorm($dtaid), 0);
+ensure_xpath($hroot, $dtaid_xpaths[1], wsnorm($dtaid), 1) if (!$foreign); ##-- dta compat
 
 ##-- meta: timestamp: ISO
 my @timestamp_xpaths = (
@@ -426,7 +422,7 @@ if (!$timestamp) {
   my $time = $infile eq '-' ? time() : (stat($infile))[9];
   $timestamp = POSIX::strftime("%FT%H:%M:%SZ",gmtime($time));
 }
-ensure_xpath($hroot, $timestamp_xpaths[0], $timestamp, 0);
+ensure_xpath($hroot, $timestamp_xpaths[0], wsnorm($timestamp), 0);
 
 ##-- meta: availability (text)
 my @availability_xpaths = (
@@ -434,7 +430,7 @@ my @availability_xpaths = (
 			   'fileDesc/publicationStmt/availability',
 			  );
 my $availability        = xpgrepval($hroot,@availability_xpaths) || "-";
-ensure_xpath($hroot, $availability_xpaths[0], $availability, 0);
+ensure_xpath($hroot, $availability_xpaths[0], wsnorm($availability), 0);
 
 ##-- meta: availability (dwds code: "OR0W".."MR3S" ~ "ohne-rechte-0-wörter".."mit-rechten-3-sätze")
 my @avail_xpaths = (
@@ -442,7 +438,7 @@ my @avail_xpaths = (
 		    'fileDesc/publicationStmt/availability/@n',
 		   );
 my $avail       = xpgrepval($hroot,@avail_xpaths) || "-";
-ensure_xpath($hroot, $avail_xpaths[0], $avail, 0);
+ensure_xpath($hroot, $avail_xpaths[0], wsnorm($avail), 0);
 
 ##-- meta: text-class: dta
 my $tcdta = join('::',
@@ -452,7 +448,7 @@ my $tcdta = join('::',
 				      'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtasub"]',
 				     ))}
 		);
-ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassDTA"]', ($tcdta||''), 0);
+ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassDTA"]', wsnorm($tcdta||''), 0);
 
 ##-- meta: text-class: dwds
 my $tcdwds = join('::',
@@ -465,7 +461,7 @@ my $tcdwds = join('::',
 				       'profileDesc/textClass/keywords/term', ##-- dwds keywords
 				      ))}
 		 );
-ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassDWDS"]', ($tcdwds||''), 0);
+ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassDWDS"]', wsnorm($tcdwds||''), 0);
 
 ##-- meta: text-class: dta-corpus (ocr|mts|cn|...)
 my $tccorpus = join('::',
@@ -474,7 +470,7 @@ my $tccorpus = join('::',
 					 'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#DTACorpus"]',
 					))}
 		   );
-ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassCorpus"]', ($tccorpus||''), 0);
+ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassCorpus"]', wsnorm($tccorpus||''), 0);
 
 ##-- apply aux-db
 my ($aux_buf);

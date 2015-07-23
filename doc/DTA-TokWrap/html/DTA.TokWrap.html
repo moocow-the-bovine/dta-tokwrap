@@ -2,7 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title></title>
+<title>DTA::TokWrap - DTA tokenizer wrappers: top level</title>
 <link rel="stylesheet" href="dtatw.css" type="text/css" />
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
@@ -10,38 +10,50 @@
 
 <body>
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
-<tr><td class="_podblock_" valign="middle">
-<big><strong><span class="_podblock_">&nbsp;</span></strong></big>
+<tr><td class="block" valign="middle">
+<big><strong><span class="block">&nbsp;DTA::TokWrap - DTA tokenizer wrappers: top level</span></strong></big>
 </td></tr>
 </table>
 
 
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
 
-<ul id="index">
-  <li><a href="#NAME">NAME</a></li>
-  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
-  <li><a href="#DESCRIPTION">DESCRIPTION</a>
-    <ul>
-      <li><a href="#Constants">Constants</a></li>
-      <li><a href="#Constructors-etc">Constructors etc.</a></li>
-      <li><a href="#Methods:-Document-pseudo-I-O">Methods: Document pseudo-I/O</a></li>
-      <li><a href="#Methods:-Profiling">Methods: Profiling</a></li>
-    </ul>
-  </li>
-  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
-  <li><a href="#SEE-ALSO1">SEE ALSO</a></li>
-  <li><a href="#SEE-ALSO2">SEE ALSO</a></li>
-  <li><a href="#AUTHOR">AUTHOR</a></li>
-  <li><a href="#COPYRIGHT-AND-LICENSE">COPYRIGHT AND LICENSE</a></li>
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#constants">Constants</a></li>
+		<li><a href="#constructors_etc_">Constructors etc.</a></li>
+		<li><a href="#methods__document_pseudo_i_o">Methods: Document pseudo-I/O</a></li>
+		<li><a href="#methods__profiling">Methods: Profiling</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
 </ul>
 
-<h1 id="NAME">NAME</h1>
+<hr name="index" />
+</div>
+<!-- INDEX END -->
 
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
 <p>DTA::TokWrap - DTA tokenizer wrappers: top level</p>
-
-<h1 id="SYNOPSIS">SYNOPSIS</h1>
-
-<pre><code> use DTA::TokWrap;
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use DTA::TokWrap;
  
  ##========================================================================
  ## Constructors etc.
@@ -59,114 +71,118 @@
  ##========================================================================
  ## Methods: Profiling
  
- $tw-&gt;logProfile($logLevel);</code></pre>
-
-<h1 id="DESCRIPTION">DESCRIPTION</h1>
-
-<p>This manpage describes the DTA::TokWrap <b>module</b>. For an introduction to the DTA::TokWrap <b>distribution</b>, see <a>DTA::TokWrap::Intro</a>.</p>
-
-<p>The DTA::TokWrap package provides top-level object-oriented wrappers for (batch) tokenization of DTA &quot;base-format&quot; XML documents.</p>
-
-<h2 id="Constants">Constants</h2>
-
+ $tw-&gt;logProfile($logLevel);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This manpage describes the DTA::TokWrap <strong>module</strong>.
+For an introduction to the DTA::TokWrap <strong>distribution</strong>, see
+<a href="DTA.TokWrap.Intro.html">the DTA::TokWrap::Intro manpage</a>.</p>
+<p>The DTA::TokWrap package provides top-level object-oriented wrappers
+for (batch) tokenization of DTA &quot;base-format&quot; XML documents.</p>
+<p>
+</p>
+<h2><a name="constants">Constants</a></h2>
 <dl>
+<dt><strong><a name="variable_isa" class="item">Variable: @ISA</a></strong></dt>
 
-<dt id="Variable:-ISA">Variable: @ISA</dt>
 <dd>
-
-<p>The DTA::TokWrap class inherits from <a>DTA::TokWrap::Base</a>.</p>
-
+<p>The DTA::TokWrap class inherits from <a href="DTA.TokWrap.Base.html">DTA::TokWrap::Base</a>.</p>
 </dd>
 </dl>
-
-<h2 id="Constructors-etc">Constructors etc.</h2>
-
+<p>
+</p>
+<h2><a name="constructors_etc_">Constructors etc.</a></h2>
 <dl>
+<dt><strong><a name="defaults" class="item">defaults</a></strong></dt>
 
-<dt id="defaults">defaults</dt>
 <dd>
-
-<pre><code> %defaults = CLASS-&gt;defaults();</code></pre>
-
-<p>Static default options; see <a>DTA::TokWrap::Base</a>.</p>
-
+<pre>
+ %defaults = CLASS-&gt;defaults();</pre>
+<p>Static default options; see <a href="DTA.TokWrap.Base.html">the DTA::TokWrap::Base manpage</a>.</p>
 </dd>
-<dt id="init">init</dt>
+<dt><strong><a name="init" class="item">init</a></strong></dt>
+
 <dd>
-
-<pre><code> $tw = $tw-&gt;init();</code></pre>
-
-<p>Set dynamic default object structure; see <a>DTA::TokWrap::Base</a>.</p>
-
+<pre>
+ $tw = $tw-&gt;init();</pre>
+<p>Set dynamic default object structure; see <a href="DTA.TokWrap.Base.html">the DTA::TokWrap::Base manpage</a>.</p>
 </dd>
 </dl>
-
-<h2 id="Methods:-Document-pseudo-I-O">Methods: Document pseudo-I/O</h2>
-
+<p>
+</p>
+<h2><a name="methods__document_pseudo_i_o">Methods: Document pseudo-I/O</a></h2>
 <dl>
+<dt><strong><a name="open" class="item">open</a></strong></dt>
 
-<dt id="open">open</dt>
 <dd>
-
-<pre><code> $doc = $CLASS_OR_OBJECT-&gt;open($xmlfile,%docNewOptions);</code></pre>
-
-<p>Wrapper for <a>DTA::TokWrap::Document-&gt;open($xmlfile,tw=&gt;$tw,%docNewOptions)</a></p>
-
+<pre>
+ $doc = $CLASS_OR_OBJECT-&gt;open($xmlfile,%docNewOptions);</pre>
+<p>Wrapper for <a href="DTA.TokWrap.Document.html#open">DTA::TokWrap::Document-&gt;open($xmlfile,tw=&gt;$tw,%docNewOptions)</a></p>
 </dd>
-<dt id="close">close</dt>
+<dt><strong><a name="close" class="item">close</a></strong></dt>
+
 <dd>
-
-<pre><code> $bool = $tw-&gt;close($doc);</code></pre>
-
-<p>Wrapper for <a>$doc-&gt;close()</a></p>
-
+<pre>
+ $bool = $tw-&gt;close($doc);</pre>
+<p>Wrapper for <a href="DTA.TokWrap.Document.html#close">$doc-&gt;close()</a></p>
 </dd>
 </dl>
-
-<h2 id="Methods:-Profiling">Methods: Profiling</h2>
-
+<p>
+</p>
+<h2><a name="methods__profiling">Methods: Profiling</a></h2>
 <dl>
+<dt><strong><a name="logprofile" class="item">logProfile</a></strong></dt>
 
-<dt id="logProfile">logProfile</dt>
 <dd>
-
-<pre><code> undef = $tw-&gt;logProfile($logLevel);</code></pre>
-
-<p>Logs profiling information (throughput) at $logLevel using the Log::Log4perl mechanism via DTA::TokWrap::Logger. See <a>DTA::TokWrap::Logger</a>.</p>
-
+<pre>
+ undef = $tw-&gt;logProfile($logLevel);</pre>
+<p>Logs profiling information (throughput) at $logLevel
+using the Log::Log4perl mechanism via DTA::TokWrap::Logger.
+See <a href="DTA.TokWrap.Logger.html">the DTA::TokWrap::Logger manpage</a>.</p>
 </dd>
 </dl>
-
-<h1 id="SEE-ALSO">SEE ALSO</h1>
-
-<p><a>DTA::TokWrap::Intro(3pm)</a>, <a href="...script.dta-tokwrap.html">dta-tokwrap.perl(1)</a>, ...</p>
-
-<h1 id="SEE-ALSO1">SEE ALSO</h1>
-
-<p><a>DTA::TokWrap::Intro(3pm)</a>, <a href="...script.dta-tokwrap.html">dta-tokwrap.perl(1)</a>, ...</p>
-
-<h1 id="SEE-ALSO2">SEE ALSO</h1>
-
-<p><a>DTA::TokWrap::Intro(3pm)</a>, <a href="...script.dta-tokwrap.html">dta-tokwrap.perl(1)</a>, ...</p>
-
-<h1 id="AUTHOR">AUTHOR</h1>
-
-<p>Bryan Jurish &lt;jurish@bbaw.de&gt;</p>
-
-<h1 id="COPYRIGHT-AND-LICENSE">COPYRIGHT AND LICENSE</h1>
-
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="DTA.TokWrap.Intro.html">DTA::TokWrap::Intro(3pm)</a>,
+<a href="dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a>,
+...</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="DTA.TokWrap.Intro.html">DTA::TokWrap::Intro(3pm)</a>,
+<a href="dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a>,
+...</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="DTA.TokWrap.Intro.html">DTA::TokWrap::Intro(3pm)</a>,
+<a href="dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a>,
+...</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Bryan Jurish &lt;<a href="mailto:jurish@bbaw.de">jurish@bbaw.de</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright_and_license">COPYRIGHT AND LICENSE</a></h1>
 <p>Copyright (C) 2009-2014 by Bryan Jurish</p>
-
-<p>This package is free software; you can redistribute it and/or modify it under the same terms as Perl itself, either Perl version 5.14.2 or, at your option, any later version of Perl 5 you may have available.</p>
-
+<p>This package is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.14.2 or,
+at your option, any later version of Perl 5 you may have available.</p>
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
-<tr><td class="_podblock_" valign="middle">
-<big><strong><span class="_podblock_">&nbsp;</span></strong></big>
+<tr><td class="block" valign="middle">
+<big><strong><span class="block">&nbsp;DTA::TokWrap - DTA tokenizer wrappers: top level</span></strong></big>
 </td></tr>
 </table>
 
 </body>
 
 </html>
-
-
