@@ -3,7 +3,7 @@ AC_PREREQ(2.5)
 
 dnl Some handy macros
 define([THE_PACKAGE_NAME],    [dta-tokwrap])
-define([THE_PACKAGE_VERSION], [0.69])
+define([THE_PACKAGE_VERSION], [0.71])
 define([THE_PACKAGE_MAINTAINER],  [jurish@bbaw.de])
 
 AC_INIT(THE_PACKAGE_NAME, THE_PACKAGE_VERSION, THE_PACKAGE_MAINTAINER)
@@ -91,7 +91,7 @@ AC_SUBST(spkgincludedir)
 sharepkgdir="\${prefix}/share/AC_PACKAGE_NAME"
 pkgxsldir="\${sharepkgdir}/stylesheets"
 pkgmakdir="\${sharepkgdir}/make"
-pkgdocdor="\${sharepkgdir}/doc"
+pkgdocdir="\${sharepkgdir}/doc"
 AC_SUBST(sharepkgdir)
 AC_SUBST(pkgxsldir)
 AC_SUBST(pkgmakdir)
@@ -163,6 +163,7 @@ AC_CONFIG_LINKS([doc/programs/dtatw-get-ddc-attrs.perl.pod:scripts/dtatw-get-ddc
 AC_CONFIG_LINKS([doc/programs/dtatw-get-header.perl.pod:scripts/dtatw-get-header.perl])
 AC_CONFIG_LINKS([doc/programs/dtatw-pn2p.perl.pod:scripts/dtatw-pn2p.perl])
 AC_CONFIG_LINKS([doc/programs/dtatw-xml2ddc.perl.pod:scripts/dtatw-xml2ddc.perl])
+AC_CONFIG_LINKS([doc/programs/dtatw-ensure-lb.perl.pod:scripts/dtatw-ensure-lb.perl])
 ##
 AC_CONFIG_LINKS([doc/README.pod:README.pod])
 ##

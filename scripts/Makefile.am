@@ -66,6 +66,7 @@ bin_SCRIPTS = \
 	dtatw-nsdefault-decode.perl \
 	dtatw-seg2prevnext.perl \
 	dtatw-add-xpath.perl \
+	dtatw-ensure-lb.perl \
 	file-substr.perl
 
 #	dtatw-txml2cspan.perl

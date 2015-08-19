@@ -1,0 +1,8 @@
+<text>
+  <p>
+    This is a test.
+    This is <b>only</b> a test.
+    With <span>embedded <span>spans</span></span>.
+  </p>
+</text>
+
