@@ -232,6 +232,19 @@ TOOLS
         replacing them with newlines. Regex hack, fast but not robust, use
         with caution. See also "dtatw-rm-lb.xsl"
 
+    dtatw-lb-encode.perl
+        Encodes newlines under //text//text() in an XML document as "<lb>"
+        (line-break) elements using high-level file heuristics only. Regex
+        hack, fast but not robust, use with caution. See also
+        "dtatw-ensure-lb.perl", "dtatw-add-lb.xsl", "dtatw-rm-lb.perl".
+
+    dtatw-ensure-lb.perl
+        Script to ensure that all //text//text() newlines in an XML document
+        are explicitly encoded with "<lb>" (line-break) elements, using
+        optional file-, element-, and line-level heuristics. Robust but
+        slow, since it actually parses XML input documents. See also
+        "dtatw-lb-encode.perl", "dtatw-add-lb.xsl", "dtatw-rm-lb.perl".
+
     dtatw-tt-dictapply.perl
         Script to apply a type-"dictionary" in one-word-per-line (.tt)
         format to a token corpus in one-word-per-line (.tt) format.
