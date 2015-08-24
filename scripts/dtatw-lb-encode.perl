@@ -22,6 +22,7 @@ my ($off0,$off1);
 for ($off0=index($buf,'<text'); $off0 >= 0; $off0=index($buf,'<text',$off0+1)) {
   last if (substr($buf,$off0,6) =~ m{^<text\b});
 }
+$off1 += 6;
 for ($off1=rindex($buf,'</text'); $off1 > 0; $off1=rindex($buf,'</text',$off1-1)) {
   last if (substr($buf,$off1,7) =~ m{^</text\b});
 }
@@ -34,5 +35,5 @@ if ($off0 < 0 || $off1 < 0 || $off1 <= $off0) {
 }
 
 ##-- tweak target buffer (in-place)
-substr($buf,$off0,$off1-$off0) =~ s{(\R)}{<lb/>$1}g;
+substr($buf,$off0,$off1-$off0) =~ s{(\r?\n)}{<lb/>$1}g;
 print $buf;
