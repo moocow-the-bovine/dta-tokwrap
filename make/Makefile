@@ -76,7 +76,7 @@ endif
 ## Configuration: Defaults: dta-tokwrap.perl: behavior
 
 ifeq "$(dummytok)" ""
-ifeq "$(shell which dwds_tomasotath 2>/dev/null)" ""
+ifeq "$(shell which waste 2>/dev/null)" ""
 override dummytok := yes
 else
 override dummytok := no
