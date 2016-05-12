@@ -2,7 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title></title>
+<title>DTA::TokWrap::Processor::standoff - DTA tokenizer wrappers: t.xml -&gt; via external filter programs</title>
 <link rel="stylesheet" href="dtatw.css" type="text/css" />
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
@@ -10,37 +10,49 @@
 
 <body>
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
-<tr><td class="_podblock_" valign="middle">
-<big><strong><span class="_podblock_">&nbsp;</span></strong></big>
+<tr><td class="block" valign="middle">
+<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::standoff - DTA tokenizer wrappers: t.xml -&gt; via external filter programs</span></strong></big>
 </td></tr>
 </table>
 
 
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
 
-<ul id="index">
-  <li><a href="#NAME">NAME</a></li>
-  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
-  <li><a href="#DESCRIPTION">DESCRIPTION</a>
-    <ul>
-      <li><a href="#Constants">Constants</a></li>
-      <li><a href="#Constructors-etc">Constructors etc.</a></li>
-      <li><a href="#Methods:-Backwards-compatibility">Methods: Backwards-compatibility</a></li>
-      <li><a href="#Methods:-document-processing">Methods: document processing</a></li>
-    </ul>
-  </li>
-  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
-  <li><a href="#SEE-ALSO1">SEE ALSO</a></li>
-  <li><a href="#AUTHOR">AUTHOR</a></li>
-  <li><a href="#COPYRIGHT-AND-LICENSE">COPYRIGHT AND LICENSE</a></li>
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#constants">Constants</a></li>
+		<li><a href="#constructors_etc_">Constructors etc.</a></li>
+		<li><a href="#methods__backwards_compatibility">Methods: Backwards-compatibility</a></li>
+		<li><a href="#methods__document_processing">Methods: document processing</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
 </ul>
 
-<h1 id="NAME">NAME</h1>
+<hr name="index" />
+</div>
+<!-- INDEX END -->
 
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
 <p>DTA::TokWrap::Processor::standoff - DTA tokenizer wrappers: t.xml -&gt; (s.xml, w.xml, a.xml) via external filter programs</p>
-
-<h1 id="SYNOPSIS">SYNOPSIS</h1>
-
-<pre><code> use DTA::TokWrap::Processor::standoff;
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use DTA::TokWrap::Processor::standoff;
  
  $so = DTA::TokWrap::Processor::standoff-&gt;new(%opts);
  $doc_or_undef = $CLASS_OR_OBJECT-&gt;sosxml($doc);
@@ -51,176 +63,171 @@
  ##-- backwards-compatibility
  undef = $so-&gt;dump_t2s_stylesheet($filename_or_fh);
  undef = $so-&gt;dump_t2w_stylesheet($filename_or_fh);
- undef = $so-&gt;dump_t2a_stylesheet($filename_or_fh);</code></pre>
-
-<h1 id="DESCRIPTION">DESCRIPTION</h1>
-
-<h2 id="Constants">Constants</h2>
-
+ undef = $so-&gt;dump_t2a_stylesheet($filename_or_fh);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>
+</p>
+<h2><a name="constants">Constants</a></h2>
 <dl>
+<dt><strong><a name="variable_isa" class="item">Variable: @ISA</a></strong></dt>
 
-<dt id="Variable:-ISA">Variable: @ISA</dt>
 <dd>
-
-<p>DTA::TokWrap::Processor::standoff inherits from <a>DTA::TokWrap::Processor</a>.</p>
-
+<p>DTA::TokWrap::Processor::standoff
+inherits from
+<a href="DTA.TokWrap.Processor.html">DTA::TokWrap::Processor</a>.</p>
 </dd>
 </dl>
-
-<h2 id="Constructors-etc">Constructors etc.</h2>
-
+<p>
+</p>
+<h2><a name="constructors_etc_">Constructors etc.</a></h2>
 <dl>
+<dt><strong><a name="new" class="item">new</a></strong></dt>
 
-<dt id="new">new</dt>
 <dd>
-
-<pre><code> $so = $CLASS_OR_OBJECT-&gt;new(%args);</code></pre>
-
+<pre>
+ $so = $CLASS_OR_OBJECT-&gt;new(%args);</pre>
 <p>Constructor.</p>
-
 <p>%args, %$so:</p>
-
-<pre><code> t2w =&gt; $path_to_dtatw_txml2wxml, ##-- default: search
+<pre>
+ t2w =&gt; $path_to_dtatw_txml2wxml, ##-- default: search
  t2s =&gt; $path_to_dtatw_txml2sxml, ##-- default: search
  t2a =&gt; $path_to_dtatw_txml2axml, ##-- default: search
- inplace =&gt; $bool,                ##-- prefer in-place programs for search?</code></pre>
-
+ inplace =&gt; $bool,                ##-- prefer in-place programs for search?</pre>
 </dd>
-<dt id="defaults">defaults</dt>
+<dt><strong><a name="defaults" class="item">defaults</a></strong></dt>
+
 <dd>
-
-<pre><code> %defaults = CLASS-&gt;defaults();</code></pre>
-
+<pre>
+ %defaults = CLASS-&gt;defaults();</pre>
 <p>Static class-dependent defaults.</p>
-
 </dd>
-<dt id="init">init</dt>
+<dt><strong><a name="init" class="item">init</a></strong></dt>
+
 <dd>
-
-<pre><code> $so = $so-&gt;init();</code></pre>
-
+<pre>
+ $so = $so-&gt;init();</pre>
 <p>Dynamic object-dependent defaults.</p>
-
 </dd>
 </dl>
-
-<h2 id="Methods:-Backwards-compatibility">Methods: Backwards-compatibility</h2>
-
+<p>
+</p>
+<h2><a name="methods__backwards_compatibility">Methods: Backwards-compatibility</a></h2>
 <dl>
+<dt><strong><a name="_xsl" class="item">_xsl</a></strong></dt>
 
-<dt id="xsl">_xsl</dt>
 <dd>
-
-<pre><code> $so_xsl = $so-&gt;_xsl();</code></pre>
-
-<p>Return a <a>DTA::TokWrap::Processor::standoff::xsl</a> object which may or may not be logically equivalent to <code>$so</code>.</p>
-
+<pre>
+ $so_xsl = $so-&gt;_xsl();</pre>
+<p>Return a <a href="DTA.TokWrap.Processor.standoff.xsl.html">DTA::TokWrap::Processor::standoff::xsl</a>
+object which may or may not be logically equivalent to <code>$so</code>.</p>
 </dd>
-<dt id="dump_t2s_stylesheet">dump_t2s_stylesheet</dt>
+<dt><strong><a name="dump_t2s_stylesheet" class="item">dump_t2s_stylesheet</a></strong></dt>
+
 <dd>
-
-<pre><code> undef = $so-&gt;dump_t2s_stylesheet($filename_or_fh);</code></pre>
-
-<p>See <a>DTA::TokWrap::Processor::standoff::xsl::dump_t2s_stylesheet()</a>.</p>
-
+<pre>
+ undef = $so-&gt;dump_t2s_stylesheet($filename_or_fh);</pre>
+<p>See <a href="DTA.TokWrap.Processor.standoff.xsl.html#item_dump_t2s_stylesheet">DTA::TokWrap::Processor::standoff::xsl::dump_t2s_stylesheet()</a>.</p>
 </dd>
-<dt id="dump_t2w_stylesheet">dump_t2w_stylesheet</dt>
+<dt><strong><a name="dump_t2w_stylesheet" class="item">dump_t2w_stylesheet</a></strong></dt>
+
 <dd>
-
-<pre><code> undef = $so-&gt;dump_t2w_stylesheet($filename_or_fh);</code></pre>
-
-<p>See <a>DTA::TokWrap::Processor::standoff::xsl::dump_t2w_stylesheet()</a>.</p>
-
+<pre>
+ undef = $so-&gt;dump_t2w_stylesheet($filename_or_fh);</pre>
+<p>See <a href="DTA.TokWrap.Processor.standoff.xsl.html#item_dump_t2w_stylesheet">DTA::TokWrap::Processor::standoff::xsl::dump_t2w_stylesheet()</a>.</p>
 </dd>
-<dt id="dump_t2a_stylesheet">dump_t2a_stylesheet</dt>
+<dt><strong><a name="dump_t2a_stylesheet" class="item">dump_t2a_stylesheet</a></strong></dt>
+
 <dd>
-
-<pre><code> undef = $so-&gt;dump_t2a_stylesheet($filename_or_fh);</code></pre>
-
-<p>See <a>DTA::TokWrap::Processor::standoff::xsl::dump_t2a_stylesheet()</a>.</p>
-
+<pre>
+ undef = $so-&gt;dump_t2a_stylesheet($filename_or_fh);</pre>
+<p>See <a href="DTA.TokWrap.Processor.standoff.xsl.html#item_dump_t2a_stylesheet">DTA::TokWrap::Processor::standoff::xsl::dump_t2a_stylesheet()</a>.</p>
 </dd>
 </dl>
-
-<h2 id="Methods:-document-processing">Methods: document processing</h2>
-
+<p>
+</p>
+<h2><a name="methods__document_processing">Methods: document processing</a></h2>
 <dl>
+<dt><strong><a name="soxml" class="item">soxml</a></strong></dt>
 
-<dt id="soxml">soxml</dt>
 <dd>
-
-<pre><code> $doc_or_undef = $CLASS_OR_OBJECT-&gt;soxml($doc,$X,$xmlbase);</code></pre>
-
-<p>Low-level generic standoff formatting method. Generate <code>$X</code>-level standoff for the <a>DTA::TokWrap::Document</a> object $doc.</p>
-
+<pre>
+ $doc_or_undef = $CLASS_OR_OBJECT-&gt;soxml($doc,$X,$xmlbase);</pre>
+<p>Low-level generic standoff formatting method.
+Generate <code>$X</code>-level standoff for the
+<a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> object $doc.</p>
 <p>Relevant %$doc keys:</p>
-
-<pre><code> xtokdata    =&gt; $xtokdata, ##-- (input) XML-ified tokenizer output data (string)
+<pre>
+ xtokdata    =&gt; $xtokdata, ##-- (input) XML-ified tokenizer output data (string)
  so${X}file  =&gt; $sosfile,  ##-- (output) standoff file, refers to $xml_base
  ##
  so${X}xml_stamp0 =&gt; $f,   ##-- (output) timestamp of operation begin
  so${X}xml_stamp  =&gt; $f,   ##-- (output) timestamp of operation end
- so${X}file_stamp =&gt; $f,   ##-- (output) timestamp of operation end</code></pre>
-
+ so${X}file_stamp =&gt; $f,   ##-- (output) timestamp of operation end</pre>
 </dd>
-<dt id="sosxml">sosxml</dt>
+<dt><strong><a name="sosxml" class="item">sosxml</a></strong></dt>
+
 <dd>
-
-<pre><code> $doc_or_undef = $CLASS_OR_OBJECT-&gt;sosxml($doc);</code></pre>
-
+<pre>
+ $doc_or_undef = $CLASS_OR_OBJECT-&gt;sosxml($doc);</pre>
 <p>Just a wrapper for:</p>
-
-<pre><code> $so-&gt;soxml($doc,&#39;s&#39;,basename($doc-&gt;{sowfile}));</code></pre>
-
+<pre>
+ $so-&gt;soxml($doc,'s',basename($doc-&gt;{sowfile}));</pre>
 </dd>
-<dt id="sowxml">sowxml</dt>
+<dt><strong><a name="sowxml" class="item">sowxml</a></strong></dt>
+
 <dd>
-
-<pre><code> $doc_or_undef = $CLASS_OR_OBJECT-&gt;sowxml($doc);</code></pre>
-
+<pre>
+ $doc_or_undef = $CLASS_OR_OBJECT-&gt;sowxml($doc);</pre>
 <p>Just a wrapper for:</p>
-
-<pre><code> $so-&gt;soxml($doc,&#39;w&#39;,$doc-&gt;{xmlbase});</code></pre>
-
+<pre>
+ $so-&gt;soxml($doc,'w',$doc-&gt;{xmlbase});</pre>
 </dd>
-<dt id="soaxml">soaxml</dt>
+<dt><strong><a name="soaxml" class="item">soaxml</a></strong></dt>
+
 <dd>
-
-<pre><code> $doc_or_undef = $CLASS_OR_OBJECT-&gt;soaxml($doc);</code></pre>
-
+<pre>
+ $doc_or_undef = $CLASS_OR_OBJECT-&gt;soaxml($doc);</pre>
 <p>Just a wrapper for:</p>
-
-<pre><code> $so-&gt;soxml($doc,&#39;a&#39;,basename($doc-&gt;{sowfile}));</code></pre>
-
+<pre>
+ $so-&gt;soxml($doc,'a',basename($doc-&gt;{sowfile}));</pre>
 </dd>
 </dl>
-
-<h1 id="SEE-ALSO">SEE ALSO</h1>
-
-<p><a>DTA::TokWrap::Intro(3pm)</a>, <a href="dta-tokwrap.perl.pod:.html">dta-tokwrap.perl(1)</a>, ...</p>
-
-<h1 id="SEE-ALSO1">SEE ALSO</h1>
-
-<p><a>DTA::TokWrap::Intro(3pm)</a>, <a href="dta-tokwrap.perl.pod:.html">dta-tokwrap.perl(1)</a>, ...</p>
-
-<h1 id="AUTHOR">AUTHOR</h1>
-
-<p>Bryan Jurish &lt;jurish@bbaw.de&gt;</p>
-
-<h1 id="COPYRIGHT-AND-LICENSE">COPYRIGHT AND LICENSE</h1>
-
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="DTA.TokWrap.Intro.html">DTA::TokWrap::Intro(3pm)</a>,
+<a href="dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a>,
+...</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="DTA.TokWrap.Intro.html">DTA::TokWrap::Intro(3pm)</a>,
+<a href="dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a>,
+...</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Bryan Jurish &lt;<a href="mailto:jurish@bbaw.de">jurish@bbaw.de</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright_and_license">COPYRIGHT AND LICENSE</a></h1>
 <p>Copyright (C) 2009-2014 by Bryan Jurish</p>
-
-<p>This package is free software; you can redistribute it and/or modify it under the same terms as Perl itself, either Perl version 5.14.2 or, at your option, any later version of Perl 5 you may have available.</p>
-
+<p>This package is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.14.2 or,
+at your option, any later version of Perl 5 you may have available.</p>
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
-<tr><td class="_podblock_" valign="middle">
-<big><strong><span class="_podblock_">&nbsp;</span></strong></big>
+<tr><td class="block" valign="middle">
+<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::standoff - DTA tokenizer wrappers: t.xml -&gt; via external filter programs</span></strong></big>
 </td></tr>
 </table>
 
 </body>
 
 </html>
-
-

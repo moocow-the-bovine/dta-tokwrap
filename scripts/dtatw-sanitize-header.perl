@@ -222,6 +222,7 @@ if (!defined($basename)) {
   $basename =~ s/\..*$//;
 }
 $basename =~ s{^./}{};
+$basename =~ s/\..*$// if (!$foreign); ##-- auto-trim dta basenames
 
 ##-- maybe open aux db
 my %auxdb;

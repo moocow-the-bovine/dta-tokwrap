@@ -2,7 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title></title>
+<title>DTA::TokWrap::Processor::standoff::xsl - DTA tokenizer wrappers: t.xml -&gt; via XSL</title>
 <link rel="stylesheet" href="dtatw.css" type="text/css" />
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:root@localhost" />
@@ -10,37 +10,49 @@
 
 <body>
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
-<tr><td class="_podblock_" valign="middle">
-<big><strong><span class="_podblock_">&nbsp;</span></strong></big>
+<tr><td class="block" valign="middle">
+<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::standoff::xsl - DTA tokenizer wrappers: t.xml -&gt; via XSL</span></strong></big>
 </td></tr>
 </table>
 
 
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
 
-<ul id="index">
-  <li><a href="#NAME">NAME</a></li>
-  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
-  <li><a href="#DESCRIPTION">DESCRIPTION</a>
-    <ul>
-      <li><a href="#Constants">Constants</a></li>
-      <li><a href="#Constructors-etc">Constructors etc.</a></li>
-      <li><a href="#Methods:-XSL-stylesheets">Methods: XSL stylesheets</a></li>
-      <li><a href="#Methods:-top-level">Methods: top-level</a></li>
-    </ul>
-  </li>
-  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
-  <li><a href="#SEE-ALSO1">SEE ALSO</a></li>
-  <li><a href="#AUTHOR">AUTHOR</a></li>
-  <li><a href="#COPYRIGHT-AND-LICENSE">COPYRIGHT AND LICENSE</a></li>
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#constants">Constants</a></li>
+		<li><a href="#constructors_etc_">Constructors etc.</a></li>
+		<li><a href="#methods__xsl_stylesheets">Methods: XSL stylesheets</a></li>
+		<li><a href="#methods__top_level">Methods: top-level</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#copyright_and_license">COPYRIGHT AND LICENSE</a></li>
 </ul>
 
-<h1 id="NAME">NAME</h1>
+<hr name="index" />
+</div>
+<!-- INDEX END -->
 
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
 <p>DTA::TokWrap::Processor::standoff::xsl - DTA tokenizer wrappers: t.xml -&gt; (s.xml, w.xml, a.xml) via XSL</p>
-
-<h1 id="SYNOPSIS">SYNOPSIS</h1>
-
-<pre><code> use DTA::TokWrap::Processor::standoff::xsl;
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use DTA::TokWrap::Processor::standoff::xsl;
  
  $so = DTA::TokWrap::Processor::standoff::xsl-&gt;new(%opts);
  $doc_or_undef = $so-&gt;sosxml($doc);
@@ -51,42 +63,46 @@
  ##-- debugging
  undef = $so-&gt;dump_t2s_stylesheet($filename_or_fh);
  undef = $so-&gt;dump_t2w_stylesheet($filename_or_fh);
- undef = $so-&gt;dump_t2a_stylesheet($filename_or_fh);</code></pre>
-
-<h1 id="DESCRIPTION">DESCRIPTION</h1>
-
-<p>This module is deprecated; prefer <a>DTA::TokWrap::Processor::standoff</a>.</p>
-
-<p>DTA::TokWrap::Processor::standoff::xsl provides an object-oriented <a>DTA::TokWrap::Processor</a> wrapper for generation of various standoff XML formats for <a>DTA::TokWrap::Document</a> objects via (slow) XSL stylesheet transformations.</p>
-
-<p>Most users should use the high-level <a>DTA::TokWrap</a> wrapper class instead of using this module directly.</p>
-
-<h2 id="Constants">Constants</h2>
-
+ undef = $so-&gt;dump_t2a_stylesheet($filename_or_fh);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module is deprecated;
+prefer <a href="DTA.TokWrap.Processor.standoff.html">DTA::TokWrap::Processor::standoff</a>.</p>
+<p>DTA::TokWrap::Processor::standoff::xsl provides an object-oriented
+<a href="DTA.TokWrap.Processor.html">DTA::TokWrap::Processor</a> wrapper
+for generation of various standoff XML formats
+for <a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> objects via
+(slow) XSL stylesheet transformations.</p>
+<p>Most users should use the high-level
+<a href="DTA.TokWrap.html">DTA::TokWrap</a> wrapper class
+instead of using this module directly.</p>
+<p>
+</p>
+<h2><a name="constants">Constants</a></h2>
 <dl>
+<dt><strong><a name="_isa" class="item">@ISA</a></strong></dt>
 
-<dt id="ISA">@ISA</dt>
 <dd>
-
-<p>DTA::TokWrap::Processor::standoff::xsl inherits from <a>DTA::TokWrap::Processor</a>.</p>
-
+<p>DTA::TokWrap::Processor::standoff::xsl
+inherits from
+<a href="DTA.TokWrap.Processor.html">DTA::TokWrap::Processor</a>.</p>
 </dd>
 </dl>
-
-<h2 id="Constructors-etc">Constructors etc.</h2>
-
+<p>
+</p>
+<h2><a name="constructors_etc_">Constructors etc.</a></h2>
 <dl>
+<dt><strong><a name="new" class="item">new</a></strong></dt>
 
-<dt id="new">new</dt>
 <dd>
-
-<pre><code> $so = $CLASS_OR_OBJECT-&gt;new(%args);</code></pre>
-
+<pre>
+ $so = $CLASS_OR_OBJECT-&gt;new(%args);</pre>
 <p>Constructor.</p>
-
 <p>%args, %$so:</p>
-
-<pre><code> ##-- Stylesheet: tx2sx (t.xml -&gt; s.xml)
+<pre>
+ ##-- Stylesheet: tx2sx (t.xml -&gt; s.xml)
  t2s_stylestr  =&gt; $stylestr,           ##-- xsl stylesheet string
  t2s_styleheet =&gt; $stylesheet,         ##-- compiled xsl stylesheet
  ##
@@ -96,187 +112,184 @@
  ##
  ##-- Styleheet: tx2wx (t.xml -&gt; a.xml)
  t2a_stylestr  =&gt; $stylestr,           ##-- xsl stylesheet string
- t2a_styleheet =&gt; $stylesheet,         ##-- compiled xsl stylesheet</code></pre>
-
+ t2a_styleheet =&gt; $stylesheet,         ##-- compiled xsl stylesheet</pre>
 </dd>
-<dt id="defaults">defaults</dt>
+<dt><strong><a name="defaults" class="item">defaults</a></strong></dt>
+
 <dd>
-
-<pre><code> %defaults = CLASS-&gt;defaults();</code></pre>
-
+<pre>
+ %defaults = CLASS-&gt;defaults();</pre>
 <p>Static class-dependent defaults.</p>
-
 </dd>
-<dt id="init">init</dt>
+<dt><strong><a name="init" class="item">init</a></strong></dt>
+
 <dd>
-
-<pre><code> $so = $so-&gt;init();</code></pre>
-
+<pre>
+ $so = $so-&gt;init();</pre>
 <p>Dynamic object-dependent defaults.</p>
-
 </dd>
 </dl>
-
-<h2 id="Methods:-XSL-stylesheets">Methods: XSL stylesheets</h2>
-
+<p>
+</p>
+<h2><a name="methods__xsl_stylesheets">Methods: XSL stylesheets</a></h2>
 <p>Low-level utility methods.</p>
-
-<p>The stylesheets returned may or may not accurately reflect the documents generated by the <a href="#sosxml">sosxml()</a>, <a href="#sowxml">sowxml()</a>, and <a href="#soaxml">soaxml()</a> methods.</p>
-
+<p>The stylesheets returned may or may not accurately
+reflect the documents generated by the
+<a href="#sosxml">sosxml()</a>, <a href="#sowxml">sowxml()</a>,
+and <a href="#soaxml">soaxml()</a> methods.</p>
 <dl>
+<dt><strong><a name="ensure_stylesheets" class="item">ensure_stylesheets</a></strong></dt>
 
-<dt id="ensure_stylesheets">ensure_stylesheets</dt>
 <dd>
-
-<pre><code> $so_or_undef = $so-&gt;ensure_stylesheets();</code></pre>
-
+<pre>
+ $so_or_undef = $so-&gt;ensure_stylesheets();</pre>
 <p>Ensures that required XSL stylesheets have been compiled.</p>
-
 </dd>
-<dt id="t2s_stylestr">t2s_stylestr</dt>
+<dt><strong><a name="t2s_stylestr" class="item">t2s_stylestr</a></strong></dt>
+
 <dd>
-
-<pre><code> $xsl_str = $mbx0-&gt;t2s_stylestr();</code></pre>
-
-<p>Returns XSL stylesheet string for generation of sentence-level standoff XML (.s.xml) from &quot;master&quot; tokenized XML (.t.xml).</p>
-
+<pre>
+ $xsl_str = $mbx0-&gt;t2s_stylestr();</pre>
+<p>Returns XSL stylesheet string for generation of
+sentence-level standoff XML (.s.xml)
+from &quot;master&quot; tokenized XML (.t.xml).</p>
 </dd>
-<dt id="t2w_stylestr">t2w_stylestr</dt>
+<dt><strong><a name="t2w_stylestr" class="item">t2w_stylestr</a></strong></dt>
+
 <dd>
-
-<pre><code> $xsl_str = $mbx0-&gt;t2w_stylestr();</code></pre>
-
-<p>Returns XSL stylesheet string for generation of token-level standoff XML (.w.xml) from &quot;master&quot; tokenized XML (.t.xml).</p>
-
+<pre>
+ $xsl_str = $mbx0-&gt;t2w_stylestr();</pre>
+<p>Returns XSL stylesheet string for generation of
+token-level standoff XML (.w.xml)
+from &quot;master&quot; tokenized XML (.t.xml).</p>
 </dd>
-<dt id="t2a_stylestr">t2a_stylestr</dt>
+<dt><strong><a name="t2a_stylestr" class="item">t2a_stylestr</a></strong></dt>
+
 <dd>
-
-<pre><code> $xsl_str = $mbx0-&gt;t2a_stylestr();</code></pre>
-
-<p>Returns XSL stylesheet string for generation of token-analysis-level standoff XML (.a.xml) from &quot;master&quot; tokenized XML (.t.xml).</p>
-
+<pre>
+ $xsl_str = $mbx0-&gt;t2a_stylestr();</pre>
+<p>Returns XSL stylesheet string for generation of
+token-analysis-level standoff XML (.a.xml)
+from &quot;master&quot; tokenized XML (.t.xml).</p>
 </dd>
-<dt id="dump_t2s_stylesheet">dump_t2s_stylesheet</dt>
+<dt><strong><a name="dump_t2s_stylesheet" class="item">dump_t2s_stylesheet</a></strong></dt>
+
 <dd>
-
-<pre><code> $so-&gt;dump_t2s_stylesheet($filename_or_fh);</code></pre>
-
+<pre>
+ $so-&gt;dump_t2s_stylesheet($filename_or_fh);</pre>
 <p>Dumps the generated sentence-level standoff stylesheet to $filename_or_fh.</p>
-
 </dd>
-<dt id="dump_t2w_stylesheet">dump_t2w_stylesheet</dt>
+<dt><strong><a name="dump_t2w_stylesheet" class="item">dump_t2w_stylesheet</a></strong></dt>
+
 <dd>
-
-<pre><code> $so-&gt;dump_t2w_stylesheet($filename_or_fh);</code></pre>
-
+<pre>
+ $so-&gt;dump_t2w_stylesheet($filename_or_fh);</pre>
 <p>Dumps the generated token-level standoff stylesheet to $filename_or_fh.</p>
-
 </dd>
-<dt id="dump_t2a_stylesheet">dump_t2a_stylesheet</dt>
+<dt><strong><a name="dump_t2a_stylesheet" class="item">dump_t2a_stylesheet</a></strong></dt>
+
 <dd>
-
-<pre><code> $so-&gt;dump_t2a_stylesheet($filename_or_fh);</code></pre>
-
+<pre>
+ $so-&gt;dump_t2a_stylesheet($filename_or_fh);</pre>
 <p>Dumps the generated token-analysis-level standoff stylesheet to $filename_or_fh.</p>
-
 </dd>
 </dl>
-
-<h2 id="Methods:-top-level">Methods: top-level</h2>
-
+<p>
+</p>
+<h2><a name="methods__top_level">Methods: top-level</a></h2>
 <dl>
+<dt><strong><a name="standoff" class="item">standoff</a></strong></dt>
 
-<dt id="standoff">standoff</dt>
 <dd>
-
-<pre><code> $doc_or_undef = $CLASS_OR_OBJECT-&gt;standoff($doc);</code></pre>
-
+<pre>
+ $doc_or_undef = $CLASS_OR_OBJECT-&gt;standoff($doc);</pre>
 <p>Wrapper for <a href="#sosxml">sosxml()</a>, <a href="#sowxml">sowxml()</a>, <a href="#soaxml">soaxml()</a>.</p>
-
 </dd>
-<dt id="sosxml">sosxml</dt>
+<dt><strong><a name="sosxml" class="item">sosxml</a></strong></dt>
+
 <dd>
-
-<pre><code> $doc_or_undef = $CLASS_OR_OBJECT-&gt;sosxml($doc);</code></pre>
-
-<p>Generate sentence-level standoff for the <a>DTA::TokWrap::Document</a> object $doc.</p>
-
+<pre>
+ $doc_or_undef = $CLASS_OR_OBJECT-&gt;sosxml($doc);</pre>
+<p>Generate sentence-level standoff for the
+<a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> object $doc.</p>
 <p>Relevant %$doc keys:</p>
-
-<pre><code> xtokdoc  =&gt; $xtokdoc,  ##-- (input) XML-ified tokenizer output data, as XML::LibXML::Document
+<pre>
+ xtokdoc  =&gt; $xtokdoc,  ##-- (input) XML-ified tokenizer output data, as XML::LibXML::Document
  xtokdata =&gt; $xtokdata, ##-- (input) fallback: string source for $xtokdoc
  sosdoc   =&gt; $sosdoc,   ##-- (output) standoff sentence data, refers to $doc-&gt;{sowfile}
  ##
  sosxml_stamp0 =&gt; $f,   ##-- (output) timestamp of operation begin
  sosxml_stamp  =&gt; $f,   ##-- (output) timestamp of operation end
- sosdoc_stamp =&gt; $f,    ##-- (output) timestamp of operation end</code></pre>
-
+ sosdoc_stamp =&gt; $f,    ##-- (output) timestamp of operation end</pre>
 </dd>
-<dt id="sowxml">sowxml</dt>
+<dt><strong><a name="sowxml" class="item">sowxml</a></strong></dt>
+
 <dd>
-
-<pre><code> $doc_or_undef = $CLASS_OR_OBJECT-&gt;sowxml($doc);</code></pre>
-
-<p>Generate token-level standoff for the <a>DTA::TokWrap::Document</a> object $doc.</p>
-
+<pre>
+ $doc_or_undef = $CLASS_OR_OBJECT-&gt;sowxml($doc);</pre>
+<p>Generate token-level standoff for the
+<a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> object $doc.</p>
 <p>Relevant %$doc keys:</p>
-
-<pre><code> xtokdoc  =&gt; $xtokdoc,  ##-- (input) XML-ified tokenizer output data, as XML::LibXML::Document
+<pre>
+ xtokdoc  =&gt; $xtokdoc,  ##-- (input) XML-ified tokenizer output data, as XML::LibXML::Document
  xtokdata =&gt; $xtokdata, ##-- (input) fallback: string source for $xtokdoc
  sowdoc   =&gt; $sowdoc,   ##-- (output) standoff token data, refers to $doc-&gt;{xmlfile}
  ##
  sowxml_stamp0 =&gt; $f,   ##-- (output) timestamp of operation begin
  sowxml_stamp  =&gt; $f,   ##-- (output) timestamp of operation end
- sowdoc_stamp =&gt; $f,    ##-- (output) timestamp of operation end</code></pre>
-
+ sowdoc_stamp =&gt; $f,    ##-- (output) timestamp of operation end</pre>
 </dd>
-<dt id="soaxml">soaxml</dt>
+<dt><strong><a name="soaxml" class="item">soaxml</a></strong></dt>
+
 <dd>
-
-<pre><code> $doc_or_undef = $CLASS_OR_OBJECT-&gt;soaxml($doc);</code></pre>
-
-<p>Generate token-analysis-level standoff for the <a>DTA::TokWrap::Document</a> object $doc.</p>
-
+<pre>
+ $doc_or_undef = $CLASS_OR_OBJECT-&gt;soaxml($doc);</pre>
+<p>Generate token-analysis-level standoff for the
+<a href="DTA.TokWrap.Document.html">DTA::TokWrap::Document</a> object $doc.</p>
 <p>Relevant %$doc keys:</p>
-
-<pre><code> xtokdoc  =&gt; $xtokdoc,  ##-- (input) XML-ified tokenizer output data, as XML::LibXML::Document
+<pre>
+ xtokdoc  =&gt; $xtokdoc,  ##-- (input) XML-ified tokenizer output data, as XML::LibXML::Document
  xtokdata =&gt; $xtokdata, ##-- (input) fallback: string source for $xtokdoc
  soadoc   =&gt; $soadoc,   ##-- (output) standoff token-analysis data, refers to $doc-&gt;{sowdoc}
  ##
  sowxml_stamp0 =&gt; $f,   ##-- (output) timestamp of operation begin
  sowxml_stamp  =&gt; $f,   ##-- (output) timestamp of operation end
- sowdoc_stamp =&gt; $f,    ##-- (output) timestamp of operation end</code></pre>
-
+ sowdoc_stamp =&gt; $f,    ##-- (output) timestamp of operation end</pre>
 </dd>
 </dl>
-
-<h1 id="SEE-ALSO">SEE ALSO</h1>
-
-<p><a>DTA::TokWrap::Intro(3pm)</a>, <a href="dta-tokwrap.perl.pod:.html">dta-tokwrap.perl(1)</a>, ...</p>
-
-<h1 id="SEE-ALSO1">SEE ALSO</h1>
-
-<p><a>DTA::TokWrap::Intro(3pm)</a>, <a href="dta-tokwrap.perl.pod:.html">dta-tokwrap.perl(1)</a>, ...</p>
-
-<h1 id="AUTHOR">AUTHOR</h1>
-
-<p>Bryan Jurish &lt;jurish@bbaw.de&gt;</p>
-
-<h1 id="COPYRIGHT-AND-LICENSE">COPYRIGHT AND LICENSE</h1>
-
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="DTA.TokWrap.Intro.html">DTA::TokWrap::Intro(3pm)</a>,
+<a href="dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a>,
+...</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="DTA.TokWrap.Intro.html">DTA::TokWrap::Intro(3pm)</a>,
+<a href="dta-tokwrap.perl.html">dta-tokwrap.perl(1)</a>,
+...</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Bryan Jurish &lt;<a href="mailto:jurish@bbaw.de">jurish@bbaw.de</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright_and_license">COPYRIGHT AND LICENSE</a></h1>
 <p>Copyright (C) 2009-2014 by Bryan Jurish</p>
-
-<p>This package is free software; you can redistribute it and/or modify it under the same terms as Perl itself, either Perl version 5.14.2 or, at your option, any later version of Perl 5 you may have available.</p>
-
+<p>This package is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.14.2 or,
+at your option, any later version of Perl 5 you may have available.</p>
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
-<tr><td class="_podblock_" valign="middle">
-<big><strong><span class="_podblock_">&nbsp;</span></strong></big>
+<tr><td class="block" valign="middle">
+<big><strong><span class="block">&nbsp;DTA::TokWrap::Processor::standoff::xsl - DTA tokenizer wrappers: t.xml -&gt; via XSL</span></strong></big>
 </td></tr>
 </table>
 
 </body>
 
 </html>
-
-
