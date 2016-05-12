@@ -57,9 +57,8 @@ GetOptions(##-- General
 	   'verbose|v=i' => \$verbose,
 	   'quiet|q' => sub { $verbose=!$_[1]; },
 
-	   ##-- behavior
+	   ##-- General: behavior
 	   'basename|base|b|dirname|dir|d=s' => \$basename,
-	   'keep-blanks|blanks|whitespace|ws!' => \$keep_blanks,
 	   'dta!' => sub { $foreign=!$_[1]; },
 	   'foreign|extern!' => \$foreign,
 
@@ -68,6 +67,7 @@ GetOptions(##-- General
 	   'aux-xpath|aux-xp|auxpath|axp|ap=s' => \$aux_xpath,
 
 	   ##-- I/O
+	   'keep-blanks|blanks|whitespace|ws!' => \$keep_blanks,
 	   'output|out|o=s' => \$outfile,
 	   'format|fmt!' => \$format,
 	  );
@@ -512,7 +512,7 @@ dtatw-sanitize-header.perl - make DDC/DTA-friendly TEI-headers
   -quiet                 # alias for -verbose=0
   -dta , -foreign        # do/don't warn about strict DTA header compliance (default=do)
 
- Auxilliary DB Options:  # optional BASENAME-keyed JSON-metata Berkeley DB
+ Auxilliary DB Options:  # optional BASENAME-keyed JSON-metadata Berkeley DB
   -aux-db DBFILE         # read auxilliary DB from DBFILE (default=none)
   -aux-xpath XPATH       # append <idno type="KEY"> elements to XPATH (default='fileDesc[@n="ddc-aux"]')
 
@@ -530,7 +530,102 @@ dtatw-sanitize-header.perl - make DDC/DTA-friendly TEI-headers
 
 =head1 OPTIONS AND ARGUMENTS
 
-Not yet written.
+=cut
+
+##----------------------------------------------------------------------
+## General Options
+=pod
+
+=head2 General Options
+
+=over 4
+
+=item -h, -help
+
+Display a brief usage summary and exit.
+
+=item -v, -verbose LEVEL
+
+Set verbosity level; values for I<LEVEL> are:
+
+ 0: silent
+ 1: warnings only
+ 2: warnings and progress messages
+
+=item -q, -quiet
+
+Alis for -verbose=0
+
+=item -b, -basename BASENAME
+
+Set basename for generated header fields; default is
+the basename (non-directory portion) of I<XML_HEADER_FILE>
+up to but not including the first dot (".") character, if any.
+In default C<-dta> mode, everything after the first dot character
+in I<BASENAME> will be truncated even if you specify this option;
+in C<-foreign> mode, dots in basenames passed in via this option are allowed.
+
+=item -dta, -nodta
+
+Do/don't run with DTA-specific heuristics and attempt to enforce DTA-header compliance (default: do).
+
+=item -foreign
+
+Alias for C<-nodta>.
+
+=back
+
+=cut
+
+##----------------------------------------------------------------------
+## Auxilliary DB Options
+=pod
+
+=head2 Auxilliary DB Options
+
+You can optionally use a I<BASENAME>-keyed JSON-metadata Berkeley DB file
+to automatically insert additional metadata fields into an existing header.
+
+=over 4
+
+=item -aux-db DBFILE
+
+Apply auxilliary metadata from Berkeley DB file I<DBFILE> (default=none).
+Keys of I<DBFILE> should be I<BASENAME>s as parsed from I<XML_HEADER_FILE>
+or passed in via the C<-basename> option, and the associated values should be
+flat JSON objects whose keys are the names of metadata attributes for I<BASENAME>
+and whose values are the values of those metadata attributes.
+
+=item -aux-xpath XPATH
+
+Append C<E<lt>idno type="I<KEY>"E<gt>I<VAL>I<lt>/idnoI<gt>> elements to I<XPATH> (default=C<'fileDesc[@n="ddc-aux"]'>)
+for auxilliary metadata attributes.
+
+=back
+
+=cut
+
+##----------------------------------------------------------------------
+## I/O Options
+=pod
+
+=head2 I/O Options
+
+=over 4
+
+=item -[no]keep-blanks
+
+Do/don't retain all whitespace in input file (default=don't).
+
+=item -o, -output OUTFILE
+
+Write output to I<OUTFILE>; default="-" (standard output).
+
+=item -format LEVEL
+
+Format output at libxml level I<LEVEL> (default=1).
+
+=back
 
 =cut
 
@@ -541,7 +636,197 @@ Not yet written.
 
 =head1 DESCRIPTION
 
-Ensure DDC/DTA-friendly TEI headers.
+dtatw-sanitize-header.perl applies some parsing and encoding heuristics to a TEI-XML header
+file I<XML_HEADER_FILE> in an attempt to ensure compliance with DTA/D* header conventions for subsequent
+DDC indexing.  For each supported metadata attribute, a corresponding header record
+is first sought by means of a first-match-wins XPath list.  If no existing header record is found,
+a default (possibly empty) value is heuristically assigned, and the resulting value is inserted
+into the header at a conventional XPath location.
+
+The metadata attributes currently supported are listed below;
+Source XPaths in the list are specified relative to the
+root C<E<lt>teiHeaderE<gt>> element, and unless otherwise noted,
+the first source XPath listed is also the target XPath,
+guaranteed to be exist in the output header on successful script completion.
+
+See L<http://kaskade.dwds.de/dstar/doc/README.html#bibliographic_metadata_attributes>
+for details on D* metadata attribute conventions.
+
+=head2 author
+
+XPath(s):
+
+ fileDesc/titleStmt/author[@n="ddc"]							##-- ddc: canonical target (formatted)
+ fileDesc/titleStmt/author								##-- new (direct, un-formatted)
+ fileDesc/sourceDesc/biblFull/titleStmt/author						##-- new (sourceDesc, un-formatted)
+ fileDesc/titleStmt/editor[string(@corresp)!="#DTACorpusPublisher"]   			##-- new (direct, un-formatted)
+ fileDesc/sourceDesc/biblFull/titleStmt/editor[string(@corresp)!="#DTACorpusPublisher"]	##-- new (sourceDesc, un-formatted)
+ fileDesc/sourceDesc/listPerson[@type="searchNames"]/person/persName			##-- old
+
+Heuristically parses and formats C<persName>, C<surname>, C<forename>, and C<genName> elements to a human-readable string.
+In DTA mode, defaults to the first component of the "_"-separated I<BASENAME>.
+
+=head2 title
+
+XPath(s):
+
+ fileDesc/titleStmt/title[@type="main" or @type="sub" or @type="vol"]	##-- DTA-mode only
+ fileDesc/titleStmt/title[@type="ddc"]					##-- ddc: canonical target (formatted)
+ fileDesc/titleStmt/title[not(@type)]
+ sourceDesc[@id="orig"]/biblFull/titleStmt/title
+ sourceDesc[@id="scan"]/biblFull/titleStmt/title
+ sourceDesc[not(@id)]/biblFull/titleStmt/title
+
+In DTA mode, heuristically parses and formats C<@type="main">, C<@type="sub">, C<@type="vol"> elements to a human-readable string,
+and defaults to the second component of the "_"-separated I<BASENAME>.
+
+=head2 date
+
+XPath(s):
+
+ fileDesc/sourceDesc[@n="ddc"]/biblFull/publicationStmt/date[@type="pub"]		##-- ddc: canonical target
+ fileDesc/sourceDesc[@n="scan"]/biblFull/publicationStmt/date				##-- old:publDate
+ fileDesc/sourceDesc/biblFull/publicationStmt/date[@type="creation"]/supplied
+ fileDesc/sourceDesc/biblFull/publicationStmt/date[@type="creation"]
+ fileDesc/sourceDesc/biblFull/publicationStmt/date[@type="publication"]/supplied	##-- new:date (published, supplied)
+ fileDesc/sourceDesc/biblFull/publicationStmt/date[@type="publication"]			##-- new:date (published)
+ fileDesc/sourceDesc/biblFull/publicationStmt/date/supplied				##-- new:date (generic, supplied)
+ fileDesc/sourceDesc/biblFull/publicationStmt/date					##-- new:date (generic, supplied)
+
+Heuristically trims everything but digits and hyphens from the extracted date-string.
+In DTA mode, defaults to the final component of the "_"-separated I<BASENAME>.
+
+=head2 firstDate
+
+XPath(s):
+
+ fileDesc/sourceDesc[@n="ddc"]/biblFull/publicationStmt/date[@type="first"]		##-- ddc: canonical target
+ fileDesc/sourceDesc[@n="orig"]/biblFull/publicationStmt/date				##-- old: publDate
+ fileDesc/sourceDesc/biblFull/publicationStmt/date[@type="creation"]/supplied
+ fileDesc/sourceDesc/biblFull/publicationStmt/date[@type="creation"]
+ fileDesc/sourceDesc/biblFull/publicationStmt/date[@type="firstPublication"]/supplied	##-- new:date (first, supplied)
+ fileDesc/sourceDesc/biblFull/publicationStmt/date[@type="firstPublication"]		##-- new:date (first)
+ fileDesc/sourceDesc/biblFull/publicationStmt/date/supplied				##-- new:date (generic, supplied)
+ fileDesc/sourceDesc/biblFull/publicationStmt/date					##-- new:date (generic, supplied)
+
+Heuristically trims everything but digits and hyphens from the extracted date-string.
+Defaults to the publication date (see above).
+
+=head2 bibl
+
+XPath(s):
+
+ fileDesc/sourceDesc[@n="ddc"]/bibl	##-- ddc:canonical target
+ fileDesc/sourceDesc[@n="orig"]/bibl	##-- old:firstBibl, target
+ fileDesc/sourceDesc[@n="scan"]/bibl	##-- old:publBibl
+ fileDesc/sourceDesc/bibl		##-- new|old:generic
+
+Heuristically generated from I<author>, I<title>, and I<date> if not set.
+Ensures that the first 2 XPaths are set in the output file.
+
+=head2 shelfmark
+
+XPath(s):
+
+ fileDesc/sourceDesc[@n="ddc"]/msDesc/msIdentifier/idno/idno[@type="shelfmark"] 	##-- ddc: canonical target
+ fileDesc/sourceDesc[@n="ddc"]/msDesc/msIdentifier/idno[@type="shelfmark"]		##-- -2013-08-04
+ fileDesc/sourceDesc/msDesc/msIdentifier/idno/idno[@type="shelfmark"]
+ fileDesc/sourceDesc/msDesc/msIdentifier/idno[@type="shelfmark"]			##-- new (>=2012-07)
+ fileDesc/sourceDesc/biblFull/notesStmt/note[@type="location"]/ident[@type="shelfmark"]	##-- old (<2012-07)
+
+=head2 library
+
+XPath(s):
+
+ fileDesc/sourceDesc[@n="ddc"]/msDesc/msIdentifier/repository				##-- ddc: canonical target
+ fileDesc/sourceDesc/msDesc/msIdentifier/repository					##-- new
+ fileDesc/sourceDesc/biblFull/notesStmt/note[@type="location"]/name[@type="repository"] ##-- old
+
+=head2 basename (dtadir)
+
+XPath(s):
+
+ fileDesc/publicationStmt[@n="ddc"]/idno[@type="basename"]	##-- new: canonical target
+ fileDesc/publicationStmt/idno/idno[@type="DTADirName"]		##-- (>=2013-09-04)
+ fileDesc/publicationStmt/idno[@type="DTADirName"]		##-- (>=2013-09-04)
+ fileDesc/publicationStmt/idno[@type="DTADIRNAME"]		##-- new (>=2012-07)
+ fileDesc/publicationStmt/idno[@type="DTADIR"]			##-- old (<2012-07)
+
+Heuristically set to I<BASENAME> if not found.
+
+=head2 dtaid
+
+XPath(s):
+
+ fileDesc/publicationStmt[@n="ddc"]/idno[@type="dtaid"]		##-- ddc: canonical target
+ fileDesc/publicationStmt/idno/idno[@type="DTAID"]
+ fileDesc/publicationStmt/idno[@type="DTAID"]
+
+Defaults to "0" (zero) if unset.
+
+=head2 timestamp
+
+XPath(s):
+
+ fileDesc/publicationStmt/date[@type="ddc-timestamp"]		##-- ddc: canonical target
+ fileDesc/publicationStmt/date					##-- DTA mode only
+
+Defaults to last modification time of I<XML_HEADER_FILE> or the current time
+if not set.
+
+=head2 availability (human-readable)
+
+XPath(s):
+
+ fileDesc/publicationStmt/availability[@type="ddc"]
+ fileDesc/publicationStmt/availability
+
+Defaults to "-" if unset.
+
+=head2 avail (DWDS code)
+
+XPath(s):
+
+ fileDesc/publicationStmt/availability[@type="ddc_dwds"]
+ fileDesc/publicationStmt/availability/@n
+
+Defaults to "-" if unset.
+
+=head2 textClass
+
+Source XPath(s):
+
+ profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds1main"]
+ profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds1sub"]
+ profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds2main"]
+ profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds2sub"]
+ profileDesc/textClass/keywords/term ##-- dwds keywords
+
+Target XPath:
+
+ profileDesc/textClass/classCode[@scheme="ddcTextClassDWDS"]
+
+
+=head2 textClassDTA
+
+Source XPath(s):
+
+ profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtamain"]
+ profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtasub"]
+
+Target XPath:
+
+ profileDesc/textClass/classCode[@scheme="ddcTextClassDTA"]
+
+=head2 DTA corpus
+
+Source XPath(s):
+
+ profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#DTACorpus"]
+
+Target XPath:
+
+ profileDesc/textClass/classCode[@scheme="ddcTextClassCorpus"]
 
 =cut
 
@@ -552,11 +837,7 @@ Ensure DDC/DTA-friendly TEI headers.
 
 =head1 SEE ALSO
 
-L<dtatw-add-c.perl(1)|dtatw-add-c.perl>,
-L<dta-tokwrap.perl(1)|dta-tokwrap.perl>,
-L<dtatw-add-ws.perl(1)|dtatw-add-ws.perl>,
-L<dtatw-splice.perl(1)|dtatw-splice.perl>,
-L<dtatw-rm-c.perl(1)|dtatw-rm-c.perl>,
+L<dtatw-get-header.perl(1)|dtatw-get-header.perl>,
 ...
 
 =cut

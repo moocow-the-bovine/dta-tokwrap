@@ -1,0 +1,367 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>dtatw-sanitize-header.perl - make DDC/DTA-friendly TEI-headers</title>
+<link rel="stylesheet" href="dtatw.css" type="text/css" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body>
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#options_and_arguments">OPTIONS AND ARGUMENTS</a></li>
+	<ul>
+
+		<li><a href="#general_options">General Options</a></li>
+		<li><a href="#auxilliary_db_options">Auxilliary DB Options</a></li>
+		<li><a href="#i_o_options">I/O Options</a></li>
+	</ul>
+
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#author">author</a></li>
+		<li><a href="#title">title</a></li>
+		<li><a href="#date">date</a></li>
+		<li><a href="#firstdate">firstDate</a></li>
+		<li><a href="#bibl">bibl</a></li>
+		<li><a href="#shelfmark">shelfmark</a></li>
+		<li><a href="#library">library</a></li>
+		<li><a href="#basename__dtadir_">basename (dtadir)</a></li>
+		<li><a href="#dtaid">dtaid</a></li>
+		<li><a href="#timestamp">timestamp</a></li>
+		<li><a href="#availability__human_readable_">availability (human-readable)</a></li>
+		<li><a href="#avail__dwds_code_">avail (DWDS code)</a></li>
+		<li><a href="#textclass">textClass</a></li>
+		<li><a href="#textclassdta">textClassDTA</a></li>
+		<li><a href="#dta_corpus">DTA corpus</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<hr />
+<h1><a name="name">NAME</a></h1>
+<p>dtatw-sanitize-header.perl - make DDC/DTA-friendly TEI-headers</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ dtatw-sanitize-header.perl [OPTIONS] XML_HEADER_FILE</pre>
+<pre>
+ General Options:
+  -help                  # this help message
+  -verbose LEVEL         # set verbosity level (0&lt;=LEVEL&lt;=1)
+  -quiet                 # alias for -verbose=0
+  -dta , -foreign        # do/don't warn about strict DTA header compliance (default=do)</pre>
+<pre>
+ Auxilliary DB Options:  # optional BASENAME-keyed JSON-metadata Berkeley DB
+  -aux-db DBFILE         # read auxilliary DB from DBFILE (default=none)
+  -aux-xpath XPATH       # append &lt;idno type=&quot;KEY&quot;&gt; elements to XPATH (default='fileDesc[@n=&quot;ddc-aux&quot;]')</pre>
+<pre>
+ I/O Options:
+  -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in XML_HEADER_FILE file (default=don't)
+  -base BASENAME         # use BASENAME to auto-compute field names (default=basename(XML_HEADER_FILE))
+  -output FILE           # specify output file (default='-' (STDOUT))</pre>
+<p>
+</p>
+<hr />
+<h1><a name="options_and_arguments">OPTIONS AND ARGUMENTS</a></h1>
+<p>
+</p>
+<h2><a name="general_options">General Options</a></h2>
+<dl>
+<dt><strong><a name="h_help" class="item">-h, -help</a></strong></dt>
+
+<dd>
+<p>Display a brief usage summary and exit.</p>
+</dd>
+<dt><strong><a name="v_verbose_level" class="item">-v, -verbose LEVEL</a></strong></dt>
+
+<dd>
+<p>Set verbosity level; values for <em>LEVEL</em> are:</p>
+<pre>
+ 0: silent
+ 1: warnings only
+ 2: warnings and progress messages</pre>
+</dd>
+<dt><strong><a name="q_quiet" class="item">-q, -quiet</a></strong></dt>
+
+<dd>
+<p>Alis for -verbose=0</p>
+</dd>
+<dt><strong><a name="b_basename_basename" class="item">-b, -basename BASENAME</a></strong></dt>
+
+<dd>
+<p>Set basename for generated header fields; default is
+the basename (non-directory portion) of <em>XML_HEADER_FILE</em>
+up to but not including the first dot (&quot;.&quot;) character, if any.
+In default <code>-dta</code> mode, everything after the first dot character
+in <em>BASENAME</em> will be truncated even if you specify this option;
+in <a href="#foreign"><code>-foreign</code></a> mode, dots in basenames passed in via this option are allowed.</p>
+</dd>
+<dt><strong><a name="dta_nodta" class="item">-dta, -nodta</a></strong></dt>
+
+<dd>
+<p>Do/don't run with DTA-specific heuristics and attempt to enforce DTA-header compliance (default: do).</p>
+</dd>
+<dt><strong><a name="foreign" class="item">-foreign</a></strong></dt>
+
+<dd>
+<p>Alias for <code>-nodta</code>.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="auxilliary_db_options">Auxilliary DB Options</a></h2>
+<p>You can optionally use a <em>BASENAME</em>-keyed JSON-metadata Berkeley DB file
+to automatically insert additional metadata fields into an existing header.</p>
+<dl>
+<dt><strong><a name="aux_db_dbfile" class="item">-aux-db DBFILE</a></strong></dt>
+
+<dd>
+<p>Apply auxilliary metadata from Berkeley DB file <em>DBFILE</em> (default=none).
+Keys of <em>DBFILE</em> should be <em>BASENAME</em>s as parsed from <em>XML_HEADER_FILE</em>
+or passed in via the <code>-basename</code> option, and the associated values should be
+flat JSON objects whose keys are the names of metadata attributes for <em>BASENAME</em>
+and whose values are the values of those metadata attributes.</p>
+</dd>
+<dt><strong><a name="aux_xpath_xpath" class="item">-aux-xpath XPATH</a></strong></dt>
+
+<dd>
+<p>Append <code>&lt;idno type=&quot;KEY&quot;&gt;VALlt/idnogt</code> elements to <em>XPATH</em> (default=<code>'fileDesc[@n=&quot;ddc-aux&quot;]'</code>)
+for auxilliary metadata attributes.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="i_o_options">I/O Options</a></h2>
+<dl>
+<dt><strong><a name="no_keep_blanks" class="item">-[no]keep-blanks</a></strong></dt>
+
+<dd>
+<p>Do/don't retain all whitespace in input file (default=don't).</p>
+</dd>
+<dt><strong><a name="o_output_outfile" class="item">-o, -output OUTFILE</a></strong></dt>
+
+<dd>
+<p>Write output to <em>OUTFILE</em>; default=&quot;-&quot; (standard output).</p>
+</dd>
+<dt><strong><a name="format_level" class="item">-format LEVEL</a></strong></dt>
+
+<dd>
+<p>Format output at libxml level <em>LEVEL</em> (default=1).</p>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>dtatw-sanitize-header.perl applies some parsing and encoding heuristics to a TEI-XML header
+file <em>XML_HEADER_FILE</em> in an attempt to ensure compliance with DTA/D* header conventions for subsequent
+DDC indexing.  For each supported metadata attribute, a corresponding header record
+is first sought by means of a first-match-wins XPath list.  If no existing header record is found,
+a default (possibly empty) value is heuristically assigned, and the resulting value is inserted
+into the header at a conventional XPath location.</p>
+<p>The metadata attributes currently supported are listed below;
+Source XPaths in the list are specified relative to the
+root <code>&lt;teiHeader&gt;</code> element, and unless otherwise noted,
+the first source XPath listed is also the target XPath,
+guaranteed to be exist in the output header on successful script completion.</p>
+<p>See <a href="http://kaskade.dwds.de/dstar/doc/README.html#bibliographic_metadata_attributes">http://kaskade.dwds.de/dstar/doc/README.html#bibliographic_metadata_attributes</a>
+for details on D* metadata attribute conventions.</p>
+<p>
+</p>
+<h2><a name="author">author</a></h2>
+<p>XPath(s):</p>
+<pre>
+ fileDesc/titleStmt/author[@n=&quot;ddc&quot;]                                                    ##-- ddc: canonical target (formatted)
+ fileDesc/titleStmt/author                                                              ##-- new (direct, un-formatted)
+ fileDesc/sourceDesc/biblFull/titleStmt/author                                          ##-- new (sourceDesc, un-formatted)
+ fileDesc/titleStmt/editor[string(@corresp)!=&quot;#DTACorpusPublisher&quot;]                     ##-- new (direct, un-formatted)
+ fileDesc/sourceDesc/biblFull/titleStmt/editor[string(@corresp)!=&quot;#DTACorpusPublisher&quot;] ##-- new (sourceDesc, un-formatted)
+ fileDesc/sourceDesc/listPerson[@type=&quot;searchNames&quot;]/person/persName                    ##-- old</pre>
+<p>Heuristically parses and formats <code>persName</code>, <code>surname</code>, <code>forename</code>, and <code>genName</code> elements to a human-readable string.
+In DTA mode, defaults to the first component of the &quot;_&quot;-separated <em>BASENAME</em>.</p>
+<p>
+</p>
+<h2><a name="title">title</a></h2>
+<p>XPath(s):</p>
+<pre>
+ fileDesc/titleStmt/title[@type=&quot;main&quot; or @type=&quot;sub&quot; or @type=&quot;vol&quot;]   ##-- DTA-mode only
+ fileDesc/titleStmt/title[@type=&quot;ddc&quot;]                                  ##-- ddc: canonical target (formatted)
+ fileDesc/titleStmt/title[not(@type)]
+ sourceDesc[@id=&quot;orig&quot;]/biblFull/titleStmt/title
+ sourceDesc[@id=&quot;scan&quot;]/biblFull/titleStmt/title
+ sourceDesc[not(@id)]/biblFull/titleStmt/title</pre>
+<p>In DTA mode, heuristically parses and formats <code>@type=&quot;main&quot;</code>, <code>@type=&quot;sub&quot;</code>, <code>@type=&quot;vol&quot;</code> elements to a human-readable string,
+and defaults to the second component of the &quot;_&quot;-separated <em>BASENAME</em>.</p>
+<p>
+</p>
+<h2><a name="date">date</a></h2>
+<p>XPath(s):</p>
+<pre>
+ fileDesc/sourceDesc[@n=&quot;ddc&quot;]/biblFull/publicationStmt/date[@type=&quot;pub&quot;]               ##-- ddc: canonical target
+ fileDesc/sourceDesc[@n=&quot;scan&quot;]/biblFull/publicationStmt/date                           ##-- old:publDate
+ fileDesc/sourceDesc/biblFull/publicationStmt/date[@type=&quot;creation&quot;]/supplied
+ fileDesc/sourceDesc/biblFull/publicationStmt/date[@type=&quot;creation&quot;]
+ fileDesc/sourceDesc/biblFull/publicationStmt/date[@type=&quot;publication&quot;]/supplied        ##-- new:date (published, supplied)
+ fileDesc/sourceDesc/biblFull/publicationStmt/date[@type=&quot;publication&quot;]                 ##-- new:date (published)
+ fileDesc/sourceDesc/biblFull/publicationStmt/date/supplied                             ##-- new:date (generic, supplied)
+ fileDesc/sourceDesc/biblFull/publicationStmt/date                                      ##-- new:date (generic, supplied)</pre>
+<p>Heuristically trims everything but digits and hyphens from the extracted date-string.
+In DTA mode, defaults to the final component of the &quot;_&quot;-separated <em>BASENAME</em>.</p>
+<p>
+</p>
+<h2><a name="firstdate">firstDate</a></h2>
+<p>XPath(s):</p>
+<pre>
+ fileDesc/sourceDesc[@n=&quot;ddc&quot;]/biblFull/publicationStmt/date[@type=&quot;first&quot;]             ##-- ddc: canonical target
+ fileDesc/sourceDesc[@n=&quot;orig&quot;]/biblFull/publicationStmt/date                           ##-- old: publDate
+ fileDesc/sourceDesc/biblFull/publicationStmt/date[@type=&quot;creation&quot;]/supplied
+ fileDesc/sourceDesc/biblFull/publicationStmt/date[@type=&quot;creation&quot;]
+ fileDesc/sourceDesc/biblFull/publicationStmt/date[@type=&quot;firstPublication&quot;]/supplied   ##-- new:date (first, supplied)
+ fileDesc/sourceDesc/biblFull/publicationStmt/date[@type=&quot;firstPublication&quot;]            ##-- new:date (first)
+ fileDesc/sourceDesc/biblFull/publicationStmt/date/supplied                             ##-- new:date (generic, supplied)
+ fileDesc/sourceDesc/biblFull/publicationStmt/date                                      ##-- new:date (generic, supplied)</pre>
+<p>Heuristically trims everything but digits and hyphens from the extracted date-string.
+Defaults to the publication date (see above).</p>
+<p>
+</p>
+<h2><a name="bibl">bibl</a></h2>
+<p>XPath(s):</p>
+<pre>
+ fileDesc/sourceDesc[@n=&quot;ddc&quot;]/bibl     ##-- ddc:canonical target
+ fileDesc/sourceDesc[@n=&quot;orig&quot;]/bibl    ##-- old:firstBibl, target
+ fileDesc/sourceDesc[@n=&quot;scan&quot;]/bibl    ##-- old:publBibl
+ fileDesc/sourceDesc/bibl               ##-- new|old:generic</pre>
+<p>Heuristically generated from <em>author</em>, <em>title</em>, and <em>date</em> if not set.
+Ensures that the first 2 XPaths are set in the output file.</p>
+<p>
+</p>
+<h2><a name="shelfmark">shelfmark</a></h2>
+<p>XPath(s):</p>
+<pre>
+ fileDesc/sourceDesc[@n=&quot;ddc&quot;]/msDesc/msIdentifier/idno/idno[@type=&quot;shelfmark&quot;]         ##-- ddc: canonical target
+ fileDesc/sourceDesc[@n=&quot;ddc&quot;]/msDesc/msIdentifier/idno[@type=&quot;shelfmark&quot;]              ##-- -2013-08-04
+ fileDesc/sourceDesc/msDesc/msIdentifier/idno/idno[@type=&quot;shelfmark&quot;]
+ fileDesc/sourceDesc/msDesc/msIdentifier/idno[@type=&quot;shelfmark&quot;]                        ##-- new (&gt;=2012-07)
+ fileDesc/sourceDesc/biblFull/notesStmt/note[@type=&quot;location&quot;]/ident[@type=&quot;shelfmark&quot;] ##-- old (&lt;2012-07)</pre>
+<p>
+</p>
+<h2><a name="library">library</a></h2>
+<p>XPath(s):</p>
+<pre>
+ fileDesc/sourceDesc[@n=&quot;ddc&quot;]/msDesc/msIdentifier/repository                           ##-- ddc: canonical target
+ fileDesc/sourceDesc/msDesc/msIdentifier/repository                                     ##-- new
+ fileDesc/sourceDesc/biblFull/notesStmt/note[@type=&quot;location&quot;]/name[@type=&quot;repository&quot;] ##-- old</pre>
+<p>
+</p>
+<h2><a name="basename__dtadir_">basename (dtadir)</a></h2>
+<p>XPath(s):</p>
+<pre>
+ fileDesc/publicationStmt[@n=&quot;ddc&quot;]/idno[@type=&quot;basename&quot;]      ##-- new: canonical target
+ fileDesc/publicationStmt/idno/idno[@type=&quot;DTADirName&quot;]         ##-- (&gt;=2013-09-04)
+ fileDesc/publicationStmt/idno[@type=&quot;DTADirName&quot;]              ##-- (&gt;=2013-09-04)
+ fileDesc/publicationStmt/idno[@type=&quot;DTADIRNAME&quot;]              ##-- new (&gt;=2012-07)
+ fileDesc/publicationStmt/idno[@type=&quot;DTADIR&quot;]                  ##-- old (&lt;2012-07)</pre>
+<p>Heuristically set to <em>BASENAME</em> if not found.</p>
+<p>
+</p>
+<h2><a name="dtaid">dtaid</a></h2>
+<p>XPath(s):</p>
+<pre>
+ fileDesc/publicationStmt[@n=&quot;ddc&quot;]/idno[@type=&quot;dtaid&quot;]         ##-- ddc: canonical target
+ fileDesc/publicationStmt/idno/idno[@type=&quot;DTAID&quot;]
+ fileDesc/publicationStmt/idno[@type=&quot;DTAID&quot;]</pre>
+<p>Defaults to &quot;0&quot; (zero) if unset.</p>
+<p>
+</p>
+<h2><a name="timestamp">timestamp</a></h2>
+<p>XPath(s):</p>
+<pre>
+ fileDesc/publicationStmt/date[@type=&quot;ddc-timestamp&quot;]           ##-- ddc: canonical target
+ fileDesc/publicationStmt/date                                  ##-- DTA mode only</pre>
+<p>Defaults to last modification time of <em>XML_HEADER_FILE</em> or the current time
+if not set.</p>
+<p>
+</p>
+<h2><a name="availability__human_readable_">availability (human-readable)</a></h2>
+<p>XPath(s):</p>
+<pre>
+ fileDesc/publicationStmt/availability[@type=&quot;ddc&quot;]
+ fileDesc/publicationStmt/availability</pre>
+<p>Defaults to &quot;-&quot; if unset.</p>
+<p>
+</p>
+<h2><a name="avail__dwds_code_">avail (DWDS code)</a></h2>
+<p>XPath(s):</p>
+<pre>
+ fileDesc/publicationStmt/availability[@type=&quot;ddc_dwds&quot;]
+ fileDesc/publicationStmt/availability/@n</pre>
+<p>Defaults to &quot;-&quot; if unset.</p>
+<p>
+</p>
+<h2><a name="textclass">textClass</a></h2>
+<p>Source XPath(s):</p>
+<pre>
+ profileDesc/textClass/classCode[@scheme=&quot;<a href="http://www.deutschestextarchiv.de/doku/klassifikation#dwds1main&quot">http://www.deutschestextarchiv.de/doku/klassifikation#dwds1main&quot</a>;]
+ profileDesc/textClass/classCode[@scheme=&quot;<a href="http://www.deutschestextarchiv.de/doku/klassifikation#dwds1sub&quot">http://www.deutschestextarchiv.de/doku/klassifikation#dwds1sub&quot</a>;]
+ profileDesc/textClass/classCode[@scheme=&quot;<a href="http://www.deutschestextarchiv.de/doku/klassifikation#dwds2main&quot">http://www.deutschestextarchiv.de/doku/klassifikation#dwds2main&quot</a>;]
+ profileDesc/textClass/classCode[@scheme=&quot;<a href="http://www.deutschestextarchiv.de/doku/klassifikation#dwds2sub&quot">http://www.deutschestextarchiv.de/doku/klassifikation#dwds2sub&quot</a>;]
+ profileDesc/textClass/keywords/term ##-- dwds keywords</pre>
+<p>Target XPath:</p>
+<pre>
+ profileDesc/textClass/classCode[@scheme=&quot;ddcTextClassDWDS&quot;]</pre>
+<p>
+</p>
+<h2><a name="textclassdta">textClassDTA</a></h2>
+<p>Source XPath(s):</p>
+<pre>
+ profileDesc/textClass/classCode[@scheme=&quot;<a href="http://www.deutschestextarchiv.de/doku/klassifikation#dtamain&quot">http://www.deutschestextarchiv.de/doku/klassifikation#dtamain&quot</a>;]
+ profileDesc/textClass/classCode[@scheme=&quot;<a href="http://www.deutschestextarchiv.de/doku/klassifikation#dtasub&quot">http://www.deutschestextarchiv.de/doku/klassifikation#dtasub&quot</a>;]</pre>
+<p>Target XPath:</p>
+<pre>
+ profileDesc/textClass/classCode[@scheme=&quot;ddcTextClassDTA&quot;]</pre>
+<p>
+</p>
+<h2><a name="dta_corpus">DTA corpus</a></h2>
+<p>Source XPath(s):</p>
+<pre>
+ profileDesc/textClass/classCode[@scheme=&quot;<a href="http://www.deutschestextarchiv.de/doku/klassifikation#DTACorpus&quot">http://www.deutschestextarchiv.de/doku/klassifikation#DTACorpus&quot</a>;]</pre>
+<p>Target XPath:</p>
+<pre>
+ profileDesc/textClass/classCode[@scheme=&quot;ddcTextClassCorpus&quot;]</pre>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="././dtatw-get-header.perl.html">dtatw-get-header.perl(1)</a>,
+...</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Bryan Jurish &lt;<a href="mailto:jurish@bbaw.de">jurish@bbaw.de</a>&gt;</p>
+
+</body>
+
+</html>
