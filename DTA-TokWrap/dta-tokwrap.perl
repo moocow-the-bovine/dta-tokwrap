@@ -133,6 +133,7 @@ GetOptions(
 	   'stop-lex|to-stop-lex|sl=s' => \$twopts{procOpts}{stopLex},
 	   'conj-lex|to-conj-lex|cl=s' => \$twopts{procOpts}{conjLex},
 	   'waste-model|to-waste-model|wm=s' => \$twopts{procOpts}{wasteHmm},
+	   'waste-dir|wd=s' => \$twopts{procOpts}{wasteDir},
 	   'processor-option|procopt|po=s%' => $twopts{procOpts},
 
 	   ##-- DTA::TokWrap options: I/O
@@ -387,6 +388,7 @@ dta-tokwrap.perl - top-level tokenizer wrapper for DTA XML documents
   -stop-lex=FILE         # stopword lexicon for waste tokenizer
   -conj-lex=FILE         # conjunction lexicon for waste tokenizer
   -waste-model=FILE      # HMM file for waste tokenizer
+  -waste-dir=DIR         # waste base directory (defaults for -abbr-lex, -stop-lex, -conj-lex, -waste-model)
   -procopt OPT=VALUE     # set arbitrary subprocessor options
  
  I/O Options:

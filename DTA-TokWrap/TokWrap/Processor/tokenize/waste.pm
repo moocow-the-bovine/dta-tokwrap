@@ -29,10 +29,11 @@ our @ISA = qw(DTA::TokWrap::Processor::tokenize);
 ##  + static class-dependent defaults
 ##  + %args, %defaults, %$tz:
 ##    waste => $path_to_waste,		   ##-- tokenizer program; default: search
-##    abbrLex => $filename,                ##-- for --abbrevs=FILE (default: "${RCDIR}/waste/abbr.lex"; '' for none)
-##    stopLex => $filename,                ##-- for --stopwords=FILE (default: "${RCDIR}/waste/stop.lex"; '' for none)
-##    conjLex => $filename,                ##-- for --conjunctions=FILE (default: "${RCDIR}/waste/conj.lex"; '' for none)
-##    wasteHmm => $filename,               ##-- for --model=FILE (default: "${RCDIR}/waste/model.hmm")
+##    wasteDir => $dirname,                ##-- waste base directory (default: "${RCDIR}/waste")
+##    abbrLex => $filename,                ##-- for --abbrevs=FILE (default: "${WASTE_DIR}/abbr.lex"; '' for none)
+##    stopLex => $filename,                ##-- for --stopwords=FILE (default: "${WASTE_DIR}/stop.lex"; '' for none)
+##    conjLex => $filename,                ##-- for --conjunctions=FILE (default: "${WASTE_DIR}/conj.lex"; '' for none)
+##    wasteHmm => $filename,               ##-- for --model=FILE (default: "${WASTE_DIR}/model.hmm")
 ##    wasteopts => \@options,              ##-- additional options (strings) for tokenizer program (default=['-v2','-Otext,loc'])
 ##    inplace => $bool,                    ##-- prefer in-place programs for search?
 sub defaults {
@@ -65,8 +66,11 @@ sub init {
   $tz->{wasteopts} = [] if (!defined($tz->{wasteopts}));
   $tz->{wasteopts} = [ $tz->{wasteopts} ] if (!ref($tz->{wasteopts}));
 
+  ##-- waste dir
+  my $wasteDir = $opts{wasteDir} || $tz->{wasteDir} || "${RCDIR}/waste";
+
   ##-- lexicon: abbrevLex: abbreviations
-  $tz->{abbrevLex} = "${RCDIR}/waste/abbr.lex" if (!defined($tz->{abbrevLex}));
+  $tz->{abbrevLex} = "${wasteDir}/abbr.lex" if (!defined($tz->{abbrevLex}));
   if ($tz->{abbrevLex} && ! -r $tz->{abbrevLex}) {
     $tz->logconfess("bad abbreviation lexicon '$tz->{abbrevLex}'");
   } elsif ($tz->{abbrevLex}) {
@@ -74,7 +78,7 @@ sub init {
   }
 
   ##-- lexicon: stopLex: stopwords
-  $tz->{stopLex} = "${RCDIR}/waste/stop.lex" if (!defined($tz->{stopLex}));
+  $tz->{stopLex} = "${wasteDir}/stop.lex" if (!defined($tz->{stopLex}));
   if ($tz->{stopLex} && ! -r $tz->{stopLex}) {
     $tz->logconfess("bad stopword lexicon '$tz->{stopLex}'");
   } elsif ($tz->{stopLex}) {
@@ -82,7 +86,7 @@ sub init {
   }
 
   ##-- lexicon: conjLex: conjunctions
-  $tz->{conjLex} = "${RCDIR}/waste/conj.lex" if (!defined($tz->{conjLex}));
+  $tz->{conjLex} = "${wasteDir}/conj.lex" if (!defined($tz->{conjLex}));
   if ($tz->{conjLex} && ! -r $tz->{conjLex}) {
     $tz->logconfess("bad conjunction lexicon '$tz->{conjLex}'");
   } elsif ($tz->{conjLex}) {
@@ -90,7 +94,7 @@ sub init {
   }
 
   ##-- tokenizer HMM
-  $tz->{wasteHmm} = "${RCDIR}/waste/model.hmm" if (!defined($tz->{wasteHmm}));
+  $tz->{wasteHmm} = "${wasteDir}/model.hmm" if (!defined($tz->{wasteHmm}));
   if ($tz->{wasteHmm} && ! -r $tz->{wasteHmm}) {
     $tz->logconfess("bad tokenizer model '$tz->{wasteHmm}'");
   } elsif ($tz->{wasteHmm}) {
