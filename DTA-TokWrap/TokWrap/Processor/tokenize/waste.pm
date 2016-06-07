@@ -67,7 +67,8 @@ sub init {
   $tz->{wasteopts} = [ $tz->{wasteopts} ] if (!ref($tz->{wasteopts}));
 
   ##-- waste dir
-  my $wasteDir = $opts{wasteDir} || $tz->{wasteDir} || "${RCDIR}/waste";
+  $tz->{wasteDir} = "${RCDIR}/waste" if (!defined($tz->{wasteDir}));
+  my $wasteDir = $tz->{wasteDir};
 
   ##-- lexicon: abbrevLex: abbreviations
   $tz->{abbrevLex} = "${wasteDir}/abbr.lex" if (!defined($tz->{abbrevLex}));
