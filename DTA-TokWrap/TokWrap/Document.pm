@@ -539,6 +539,7 @@ BEGIN {
 		    qw(tokenize1 saveTokFile1),
 		    qw(tok2xml saveXtokFile),
 		   ],
+     'tei2spliced' => [qw(tei2txml mkcws mkcwst)],
 
      'tei2tcf' =>[qw(mkindex),
 		  qw(mkbx0), #saveBx0File
