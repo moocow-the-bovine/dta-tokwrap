@@ -26,7 +26,7 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ## $enc = CLASS_OR_OBJ->new(%args)
 ##  + %args, %deaults, %$enc:
 ##    (
-##     tcfTextSourceType => $type, ##-- attribute value for encoded //textSource/@type (default="text/tei+xml; tokenized=0")
+##     tcfTextSourceType => $type, ##-- attribute value for encoded //textSource/@type (default="application/tei+xml; tokenized=0")
 ##    )
 
 ## %defaults = CLASS_OR_OBJ->defaults()
@@ -34,7 +34,7 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##  + inherited dummy method
 sub defaults {
   return (
-	  tcfTextSourceType => 'text/tei+xml; tokenized=0',
+	  tcfTextSourceType => 'application/tei+xml; tokenized=0',
 	 );
 }
 
