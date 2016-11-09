@@ -81,13 +81,17 @@ sub tokenize {
       $ta->vlog($ta->{traceLevel},"trying tokenizer subclass '$class'...");
       my %args = qw();
       if ($class =~ /^waste/) {
-	next if (!defined($args{waste}=path_prog("${class}", prepend=>($ta->{inplace} ? ['.','../src'] : undef)))
+	next if (!defined($args{waste}=$ta->{waste})
+		 &&
+		 !defined($args{waste}=path_prog("${class}", prepend=>($ta->{inplace} ? ['.','../src'] : undef)))
 		 &&
 		 !defined($args{waste}=path_prog('waste', prepend=>($ta->{inplace} ? ['.','../src'] : undef)))
 		);
       }
       elsif ($class =~ /^tomasotath/) {
-	next if (!defined($args{tomata2}=path_prog("dwds_${class}", prepend=>($ta->{inplace} ? ['.','../src'] : undef)))
+	next if (!defined($args{waste}=$ta->{tomata2})
+		 &&
+		 !defined($args{tomata2}=path_prog("dwds_${class}", prepend=>($ta->{inplace} ? ['.','../src'] : undef)))
 		 &&
 		 !defined($args{tomata2}=path_prog('dwds_tomasotath', prepend=>($ta->{inplace} ? ['.','../src'] : undef)))
 		);
