@@ -630,7 +630,15 @@ sub apply_word {
   if ($do_rendition) {
     $wrend = join($rend_sep,
 		  map {s/^\#//;$_}
-		  llintersect(map {[luniq (split(' ',($_->{xr}//'')),($_->{blk} ? split(' ',($_->{blk}{xr}//'')) : qw()))]} @cs),
+		  ##-- rendition: ANY-vs-ALL
+		  ##
+		  ##-- rendition: ALL: intersection: only those rendition properties shared by ALL characters of a word
+		  #llintersect(map {[luniq (split(' ',($_->{xr}//'')),($_->{blk} ? split(' ',($_->{blk}{xr}//'')) : qw()))]} @cs),
+		  ##
+		  ##-- rendition: ANY: union: those rendition properties assigned to ANY character of a word
+		  luniq( map {split(' ',($_->{xr}//'')),($_->{blk} ? split(' ',($_->{blk}{xr}//'')) : qw())} @cs ),
+		  ##
+		  ##--/rendition: ANY-vs-ALL
 		  ($foreign
 		   ? ((grep {$_ eq 'head'} map {split(' ',$_->{xc})} @blks) ? $xrhead : qw()) ##-- include 'head' context for non-DTA rendition lists
 		   : qw()));

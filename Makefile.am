@@ -32,7 +32,7 @@ distuninstallcheck:
 
 PODS = README.pod
 
-pkgdoc_DATA = $(PODS:.pod=.txt) COPYING COPYING.LESSER
+pkgdoc_DATA = $(PODS:.pod=.txt) COPYING COPYING.LESSER ChangeLog
 
 all-local: $(PODS:.pod=.txt)
 
