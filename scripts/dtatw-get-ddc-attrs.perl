@@ -292,7 +292,7 @@ our $Ncx_est = 0;
 our @c_pkeys = qw(cn typ   xo xl   pb lb   ulx uly lrx lry);
 
 ## $c_pack : pack format for local c_pack(), c_unpack()
-our $c_pack = 'lC(lC)(ss)(llll)';
+our $c_pack = 'lC(lC)(LL)(llll)';
 
 ## $c_pack_size
 our $c_pack_size = bytes::length(pack($c_pack, map {0} @c_pkeys));
