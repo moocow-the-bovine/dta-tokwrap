@@ -1,5 +1,8 @@
 ##-*- Mode: ChangeLog; coding: utf-8; -*-
 
+v0.77 Tue, 21 Mar 2017 14:40:32 +0100 moocow
+	* added dtatw-percent-(encode|decode).perl : "%" <-> "$%$" escaping for use with waste tokenizer >= v2.0.15-1
+
 v0.76 Wed, 25 Jan 2017 11:05:49 +0100 moocow
 	* changed dtatw-get-ddc-attrs.perl @rendition parsing (ALL -> ANY); related to mantis bug #18392
 
