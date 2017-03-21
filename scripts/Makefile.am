@@ -68,6 +68,8 @@ bin_SCRIPTS = \
 	dtatw-add-xpath.perl \
 	dtatw-ensure-lb.perl \
 	dtatw-lb-encode.perl \
+	dtatw-percent-encode.perl \
+	dtatw-percent-decode.perl \
 	file-substr.perl
 
 #	dtatw-txml2cspan.perl
