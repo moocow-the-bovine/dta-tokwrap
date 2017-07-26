@@ -372,7 +372,7 @@ my @bibl_xpaths = (
 		   );
 my $bibl = xpgrepval($hroot,@bibl_xpaths);
 if (!defined($bibl)) {
-  $bibl = "$author: $title. $date";
+  $bibl = "$author: $title. $date0";
   warn("$prog: $basename: WARNING: missing bibl XPath(s) ".join('|',@bibl_xpaths)) if ($verbose >= $vl_warn);
 }
 ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="orig"]/bibl', wsnorm($bibl)); ##-- old (<2012-07)
