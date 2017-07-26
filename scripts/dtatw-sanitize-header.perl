@@ -330,13 +330,20 @@ my @date_xpaths = (
 		   'fileDesc/sourceDesc/biblFull/publicationStmt/date', ##-- new:date (generic, supplied)
 		  );
 my $date = xpgrepval($hroot,@date_xpaths);
+my $date0 = $date;
 if (!$date) {
   $date = ($basename =~ m/^[^\.]*_([0-9]+)$/ ? $1 : 0);
   warn("$prog: $basename: WARNING: missing date XPath $date_xpaths[$#date_xpaths] defaults to \"$date\"") if ($verbose >= $vl_warn);
 }
 $date =~ s/(?:^\s*)|(?:\s*$)//g;
+if ($date =~ s/^((?:um|circa|ca\.|~)\s*)//i) {
+  warn("$prog: $basename: WARNING: trimming leading approximation prefix '$1' from parsed date '$date0'") if ($verbose >= $vl_warn);
+}
+if ($date =~ s/^([0-9\-]+)(.*)$/$1/) {
+  warn("$prog: $basename: WARNING: trimming trailing non-numeric suffix '$2' from parsed date '$date0'") if ($verbose >= $vl_warn);
+}
 if ($date =~ /[^0-9\-]/) {
-  warn("$prog: $basename: WARNING: trimming non-digits from parsed date '$date'") if ($verbose >= $vl_warn);
+  warn("$prog: $basename: WARNING: trimming non-digits from parsed date '$date0'") if ($verbose >= $vl_warn);
   $date =~ s/[^0-9\-]//g;
 }
 #ensure_xpath($hroot, 'fileDesc/sourceDesc[@n="scan"]/biblFull/publicationStmt/date[@type="first"]', $date); ##-- old (<2012-07)
