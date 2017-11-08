@@ -247,6 +247,7 @@ my @author_xpaths = (
 		     'fileDesc/titleStmt/editor[string(@corresp)!="#DTACorpusPublisher"]',   			##-- new (direct, un-formatted)
 		     'fileDesc/sourceDesc/biblFull/titleStmt/editor[string(@corresp)!="#DTACorpusPublisher"]',	##-- new (sourceDesc, un-formatted)
 		     'fileDesc/sourceDesc/listPerson[@type="searchNames"]/person/persName',			##-- old
+		     './/idno[@type="author"]',									##-- flat fallback
 		    );
 my $author_nod = xpgrepnod($hroot,@author_xpaths);
 my ($author);
@@ -303,6 +304,7 @@ my @other_title_xpaths = (
 			  'sourceDesc[@id="orig"]/biblFull/titleStmt/title',
 			  'sourceDesc[@id="scan"]/biblFull/titleStmt/title',
 			  'sourceDesc[not(@id)]/biblFull/titleStmt/title',
+			  './/idno[@type="title"]', ##-- flat fallback
 			 );
 my $other_title_nod  = xpgrepnod($hroot,@other_title_xpaths);
 if (@$dta_title_nods) {
@@ -328,6 +330,7 @@ my @date_xpaths = (
 		   'fileDesc/sourceDesc/biblFull/publicationStmt/date[@type="publication"]', ##-- new:date (published)
 		   'fileDesc/sourceDesc/biblFull/publicationStmt/date/supplied', ##-- new:date (generic, supplied)
 		   'fileDesc/sourceDesc/biblFull/publicationStmt/date', ##-- new:date (generic, supplied)
+		   './/idno[@type="date"]',				##-- flat fallback
 		  );
 my $date = xpgrepval($hroot,@date_xpaths);
 my $date0 = $date;
@@ -369,6 +372,7 @@ my @bibl_xpaths = (
 		   'fileDesc/sourceDesc[@n="orig"]/bibl', ##-- old:firstBibl
 		   'fileDesc/sourceDesc[@n="scan"]/bibl', ##-- old:publBibl
 		   'fileDesc/sourceDesc/bibl', ##-- new|old:generic
+		   './/idno[@type="bibl"]',    ##-- flat fallback
 		   );
 my $bibl = xpgrepval($hroot,@bibl_xpaths);
 if (!defined($bibl)) {
