@@ -1,5 +1,11 @@
 ##-*- Mode: ChangeLog; coding: utf-8; -*-
 
+v0.79 Wed, 08 Nov 2017 12:20:54 +0100 moocow
+	* dtatw-sanitize-header.perl for 'rsc' corpus tweaks (//idno fallback XPaths)
+
+v0.78 Wed, 26 Jul 2017 12:57:07 +0200 moocow
+	* dtatw-sanitize-header.perl for 'rem' corpus tweaks (date string sanitation heuristics)
+
 v0.77 Tue, 21 Mar 2017 14:40:32 +0100 moocow
 	* added dtatw-percent-(encode|decode).perl : "%" <-> "$%$" escaping for use with waste tokenizer >= v2.0.15-1
 
