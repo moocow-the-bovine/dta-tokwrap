@@ -260,6 +260,10 @@ elsif ($author_nod && $author_nod->nodeName eq 'author' && ($author_nod->getAttr
   ##-- ddc-author node: direct from document
   $author = $author_nod->textContent;
 }
+elsif ($author_nod && $author_nod->nodeName eq 'idno') {
+  ##-- fallback author node: direct from document
+  $author = $author_nod->textContent;
+}
 elsif ($author_nod && $author_nod->nodeName =~ /^(?:author|editor)$/ && ($author_nod->getAttribute('n')||'') ne 'ddc') {
   warn("$prog: $basename: WARNING: formatting author node from ", $author_nod->nodePath) if ($verbose >= $vl_progress);
   ##-- parse structured author node (new, 2012-07)
@@ -304,7 +308,7 @@ my @other_title_xpaths = (
 			  'sourceDesc[@id="orig"]/biblFull/titleStmt/title',
 			  'sourceDesc[@id="scan"]/biblFull/titleStmt/title',
 			  'sourceDesc[not(@id)]/biblFull/titleStmt/title',
-			  './/idno[@type="title"]', ##-- flat fallback
+			  './/idno[@type="title"][last()]', ##-- flat fallback
 			 );
 my $other_title_nod  = xpgrepnod($hroot,@other_title_xpaths);
 if (@$dta_title_nods) {
@@ -330,7 +334,8 @@ my @date_xpaths = (
 		   'fileDesc/sourceDesc/biblFull/publicationStmt/date[@type="publication"]', ##-- new:date (published)
 		   'fileDesc/sourceDesc/biblFull/publicationStmt/date/supplied', ##-- new:date (generic, supplied)
 		   'fileDesc/sourceDesc/biblFull/publicationStmt/date', ##-- new:date (generic, supplied)
-		   './/idno[@type="date"]',				##-- flat fallback
+		   './/idno[@type="date"][last()]',			##-- flat fallback
+		   './/idno[@type="year"][last()]',			##-- flat fallback
 		  );
 my $date = xpgrepval($hroot,@date_xpaths);
 my $date0 = $date;
@@ -342,7 +347,7 @@ $date =~ s/(?:^\s*)|(?:\s*$)//g;
 if ($date =~ s/^((?:um|circa|ca\.|~)\s*)//i) {
   warn("$prog: $basename: WARNING: trimming leading approximation prefix '$1' from parsed date '$date0'") if ($verbose >= $vl_warn);
 }
-if ($date =~ s/^([0-9\-]+)(.*)$/$1/) {
+if ($date =~ s/^([0-9\-]+)([^0-9\-]+)$/$1/) {
   warn("$prog: $basename: WARNING: trimming trailing non-numeric suffix '$2' from parsed date '$date0'") if ($verbose >= $vl_warn);
 }
 if ($date =~ /[^0-9\-]/) {
