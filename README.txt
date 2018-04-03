@@ -130,6 +130,28 @@ USAGE
 
      bash$ dta-tokwrap.perl -traceAll doc*.xml
 
+  Example: From TEI to TCF and Back
+    Assume we have a TEI-like document doc.tei.xml which we want to encode
+    as TCF to the file doc.tei.tcf, using only whitespace tokenizer "hints",
+    but not actually tokenizing the document yet. This can be accomplished
+    by:
+
+     $ dta-tokwrap.perl -t=tei2tcf -weak-hints doc1.tei.xml
+
+    If the output should instead be written to STDOUT, just call:
+
+     $ dta-tokwrap.perl -t=tei2tcf -weak-hints -dO=tcffile=- doc1.tei.xml
+
+    Assume that the resulting TCF document has undergone further processing
+    (e.g. via WebLicht
+    <http://weblicht.sfs.uni-tuebingen.de/weblichtwiki/index.php/Main_Page>)
+    to produce an annotated TCF document "doc.out.tcf".
+
+    selected TCF layers (in particular the "tokens" and "sentences" layers)
+    can be spliced back into the TEI document as doc.out.xml by calling:
+
+     $ dta-tokwrap.perl -t=tcf2tei doc.out.tcf -dO=tcffile=doc.out.tcf -dO=tcfcwsfile=doc.out.xml
+
 TOOLS
     This section provides a brief overview of the individual tools included
     in the dta-tokwrap distribution.
@@ -367,7 +389,7 @@ AUTHOR
     Bryan Jurish <jurish@bbaw.de>
 
 COPYRIGHT AND LICENSE
-    Copyright (C) 2009-2014 by Bryan Jurish
+    Copyright (C) 2009-2018 by Bryan Jurish
 
     This package is free software. Redistribution and modification of C
     portions of this package are subject to the terms of the version 3 or
@@ -375,6 +397,6 @@ COPYRIGHT AND LICENSE
     and COPYING.LESSER which came with the distribution for details.
 
     Redistribution and/or modification of the Perl portions of this package
-    are subject to the same terms as Perl itself, either Perl version 5.14.2
+    are subject to the same terms as Perl itself, either Perl version 5.24.1
     or, at your option, any later version of Perl 5 you may have available.
 

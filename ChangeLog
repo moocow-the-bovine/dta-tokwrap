@@ -1,5 +1,9 @@
 ##-*- Mode: ChangeLog; coding: utf-8; -*-
 
+v0.80 Tue, 03 Apr 2018 13:57:33 +0200 moocow
+	* allow TCF->TEI decoding even without a TCF 'tokens' layer (expensive no-op)
+	* added TCF<->TEI encoding/decoding example in top-level README
+
 v0.79 Wed, 08 Nov 2017 12:20:54 +0100 moocow
 	* dtatw-sanitize-header.perl for 'rsc' corpus tweaks (//idno fallback XPaths)
 
