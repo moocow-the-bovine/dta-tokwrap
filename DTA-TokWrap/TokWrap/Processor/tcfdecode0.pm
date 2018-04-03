@@ -103,26 +103,32 @@ sub tcfdecode0 {
     utf8::encode($doc->{tcftdata}) if (utf8::is_utf8($doc->{tcftdata}));
   }
 
-    ##-- decode0: tcfwdata
+  ##-- decode0: tcfwdata: xtokens, xsents
+  my ($xtokens) = $xcorpus->getChildrenByLocalName('tokens');
+  my ($xsents) = $xcorpus->getChildrenByLocalName('sentences');
+
+  ##-- decode0: tcfwdata
   if ($dec->{decode_tcfw}) {
     ##-- parse: /D-Spin/TextCorpus/tokens
     $dec->vlog($dec->{traceLevel},"tcfdecode0(): tokens");
-    my ($xtokens) = $xcorpus->getChildrenByLocalName('tokens');
-    $dec->logconfess("tcfdecode0(): no TextCorpus/tokens node found in TCF document") if (!$xtokens);
     my (@wids,%id2w,$wid);
-    foreach ($xtokens->getChildrenByLocalName('token')) {
-      if (!defined($wid=$_->getAttribute('ID'))) {
-	$wid = sprintf("w%x", $#wids);
-	$_->setAttribute('ID'=>$wid);
+    if (defined($xtokens)) {
+      foreach ($xtokens->getChildrenByLocalName('token')) {
+	if (!defined($wid=$_->getAttribute('ID'))) {
+	  $wid = sprintf("w%x", $#wids);
+	  $_->setAttribute('ID'=>$wid);
+	}
+	$id2w{$wid} = $_->textContent;
+	push(@wids,$wid);
       }
-      $id2w{$wid} = $_->textContent;
-      push(@wids,$wid);
+    } else {
+      ##-- pathological case: no 'tokens' layer: just warn (in case someone is performing an expensive no-op)
+      $dec->logwarn("tcfdecode0(): no TextCorpus/tokens node found in TCF document");
     }
 
     ##-- parse: /D-Spin/TextCorpus/sentences
     $dec->vlog($dec->{traceLevel},"tcfdecode0(): sentences");
     my @sents = qw();
-    my ($xsents) = $xcorpus->getChildrenByLocalName('sentences');
     if (defined($xsents)) {
       my ($s,$sid,$swids);
       foreach ($xsents->getChildrenByLocalName('sentence')) {

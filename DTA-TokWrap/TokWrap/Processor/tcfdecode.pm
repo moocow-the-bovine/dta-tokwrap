@@ -92,9 +92,20 @@ sub tcfdecode {
     if ($ddoc->{tw});
 
   ##-- run tcf-decoding processors on proxy document
-  foreach (qw(tcfsplit tei2txt saveBxFile tcfalign tok2xml addws)) {
-    $ddoc->genKey($_)
-      or $dec->logconfess("failed to generate target '$_' for proxy document");
+  $ddoc->genKey('tcfsplit')
+    or $dec->logconfess("failed to generate target 'tcfsplit' for proxy document");
+  if ($ddoc->{tcfxdata} && ($ddoc->{tcfwdata}//'') eq '') {
+    ##-- proxy decode: pathological case: no tokens or sentences in TCF document -- just un-escape textSource (expensive no-op)
+    $ddoc->{notmpkeys} .= ' cwsfile';
+    $ddoc->saveFileData('cws', '', $ddoc->{cwsfile}, \$ddoc->{tcfxdata})
+      or $dec->logconfess("failed to save decoded TEI data (no-op) for proxy document");
+  }
+  else {
+    ##-- proxy decode: usual case: splice selected TCF layers into TEI source
+    foreach (qw(tei2txt saveBxFile tcfalign tok2xml addws)) {
+      $ddoc->genKey($_)
+	or $dec->logconfess("failed to generate target '$_' for proxy document");
+    }
   }
 
   ##-- propagate proxy keys to parent document
