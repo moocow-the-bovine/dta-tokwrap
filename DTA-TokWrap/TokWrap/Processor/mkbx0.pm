@@ -288,8 +288,10 @@ sub chain_stylestr {
   </xsl:template>
 
   <xsl:template match="*[@prev]" priority="20">
-    <!-- content of these elements should get pulled in by named template "chain.next" -->
-    <xsl:comment><xsl:value-of select="local-name()"/>#<xsl:value-of select="@xml:id"/> content serialized with #<xsl:value-of select="@prev"/></xsl:comment>
+    <!-- non initial chained element: content should get pulled in by named template "chain.next" -->'
+    ##-- DEBUG ONLY: including this causes non-wf stylesheet for pathological xml:ids with trailing hyphens (mantis bug #26675)
+    #<xsl:comment><xsl:value-of select="local-name()"/>#<xsl:value-of select="@xml:id"/> content serialized with #<xsl:value-of select="@prev"/></xsl:comment>
+    .'
   </xsl:template>
 
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
