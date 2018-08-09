@@ -34,6 +34,7 @@ sub defaults {
 	  decode_tcfx => 1,
 	  decode_tcft => 1,
 	  decode_tcfw => 1,
+	  decode_tcfa => 1,
 	 );
 }
 
@@ -50,6 +51,7 @@ sub defaults {
 ##     decode_tcfx => $bool,  ##-- whether to decode $tcfxdata (default=1)
 ##     decode_tcft => $bool,  ##-- whether to decode $tcftdata (default=1)
 ##     decode_tcfw => $bool,  ##-- whether to decode $tcfwdata (default=1)
+##     decode_tcfa => $bool,  ##-- whether to decode $tcfadata (default=1)
 ## + $doc is a DTA::TokWrap::Document object
 ## + %$doc keys:
 ##    tcfdoc   => $tcfdoc,   ##-- (input) TCF input document
@@ -57,12 +59,14 @@ sub defaults {
 ##    tcfxdata => $tcfxdata, ##-- (output) TEI-XML decode0d from TCF
 ##    tcftdata => $tcftdata, ##-- (output) text data decode0d from TCF
 ##    tcfwdata => $tcfwdata, ##-- (output) tokenized data decode0d from TCF, without byte-offsets, with "SID/WID" attributes
+##    tcfadata => $tcfadata, ##-- (output) annotation data decode0d from TCF
 ##    ##
 ##    tcfdecode0_stamp0 => $f, ##-- (output) timestamp of operation begin
 ##    tcfdecode0_stamp  => $f, ##-- (output) timestamp of operation end
 ##    tcfxdata_stamp   => $f, ##-- (output) timestamp of operation end
 ##    tcftdata_stamp   => $f, ##-- (output) timestamp of operation end
 ##    tcfwdata_stamp   => $f, ##-- (output) timestamp of operation end
+##    tcfadata_stamp   => $f, ##-- (output) timestamp of operation end
 ## + code lifted in part from DTA::CAB::Format::TCF::parseDocument()
 sub tcfdecode0 {
   my ($dec,$doc,%opts) = @_;
@@ -152,9 +156,56 @@ sub tcfdecode0 {
     utf8::encode($doc->{tcfwdata}) if (utf8::is_utf8($doc->{tcfwdata}));
   }
 
+  ##-- decode: tcf annotations
+  if ($dec->{decode_tcfa}) {
+    ##-- parse: /D-Spin/TextCorpus/(POStags|lemmas|orthography)
+    $dec->vlog($dec->{traceLevel},"tcfdecode0(): tcfadata");
+
+    my $adoc  = XML::LibXML::Document->new("1.0","UTF-8");
+    my $aroot = XML::LibXML::Element->new("annotations");
+    $adoc->setDocumentElement($aroot);
+    $aroot->setAttribute('type','att.linguistic');
+    $aroot->setAttribute('source','tcf');
+
+    my %id2w = qw();
+    my ($id,$w);
+    my $getw = sub {
+      $id = shift // '';
+      if (!defined($w=$id2w{$id})) {
+	$w = $id2w{$id} = $aroot->addNewChild(undef,'w');
+	$w->setAttribute('id',$id);
+      }
+      return wantarray ? ($id,$w) : $w;
+    };
+
+    my ($xlemma) = $xcorpus->getChildrenByLocalName('lemmas');
+    if (defined($xlemma)) {
+      foreach ($xlemma->getChildrenByLocalName('lemma')) {
+	$getw->( $_->getAttribute('tokenIDs') )->setAttribute('lemma'=>$_->textContent);
+      }
+    }
+
+    my ($xpos) = $xcorpus->getChildrenByLocalName('POStags');
+    if (defined($xpos)) {
+      foreach ($xpos->getChildrenByLocalName('tag')) {
+	$getw->( $_->getAttribute('tokenIDs') )->setAttribute('pos'=>$_->textContent);
+      }
+    }
+
+    my ($xorth) = $xcorpus->getChildrenByLocalName('orthography');
+    if (defined($xorth)) {
+      foreach ($xorth->getChildrenByLocalName('correction')) {
+	next if (($_->getAttribute('operation')//'') ne 'replace');
+	$getw->( $_->getAttribute('tokenIDs') )->setAttribute('norm'=>$_->textContent);
+      }
+    }
+
+    $doc->{tcfadata} = $adoc->toString(1);
+  }
+
   ##-- finalize
   #$dec->vlog($dec->{traceLevel},"tcfdecode0(): finalize");
-  $doc->{tcfdecode0_stamp} = $doc->{tcfxdata_stamp} = $doc->{tcftdata_stamp} = $doc->{tcfwdata_stamp} = timestamp(); ##-- stamp
+  $doc->{tcfdecode0_stamp} = $doc->{tcfxdata_stamp} = $doc->{tcftdata_stamp} = $doc->{tcfwdata_stamp} = $doc->{tcfadata_stamp} = timestamp(); ##-- stamp
   return $doc;
 }
 
@@ -230,6 +281,24 @@ Document order of sentences must correspond B<exactly> to the serial order of th
 
 =back
 
+The following additional layers will be decoded if the C<decode_tcfa> option is set to a true value:
+
+=over 4
+
+=item lemmas
+
+TCF lemmata identified by C<tokenIDs> in 1:1 correspondence with the tokens in the C<tokens> layer.
+
+=item POStags
+
+TCF part-of-speech tags identified by C<tokenIDs> in 1:1 correspondence with the tokens in the C<tokens> layer.
+
+=item orthography
+
+TCF orthographic normalizations (C<replace> operations only) identified by C<tokenIDs> in 1:1 correspondence with the tokens in the C<tokens> layer.
+
+=back
+
 =cut
 
 ##----------------------------------------------------------------
@@ -262,7 +331,12 @@ L<DTA::TokWrap::Processor|DTA::TokWrap::Processor>.
 
  $obj = $CLASS_OR_OBJECT->new(%args);
 
-Constructor.
+Constructor. Default %args:
+
+ decode_tcfx => $bool,  ##-- whether to decode $tcfxdata (default=1)
+ decode_tcft => $bool,  ##-- whether to decode $tcftdata (default=1)
+ decode_tcfw => $bool,  ##-- whether to decode $tcfwdata (default=1)
+ decode_tcfa => $bool,  ##-- whether to decode $tcfadata (default=1)
 
 =item defaults
 
@@ -298,12 +372,14 @@ Relevant %$doc keys:
  tcfxdata => $tcfxdata, ##-- (output) TEI-XML decode0d from TCF
  tcftdata => $tcftdata, ##-- (output) text data decode0d from TCF
  tcfwdata => $tcfwdata, ##-- (output) tokenized data decode0d from TCF, without byte-offsets, with "SID/WID" attributes
+ tcfadata => $tcfadata, ##-- (output) annotation data decode0d from TCF
  ##
  tcfdecode0_stamp0 => $f, ##-- (output) timestamp of operation begin
  tcfdecode0_stamp  => $f, ##-- (output) timestamp of operation end
  tcfxdata_stamp   => $f, ##-- (output) timestamp of operation end
  tcftdata_stamp   => $f, ##-- (output) timestamp of operation end
  tcfwdata_stamp   => $f, ##-- (output) timestamp of operation end
+ tcfadata_stamp   => $f, ##-- (output) timestamp of operation end
 
 =back
 

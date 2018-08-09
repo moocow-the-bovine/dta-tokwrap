@@ -32,7 +32,7 @@ our @ISA = qw(DTA::TokWrap::Processor);
 ##    (
 ##    txmlsort => $bool,	     ##-- if true (default), sort output .t.xml data as close to input document-order as __paragraph__ boundaries will allow
 ##    txmlsort_bysentence => $bool,  ##-- use old sentence-level sort (default: false)
-##    txmlextids => $bool,           ##-- if true, attempt to parse "<a>$SID/$WID</a>" pseudo-analyses as IDs (default:false; uses regex hack)
+##    txmlextids => $bool,           ##-- if true, attempt to parse "<a>$SID/$WID</a>" pseudo-analyses as IDs (default:true; uses regex hack)
 ##    t2x => $path_to_dtatw_tok2xml, ##-- default: search
 ##    b2xb => $path_to_dtatw_b2xb,   ##-- default: search; 'off' to disable
 ##    inplace => $bool,              ##-- prefer in-place programs for search?
@@ -318,7 +318,7 @@ Constructor.
 
   txmlsort => $bool,             ##-- if true (default), sort output .t.xml data as close to input document-order as __paragraph__ boundaries will allow
   txmlsort_bysentence => $bool,  ##-- use old sentence-level sort (default: false)
-  txmlextids => $bool,           ##-- if true, attempt to parse "<a>$SID/$WID</a>" pseudo-analyses as IDs (default:false; uses regex hack)
+  txmlextids => $bool,           ##-- if true, attempt to parse "<a>$SID/$WID</a>" pseudo-analyses as IDs (default:true; uses regex hack)
   t2x => $path_to_dtatw_tok2xml, ##-- default: search
   b2xb => $path_to_dtatw_b2xb,   ##-- default: search; 'off' to disable
   inplace => $bool,              ##-- prefer in-place programs for search?

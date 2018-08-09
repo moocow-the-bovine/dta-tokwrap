@@ -134,7 +134,7 @@ GetOptions(
 	   'conj-lex|to-conj-lex|cl=s' => \$twopts{procOpts}{conjLex},
 	   'waste-model|to-waste-model|wm=s' => \$twopts{procOpts}{wasteHmm},
 	   'waste-dir|wd=s' => \$twopts{procOpts}{wasteDir},
-	   'processor-option|procopt|po=s%' => $twopts{procOpts},
+	   'processor-option|procopt|po|pO=s%' => $twopts{procOpts},
 
 	   ##-- DTA::TokWrap options: I/O
 	   'outdir|od|d=s' => \$twopts{outdir},

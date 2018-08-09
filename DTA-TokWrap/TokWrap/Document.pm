@@ -22,6 +22,7 @@ use DTA::TokWrap::Processor::tokenize::dwds_scanner;
 use DTA::TokWrap::Processor::tokenize::dummy;
 use DTA::TokWrap::Processor::tokenize1;
 use DTA::TokWrap::Processor::tok2xml;
+use DTA::TokWrap::Processor::txmlanno;
 #use DTA::TokWrap::Processor::standoff;
 #use DTA::TokWrap::Processor::standoff::xsl;
 use DTA::TokWrap::Processor::addws;
@@ -129,6 +130,11 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    xtokfile => $xtokfile,  ##-- XML-ified tokenizer output file (default="$outdir/$outbase.t.xml")
 ##    #xtokdoc  => $xtokdoc,   ##-- XML::LibXML::Document for $xtokdata (parsed from string)
 ##
+##    ##-- tokenizer xml annotations (see DTA::TokWrap::Processor::txmlanno)
+##    axtokdata => $axtokdata,  ##-- optional external XML annotation data (for splicing into $xtokdata)
+##    axtokfile => $axtokfile,  ##-- optional external XML annotation file (for splicing into $xtokfile; default="$outdir/$outbase.ta.xml")
+##    xtokfile0 => $xtokfile0,  ##-- XML-ified tokenizer output file (default=none or "$outdir/$outbase.t0.xml" if {keeptmp} is true)
+##
 ##    ##-- ws-splice (see DTA::TokWrap::Processor::addws)
 ##    #cwsdata => $cwsdata,    ##-- ws-spliced output data (xmlfile with <s> and <w> elements)
 ##    cwsfile => $cwsfile,    ##-- ws-spliced output file (default="$outdir/$outbase.cws.xml")
@@ -162,6 +168,8 @@ our @EXPORT_OK = @{$EXPORT_TAGS{all}};
 ##    tcftdata => $tcftdata,   ##-- tcf-decoded serial txt data
 ##    tcfwdata => $tcfwdata,   ##-- tcf-decoded token data, tt-format: "TEXT\tSID/WID\n"
 ##    tcfwfile => $tcfwfile,   ##-- tcf-decoded token file, tt-format [default="$tmpdir/$outbase.tcfw"]
+##    tcfadata => $tcfadata,   ##-- tcf-decoded token attributes for idsplice, data
+##    tcfafile => $tcfafile,   ##-- tcf-decoded token attributes for idsplice, file [default="$tmpdir/$outbase.tcfa"]
 ##
 ##    ##-- tcfalign data (PROXIED, see DTA::TokWrap::Processor::tcfalign : uses tokdata1,tokfile1)
 ##    ##-- tcf2txml data (PROXIED, see DTA::TokWrap::Processor::tok2xml : uses tokfile1,cxfile,bxfile,xtokdata)
@@ -237,6 +245,11 @@ sub defaults {
 	  xtokdata => undef,
 	  xtokfile => undef,
 
+	  ##-- tokenizer xml annotations
+	  axtokdata => undef,
+	  axtokfile => undef,
+	  xtokfile0 => undef,
+
 	  ##-- ws-splice data
 	  #cwsdata => undef,
 	  cwsfile => undef,
@@ -264,6 +277,7 @@ sub defaults {
 	  tcfxfile => undef,
 	  tcftfile => undef,
 	  tcfwfile => undef,
+	  tcfafile => undef,
 
 	  ##-- tcf addws
 	  tcfcwsfile => undef,
@@ -318,6 +332,11 @@ sub init {
   #$doc->{xtokfile}  = $doc->{tmpdir}.'/'.$doc->{outbase}.".t.xml" if (!$doc->{xtokfile});
   $doc->{xtokfile}  = $doc->{outdir}.'/'.$doc->{outbase}.".t.xml" if (!$doc->{xtokfile});
 
+  ##-- defaults: tokenizer xml annotations (txmlanno)
+  #$doc->{axtokdata} = undef;
+  $doc->{axtokfile} = $doc->{tmpdir}.'/'.$doc->{outbase}.".ta.xml" if (!$doc->{axtokfile});
+  $doc->{xtokfile0} = $doc->{outdir}.'/'.$doc->{outbase}.".t0.xml" if (!$doc->{xtokfile0} && $doc->{keeptmp});
+
   ##-- defaults: ws-splice (addws)
   $doc->{cwsfile} = $doc->{outdir}.'/'.$doc->{outbase}.".cws.xml" if (!$doc->{cwsfile});
 
@@ -347,6 +366,7 @@ sub init {
   $doc->{tcfxfile} = $doc->{tmpdir}.'/'.$doc->{outbase}.".tcfx" if (!$doc->{tcfxfile});
   $doc->{tcftfile} = $doc->{tmpdir}.'/'.$doc->{outbase}.".tcft" if (!$doc->{tcftfile});
   $doc->{tcfwfile} = $doc->{tmpdir}.'/'.$doc->{outbase}.".tcfw" if (!$doc->{tcfwfile});
+  $doc->{tcfafile} = $doc->{tmpdir}.'/'.$doc->{outbase}.".tcfa" if (!$doc->{tcfafile});
 
   ##-- defaults: tcf-decoded .cws.xml data
   $doc->{tcfcwsfile} = $doc->{outdir}.'/'.$doc->{outbase}.".tcfws.xml" if (!$doc->{tcfcwsfile});
@@ -507,7 +527,7 @@ BEGIN {
      (map {$_=>[qw(tokenize1 saveTokFile1)]} qw(mktok1 tokenize1 tok1 t1 tt1)),
      (map {$_=>[qw(tokenize saveTokFile0 tokenize1 saveTokFile1)]} qw(mktok tokenize tok t tt)),
 
-     (map {$_=>[qw(loadTokFile1 tok2xml saveXtokFile)]} qw(mktxml tok2xml xtok txml ttxml tokxml)),
+     (map {$_=>[qw(loadTokFile1 tok2xml txmlanno saveXtokFile)]} qw(mktxml tok2xml xtok txml ttxml tokxml)),
 
      (map {$_=>[qw(addws)]} qw(addws mkcws cwsxml cws)),
 
@@ -537,7 +557,7 @@ BEGIN {
 		    qw(mkbx saveBxFile saveTxtFile),
 		    qw(tokenize0 saveTokFile0),
 		    qw(tokenize1 saveTokFile1),
-		    qw(tok2xml saveXtokFile),
+		    qw(tok2xml txmlanno saveXtokFile),
 		   ],
      'tei2spliced' => [
 		       ##-- tei2txml
@@ -546,7 +566,7 @@ BEGIN {
 		       qw(mkbx saveBxFile saveTxtFile),
 		       qw(tokenize0 saveTokFile0),
 		       qw(tokenize1 saveTokFile1),
-		       qw(tok2xml saveXtokFile),
+		       qw(tok2xml txmlanno saveXtokFile),
 		       ##-- addws+splice
 		       qw(addws idsplice),
 		      ],
@@ -561,7 +581,7 @@ BEGIN {
      'tcf2tok' => [qw(loadTcfFile tcftokenize saveTcfTokFile)],
 
 
-     'tcfsplit' => [qw(loadTcfFile tcfdecode0 saveTcfxFile saveTcftFile saveTcfwFile)],
+     'tcfsplit' => [qw(loadTcfFile tcfdecode0 saveTcfxFile saveTcftFile saveTcfwFile saveTcfaFile)],
      'tcfalign' => [
 		    #qw(loadTcfFile tcfdecode0 saveTcfxFile saveTcftFile saveTcfwFile),
 		    qw(loadTxtData),
@@ -576,7 +596,7 @@ BEGIN {
 	     qw(tokenize0 saveTokFile0),
 	     qw(tokenize1 saveTokFile1),
 	     #qw(loadCxFile)
-	     qw(tok2xml saveXtokFile),
+	     qw(tok2xml txmlanno saveXtokFile),
 	     qw(addws),
 	     #qw(standoff),
 	     #qw(idsplice),
@@ -697,6 +717,15 @@ sub tok2xml {
   $_[0]->setLogContext();
   $_[0]->vlog($_[0]{traceProc},"tok2xml()") if ($_[0]{traceProc});
   return ($_[1] || ($_[0]{tw} && $_[0]{tw}{tok2xml}) || 'DTA::TokWrap::Processor::tok2xml')->tok2xml($_[0]);
+}
+
+## $doc_or_undef = $doc->txmlanno($txmlanno)
+## $doc_or_undef = $doc->txmlanno()
+##  + see DTA::TokWrap::Processor::txmlanno::txmlanno()
+sub txmlanno {
+  $_[0]->setLogContext();
+  $_[0]->vlog($_[0]{traceProc},"txmlanno()") if ($_[0]{traceProc});
+  return ($_[1] || ($_[0]{tw} && $_[0]{tw}{txmlanno}) || 'DTA::TokWrap::Processor::txmlannp')->txmlanno($_[0]);
 }
 
 ## $doc_or_undef = $doc->addws($addws)
@@ -1032,7 +1061,10 @@ sub saveFileData {
   $doc->logconfess("saveFileData($key,$suff): failed to open file '$file': $!") if (!$fh);
   $fh->binmode() if (!ref($file));
   $fh->print( $$datar );
-  $fh->close() if (!ref($file));
+  if (!ref($file)) {
+    $fh->close()
+      or $doc->logconfess("saveFileData($key,$suff): failed to close file '$file': $!");
+  }
 
   $doc->{"${key}file${suff}_stamp"} = timestamp(); ##-- stamp
   return $file;
@@ -1232,6 +1264,18 @@ sub saveTcfwFile {
   return $_[0]->saveFileData('tcfw','',@_[1..$#_]);
 }
 
+## $file_or_undef = $doc->saveTcfaFile($filename_or_fh,\$tcfadata)
+## $file_or_undef = $doc->saveTcfaFile($filename_or_fh)
+## $file_or_undef = $doc->saveTcfaFile()
+##  + $filename_or_fh defaults to $doc->{tcfafile}="$doc->{outdir}/$doc->{outbase}.tcfa"
+##  + $tcfadata defaults to \$doc->{tcfadata}
+##  + sets $doc->{tcfafile_stamp}
+sub saveTcfaFile {
+  #return $_[0]->saveFileDoc('tcfa',@_[1..$#_]);
+  return 1 if (exists($_[2]) ? !$_[2] : !defined($_[0]->{tcfadata})); ##-- no tcfadata to save
+  return $_[0]->saveFileData('tcfa','',@_[1..$#_]);
+}
+
 
 ##==============================================================================
 ## Methods: Profiling
@@ -1298,6 +1342,7 @@ DTA::TokWrap::Document - DTA tokenizer wrappers: document wrapper
  $doc_or_undef = $doc->mkbx();
  $doc_or_undef = $doc->tokenize();
  $doc_or_undef = $doc->tok2xml();
+ $doc_or_undef = $doc->txmlanno();
  
  ##========================================================================
  ## Methods: Member I/O
@@ -1448,6 +1493,11 @@ instead of calling this constructor directly.
  xtokfile => $xtokfile,  ##-- XML-ified tokenizer output file (default="$outdir/$outbase.t.xml")
  xtokdoc  => $xtokdoc,   ##-- XML::LibXML::Document for $xtokdata (parsed from string)
  ##
+ ##-- tokenizer xml annotations (see DTA::TokWrap::Processor::txmlanno)
+ axtokdata => $axtokdata,  ##-- optional external XML annotation data (for splicing into $xtokdata)
+ axtokfile => $axtokfile,  ##-- optional external XML annotation file (for splicing into $xtokfile; default="$outdir/$outbase.ta.xml")
+ xtokfile0 => $xtokfile0,  ##-- XML-ified tokenizer output file (default=none or "$outdir/$outbase.t0.xml" if {keeptmp} is true)
+ ##
  ##-- ws-splice (see DTA::TokWrap::Processor::addws)
  #cwsdata => $cwsdata,    ##-- ws-spliced output data (xmlfile with <s> and <w> elements)
  cwsfile => $cwsfile,    ##-- ws-spliced output file (default="$outdir/$outbase.cws.xml")
@@ -1460,11 +1510,29 @@ instead of calling this constructor directly.
  ## cwstbufr     => $wstbufr, ##-- idsplice output buffer (base + id-spliced attributes, content) -- available for override, not used by default
  ## cwstfile     => $wstfile, ##-- idsplice output file [default="$outdir/$outbase.cwst.xml"]
  ##
- ##-- tcf codec data (see DTA::TokWrap::Processor::tcfencode)
- tcfdoc  => \$doc,       ##-- XML::LibXML::Document representing TCF-encoded data
- tcfbufr => \$tcfbufr,   ##-- TCF-encoded buffer (reference)
- tcffile => $tcffile,    ##-- TCF file (default="$outdir/$outbase.tcf")
- tcflang => $lang,       ##-- TCF language attribute (default: 'de')
+ ##-- tcfencode data (see DTA::TokWrap::Processor::tcfencode)
+ tcfdoc   => $tcfdoc,     ##-- XML::LibXML::Document representing TCF-encoded data
+ tcffile  => $tcffile,    ##-- TCF file
+ tcflang  => $lang,       ##-- TCF language attribute (default: 'de')
+ ##
+ ##-- tcftokenize data (see DTA::TokWrap::Processor::tcftokenize)
+ tcftokdoc => $tcftokdoc,    ##-- XML::LibXML::Document representing tokenized TCF data (== $tcfdoc)
+ tcftokfile => $tcftokfile,  ##-- tcf-tokenized file
+ ##
+ ##-- tcfdecode0 data (see DTA::TokWrap::Processor::tcfdecode0)
+ tcfxfile => $tcfxfile,   ##-- tcf-decoded base xml file [default="$tmpdir/$outbase.tcfx"]
+ tcfxdata => $tcfxdata,   ##-- tcf-decoded base xml data
+ tcftfile => $tcftfile,   ##-- tcf-decoded serial text file [default="$tmpdir/$outbase.tcft"]
+ tcftdata => $tcftdata,   ##-- tcf-decoded serial txt data
+ tcfwdata => $tcfwdata,   ##-- tcf-decoded token data, tt-format: "TEXT\tSID/WID\n"
+ tcfwfile => $tcfwfile,   ##-- tcf-decoded token file, tt-format [default="$tmpdir/$outbase.tcfw"]
+ tcfadata => $tcfadata,   ##-- tcf-decoded token attributes for idsplice, data
+ tcfafile => $tcfafile,   ##-- tcf-decoded token attributes for idsplice, file [default="$tmpdir/$outbase.tcfa"]
+ ##
+ ##-- tcfalign data (PROXIED, see DTA::TokWrap::Processor::tcfalign : uses tokdata1,tokfile1)
+ ##-- tcf2txml data (PROXIED, see DTA::TokWrap::Processor::tok2xml : uses tokfile1,cxfile,bxfile,xtokdata)
+ ##-- tcfdecode data
+ tcfcwsfile => $tcfcwsfile, ##-- tcf-decoded+aligned+ws-spliced output file (default="$outdir/$outbase.tcfws.xml")
 
 
 =item defaults
@@ -1640,6 +1708,13 @@ L<DTA::TokWrap::Processor::tokenize1::tokenize1()|DTA::TokWrap::Processor::token
  $doc_or_undef = $doc->tok2xml();
 
 see L<DTA::TokWrap::Processor::tok2xml::tok2xml()|DTA::TokWrap::Processor::tok2xml/tok2xml>.
+
+=item txmlanno
+
+ $doc_or_undef = $doc->txmlanno($txmlanno);
+ $doc_or_undef = $doc->txmlanno();
+
+see L<DTA::TokWrap::Processor::txmlanno::txmlanno()|DTA::TokWrap::Processor::txmlanno/txmlanno>.
 
 =item addws
 
