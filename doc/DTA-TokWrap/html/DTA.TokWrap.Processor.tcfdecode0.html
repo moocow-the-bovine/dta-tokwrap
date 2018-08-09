@@ -76,6 +76,30 @@
 </dd>
 </dl>
 
+<p>The following additional layers will be decoded if the <code>decode_tcfa</code> option is set to a true value:</p>
+
+<dl>
+
+<dt id="lemmas">lemmas</dt>
+<dd>
+
+<p>TCF lemmata identified by <code>tokenIDs</code> in 1:1 correspondence with the tokens in the <code>tokens</code> layer.</p>
+
+</dd>
+<dt id="POStags">POStags</dt>
+<dd>
+
+<p>TCF part-of-speech tags identified by <code>tokenIDs</code> in 1:1 correspondence with the tokens in the <code>tokens</code> layer.</p>
+
+</dd>
+<dt id="orthography">orthography</dt>
+<dd>
+
+<p>TCF orthographic normalizations (<code>replace</code> operations only) identified by <code>tokenIDs</code> in 1:1 correspondence with the tokens in the <code>tokens</code> layer.</p>
+
+</dd>
+</dl>
+
 <h2 id="Constants">Constants</h2>
 
 <dl>
@@ -97,7 +121,12 @@
 
 <pre><code> $obj = $CLASS_OR_OBJECT-&gt;new(%args);</code></pre>
 
-<p>Constructor.</p>
+<p>Constructor. Default %args:</p>
+
+<pre><code> decode_tcfx =&gt; $bool,  ##-- whether to decode $tcfxdata (default=1)
+ decode_tcft =&gt; $bool,  ##-- whether to decode $tcftdata (default=1)
+ decode_tcfw =&gt; $bool,  ##-- whether to decode $tcfwdata (default=1)
+ decode_tcfa =&gt; $bool,  ##-- whether to decode $tcfadata (default=1)</code></pre>
 
 </dd>
 <dt id="defaults">defaults</dt>
@@ -128,23 +157,25 @@
  tcfxdata =&gt; $tcfxdata, ##-- (output) TEI-XML decode0d from TCF
  tcftdata =&gt; $tcftdata, ##-- (output) text data decode0d from TCF
  tcfwdata =&gt; $tcfwdata, ##-- (output) tokenized data decode0d from TCF, without byte-offsets, with &quot;SID/WID&quot; attributes
+ tcfadata =&gt; $tcfadata, ##-- (output) annotation data decode0d from TCF
  ##
  tcfdecode0_stamp0 =&gt; $f, ##-- (output) timestamp of operation begin
  tcfdecode0_stamp  =&gt; $f, ##-- (output) timestamp of operation end
  tcfxdata_stamp   =&gt; $f, ##-- (output) timestamp of operation end
  tcftdata_stamp   =&gt; $f, ##-- (output) timestamp of operation end
- tcfwdata_stamp   =&gt; $f, ##-- (output) timestamp of operation end</code></pre>
+ tcfwdata_stamp   =&gt; $f, ##-- (output) timestamp of operation end
+ tcfadata_stamp   =&gt; $f, ##-- (output) timestamp of operation end</code></pre>
 
 </dd>
 </dl>
 
 <h1 id="SEE-ALSO">SEE ALSO</h1>
 
-<p><a>DTA::TokWrap::Intro(3pm)</a>, <a href="dta-tokwrap.perl.pod:.html">dta-tokwrap.perl(1)</a>, ...</p>
+<p><a>DTA::TokWrap::Intro(3pm)</a>, <a href="...script.dta-tokwrap.html">dta-tokwrap.perl(1)</a>, ...</p>
 
 <h1 id="SEE-ALSO1">SEE ALSO</h1>
 
-<p><a>DTA::TokWrap::Intro(3pm)</a>, <a href="dta-tokwrap.perl.pod:.html">dta-tokwrap.perl(1)</a>, ...</p>
+<p><a>DTA::TokWrap::Intro(3pm)</a>, <a href="...script.dta-tokwrap.html">dta-tokwrap.perl(1)</a>, ...</p>
 
 <h1 id="AUTHOR">AUTHOR</h1>
 

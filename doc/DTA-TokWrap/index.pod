@@ -127,6 +127,10 @@ L<DTA::TokWrap::Processor::tokenize::waste|DTA::TokWrap::Processor::tokenize::wa
 
 =item *
 
+L<DTA::TokWrap::Processor::txmlanno|DTA::TokWrap::Processor::txmlanno> - Descript: DTA tokenizer wrappers: t.xml -E<gt> t.xml, via idsplice
+
+=item *
+
 L<DTA::TokWrap::Utils|DTA::TokWrap::Utils> - DTA tokenizer wrappers: generic utilities
 
 =item *

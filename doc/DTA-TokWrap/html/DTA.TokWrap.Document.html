@@ -75,6 +75,7 @@
  $doc_or_undef = $doc-&gt;mkbx();
  $doc_or_undef = $doc-&gt;tokenize();
  $doc_or_undef = $doc-&gt;tok2xml();
+ $doc_or_undef = $doc-&gt;txmlanno();
  
  ##========================================================================
  ## Methods: Member I/O
@@ -204,6 +205,11 @@
  xtokfile =&gt; $xtokfile,  ##-- XML-ified tokenizer output file (default=&quot;$outdir/$outbase.t.xml&quot;)
  xtokdoc  =&gt; $xtokdoc,   ##-- XML::LibXML::Document for $xtokdata (parsed from string)
  ##
+ ##-- tokenizer xml annotations (see DTA::TokWrap::Processor::txmlanno)
+ axtokdata =&gt; $axtokdata,  ##-- optional external XML annotation data (for splicing into $xtokdata)
+ axtokfile =&gt; $axtokfile,  ##-- optional external XML annotation file (for splicing into $xtokfile; default=&quot;$outdir/$outbase.ta.xml&quot;)
+ xtokfile0 =&gt; $xtokfile0,  ##-- XML-ified tokenizer output file (default=none or &quot;$outdir/$outbase.t0.xml&quot; if {keeptmp} is true)
+ ##
  ##-- ws-splice (see DTA::TokWrap::Processor::addws)
  #cwsdata =&gt; $cwsdata,    ##-- ws-spliced output data (xmlfile with &lt;s&gt; and &lt;w&gt; elements)
  cwsfile =&gt; $cwsfile,    ##-- ws-spliced output file (default=&quot;$outdir/$outbase.cws.xml&quot;)
@@ -216,11 +222,29 @@
  ## cwstbufr     =&gt; $wstbufr, ##-- idsplice output buffer (base + id-spliced attributes, content) -- available for override, not used by default
  ## cwstfile     =&gt; $wstfile, ##-- idsplice output file [default=&quot;$outdir/$outbase.cwst.xml&quot;]
  ##
- ##-- tcf codec data (see DTA::TokWrap::Processor::tcfencode)
- tcfdoc  =&gt; \$doc,       ##-- XML::LibXML::Document representing TCF-encoded data
- tcfbufr =&gt; \$tcfbufr,   ##-- TCF-encoded buffer (reference)
- tcffile =&gt; $tcffile,    ##-- TCF file (default=&quot;$outdir/$outbase.tcf&quot;)
- tcflang =&gt; $lang,       ##-- TCF language attribute (default: &#39;de&#39;)</code></pre>
+ ##-- tcfencode data (see DTA::TokWrap::Processor::tcfencode)
+ tcfdoc   =&gt; $tcfdoc,     ##-- XML::LibXML::Document representing TCF-encoded data
+ tcffile  =&gt; $tcffile,    ##-- TCF file
+ tcflang  =&gt; $lang,       ##-- TCF language attribute (default: &#39;de&#39;)
+ ##
+ ##-- tcftokenize data (see DTA::TokWrap::Processor::tcftokenize)
+ tcftokdoc =&gt; $tcftokdoc,    ##-- XML::LibXML::Document representing tokenized TCF data (== $tcfdoc)
+ tcftokfile =&gt; $tcftokfile,  ##-- tcf-tokenized file
+ ##
+ ##-- tcfdecode0 data (see DTA::TokWrap::Processor::tcfdecode0)
+ tcfxfile =&gt; $tcfxfile,   ##-- tcf-decoded base xml file [default=&quot;$tmpdir/$outbase.tcfx&quot;]
+ tcfxdata =&gt; $tcfxdata,   ##-- tcf-decoded base xml data
+ tcftfile =&gt; $tcftfile,   ##-- tcf-decoded serial text file [default=&quot;$tmpdir/$outbase.tcft&quot;]
+ tcftdata =&gt; $tcftdata,   ##-- tcf-decoded serial txt data
+ tcfwdata =&gt; $tcfwdata,   ##-- tcf-decoded token data, tt-format: &quot;TEXT\tSID/WID\n&quot;
+ tcfwfile =&gt; $tcfwfile,   ##-- tcf-decoded token file, tt-format [default=&quot;$tmpdir/$outbase.tcfw&quot;]
+ tcfadata =&gt; $tcfadata,   ##-- tcf-decoded token attributes for idsplice, data
+ tcfafile =&gt; $tcfafile,   ##-- tcf-decoded token attributes for idsplice, file [default=&quot;$tmpdir/$outbase.tcfa&quot;]
+ ##
+ ##-- tcfalign data (PROXIED, see DTA::TokWrap::Processor::tcfalign : uses tokdata1,tokfile1)
+ ##-- tcf2txml data (PROXIED, see DTA::TokWrap::Processor::tok2xml : uses tokfile1,cxfile,bxfile,xtokdata)
+ ##-- tcfdecode data
+ tcfcwsfile =&gt; $tcfcwsfile, ##-- tcf-decoded+aligned+ws-spliced output file (default=&quot;$outdir/$outbase.tcfws.xml&quot;)</code></pre>
 
 </dd>
 <dt id="defaults">defaults</dt>
@@ -391,6 +415,15 @@
  $doc_or_undef = $doc-&gt;tok2xml();</code></pre>
 
 <p>see <a>DTA::TokWrap::Processor::tok2xml::tok2xml()</a>.</p>
+
+</dd>
+<dt id="txmlanno">txmlanno</dt>
+<dd>
+
+<pre><code> $doc_or_undef = $doc-&gt;txmlanno($txmlanno);
+ $doc_or_undef = $doc-&gt;txmlanno();</code></pre>
+
+<p>see <a>DTA::TokWrap::Processor::txmlanno::txmlanno()</a>.</p>
 
 </dd>
 <dt id="addws">addws</dt>
@@ -657,11 +690,11 @@
 
 <h1 id="SEE-ALSO">SEE ALSO</h1>
 
-<p><a>DTA::TokWrap::Intro(3pm)</a>, <a href="dta-tokwrap.perl.pod:.html">dta-tokwrap.perl(1)</a>, ...</p>
+<p><a>DTA::TokWrap::Intro(3pm)</a>, <a href="...script.dta-tokwrap.html">dta-tokwrap.perl(1)</a>, ...</p>
 
 <h1 id="SEE-ALSO1">SEE ALSO</h1>
 
-<p><a>DTA::TokWrap::Intro(3pm)</a>, <a href="dta-tokwrap.perl.pod:.html">dta-tokwrap.perl(1)</a>, ...</p>
+<p><a>DTA::TokWrap::Intro(3pm)</a>, <a href="...script.dta-tokwrap.html">dta-tokwrap.perl(1)</a>, ...</p>
 
 <h1 id="AUTHOR">AUTHOR</h1>
 
