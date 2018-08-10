@@ -23,6 +23,9 @@ REQUIREMENTS
     Getopt::Long
         tested version(s): 2.37
 
+    Log::Log4perl
+        tested version(s): 1.21
+
     Pod::Usage
         tested version(s): 1.35
 
