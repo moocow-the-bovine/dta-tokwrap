@@ -85,7 +85,7 @@ sub tcfalign {
 
   ##-- check for text-identity
   if (file_try_open($doc->{tcftfile}) && file_try_open($doc->{txtfile})) {
-    runcmd($aln->{diff}, '-qwBa', $doc->{tcftfile}, $doc->{txtfile})==0
+    runcmd_noout($aln->{diff}, '-qwBa', $doc->{tcftfile}, $doc->{txtfile})==0
       or $aln->logwarn("tcfalign(): tcf text layer '$doc->{tcftfile}' differs from serialized text '$doc->{txtfile}'");
   }
 

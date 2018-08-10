@@ -28,7 +28,7 @@ our @EXPORT = qw();
 our %EXPORT_TAGS = (
 		    files => [qw(file_mtime file_is_newer  file_try_open abs_path str2file ref2file)],
 		    slurp => [qw(slurp_file slurp_fh tempbuf)],
-		    progs => ['path_prog','runcmd','opencmd','$TRACE_RUNCMD'],
+		    progs => ['path_prog','runcmd','runcmd_noout','opencmd','$TRACE_RUNCMD'],
 		    libxml => [qw(libxml_parser)],
 		    xmlutils => [qw(xmlesc xmlesc_bytes)],
 		    libxslt => [qw(xsl_stylesheet)],
@@ -69,6 +69,7 @@ sub path_prog {
 }
 
 ## $system_rc = PACKAGE::runcmd(@cmd)
+##  + wrapper for system(@cmd) with optional logging
 sub runcmd {
   my @argv = @_;
   __PACKAGE__->vlog($TRACE_RUNCMD,"runcmd(): ", join(' ', map {$_=~/\s/ ? "\"$_\"" : $_} @argv))
@@ -76,8 +77,33 @@ sub runcmd {
   return system(@argv);
 }
 
+## $system_rc = PACKAGE::runcmd_noout(@cmd)
+##  + wrapper for system(@cmd) optional logging and no stdout
+sub runcmd_noout {
+  my @argv = qw();
+  my $that = __PACKAGE__;
+  $that->vlog($TRACE_RUNCMD,"runcmd_noout(): ", join(' ', map {$_=~/\s/ ? "\"$_\"" : $_} @argv))
+    if ($TRACE_RUNCMD);
+
+  open(my $oldout, '>&', \*STDOUT)
+    or $that->vlog('warn', "runcmd_noout(): failed to save STDOUT: $!");
+  open(STDOUT,">/dev/null")
+    or $that->vlog('warn',"runcmd_noout(): could't redirect STDOUT to /dev/null: $!");
+
+  my $rc = system(@argv);
+
+  if ($oldout) {
+    open(STDOUT, '>&', $oldout)
+      or $that->vlog('warn',"runcmd_noout(): failed to restore STDOUT: $!");
+    close($oldout)
+      or $that->vlog('warn',"runcmd_noout(): failed to close STDOUT dup: $!");
+  }
+  return $rc;
+}
+
+
 ## $fh_or_undef = PACKAGE::opencmd($cmd)
-## $fh_or_undef = PACKAGE::opencmd($mode,@argv)
+## #$fh_or_undef = PACKAGE::opencmd($mode,@argv)
 ##  + does log trace at level $TRACE_RUNCMD
 sub opencmd {
   my ($cmd) = shift;
