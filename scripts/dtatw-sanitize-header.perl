@@ -37,6 +37,9 @@ our $foreign = 0;      ##-- relaxed (non-dta) mode?
 our $aux_dbfile = undef;    ##-- auxilliary db (Berkeley DB, ($basename => $metadata_json)
 our $aux_xpath  = 'fileDesc[@n="ddc-aux"]';
 
+##-- var: user XPaths
+our %user_xpaths = qw(); ##-- ($key => \@xpaths); known keys: date,author,...
+
 ##-- constants: verbosity levels
 our $vl_warn     = 1;
 our $vl_progress = 2;
@@ -66,6 +69,9 @@ GetOptions(##-- General
 	   'aux-db|auxdb|adb|a=s' => \$aux_dbfile,
 	   'aux-xpath|aux-xp|auxpath|axp|ap=s' => \$aux_xpath,
 
+	   ##-- user-specified XPaths
+	   'user-xpath|user-xp|userpath|uxp|xpath|xp=s%' => sub { push(@{$user_xpaths{$_[1]}},$_[2]); },
+
 	   ##-- I/O
 	   'keep-blanks|blanks|whitespace|ws!' => \$keep_blanks,
 	   'output|out|o=s' => \$outfile,
@@ -89,6 +95,15 @@ sub loadxml {
   die("$prog: ERROR: could not parse XML file '$xmlfile': $!") if (!$xdoc);
   return $xdoc;
 }
+
+##======================================================================
+## X-Path utilities: user-specified
+
+## @xpaths = user_xpaths($key)
+sub user_xpaths {
+  return @{ $user_xpaths{$_[0]} // [] };
+}
+
 
 ##======================================================================
 ## X-Path utilities: get
@@ -249,7 +264,7 @@ my @author_xpaths = (
 		     'fileDesc/sourceDesc/listPerson[@type="searchNames"]/person/persName',			##-- old
 		     './/idno[@type="author"]',									##-- flat fallback
 		    );
-my $author_nod = xpgrepnod($hroot,@author_xpaths);
+my $author_nod = xpgrepnod($hroot,user_xpaths('author'),@author_xpaths);
 my ($author);
 if ($author_nod && $author_nod->nodeName eq 'persName') {
   ##-- parse pre-formatted author node (old, pre-2012-07)
@@ -289,6 +304,11 @@ elsif ($author_nod && $author_nod->nodeName =~ /^(?:author|editor)$/ && ($author
 		   ($nnods && @$nnods ? @$nnods : $_)
 		 }
 		 @{$author_nod->findnodes('../'.$author_nod->nodeName.'[string(@corresp)!="#DTACorpusPublisher"]')});
+
+  if (($author//'') eq '') {
+    ##-- fallback: use literal text content
+    $author = $author_nod->textContent;
+  }
 }
 if (!defined($author)) {
   ##-- guess author from basename
@@ -301,7 +321,7 @@ ensure_xpath($hroot, 'fileDesc/titleStmt/author[@n="ddc"]', wsnorm($author));
 ##-- meta: title
 my $title           = $foreign ? '' : ($basename =~ m/^[^_]+_([^_]+)_/ ? ucfirst($1) : '');
 my $dta_title_xpath = 'fileDesc/titleStmt/title[@type="main" or @type="sub" or @type="vol"]';
-my $dta_title_nods  = $hroot->findnodes($dta_title_xpath);
+my $dta_title_nods  = user_xpaths('title') ? [] : $hroot->findnodes($dta_title_xpath);
 my @other_title_xpaths = (
 			  'fileDesc/titleStmt/title[@type="ddc"]',
 			  'fileDesc/titleStmt/title[not(@type)]',
@@ -310,7 +330,7 @@ my @other_title_xpaths = (
 			  'sourceDesc[not(@id)]/biblFull/titleStmt/title',
 			  './/idno[@type="title"][last()]', ##-- flat fallback
 			 );
-my $other_title_nod  = xpgrepnod($hroot,@other_title_xpaths);
+my $other_title_nod  = xpgrepnod($hroot,user_xpaths('title'),@other_title_xpaths);
 if (@$dta_title_nods) {
   $title  = join(' / ', map {$_->textContent} grep {$_->getAttribute('type') eq 'main'} @$dta_title_nods);
   $title .= join('', map {": ".$_->textContent} grep {$_->getAttribute('type') eq 'sub'} @$dta_title_nods);
@@ -337,7 +357,7 @@ my @date_xpaths = (
 		   './/idno[@type="date"][last()]',			##-- flat fallback
 		   './/idno[@type="year"][last()]',			##-- flat fallback
 		  );
-my $date = xpgrepval($hroot,@date_xpaths);
+my $date = xpgrepval($hroot,user_xpaths('date'),@date_xpaths);
 my $date0 = $date // '';
 if (!$date) {
   $date = ($basename =~ m/^[^\.]*_([0-9]+)$/ ? $1 : 0);
@@ -379,7 +399,7 @@ my @bibl_xpaths = (
 		   'fileDesc/sourceDesc/bibl', ##-- new|old:generic
 		   './/idno[@type="bibl"]',    ##-- flat fallback
 		   );
-my $bibl = xpgrepval($hroot,@bibl_xpaths);
+my $bibl = xpgrepval($hroot,user_xpaths('bibl'),@bibl_xpaths);
 if (!defined($bibl)) {
   $bibl = "$author: $title. $date0";
   warn("$prog: $basename: WARNING: missing bibl XPath(s) ".join('|',@bibl_xpaths)) if ($verbose >= $vl_warn);
@@ -395,7 +415,7 @@ my @shelfmark_xpaths = (
 			'fileDesc/sourceDesc/msDesc/msIdentifier/idno[@type="shelfmark"]', ##-- new (>=2012-07)
 			'fileDesc/sourceDesc/biblFull/notesStmt/note[@type="location"]/ident[@type="shelfmark"]', ##-- old (<2012-07)
 		       );
-my $shelfmark = xpgrepval($hroot,@shelfmark_xpaths) || '-';
+my $shelfmark = xpgrepval($hroot,user_xpaths('shelfmark'),@shelfmark_xpaths) || '-';
 ensure_xpath($hroot, $shelfmark_xpaths[0], wsnorm($shelfmark), 0);
 
 ##-- meta: library
@@ -404,7 +424,7 @@ my @library_xpaths = (
 		      'fileDesc/sourceDesc/msDesc/msIdentifier/repository', ##-- new
 		      'fileDesc/sourceDesc/biblFull/notesStmt/note[@type="location"]/name[@type="repository"]', ##-- old
 		     );
-my $library = xpgrepval($hroot, @library_xpaths) || '-';
+my $library = xpgrepval($hroot, user_xpaths('library'), @library_xpaths) || '-';
 ensure_xpath($hroot, $library_xpaths[0], wsnorm($library), 0);
 
 ##-- meta: dtadir
@@ -415,7 +435,7 @@ my @dirname_xpaths = (
 		      'fileDesc/publicationStmt/idno[@type="DTADIRNAME"]', ##-- new (>=2012-07)
 		      'fileDesc/publicationStmt/idno[@type="DTADIR"]',     ##-- old (<2012-07)
 		     );
-my $dirname = xpgrepval($hroot,@dirname_xpaths) || $basename;
+my $dirname = xpgrepval($hroot,user_xpaths('dirname'),@dirname_xpaths) || $basename;
 ensure_xpath($hroot, $dirname_xpaths[0], wsnorm($dirname), 0);
 ensure_xpath($hroot, $dirname_xpaths[1], wsnorm($dirname), 1) if (!$foreign); ##-- dta compat
 
@@ -425,7 +445,7 @@ my @dtaid_xpaths = (
 		    'fileDesc/publicationStmt/idno/idno[@type="DTAID"]',
 		    'fileDesc/publicationStmt/idno[@type="DTAID"]',
 		   );
-my $dtaid = xpgrepval($hroot,@dtaid_xpaths) || "0";
+my $dtaid = xpgrepval($hroot,user_xpaths('dtaid'),@dtaid_xpaths) || "0";
 ensure_xpath($hroot, $dtaid_xpaths[0], wsnorm($dtaid), 0);
 ensure_xpath($hroot, $dtaid_xpaths[1], wsnorm($dtaid), 1) if (!$foreign); ##-- dta compat
 
@@ -434,7 +454,7 @@ my @timestamp_xpaths = (
 			'fileDesc/publicationStmt/date[@type="ddc-timestamp"]',
 			($foreign ? qw() : 'fileDesc/publicationStmt/date'),
 		       );
-my $timestamp = xpgrepval($hroot, @timestamp_xpaths);
+my $timestamp = xpgrepval($hroot, user_xpaths('timestamp'), @timestamp_xpaths);
 if (!$timestamp) {
   my $time = $infile eq '-' ? time() : (stat($infile))[9];
   $timestamp = POSIX::strftime("%FT%H:%M:%SZ",gmtime($time));
@@ -446,7 +466,7 @@ my @availability_xpaths = (
 			   'fileDesc/publicationStmt/availability[@type="ddc"]',
 			   'fileDesc/publicationStmt/availability',
 			  );
-my $availability        = xpgrepval($hroot,@availability_xpaths) || "-";
+my $availability        = xpgrepval($hroot,user_xpaths('availability'), @availability_xpaths) || "-";
 ensure_xpath($hroot, $availability_xpaths[0], wsnorm($availability), 0);
 
 ##-- meta: availability (dwds code: "OR0W".."MR3S" ~ "ohne-rechte-0-wörter".."mit-rechten-3-sätze")
@@ -454,13 +474,14 @@ my @avail_xpaths = (
 		    'fileDesc/publicationStmt/availability[@type="ddc_dwds"]',
 		    'fileDesc/publicationStmt/availability/@n',
 		   );
-my $avail       = xpgrepval($hroot,@avail_xpaths) || "-";
+my $avail       = xpgrepval($hroot,user_xpaths('avail'),@avail_xpaths) || "-";
 ensure_xpath($hroot, $avail_xpaths[0], wsnorm($avail), 0);
 
 ##-- meta: text-class: dta
 my $tcdta = join('::',
 		 map {normalize_space($_->textContent)}
 		 @{xpnods($hroot,join('|',
+				      user_xpaths('textClassDTA'),
 				      'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtamain"]',
 				      'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtasub"]',
 				     ))}
@@ -471,6 +492,7 @@ ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassDTA"]
 my $tcdwds = join('::',
 		  map {normalize_space($_->textContent)}
 		  @{xpnods($hroot,join('|',
+				       user_xpaths('textClassDWDS'),
 				       'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds1main"]',
 				       'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds1sub"]',
 				       'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds2main"]',
@@ -484,6 +506,7 @@ ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassDWDS"
 my $tccorpus = join('::',
 		    map {normalize_space($_->textContent)}
 		    @{xpnods($hroot,join('|',
+					 user_xpaths('textClassCorpus'),
 					 'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#DTACorpus"]',
 					))}
 		   );
@@ -531,6 +554,9 @@ dtatw-sanitize-header.perl - make DDC/DTA-friendly TEI-headers
  Auxilliary DB Options:  # optional BASENAME-keyed JSON-metadata Berkeley DB
   -aux-db DBFILE         # read auxilliary DB from DBFILE (default=none)
   -aux-xpath XPATH       # append <idno type="KEY"> elements to XPATH (default='fileDesc[@n="ddc-aux"]')
+
+ XPath Options:
+  -xpath ATTR=XPATH      # prepend XPATH for attribute ATTR
 
  I/O Options:
   -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in XML_HEADER_FILE file (default=don't)
@@ -616,6 +642,28 @@ and whose values are the values of those metadata attributes.
 
 Append C<E<lt>idno type="I<KEY>"E<gt>I<VAL>I<lt>/idnoI<gt>> elements to I<XPATH> (default=C<'fileDesc[@n="ddc-aux"]'>)
 for auxilliary metadata attributes.
+
+=back
+
+=cut
+
+##----------------------------------------------------------------------
+## XPath Options
+=pod
+
+=head2 XPath Options
+
+You can optionally specify source XPaths to override the defaults with
+the C<-xpath> option.
+
+=over 4
+
+=item -xpath ATTR=XPATH
+
+Prepend I<XPATH> to the builtin list of source XPaths for the attribute I<ATTR>.
+Known attributes:
+author title date bibl shelfmark library dirname dtaid timestamp
+availability avail textClassDTA textClassDWDS textClassCorpus.
 
 =back
 
