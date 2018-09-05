@@ -338,7 +338,7 @@ my @date_xpaths = (
 		   './/idno[@type="year"][last()]',			##-- flat fallback
 		  );
 my $date = xpgrepval($hroot,@date_xpaths);
-my $date0 = $date;
+my $date0 = $date // '';
 if (!$date) {
   $date = ($basename =~ m/^[^\.]*_([0-9]+)$/ ? $1 : 0);
   warn("$prog: $basename: WARNING: missing date XPath $date_xpaths[$#date_xpaths] defaults to \"$date\"") if ($verbose >= $vl_warn);
