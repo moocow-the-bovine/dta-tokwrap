@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "DTATW-SANITIZE-HEADER.PERL 1"
-.TH DTATW-SANITIZE-HEADER.PERL 1 "2017-11-08" "dta-tokwrap v0.79" "DTA Tokenization Utilities"
+.TH DTATW-SANITIZE-HEADER.PERL 1 "2018-09-05" "dta-tokwrap v0.83" "DTA Tokenization Utilities"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -154,6 +154,9 @@ dtatw\-sanitize\-header.perl \- make DDC/DTA\-friendly TEI\-headers
 \& Auxilliary DB Options:  # optional BASENAME\-keyed JSON\-metadata Berkeley DB
 \&  \-aux\-db DBFILE         # read auxilliary DB from DBFILE (default=none)
 \&  \-aux\-xpath XPATH       # append <idno type="KEY"> elements to XPATH (default=\*(AqfileDesc[@n="ddc\-aux"]\*(Aq)
+\&
+\& XPath Options:
+\&  \-xpath ATTR=XPATH      # prepend XPATH for attribute ATTR
 \&
 \& I/O Options:
 \&  \-blanks , \-noblanks    # do/don\*(Aqt keep \*(Aqignorable\*(Aq whitespace in XML_HEADER_FILE file (default=don\*(Aqt)
@@ -208,6 +211,16 @@ and whose values are the values of those metadata attributes.
 .IX Item "-aux-xpath XPATH"
 Append \f(CW\*(C`<idno type="\f(CIKEY\f(CW">\f(CIVAL\f(CW\f(CIlt\f(CW/idno\f(CIgt\f(CW\*(C'\fR elements to \fI\s-1XPATH\s0\fR (default=\f(CW\*(AqfileDesc[@n="ddc\-aux"]\*(Aq\fR)
 for auxilliary metadata attributes.
+.SS "XPath Options"
+.IX Subsection "XPath Options"
+You can optionally specify source XPaths to override the defaults with
+the \f(CW\*(C`\-xpath\*(C'\fR option.
+.IP "\-xpath ATTR=XPATH" 4
+.IX Item "-xpath ATTR=XPATH"
+Prepend \fI\s-1XPATH\s0\fR to the builtin list of source XPaths for the attribute \fI\s-1ATTR\s0\fR.
+Known attributes:
+author title date bibl shelfmark library dirname dtaid timestamp
+availability avail textClassDTA textClassDWDS textClassCorpus.
 .SS "I/O Options"
 .IX Subsection "I/O Options"
 .IP "\-[no]keep\-blanks" 4

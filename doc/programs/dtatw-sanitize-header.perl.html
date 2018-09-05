@@ -19,6 +19,7 @@
     <ul>
       <li><a href="#General-Options">General Options</a></li>
       <li><a href="#Auxilliary-DB-Options">Auxilliary DB Options</a></li>
+      <li><a href="#XPath-Options">XPath Options</a></li>
       <li><a href="#I-O-Options">I/O Options</a></li>
     </ul>
   </li>
@@ -62,6 +63,9 @@
  Auxilliary DB Options:  # optional BASENAME-keyed JSON-metadata Berkeley DB
   -aux-db DBFILE         # read auxilliary DB from DBFILE (default=none)
   -aux-xpath XPATH       # append &lt;idno type=&quot;KEY&quot;&gt; elements to XPATH (default=&#39;fileDesc[@n=&quot;ddc-aux&quot;]&#39;)
+
+ XPath Options:
+  -xpath ATTR=XPATH      # prepend XPATH for attribute ATTR
 
  I/O Options:
   -blanks , -noblanks    # do/don&#39;t keep &#39;ignorable&#39; whitespace in XML_HEADER_FILE file (default=don&#39;t)
@@ -132,6 +136,20 @@
 <dd>
 
 <p>Append <code>&lt;idno type=&quot;<i>KEY</i>&quot;&gt;<i>VAL</i><i>lt</i>/idno<i>gt</i></code> elements to <i>XPATH</i> (default=<code>&#39;fileDesc[@n=&quot;ddc-aux&quot;]&#39;</code>) for auxilliary metadata attributes.</p>
+
+</dd>
+</dl>
+
+<h2 id="XPath-Options">XPath Options</h2>
+
+<p>You can optionally specify source XPaths to override the defaults with the <code>-xpath</code> option.</p>
+
+<dl>
+
+<dt id="xpath-ATTR-XPATH">-xpath ATTR=XPATH</dt>
+<dd>
+
+<p>Prepend <i>XPATH</i> to the builtin list of source XPaths for the attribute <i>ATTR</i>. Known attributes: author title date bibl shelfmark library dirname dtaid timestamp availability avail textClassDTA textClassDWDS textClassCorpus.</p>
 
 </dd>
 </dl>
