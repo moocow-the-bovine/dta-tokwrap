@@ -478,36 +478,45 @@ my $avail       = xpgrepval($hroot,user_xpaths('avail'),@avail_xpaths) || "-";
 ensure_xpath($hroot, $avail_xpaths[0], wsnorm($avail), 0);
 
 ##-- meta: text-class: dta
+my @uxp_tcdta = user_xpaths('textClassDTA');
 my $tcdta = join('::',
 		 map {normalize_space($_->textContent)}
 		 @{xpnods($hroot,join('|',
-				      user_xpaths('textClassDTA'),
-				      'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtamain"]',
-				      'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtasub"]',
+				      (@uxp_tcdta ? @uxp_tcdta
+				       : (
+					  'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtamain"]',
+					  'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtasub"]',
+					 ))
 				     ))}
 		);
 ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassDTA"]', wsnorm($tcdta||''), 0);
 
 ##-- meta: text-class: dwds
+my @uxp_tcdwds = user_xpaths('textClassDWDS');
 my $tcdwds = join('::',
 		  map {normalize_space($_->textContent)}
 		  @{xpnods($hroot,join('|',
-				       user_xpaths('textClassDWDS'),
-				       'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds1main"]',
-				       'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds1sub"]',
-				       'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds2main"]',
-				       'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds2sub"]',
-				       'profileDesc/textClass/keywords/term', ##-- dwds keywords
+				       (@uxp_tcdwds ? @uxp_tcdwds
+					: (
+					   'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds1main"]',
+					   'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds1sub"]',
+					   'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds2main"]',
+					   'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds2sub"]',
+					   'profileDesc/textClass/keywords/term', ##-- dwds keywords
+					  ))
 				      ))}
 		 );
 ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassDWDS"]', wsnorm($tcdwds||''), 0);
 
 ##-- meta: text-class: dta-corpus (ocr|mts|cn|...)
+my @uxp_corpus = user_xpaths('textClassCorpus');
 my $tccorpus = join('::',
 		    map {normalize_space($_->textContent)}
 		    @{xpnods($hroot,join('|',
-					 user_xpaths('textClassCorpus'),
-					 'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#DTACorpus"]',
+					 (@uxp_corpus ? @uxp_corpus
+					  : (
+					     'profileDesc/textClass/classCode[@scheme="http://www.deutschestextarchiv.de/doku/klassifikation#DTACorpus"]',
+					    ))
 					))}
 		   );
 ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassCorpus"]', wsnorm($tccorpus||''), 0);
