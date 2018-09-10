@@ -38,7 +38,8 @@ our $aux_dbfile = undef;    ##-- auxilliary db (Berkeley DB, ($basename => $meta
 our $aux_xpath  = 'fileDesc[@n="ddc-aux"]';
 
 ##-- var: user XPaths
-our %user_xpaths = qw(); ##-- ($key => \@xpaths); known keys: date,author,...
+our %user_xpaths   = qw();  ##-- ($key => \@xpaths); known keys: date,author,...
+our %user_defaults = qw();  ##-- default values (textClass*)
 
 ##-- constants: verbosity levels
 our $vl_warn     = 1;
@@ -71,6 +72,7 @@ GetOptions(##-- General
 
 	   ##-- user-specified XPaths
 	   'user-xpath|user-xp|userpath|uxp|xpath|xp=s%' => sub { push(@{$user_xpaths{$_[1]}},$_[2]); },
+	   'user-default|ud|default|D=s%' => \%user_defaults,
 
 	   ##-- I/O
 	   'keep-blanks|blanks|whitespace|ws!' => \$keep_blanks,
@@ -489,7 +491,7 @@ my $tcdta = join('::',
 					 ))
 				     ))}
 		);
-ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassDTA"]', wsnorm($tcdta||''), 0);
+ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassDTA"]', wsnorm($tcdta||$user_defaults{'textClassDTA'}||''), 0);
 
 ##-- meta: text-class: dwds
 my @uxp_tcdwds = user_xpaths('textClassDWDS');
@@ -506,7 +508,7 @@ my $tcdwds = join('::',
 					  ))
 				      ))}
 		 );
-ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassDWDS"]', wsnorm($tcdwds||''), 0);
+ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassDWDS"]', wsnorm($tcdwds||$user_defaults{'textClassDWDS'}||''), 0);
 
 ##-- meta: text-class: dta-corpus (ocr|mts|cn|...)
 my @uxp_corpus = user_xpaths('textClassCorpus');
@@ -519,7 +521,7 @@ my $tccorpus = join('::',
 					    ))
 					))}
 		   );
-ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassCorpus"]', wsnorm($tccorpus||''), 0);
+ensure_xpath($hroot, 'profileDesc/textClass/classCode[@scheme="ddcTextClassCorpus"]', wsnorm($tccorpus||$user_defaults{'textClassCorpus'}||''), 0);
 
 ##-- apply aux-db
 my ($aux_buf);
@@ -566,6 +568,7 @@ dtatw-sanitize-header.perl - make DDC/DTA-friendly TEI-headers
 
  XPath Options:
   -xpath ATTR=XPATH      # prepend XPATH for attribute ATTR
+  -default ATTR=VAL      # default values (for textClass* attributes)
 
  I/O Options:
   -blanks , -noblanks    # do/don't keep 'ignorable' whitespace in XML_HEADER_FILE file (default=don't)
@@ -673,6 +676,10 @@ Prepend I<XPATH> to the builtin list of source XPaths for the attribute I<ATTR>.
 Known attributes:
 author title date bibl shelfmark library dirname dtaid timestamp
 availability avail textClassDTA textClassDWDS textClassCorpus.
+
+=item -default ATTR=VALUE
+
+Default value for attribute ATTR.  Only used for textClass* attributes.
 
 =back
 
