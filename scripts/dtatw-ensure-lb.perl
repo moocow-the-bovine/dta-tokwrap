@@ -74,6 +74,7 @@ sub cb_char {
     return;
   }
   $str = $_[0]->original_string();
+  utf8::decode($str) if (!utf8::is_utf8($str));
   if ($byline && $last_was_lb) {
     ##-- apply line heuristics
     $outfh->print($1) if ($str =~ s/^(\R)//);
@@ -82,6 +83,7 @@ sub cb_char {
 
   $last_was_lb ||= ($byline && $str =~ /\R\z/);
   $str =~ s{(\R)}{<lb/>$1}sg;           ##-- map internal newlines
+  utf8::encode($str) if (utf8::is_utf8($str));
   $outfh->print($str);
 }
 
