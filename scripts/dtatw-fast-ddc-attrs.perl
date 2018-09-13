@@ -9,10 +9,14 @@ use strict;
 ## Command-line
 our $prog = basename($0);
 our $outfile = '-';
+our $keep_b = 0;
+our $keep_xb = 0;
 our ($help);
 GetOptions(##-- General
 	   'help|h' => \$help,
 	   'o|out|output=s' => \$outfile,
+	   'b|keep-b!' => \$keep_b,
+	   'xb|keep-xb!' => \$keep_xb,
 	  );
 if ($help) {
   print STDERR <<EOF;
@@ -22,6 +26,8 @@ Usage: $prog \[OPTIONS] T_XML_FILE
 Options:
   -h, -help          # this help message
   -o, -out OUTFILE   # output file (t-xml with //w/\@ws)
+      -[no]keep-b    # do/don't keep //w/\@b (default: don't)
+      -[no]keep-xb   # do/don't keep //w/\@xb (default: don't)
 
 EOF
   exit ($help ? 0 : 1);
@@ -50,19 +56,20 @@ sub cb_start {
     $ws = (($off//0) == $cur ? 0 : 1);
     $cur = $off+$len;
     $str = $_[0]->original_string;
+    $str =~ s{\sb=\"[^\"]*\"}{}g if (!$keep_b);
+    $str =~ s{\sxb=\"[^\"]*\"}{}g if (!$keep_xb);
     $str =~ s{(\/?>)\z}{ ws="$ws"$1};
-    $str =~ s{\sx?b=\"[^\"]*\"}{}g;
-    print $str;
+    print $outfh $str;
   }
   else {
-    print $that->original_string;
+    print $outfh $that->original_string;
   }
 }
 
 ## undef = cb_catchall($expat, ...)
 ##  + catch-all
 sub cb_catchall {
-  $outfh->print($_[0]->original_string);
+  print $outfh $_[0]->original_string;
 }
 
 ## undef = cb_default($expat, $str)
