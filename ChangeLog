@@ -1,5 +1,8 @@
 ##-*- Mode: ChangeLog; coding: utf-8; -*-
 
+v0.84 Thu, 13 Sep 2018 14:39:19 +0200 moocow
+	* added dtatw-fast-ddc-attrs.perl: fast minimal attribute extraction (//w/@ws only)
+
 v0.83 Wed, 05 Sep 2018 11:05:56 +0200 moocow
 	* added dtatw-sanitize-header.perl support for user-specified XPaths
 
