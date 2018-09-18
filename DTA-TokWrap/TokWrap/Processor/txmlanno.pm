@@ -38,7 +38,7 @@ sub defaults {
 	  ##-- inherited
 	  $that->SUPER::defaults(),
 
-	  'annojoin'=>,
+	  'annojoin'=>0,
 	 );
 }
 
