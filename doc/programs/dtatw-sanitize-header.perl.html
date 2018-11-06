@@ -66,6 +66,7 @@
 
  XPath Options:
   -xpath ATTR=XPATH      # prepend XPATH for attribute ATTR
+  -default ATTR=VAL      # default values (for textClass* attributes)
 
  I/O Options:
   -blanks , -noblanks    # do/don&#39;t keep &#39;ignorable&#39; whitespace in XML_HEADER_FILE file (default=don&#39;t)
@@ -150,6 +151,12 @@
 <dd>
 
 <p>Prepend <i>XPATH</i> to the builtin list of source XPaths for the attribute <i>ATTR</i>. Known attributes: author title date bibl shelfmark library dirname dtaid timestamp availability avail textClassDTA textClassDWDS textClassCorpus.</p>
+
+</dd>
+<dt id="default-ATTR-VALUE">-default ATTR=VALUE</dt>
+<dd>
+
+<p>Default value for attribute ATTR. Only used for textClass* attributes.</p>
 
 </dd>
 </dl>

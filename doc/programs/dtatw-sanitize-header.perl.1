@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "DTATW-SANITIZE-HEADER.PERL 1"
-.TH DTATW-SANITIZE-HEADER.PERL 1 "2018-09-05" "dta-tokwrap v0.83" "DTA Tokenization Utilities"
+.TH DTATW-SANITIZE-HEADER.PERL 1 "2018-09-10" "dta-tokwrap v0.84" "DTA Tokenization Utilities"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -157,6 +157,7 @@ dtatw\-sanitize\-header.perl \- make DDC/DTA\-friendly TEI\-headers
 \&
 \& XPath Options:
 \&  \-xpath ATTR=XPATH      # prepend XPATH for attribute ATTR
+\&  \-default ATTR=VAL      # default values (for textClass* attributes)
 \&
 \& I/O Options:
 \&  \-blanks , \-noblanks    # do/don\*(Aqt keep \*(Aqignorable\*(Aq whitespace in XML_HEADER_FILE file (default=don\*(Aqt)
@@ -221,6 +222,9 @@ Prepend \fI\s-1XPATH\s0\fR to the builtin list of source XPaths for the attribut
 Known attributes:
 author title date bibl shelfmark library dirname dtaid timestamp
 availability avail textClassDTA textClassDWDS textClassCorpus.
+.IP "\-default ATTR=VALUE" 4
+.IX Item "-default ATTR=VALUE"
+Default value for attribute \s-1ATTR. \s0 Only used for textClass* attributes.
 .SS "I/O Options"
 .IX Subsection "I/O Options"
 .IP "\-[no]keep\-blanks" 4

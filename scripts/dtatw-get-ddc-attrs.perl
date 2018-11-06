@@ -223,8 +223,9 @@ sub load_sx {
 
   ##-- descendants of these elements get marked in their 'xc' attribute
   my %xcontext_elts = (map {($_=>undef)}
-		       qw(text front body back head left foot end argument hi cit fw lg stage speaker formula table),
+		       qw(text front body back head foot end argument hi cit fw lg stage speaker formula table),
 		       qw(div note), ##-- specially handled hacked elements
+		       ##qw(left) ##-- DISABLED 2018-11-06 (mantis #31734)
 		      );
 
   ##-- populate sx-blocks

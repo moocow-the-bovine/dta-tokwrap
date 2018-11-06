@@ -46,6 +46,9 @@ our $vl_warn     = 1;
 our $vl_progress = 2;
 our $verbose = $vl_warn;
 
+##-- constants: maximum field length (<=0 or undef for none)
+our $max_bibl_len = 256;
+
 ##-- globals: XML parser
 our $parser = XML::LibXML->new();
 $parser->keep_blanks($keep_blanks ? 1 : 0);
@@ -65,6 +68,7 @@ GetOptions(##-- General
 	   'basename|base|b|dirname|dir|d=s' => \$basename,
 	   'dta!' => sub { $foreign=!$_[1]; },
 	   'foreign|extern!' => \$foreign,
+	   'max-bibl-length|maxlen|l=i' => \$max_bibl_len,
 
 	   ##-- auxilliary data
 	   'aux-db|auxdb|adb|a=s' => \$aux_dbfile,
@@ -213,6 +217,18 @@ sub ensure_xpath {
       if ($warn_if_missing && $verbose >= $vl_warn);
     $elt->appendText($val) if (defined($val));
     $elt->parentNode->insertAfter(XML::LibXML::Comment->new("/".$elt->nodeName.": added by $prog"), $elt);
+  }
+  if (($max_bibl_len//0) > 0 && length($val//'') >= $max_bibl_len) {
+    warn("$prog: $basename: WARNING: trimming XPath ".unparse_xpath($xpspec)." to max_bibl_len=$max_bibl_len characters")
+      if ($verbose >= $vl_warn);
+
+    my $oldelt = $elt;
+    my $newelt = $elt = $oldelt->cloneNode(0);
+    $oldelt->setNodeName($oldelt->nodeName . "_dtatw_orig");
+    $oldelt->parentNode->insertAfter($newelt,$oldelt);
+    my $newval = substr($val,0,($max_bibl_len > 3 ? ($max_bibl_len-3) : $max_bibl_len))."...";
+    $newelt->appendText($newval);
+    $newelt->parentNode->insertAfter(XML::LibXML::Comment->new("/".$newelt->nodeName.": trimmed by $prog"), $newelt);
   }
   return $elt;
 }
@@ -561,6 +577,7 @@ dtatw-sanitize-header.perl - make DDC/DTA-friendly TEI-headers
   -verbose LEVEL         # set verbosity level (0<=LEVEL<=1)
   -quiet                 # alias for -verbose=0
   -dta , -foreign        # do/don't warn about strict DTA header compliance (default=do)
+  -max-bibl-length LEN   # trim bibl fields to maximum length LEN (default=256)
 
  Auxilliary DB Options:  # optional BASENAME-keyed JSON-metadata Berkeley DB
   -aux-db DBFILE         # read auxilliary DB from DBFILE (default=none)
@@ -626,6 +643,10 @@ Do/don't run with DTA-specific heuristics and attempt to enforce DTA-header comp
 =item -foreign
 
 Alias for C<-nodta>.
+
+=item -l, -max-bibl-len LEN
+
+Trim sanitized XPaths to maximum length LEN characters (default=256).
 
 =back
 
