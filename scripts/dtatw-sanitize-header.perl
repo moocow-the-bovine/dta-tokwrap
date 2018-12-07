@@ -34,7 +34,7 @@ our $format = 1;       ##-- output format level
 our $foreign = 0;      ##-- relaxed (non-dta) mode?
 
 ##-- var: aux db
-our $aux_dbfile = undef;    ##-- auxilliary db (Berkeley DB, ($basename => $metadata_json)
+our $aux_dbfile = undef;    ##-- auxiliary db (Berkeley DB, ($basename => $metadata_json)
 our $aux_xpath  = 'fileDesc[@n="ddc-aux"]';
 
 ##-- var: user XPaths
@@ -70,7 +70,7 @@ GetOptions(##-- General
 	   'foreign|extern!' => \$foreign,
 	   'max-bibl-length|maxlen|l=i' => \$max_bibl_len,
 
-	   ##-- auxilliary data
+	   ##-- auxiliary data
 	   'aux-db|auxdb|adb|a=s' => \$aux_dbfile,
 	   'aux-xpath|aux-xp|auxpath|axp|ap=s' => \$aux_xpath,
 
@@ -579,8 +579,8 @@ dtatw-sanitize-header.perl - make DDC/DTA-friendly TEI-headers
   -dta , -foreign        # do/don't warn about strict DTA header compliance (default=do)
   -max-bibl-length LEN   # trim bibl fields to maximum length LEN (default=256)
 
- Auxilliary DB Options:  # optional BASENAME-keyed JSON-metadata Berkeley DB
-  -aux-db DBFILE         # read auxilliary DB from DBFILE (default=none)
+ Auxiliary DB Options:   # optional BASENAME-keyed JSON-metadata Berkeley DB
+  -aux-db DBFILE         # read auxiliary DB from DBFILE (default=none)
   -aux-xpath XPATH       # append <idno type="KEY"> elements to XPATH (default='fileDesc[@n="ddc-aux"]')
 
  XPath Options:
@@ -653,10 +653,10 @@ Trim sanitized XPaths to maximum length LEN characters (default=256).
 =cut
 
 ##----------------------------------------------------------------------
-## Auxilliary DB Options
+## Auxiliary DB Options
 =pod
 
-=head2 Auxilliary DB Options
+=head2 Auxiliary DB Options
 
 You can optionally use a I<BASENAME>-keyed JSON-metadata Berkeley DB file
 to automatically insert additional metadata fields into an existing header.
@@ -665,7 +665,7 @@ to automatically insert additional metadata fields into an existing header.
 
 =item -aux-db DBFILE
 
-Apply auxilliary metadata from Berkeley DB file I<DBFILE> (default=none).
+Apply auxiliary metadata from Berkeley DB file I<DBFILE> (default=none).
 Keys of I<DBFILE> should be I<BASENAME>s as parsed from I<XML_HEADER_FILE>
 or passed in via the C<-basename> option, and the associated values should be
 flat JSON objects whose keys are the names of metadata attributes for I<BASENAME>
@@ -674,7 +674,7 @@ and whose values are the values of those metadata attributes.
 =item -aux-xpath XPATH
 
 Append C<E<lt>idno type="I<KEY>"E<gt>I<VAL>E<lt>/idnoE<gt>> elements to I<XPATH> (default=C<'fileDesc[@n="ddc-aux"]'>)
-for auxilliary metadata attributes.
+for auxiliary metadata attributes.
 
 =back
 
