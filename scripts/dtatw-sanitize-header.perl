@@ -673,7 +673,7 @@ and whose values are the values of those metadata attributes.
 
 =item -aux-xpath XPATH
 
-Append C<E<lt>idno type="I<KEY>"E<gt>I<VAL>I<lt>/idnoI<gt>> elements to I<XPATH> (default=C<'fileDesc[@n="ddc-aux"]'>)
+Append C<E<lt>idno type="I<KEY>"E<gt>I<VAL>E<lt>/idnoE<gt>> elements to I<XPATH> (default=C<'fileDesc[@n="ddc-aux"]'>)
 for auxilliary metadata attributes.
 
 =back
