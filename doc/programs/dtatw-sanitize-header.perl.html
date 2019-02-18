@@ -18,7 +18,7 @@
   <li><a href="#OPTIONS-AND-ARGUMENTS">OPTIONS AND ARGUMENTS</a>
     <ul>
       <li><a href="#General-Options">General Options</a></li>
-      <li><a href="#Auxilliary-DB-Options">Auxilliary DB Options</a></li>
+      <li><a href="#Auxiliary-DB-Options">Auxiliary DB Options</a></li>
       <li><a href="#XPath-Options">XPath Options</a></li>
       <li><a href="#I-O-Options">I/O Options</a></li>
     </ul>
@@ -59,9 +59,10 @@
   -verbose LEVEL         # set verbosity level (0&lt;=LEVEL&lt;=1)
   -quiet                 # alias for -verbose=0
   -dta , -foreign        # do/don&#39;t warn about strict DTA header compliance (default=do)
+  -max-bibl-length LEN   # trim bibl fields to maximum length LEN (default=256)
 
- Auxilliary DB Options:  # optional BASENAME-keyed JSON-metadata Berkeley DB
-  -aux-db DBFILE         # read auxilliary DB from DBFILE (default=none)
+ Auxiliary DB Options:   # optional BASENAME-keyed JSON-metadata Berkeley DB
+  -aux-db DBFILE         # read auxiliary DB from DBFILE (default=none)
   -aux-xpath XPATH       # append &lt;idno type=&quot;KEY&quot;&gt; elements to XPATH (default=&#39;fileDesc[@n=&quot;ddc-aux&quot;]&#39;)
 
  XPath Options:
@@ -119,9 +120,15 @@
 <p>Alias for <code>-nodta</code>.</p>
 
 </dd>
+<dt id="l--max-bibl-len-LEN">-l, -max-bibl-len LEN</dt>
+<dd>
+
+<p>Trim sanitized XPaths to maximum length LEN characters (default=256).</p>
+
+</dd>
 </dl>
 
-<h2 id="Auxilliary-DB-Options">Auxilliary DB Options</h2>
+<h2 id="Auxiliary-DB-Options">Auxiliary DB Options</h2>
 
 <p>You can optionally use a <i>BASENAME</i>-keyed JSON-metadata Berkeley DB file to automatically insert additional metadata fields into an existing header.</p>
 
@@ -130,13 +137,13 @@
 <dt id="aux-db-DBFILE">-aux-db DBFILE</dt>
 <dd>
 
-<p>Apply auxilliary metadata from Berkeley DB file <i>DBFILE</i> (default=none). Keys of <i>DBFILE</i> should be <i>BASENAME</i>s as parsed from <i>XML_HEADER_FILE</i> or passed in via the <code>-basename</code> option, and the associated values should be flat JSON objects whose keys are the names of metadata attributes for <i>BASENAME</i> and whose values are the values of those metadata attributes.</p>
+<p>Apply auxiliary metadata from Berkeley DB file <i>DBFILE</i> (default=none). Keys of <i>DBFILE</i> should be <i>BASENAME</i>s as parsed from <i>XML_HEADER_FILE</i> or passed in via the <code>-basename</code> option, and the associated values should be flat JSON objects whose keys are the names of metadata attributes for <i>BASENAME</i> and whose values are the values of those metadata attributes.</p>
 
 </dd>
 <dt id="aux-xpath-XPATH">-aux-xpath XPATH</dt>
 <dd>
 
-<p>Append <code>&lt;idno type=&quot;<i>KEY</i>&quot;&gt;<i>VAL</i><i>lt</i>/idno<i>gt</i></code> elements to <i>XPATH</i> (default=<code>&#39;fileDesc[@n=&quot;ddc-aux&quot;]&#39;</code>) for auxilliary metadata attributes.</p>
+<p>Append <code>&lt;idno type=&quot;<i>KEY</i>&quot;&gt;<i>VAL</i>&lt;/idno&gt;</code> elements to <i>XPATH</i> (default=<code>&#39;fileDesc[@n=&quot;ddc-aux&quot;]&#39;</code>) for auxiliary metadata attributes.</p>
 
 </dd>
 </dl>

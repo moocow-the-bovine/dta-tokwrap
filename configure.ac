@@ -3,7 +3,7 @@ AC_PREREQ(2.5)
 
 dnl Some handy macros
 define([THE_PACKAGE_NAME],    [dta-tokwrap])
-define([THE_PACKAGE_VERSION], [0.85])
+define([THE_PACKAGE_VERSION], [0.86-pre1])
 define([THE_PACKAGE_MAINTAINER],  [jurish@bbaw.de])
 
 AC_INIT(THE_PACKAGE_NAME, THE_PACKAGE_VERSION, THE_PACKAGE_MAINTAINER)
@@ -35,6 +35,7 @@ dnl AC_LANG(C++)
 AX_ARG_DISTCHECK()
 
 ##-- flex, bison (also automake LEX, YACC)
+AX_HAVE_GNU_MAKE()
 AX_CHECK_FLEX()
 AX_CHECK_BISON()
 AX_GNU_LEXYACC()

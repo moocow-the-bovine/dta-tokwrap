@@ -246,11 +246,18 @@ sub MY::distdir {
   my $local =
 '
 ##-- distdir_am: hacked create_distdir for superordinate automake
+#DISTDIR_AM ?= $(DISTNAME).am
+#distdir_am:
+#	$(RM_RF) $(DISTDIR_AM)
+#	$(PERLRUN) "-MExtUtils::Manifest=manicopy,maniread" \\
+#	  -e "manicopy(maniread(),\'$(DISTDIR_AM)\', \'$(DIST_CP)\');"
+
 DISTDIR_AM ?= $(DISTNAME).am
 distdir_am:
-	$(RM_RF) $(DISTDIR_AM)
-	$(PERLRUN) "-MExtUtils::Manifest=manicopy,maniread" \\
-	  -e "manicopy(maniread(),\'$(DISTDIR_AM)\', \'$(DIST_CP)\');"
+	$(MAKE) distdir
+	-rm -rf $(DISTDIR_AM)
+	mv $(DISTVNAME) $(DISTDIR_AM)
+
 
 PMLIST_AM ?= ../doc/pm_list
 pm_list: $(PMLIST_AM)

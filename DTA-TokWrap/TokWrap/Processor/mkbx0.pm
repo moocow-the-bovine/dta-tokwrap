@@ -532,7 +532,7 @@ sub hint_autotune {
 		   ? $mbx0->{hint_sb_xpaths_pretune}
 		   : ($mbx0->{hint_sb_xpaths_pretune}=$mbx0->{hint_sb_xpaths}));
 
-  ##-- count <p> and <p> elements
+  ##-- count <p> and <sp> elements
   my $np  = 0+($$sxbufr =~ s/<p\b/<p/sg);
   my $nsp = 0+($$sxbufr =~ s/<sp\b/<sp/sg);
 
