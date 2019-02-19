@@ -1,0 +1,484 @@
+<!-- source=kaskade:/home/wiegand/mysource/git/DTAQ/root/api/tei-header.tt -->
+  <teiHeader>
+    <fileDesc>
+
+      <!-- Titelangaben der DTA-Publikation -->
+      <titleStmt>
+        <title type="main">[% book.title | xml %]</title>
+
+        [% IF book.subtitle %]
+        <title type="sub">[% book.subtitle | xml %]</title>
+        [% END %]
+
+        [% IF book.other_title %]
+        <title type="sub">[% book.other_title | xml %]</title>
+        [% END %]
+
+        [% IF book.band_alphanum OR book.band_zaehlung %]
+        <title type="[% book.metadaten.type.search('ZSA') ? 'part' : 'vol' %]"[% IF book.band_zaehlung %] n="[% book.band_zaehlung | xml %]"[% END %]>[% book.band_alphanum | xml %]</title>
+        [% END %]
+
+        [% IF book.short_title %]
+        <title type="short">[% book.short_title | xml %]</title>
+        [% END %]
+
+        <!--
+          Achtung: nur der Autor wird genannt (falls vorhanden); ein möglicher Herausgeber
+          der zugrundeliegenden Textfassung steht in der <sourceDesc>; bei mehreren Autoren:
+          mehrere <author>-Elemente
+        -->
+        [% IF book.autor1_lastname OR book.autor1_pnd %]
+        <author>
+          [% IF book.autor1_pnd == '118535749' %]
+          <persName ref="http://d-nb.info/gnd/[% book.autor1_pnd | xml %]">
+            <forename>Friedrich</forename>
+            <genName>II.</genName>
+            <roleName>König von Preußen</roleName>
+          </persName>
+          [% ELSIF book.autor1_pnd == '118532510' %]
+          <persName ref="http://d-nb.info/gnd/[% book.autor1_pnd | xml %]">
+            <forename>Ferdinand</forename>
+            <genName>II.</genName>
+          </persName>
+          [% ELSE %]
+          <persName[% IF book.autor1_pnd %] ref="http://d-nb.info/gnd/[% book.autor1_pnd | xml %]"[% END %]>
+            [% IF book.autor1_lastname %]
+            <surname>[% book.autor1_lastname | xml %]</surname>
+            [% END %]
+
+            [% IF book.autor1_prename %]
+            <forename>[% book.autor1_prename | xml %]</forename>
+            [% END %]
+
+            [% IF book.autor1_syn_names %]
+            <addName>[% book.autor1_syn_names | xml %]</addName>
+            [% END %]
+          </persName>
+          [% END %]
+        </author>
+        [% END %]
+
+        [% IF book.autor2_lastname %]
+        <author>
+          <persName[% IF book.autor2_pnd %] ref="http://d-nb.info/gnd/[% book.autor2_pnd | xml %]"[% END %]>
+            [% IF book.autor2_lastname %]
+            <surname>[% book.autor2_lastname | xml %]</surname>
+            [% END %]
+
+            [% IF book.autor2_prename %]
+            <forename>[% book.autor2_prename | xml %]</forename>
+            [% END %]
+
+            [% IF book.autor2_syn_names %]
+            <addName>[% book.autor2_syn_names | xml %]</addName>
+            [% END %]
+          </persName>
+        </author>
+        [% END %]
+
+        [% IF book.autor3_lastname %]
+        <author>
+          <persName[% IF book.autor3_pnd %] ref="http://d-nb.info/gnd/[% book.autor3_pnd | xml %]"[% END %]>
+            [% IF book.autor3_lastname %]
+            <surname>[% book.autor3_lastname | xml %]</surname>
+            [% END %]
+
+            [% IF book.autor3_prename %]
+            <forename>[% book.autor3_prename | xml %]</forename>
+            [% END %]
+
+            [% IF book.autor3_syn_names %]
+            <addName>[% book.autor3_syn_names | xml %]</addName>
+            [% END %]
+          </persName>
+        </author>
+        [% END %]
+
+        <editor corresp="#DTACorpusPublisher">
+          <persName ref="http://d-nb.info/gnd/115266127">
+            <surname>Geyken</surname>
+            <forename>Alexander</forename>
+          </persName>
+        </editor>
+        <editor corresp="#DTACorpusPublisher">
+          <persName ref="http://d-nb.info/gnd/1018099549">
+            <surname>Haaf</surname>
+            <forename>Susanne</forename>
+          </persName>
+        </editor>
+        <editor corresp="#DTACorpusPublisher">
+          <persName ref="http://d-nb.info/gnd/1019062681">
+            <surname>Jurish</surname>
+            <forename>Bryan</forename>
+          </persName>
+        </editor>
+        <editor corresp="#DTACorpusPublisher">
+          <persName>
+            <surname>Schulz</surname>
+            <forename>Matthias</forename>
+          </persName>
+        </editor>
+        <editor corresp="#DTACorpusPublisher">
+          <persName>
+            <surname>Steinmann</surname>
+            <forename>Jakob</forename>
+          </persName>
+        </editor>
+        <editor corresp="#DTACorpusPublisher">
+          <persName>
+            <surname>Thomas</surname>
+            <forename>Christian</forename>
+          </persName>
+        </editor>
+        <editor corresp="#DTACorpusPublisher">
+          <persName>
+            <surname>Wiegand</surname>
+            <forename>Frank</forename>
+          </persName>
+        </editor>
+
+        [% IF book.resp %]
+          [% book.resp %]
+        [% END %]
+        <!-- <respStmt - hier Variante (a), nicht wenn DTA-Kernkorpus
+        <respStmt>
+          <resp>
+            Erstellung der dem DTA-Volltext zugrundegelegten Transkription
+            <ref target="..."/> (ohne @type)
+            <date type="access">>[% USE date; date.format(XXX, '%Y-%m-%dT%H:%M:%SZ', 'C', 1) %] </date>
+            <note>Bitte beachten Sie. </note>XXX
+          </resp>
+          <persName>
+            <forename>Kathrin</forename>
+            <surname>Beck</surname>
+          </persName>
+        </respStmt>
+        <respStmt>
+          <resp>Bereitstellung der dem DTA-Volltext zugrundegelegten
+          Transkription</resp>
+          <name>Projekt Digitization Lifecycle</name>
+          <orgName>MPI für Bildungsforschung</orgName>
+        </respStmt>
+        <respStmt>
+          <resp>Bereitstellung der dem DTA-Volltext zugrundegelegten
+          Transkription</resp>
+          <orgName>Wikisource</orgName>
+        </respStmt> 
+        -->
+      </titleStmt>
+
+      <editionStmt><edition>Vollständige digitalisierte Ausgabe.</edition></editionStmt>
+
+      <extent>
+        <measure type="images">[% book.pages.size | xml %]</measure>
+        <measure type="tokens">[% book.token3 | xml %]</measure>
+        <measure type="types">[% book.types3 | xml %]</measure>
+        <measure type="characters">[% book.chars | xml %]</measure>
+      </extent>
+
+      <publicationStmt>
+        <pubPlace>Berlin</pubPlace>
+        <date type="publication">[% USE date; date.format(date.now, '%Y-%m-%dT%H:%M:%SZ', 'C', 1) %]</date>
+        <publisher xml:id="DTACorpusPublisher">
+          <orgName>Deutsches Textarchiv</orgName>
+          <email>dta@bbaw.de</email>
+        </publisher>
+        <address>
+          <addrLine>Jägerstr. 22/23, 10117 Berlin</addrLine>
+        </address>
+        <availability>
+          [% IF book.license %]
+            [% book.license %]
+          [% ELSE %]
+          <licence target="http://creativecommons.org/licenses/by-nc/3.0/">
+            <p>Distributed under the Creative Commons Attribution-NonCommercial 3.0 Unported License.</p>
+          </licence>
+          [% END %]
+        </availability>
+        
+        <!--<idno type="URN">URN</idno>-->
+        <idno type="URL">http://www.deutschestextarchiv.de/[% book.metadaten.dirname | xml %]</idno>
+        <idno type="DTAID">[% book.id_book | xml %]</idno>
+        <idno type="DTADirName">[% book.metadaten.dirname | xml %]</idno>
+      </publicationStmt>
+      
+      <sourceDesc>
+        <bibl>[% book.dta_bibl_angabe | xml %]</bibl>
+        <biblFull>
+          <titleStmt>
+          <!-- auch level="a" für nichtselbständige Publikationen möglich -->
+          <title level="[% book.metadaten.type.search('^(R|ZSA)$') ? 'a' : 'm' %]" type="main">[% book.title | xml %]</title>
+
+          [% IF book.subtitle %]
+          <title level="[% book.metadaten.type.search('^(R|ZSA)$') ? 'a' : 'm' %]" type="sub">[% book.subtitle | xml %]</title>
+          [% END %]
+            
+          [% IF book.other_title %]
+          <title level="[% book.metadaten.type.search('^(R|ZSA)$') ? 'a' : 'm' %]" type="sub">[% book.other_title | xml %]</title>
+          [% END %]
+            
+          [% IF book.band_alphanum OR book.band_zaehlung %]
+          <title level="[% book.metadaten.type.search('^(R|ZSA)$') ? 'a' : 'm' %]" type="[% book.metadaten.type.search('ZSA') ? 'part' : 'vol' %]"[% IF book.band_zaehlung %] n="[% book.band_zaehlung | xml %]"[% END %]>[% book.band_alphanum | xml %]</title>
+          [% END %]
+
+          <!-- bei mehreren Autoren mehrere <author>-Elemente -->
+          [% IF book.autor1_lastname OR book.autor1_pnd %]
+            <author>
+              [% IF book.autor1_pnd == '118535749' %]
+              <persName ref="http://d-nb.info/gnd/118535749">
+                <forename>Friedrich</forename>
+                <genName>II.</genName>
+                <roleName>König von Preußen</roleName>
+              </persName>
+              [% ELSIF book.autor1_pnd == '118532510' %]
+              <persName ref="http://d-nb.info/gnd/118532510">
+                <forename>Ferdinand</forename>
+                <genName>II.</genName>
+              </persName>
+              [% ELSE %]
+              <persName[% IF book.autor1_pnd %] ref="http://d-nb.info/gnd/[% book.autor1_pnd | xml %]"[% END %]>
+                [% IF book.autor1_lastname %]
+                <surname>[% book.autor1_lastname | xml %]</surname>
+                [% END %]
+
+                [% IF book.autor1_prename %]
+                <forename>[% book.autor1_prename | xml %]</forename>
+                [% END %]
+
+                [% IF book.autor1_syn_names %]
+                <addName>[% book.autor1_syn_names | xml %]</addName>
+                [% END %]
+              </persName>
+              [% END %]
+            </author>
+          [% END %]
+
+          [% IF book.autor2_lastname %]
+            <author>
+              <persName[% IF book.autor2_pnd %] ref="http://d-nb.info/gnd/[% book.autor2_pnd | xml %]"[% END %]>
+                [% IF book.autor2_lastname %]
+                <surname>[% book.autor2_lastname | xml %]</surname>
+                [% END %]
+
+                [% IF book.autor2_prename %]
+                <forename>[% book.autor2_prename | xml %]</forename>
+                [% END %]
+
+                [% IF book.autor2_syn_names %]
+                <addName>[% book.autor2_syn_names | xml %]</addName>
+                [% END %]
+              </persName>
+            </author>
+          [% END %]
+
+          [% IF book.autor3_lastname %]
+            <author>
+              <persName[% IF book.autor3_pnd %] ref="http://d-nb.info/gnd/[% book.autor3_pnd | xml %]"[% END %]>
+                [% IF book.autor3_lastname %]
+                <surname>[% book.autor3_lastname | xml %]</surname>
+                [% END %]
+
+                [% IF book.autor3_prename %]
+                <forename>[% book.autor3_prename | xml %]</forename>
+                [% END %]
+
+                [% IF book.autor3_syn_names %]
+                <addName>[% book.autor3_syn_names | xml %]</addName>
+                [% END %]
+              </persName>
+            </author>
+          [% END %]
+
+          <!-- wenn keiner, dann <editor>N. N.</editor> kommt in DTADB -->
+          [% FOREACH publisher IN book.publisher_fw %]
+            <editor>
+              <persName[% IF publisher.pnd %] ref="http://d-nb.info/gnd/[% publisher.pnd | xml %]"[% END %]>
+                [% IF publisher.surname %]
+                <surname>[% publisher.surname | xml %]</surname>
+                [% END %]
+
+                [% IF publisher.forename %]
+                <forename>[% publisher.forename | xml %]</forename>
+                [% END %]
+
+                [% IF publisher.addname %]
+                <addName>[% publisher.addname | xml %]</addName>
+                [% END %]
+              </persName>
+            </editor>
+          [% END %]
+
+          <!-- wenn keiner, dann <editor role="translator">N. N.</editor> -->
+          [% FOREACH translator IN book.translator_fw %]
+            <editor role="translator">
+              <persName[% IF translator.pnd %] ref="http://d-nb.info/gnd/[% translator.pnd | xml %]"[% END %]>
+                [% IF translator.surname %]
+                <surname>[% translator.surname | xml %]</surname>
+                [% END %]
+
+                [% IF translator.forename %]
+                <forename>[% translator.forename | xml %]</forename>
+                [% END %]
+
+                [% IF translator.addname %]
+                <addName>[% translator.addname | xml %]</addName>
+                [% END %]
+              </persName>
+            </editor>
+          [% END %]
+          </titleStmt>
+
+          <editionStmt>
+            <edition n="[% IF book.dta_auflage; book.dta_auflage.replace('^(\d+).*', '$1') | xml; ELSE; '1'; END %]"[% IF book.dta_auflage %]>[% book.dta_auflage | xml %]</edition>[% ELSE %]/>[% END %]
+          </editionStmt>
+
+          [% IF book.umfang %]
+          <extent>
+            <measure type="pages">[% book.umfang | xml %]</measure>
+          </extent>
+          [% END %]
+
+          <publicationStmt>
+            [% FOREACH place IN book.dta_pub_location_fw %]
+              <pubPlace>[% place | xml %]</pubPlace>
+            [% END %]
+
+            [% IF book.dta_pub_date %]
+            <date type="publication">[% book.dta_pub_date | xml %]</date>
+            [% END %]
+
+            [% IF 0 %]<!-- XXX: Jahr der Erschaffung -->
+            <date type="firstPublication">...</date>
+            [% END %]
+            
+            [% IF book.dta_pub_verlag %]
+              [% FOREACH verlag IN book.dta_pub_verlag.split('\s*;\s*') %]
+              <publisher><name>[% verlag | xml %]</name></publisher>
+              [% END %]
+            [% END %]
+          </publicationStmt>
+
+          [% IF book.metadaten.type.search('^(ZSA|MM|R|RM|RU)$') AND (book.dta_reihe_titel OR book.dta_reihe_jahrgang OR book.dta_reihe_band OR book.dta_seiten) %]
+          <seriesStmt>
+            <!-- bei Artikeln in Zeitschriften -->
+            <!--<title level="j" type="main">Titel der Zeitschrift</title>-->
+            <!-- oder: -->
+            [% IF book.dta_reihe_titel %]
+            <title level="[% book.metadaten.type.search('^ZSA') ? 'j' : 's' %]" type="main">[% book.dta_reihe_titel | xml %]</title>
+            [% END %]
+            <!-- type="sub" auch möglich -->
+
+            [% IF book.metadaten.type.search('^(MM|R|RU|RM)$') %]
+              [% IF book.dta_reihe_band %]
+              <biblScope type="volume">[% book.dta_reihe_band | xml %]</biblScope>
+              [% END %]
+            [% ELSE %]
+              [% IF book.dta_reihe_jahrgang %]
+              <biblScope type="volume">[% book.dta_reihe_jahrgang | xml %]</biblScope>
+              [% END %]
+
+              [% IF book.dta_reihe_band %]
+              <biblScope type="issue">[% book.dta_reihe_band | xml %]</biblScope>
+              [% END %]
+            [% END %]
+            [% IF book.dta_seiten %]
+            <biblScope type="pages">[% book.dta_seiten | xml %]</biblScope>
+            [% END %]
+          </seriesStmt>
+          [% END %]
+        </biblFull>
+
+        <msDesc>
+          <msIdentifier>
+            [% IF book.bookplace %]
+            <repository>[% book.bookplace.location.name | xml %]</repository>
+            <idno type="shelfmark">[% book.bookplace.signatur | xml %]</idno>
+
+            [% IF book.bookplace.bib_id %]
+            <altIdentifier>
+              <idno type="EPN">[% book.bookplace.bib_id | xml %]</idno>
+            </altIdentifier>
+            [% END %]
+
+            <!--<altIdentifier>
+              <idno type="URN">URN der Bilder</idno>
+            </altIdentifier>-->
+            [% END %]
+          </msIdentifier>
+
+          [% IF book.metadaten.schriftart %]
+          <physDesc>
+            <typeDesc>
+              <p>[% book.metadaten.schriftart | xml %]</p>
+            </typeDesc>
+          </physDesc>
+          [% END %]
+        </msDesc>
+      </sourceDesc>
+    </fileDesc>
+
+    <encodingDesc>
+      [% SWITCH book.source.source %]
+        [% CASE 'kt' %]
+        <p>Dieses Werk wurde gemäß den <ref target="http://www.deutschestextarchiv.de/doku/richtlinien">DTA-Transkriptionsrichtlinien</ref>
+          im Double-Keying-Verfahren von Muttersprachlern erfasst und in XML/TEI P5
+          nach <ref target="http://www.deutschestextarchiv.de/doku/basisformat">DTA-Basisformat</ref> kodiert.</p>
+        [% CASE 'china' %]
+        <p>Dieses Werk wurde gemäß den <ref target="http://www.deutschestextarchiv.de/doku/richtlinien">DTA-Transkriptionsrichtlinien</ref>
+          im Double-Keying-Verfahren von Nicht-Muttersprachlern erfasst und in XML/TEI P5
+          nach <ref target="http://www.deutschestextarchiv.de/doku/basisformat">DTA-Basisformat</ref> kodiert.</p>
+        [% CASE 'don' %]
+        <p>Dieses Werk wurde von OCR-Software automatisch erfasst und anschließend
+          gemäß den <ref target="http://www.deutschestextarchiv.de/doku/richtlinien">DTA-Transkriptionsrichtlinien</ref>
+          von Muttersprachlern nachkontrolliert. Es wurde gemäß dem
+          <ref target="http://www.deutschestextarchiv.de/doku/basisformat">DTA-Basisformat</ref> in XML/TEI P5 kodiert.</p>
+        [% CASE %]
+        <p/>
+      [% END %]
+
+      [% IF book.extra_information %]
+      <p>
+        <![CDATA[
+          [% book.extra_information %]
+        ]]>
+      </p>
+      [% END %]
+    </encodingDesc>
+
+    <profileDesc>
+      <langUsage>
+        <language ident="de">German</language>
+      </langUsage>
+      <textClass>
+        [% IF book.metadaten.genre %]
+        <classCode scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtamain">[% book.metadaten.genre | xml %]</classCode>
+        [% END %]
+
+        [% IF book.metadaten.untergenre %]
+        <classCode scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dtasub">[% book.metadaten.untergenre | xml %]</classCode>
+        [% END %]
+        
+        [% IF book.metadaten.dwds_kategorie1 %]
+        <classCode scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds1main">[% book.metadaten.dwds_kategorie1 | xml %]</classCode>
+        [% END %]
+        
+        [% IF book.metadaten.dwds_unterkategorie1 %]
+        <classCode scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds1sub">[% book.metadaten.dwds_unterkategorie1 | xml %]</classCode>
+        [% END %]
+        
+        [% IF book.metadaten.dwds_kategorie2 %]
+        <classCode scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds2main">[% book.metadaten.dwds_kategorie2 | xml %]</classCode>
+        [% END %]
+        
+        [% IF book.metadaten.dwds_unterkategorie2 %]
+        <classCode scheme="http://www.deutschestextarchiv.de/doku/klassifikation#dwds2sub">[% book.metadaten.dwds_unterkategorie2 | xml %]</classCode>
+        [% END %]
+      
+        [% IF book.source.source.match('^(?:don|cn|kt)$') %]
+        <classCode scheme="http://www.deutschestextarchiv.de/doku/klassifikation#DTACorpus">core</classCode>
+        [% END %] 
+
+        <classCode scheme="http://www.deutschestextarchiv.de/doku/klassifikation#DTACorpus">[% book.source.source.replace('^don$', 'ocr').replace('^kt', 'mts') | xml %]</classCode>
+      </textClass>
+    </profileDesc>
+  </teiHeader>

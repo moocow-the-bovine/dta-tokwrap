@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doc xmlns:dta="http://www.deutsches-textarchiv.de/ns/1.0" xmlns="http://www.tei-c.org/ns/1.0">
+  <!-- a comment -->
+  <?dummy a processing instruction?>
+  <w n="default:w" dta:xdta="foo" nons_attr="nons_val">abc</w>
+  <dta:w n="dta:w" xdefault="bar" nons_attr="a_val">xyz</dta:w>
+  <foo xmlns:bar="http://bar.com" bar:bonk="blop">
+    <bar n="foo/bar:n" dta:n="foo/bar:dta:n" bar:n="foo/bar:bar:n">blip</bar>
+  </foo>
+  <foo:x xmlns:foo="http://foo.com" n="foo:x"></foo:x>
+  <x xmlns="http://x.com" n="x"></x>
+</doc>

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<teiHeader>
+<fileDesc>
+<titleStmt>
+<title type="main">Handbuch der Naturgeschichte</title>
+<author>
+<persName ref="http://d-nb.info/gnd/116208503">
+<surname>Blumenbach</surname>
+<forename>Johann Friedrich</forename>
+</persName>
+          <persName ref="http://d-nb.info/gnd/118535749">
+            <forename>Friedrich</forename>
+            <genName>II.</genName>
+            <roleName>König von Preußen</roleName>
+	    <addName>der olle Fritz</addName>
+          </persName>
+</author>
+<editor corresp="#DTACorpusPublisher">
+<persName ref="http://d-nb.info/gnd/115266127">
+<surname>Geyken</surname>
+<forename>Alexander</forename>
+</persName>
+</editor>
+<editor corresp="#DTACorpusPublisher">
+<persName ref="http://d-nb.info/gnd/1018099549">
+<surname>Haaf</surname>
+<forename>Susanne</forename>
+</persName>
+</editor>
+<editor corresp="#DTACorpusPublisher">
+<persName ref="http://d-nb.info/gnd/1019062681">
+<surname>Jurish</surname>
+<forename>Bryan</forename>
+</persName>
+</editor>
+<editor corresp="#DTACorpusPublisher">
+<persName>
+<surname>Schulz</surname>
+<forename>Matthias</forename>
+</persName>
+</editor>
+<editor corresp="#DTACorpusPublisher">
+<persName>
+<surname>Steinmann</surname>
+<forename>Jakob</forename>
+</persName>
+</editor>
+<editor corresp="#DTACorpusPublisher">
+<persName>
+<surname>Thomas</surname>
+<forename>Christian</forename>
+</persName>
+</editor>
+<editor corresp="#DTACorpusPublisher">
+<persName>
+<surname>Wiegand</surname>
+<forename>Frank</forename>
+</persName>
+</editor>
+</titleStmt>
+<editionStmt><edition>Vollständige digitalisierte Ausgabe.</edition></editionStmt>
+<extent>
+<measure type="images">766</measure>
+<measure type="tokens">129808</measure>
+<measure type="types">25999</measure>
+<measure type="characters">1071182</measure>
+</extent>
+<publicationStmt>
+<pubPlace>Berlin</pubPlace>
+<date type="publication">2012-10-24T12:02:33Z</date>
+<publisher xml:id="DTACorpusPublisher">
+<orgName>Deutsches Textarchiv</orgName>
+<email>dta@bbaw.de</email>
+</publisher>
+<address>
+<addrLine>Jägerstr. 22/23, 10117 Berlin</addrLine>
+</address>
+<availability>
+<licence target="http://creativecommons.org/licenses/by-nc/3.0/">
+<p>Distributed under the Creative Commons Attribution-NonCommercial 3.0 Unported License.</p>
+</licence>
+</availability>
+<idno type="URL">http://www.deutschestextarchiv.de/blumenbach_naturgeschichte_1799</idno>
+<idno type="DTAID">30006</idno>
+<idno type="DTADirName">blumenbach_naturgeschichte_1799</idno>
+</publicationStmt>
+<sourceDesc>
+<bibl>Blumenbach, Johann Friedrich: Handbuch der Naturgeschichte. 6. Aufl. Göttingen, 1799.</bibl>
+<biblFull>
+<titleStmt>
+<title level="m" type="main">Handbuch der Naturgeschichte</title>
+<author>
+<persName ref="http://d-nb.info/gnd/116208503">
+<surname>Blumenbach</surname>
+<forename>Johann Friedrich</forename>
+</persName>
+</author>
+</titleStmt>
+<editionStmt>
+<edition n="Sechste Auflage">Sechste Auflage</edition>
+</editionStmt>
+<publicationStmt>
+<pubPlace>Göttingen</pubPlace>
+<date type="publication">1799</date>
+</publicationStmt>
+</biblFull>
+<msDesc>
+<msIdentifier>
+</msIdentifier>
+<physDesc>
+<typeDesc>
+<p>Fraktur</p>
+</typeDesc>
+</physDesc>
+</msDesc>
+</sourceDesc>
+</fileDesc>
+<encodingDesc>
+<p/>
+<p>
+<![CDATA[
+<p>
+Dieses Werk stammt vom Projekt <a href="http://www.blumenbach-online.de/">„Johann Friedrich Blumenbach – online“</a>
+der Akademie der Wissenschaften zu Göttingen.
+</p>
+<p>
+Herstellung der Imagedateien des Quelldokuments durch die Utrecht University Library und die Thüringer
+Universitäts- und Landesbibliothek Jena.
+</p>
+<p>Anmerkungen zur Transkription:</p>
+<p>Bei der Zeichenerkennung wurde nach dem von der Akademie gelieferten Dokument "Buchstabenmuster_Blumenbach.doc" modernisiert.</p>
+<p>In Absprache mit der Akademie wurden die folgenden Aspekte der Vorlage nicht erfasst:</p>
+<ul>
+<li>Bogensignaturen und Kustoden</li>
+<li>Kolumnentitel</li>
+<li>Auf Titelblättern wurde auf die Auszeichnung der Schriftgrößenunterscheide zugunsten der Identifizeriung von <code>titlePart</code>s verzeichtet.</li>
+<li>Keine Auszeichnung der Initialbuchstaben am Kapitelanfang.</li>
+</ul>
+<p>
+Es wurden alle Anführungszeichen übernommen und die Zitate zusätzlich mit <code>q</code>
+ausgezeichnet. Eine Ausnahme bilden Zitate, bei denen das Anführungszeichen zu Beginn
+jeder Zeile  wiederholt wird. Hier wurden die Wiederholungen des öffenenden Zeichens
+nicht übernommen, sondern jeweils nur das öffnende und das schließende Zeichen.
+Das umschließende Element <code>q</code> wurde für diese Zitate über das Attribut
+<code>type</code> mit dem Wert <code>preline</code> gekennzeichnet.
+</p>
+<p>
+Weiche und harte Zeilentrennungen wurden als <code>002D</code> übernommen. Weiche
+Zeilentrennungen wurden über die Ergänzung eines Attributwertes von den harten
+Trennungen unterscheiden: <code>lb type="inWord"</code>. Erstreckt sich die
+Worttrennung über einen Seitenumbruch steht das Element <code>pb</code> direkt
+hinter dem schließenden <code>lb type="inWord"</code> bzw. <code>lb</code>.
+</p>
+]]>
+</p>
+</encodingDesc>
+<profileDesc>
+<langUsage>
+<language ident="de">German</language>
+</langUsage>
+<textClass>
+<classCode scheme="http://www.deutschestextarchiv.de/doku/klassifikation#DTACorpus">dtae</classCode>
+</textClass>
+</profileDesc>
+</teiHeader>
