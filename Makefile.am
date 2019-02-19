@@ -84,12 +84,12 @@ dist-hook: $(PMDEPS)
 
 ##-- 'SUBDIRS = DTA-TokWrap' causes multiple 'make cleans' to puke
 clean-local:
-	if test -f DTA-TokWrap/Makefile ; then $(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) clean; fi
+	-if test -f DTA-TokWrap/Makefile ; then $(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) clean; fi
 
 ##-- distcheck hacks
 distclean-local:
-	if test -f DTA-TokWrap/Makefile ; then $(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) distclean; fi
-	if test "$(srcdir)" != "."; then chmod -R u+w DTA-TokWrap; rm -rf DTA-TokWrap; fi
+	-if test -f DTA-TokWrap/Makefile ; then $(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) distclean; fi
+	-if test "$(srcdir)" != "."; then chmod -R u+w DTA-TokWrap; rm -rf DTA-TokWrap; fi
 
 ##-- EU::MM pass-through: test
 test:

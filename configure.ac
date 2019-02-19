@@ -237,6 +237,12 @@ if test "$enable_perl_modules" != "no" ; then
    cp -r $srcdir/DTA-TokWrap/* DTA-TokWrap
  fi
 
+ ##-- more distcheck hacks
+ if test -n "$DISTCHECK" ; then
+    PERL=perl
+    MAKEPLFLAGS="$MAKEPLFLAGS INSTALL_BASE=\"$prefix\""
+ fi
+
  AC_MSG_NOTICE([cd DTA-TokWrap; $PERL Makefile.PL $MAKEPLFLAGS])
  (cd DTA-TokWrap; $PERL Makefile.PL $MAKEPLFLAGS)
 
