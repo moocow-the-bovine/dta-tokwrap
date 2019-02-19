@@ -82,20 +82,21 @@ AC_DEFINE_UNQUOTED(PACKAGE_SVNID,  "$SVNID",  [Subversion identifier for package
 
 #---------------------------------------------------------------
 # short package include-dir
-spkgincludedir="\${includedir}/AC_PACKAGE_NAME"
-AC_SUBST(spkgincludedir)
+dnl spkgincludedir="\${includedir}/dta-tokwrap"
+dnl AC_SUBST(spkgincludedir)
 # short package include-dir
 #---------------------------------------------------------------
 
 #---------------------------------------------------------------
 # share/package dir
-sharepkgdir="\${prefix}/share/AC_PACKAGE_NAME"
-pkgxsldir="\${sharepkgdir}/stylesheets"
-pkgmakdir="\${sharepkgdir}/make"
+#sharepkgdir="\${prefix}/share/AC_PACKAGE_NAME"
+dnl sharepkgdir"\${prefix}/share/dta-tokwrap-utils"
+dnl pkgxsldir="\${sharepkgdir}/stylesheets"
+dnl pkgmakdir="\${sharepkgdir}/make"
 pkgdocdir="\${sharepkgdir}/doc"
-AC_SUBST(sharepkgdir)
-AC_SUBST(pkgxsldir)
-AC_SUBST(pkgmakdir)
+dnl AC_SUBST(sharepkgdir)
+dnl AC_SUBST(pkgxsldir)
+dnl AC_SUBST(pkgmakdir)
 AC_SUBST(pkgdocdir)
 # share/package dir
 #---------------------------------------------------------------
@@ -153,7 +154,7 @@ dnl AX_DOC_GOG_LINKS()
 ##----------------------------------------------------------------------
 ## output
 ##
-AC_CONFIG_FILES(scripts/Makefile)
+dnl AC_CONFIG_FILES(scripts/Makefile)
 AC_CONFIG_FILES(src/Makefile)
 AC_CONFIG_FILES(Makefile)
 AC_OUTPUT

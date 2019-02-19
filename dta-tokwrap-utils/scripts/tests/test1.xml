@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<text>
-  <p>This is a test.<lb/>With line-breaks.<lb/>And more line-breaks.<lb/></p><p>And a second paragraph.</p>
-  <p>after a real line-break; with an &#x65;ntity &amp; &#x17f;t&#252;ff.</p>
-  <p>and some literal äöü</p>
-</text>

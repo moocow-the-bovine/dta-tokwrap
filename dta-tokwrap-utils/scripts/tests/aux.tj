@@ -1,3 +1,0 @@
-head	{"foo":"head-foo","bar":"head-bar"}
-foot	{"foo":"foot-foo","bar":"foot-bar"}
-tests/head	{"foo":"tests/head-foo","bar":"tests/head-bar"}
