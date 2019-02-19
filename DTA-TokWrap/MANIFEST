@@ -44,5 +44,4 @@ TokWrap/Utils.pm
 #TokWrap/Version.pm
 TokWrap/Version.pm.in
 
-t/common.plt
 t/00_basic.t

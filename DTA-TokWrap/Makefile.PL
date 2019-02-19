@@ -6,29 +6,32 @@ use ExtUtils::MakeMaker;
 WriteMakefile
   (
    NAME		=> 'DTA::TokWrap',
-   AUTHOR       => 'Bryan Jurish <moocow@bbaw.de>',
+   AUTHOR       => 'Bryan Jurish <moocow@cpan.org>',
    ABSTRACT	=> 'Wrapper modules & scripts for DTA XML corpus tokenization',
    VERSION_FROM	=> 'TokWrap/Version.pm',
+   LICENSE      => 'perl_5',
 
    PREREQ_PM    => {
-		    'XML::Parser' => undef,
-		    'XML::LibXML' => undef,
-		    'XML::LibXSLT' => undef,
-		    'Encode'=>undef,
+		    'XML::Parser' => 0,
+		    'XML::LibXML' => 0,
+		    'XML::LibXSLT' => 0,
+		    'Encode'=>0,
 		    'Time::HiRes'=>1.9711,
-		    'Getopt::Long'=>undef,
-		    'Pod::Usage'=>undef,
+		    'Getopt::Long'=>0,
+		    'Pod::Usage'=>0,
 		    'Env::Path' =>0.18,
-		    'File::Basename'=>undef,
-		    'Cwd'=>undef,
+		    'File::Basename'=>0,
+		    'Cwd'=>0,
 		    'Log::Log4perl'=>1.20,
 		    'Algorithm::BinarySearch::Vec'=>0.05, ##-- only really required for for dtatw-get-ddc-attrs.perl
+		    ##
+		    'Test::More'=>0,
 		    ##--
-		    #'Tie::Cache'=>undef,
-		    #'File::Basename'=>undef,
-		    #'Getopt::Long'=>undef,
-		    #'Pod::Usage'=>undef,
-		    #'Storable'=>undef,
+		    #'Tie::Cache'=>0,
+		    #'File::Basename'=>0,
+		    #'Getopt::Long'=>0,
+		    #'Pod::Usage'=>0,
+		    #'Storable'=>0,
 		    ##--
 		    #'Log::Log4perl' => 1.07,
 		    #'Text::Unidecode' => 0.04,

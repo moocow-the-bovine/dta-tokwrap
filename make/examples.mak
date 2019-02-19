@@ -1,7 +1,7 @@
 ##-*- Mode: Makefile -*-
 ##
 ## File: User.mak
-## Author: Bryan Jurish <jurish@bbaw.de>
+## Author: Bryan Jurish <moocow@cpan.org>
 ## Description:
 ##  + User configuration makefile for corpus preparation via dta-tokwrap 
 ## Usage:

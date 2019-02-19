@@ -250,6 +250,6 @@ L<dtatw-get-ddc-attrs.perl(1)|dtatw-get-ddc-attrs.perl>,
 
 =head1 AUTHOR
 
-Bryan Jurish E<lt>jurish@bbaw.deE<gt>
+Bryan Jurish E<lt>moocow@cpan.orgE<gt>
 
 =cut

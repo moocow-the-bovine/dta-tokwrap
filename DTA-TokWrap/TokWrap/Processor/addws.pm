@@ -1,7 +1,7 @@
 ## -*- Mode: CPerl; coding: utf-8; -*-
 
 ## File: DTA::TokWrap::Processor::tok2xml.pm
-## Author: Bryan Jurish <jurish@bbaw.de>
+## Author: Bryan Jurish <moocow@cpan.org>
 ## Descript: DTA tokenizer wrappers: xml + t.xml --> cws.xml
 
 package DTA::TokWrap::Processor::addws;

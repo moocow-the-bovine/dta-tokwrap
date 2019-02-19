@@ -1,7 +1,7 @@
 ## -*- Mode: CPerl -*-
 
 ## File: DTA::TokWrap::Processor::tokenize::dwds_scanner.pm
-## Author: Bryan Jurish <jurish@bbaw.de>
+## Author: Bryan Jurish <moocow@cpan.org>
 ## Description: DTA tokenizer wrappers: tokenizer: dwds_scanner via command-line
 
 package DTA::TokWrap::Processor::tokenize::dwds_scanner;

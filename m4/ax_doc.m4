@@ -5,7 +5,7 @@ dnl  + vars: doc_formats
 dnl  + args: --with-docdir, --with-doc-formats
 dnl  + AC_SUBST directory vars: pkgdocdir, pkgdocprogdir, pkgdoctutdir, pkgdoclibdir
 dnl  + AC_SUBST:      CONFIG_DOC_WANT_(TXT|MAN|HTML|LATEX|DVI|PS|PDF)
-dnl  + AM_CONDITIONAL:       DOC_WANT_(TXT|MAN|HTML|LATEX|DVI|PS|PDF)
+dnl  + AM_CONDITIONAL:       DOC_WANT_(TXT|MAN|HTML|LATEX|DVI|PS|PDF), DOC_ENABLED
 dnl
 dnl AX_DOC_DOXYGEN()
 dnl  + requires: AX_DOC_COMMON
@@ -68,6 +68,9 @@ AC_ARG_ENABLE(doc,
 	AC_HELP_STRING([--disable-doc],[Synonym for --with-doc-formats="none"]),
 	[enable_doc="$enableval"],[enable_doc="yes"])
 
+if test "$enable_doc" != "yes" ; then
+  ac_cv_doc_formats="none"
+fi
 
 AC_MSG_CHECKING([which documentation formats to build])
 ##
@@ -81,19 +84,12 @@ doc_formats=`echo "$ac_cv_doc_formats" | sed 's/\,/ /g'`
 
 AC_MSG_RESULT($doc_formats)
 
-  ##-- set "CONFIG_DOC_WANT_*" variables
+  ##-- initialize "CONFIG_DOC_WANT_*" variables
   ##   + test with automake conditionals "DOC_WANT_*"
-  CONFIG_DOC_WANT_TXT="no"
-  CONFIG_DOC_WANT_MAN="no"
-  CONFIG_DOC_WANT_HTML="no"
-  CONFIG_DOC_WANT_LATEX="no"
-  CONFIG_DOC_WANT_DVI="no"
-  CONFIG_DOC_WANT_PS="no"
-  CONFIG_DOC_WANT_PDF="no"
 
   ##-- docs: parse user request
   ##
-  for fmt in $doc_formats ; do
+  for fmt in "none" $doc_formats ; do
     case "$fmt" in
       txt)
         CONFIG_DOC_WANT_TXT="yes"
@@ -116,6 +112,16 @@ AC_MSG_RESULT($doc_formats)
         CONFIG_DOC_WANT_LATEX="yes"
 	CONFIG_DOC_WANT_PDF="yes"
 	;;
+      none)
+	enable_doc="no"
+        CONFIG_DOC_WANT_TXT="no"
+	CONFIG_DOC_WANT_MAN="no"
+  	CONFIG_DOC_WANT_HTML="no"
+  	CONFIG_DOC_WANT_LATEX="no"
+  	CONFIG_DOC_WANT_DVI="no"
+  	CONFIG_DOC_WANT_PS="no"
+  	CONFIG_DOC_WANT_PDF="no"
+	;;
       *)
 	AC_MSG_WARN(ignoring unknown documentation format: $fmt)
 	;;
@@ -134,6 +140,7 @@ AC_MSG_RESULT($doc_formats)
   AC_SUBST(CONFIG_DOC_WANT_PDF)
 
   ##-- automake conditionals: doc_want_x
+  AM_CONDITIONAL(DOC_ENABLED,      [test -n "$doc_formats"           -a "$doc_formats" != "none"])
   AM_CONDITIONAL(DOC_WANT_TXT,     [test -n "$CONFIG_DOC_WANT_TXT"   -a "$CONFIG_DOC_WANT_TXT"   != "no"])
   AM_CONDITIONAL(DOC_WANT_MAN,     [test -n "$CONFIG_DOC_WANT_MAN"   -a "$CONFIG_DOC_WANT_MAN"   != "no"])
   AM_CONDITIONAL(DOC_WANT_HTML,    [test -n "$CONFIG_DOC_WANT_HTML"  -a "$CONFIG_DOC_WANT_HTML"  != "no"])

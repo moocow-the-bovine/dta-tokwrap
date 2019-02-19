@@ -157,7 +157,7 @@ L<dta-tokwrap.perl|dta-tokwrap.perl> - top-level tokenizer wrapper for DTA XML d
 
 =head1 AUTHOR
 
-Bryan Jurish E<lt>jurish@bbaw.deE<gt>
+Bryan Jurish E<lt>moocow@cpan.orgE<gt>
 
 =cut
 

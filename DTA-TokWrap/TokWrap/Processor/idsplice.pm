@@ -1,7 +1,7 @@
 ## -*- Mode: CPerl; coding: utf-8; -*-
 
 ## File: DTA::TokWrap::Processor::idsplice.pm
-## Author: Bryan Jurish <jurish@bbaw.de>
+## Author: Bryan Jurish <moocow@cpan.org>
 ## Descript: DTA tokenizer wrappers: base.xml + so.xml -> base+so.xml
 ##  + splices in attributes and content from selected so.xml into base.xml by id-matching
 ##  + formerly implemented in external script dtatw-splice.perl

@@ -16,7 +16,10 @@ ACLOCAL_AMFLAGS = -I m4
 #AUTOMAKE_OPTIONS = foreign dist-bzip2 dist-zip
 AUTOMAKE_OPTIONS = foreign
 
-SUBDIRS = src scripts doc
+SUBDIRS = src scripts
+if DOC_ENABLED
+SUBDIRS += doc
+endif
 #SUBDIRS += DTA-TokWrap  ##-- works (kinda), but breaks 'make clean'
 
 ## --- distcheck stuff
@@ -49,7 +52,11 @@ EXTRA_DIST += $(EXMAKE_PATHS)
 ##-----------------------------------------------------------------------
 ## Subdirs: perl
 
+if ENABLE_PERL_MODULES
 PMDEPS = DTA-TokWrap/Makefile
+else
+PMDEPS =
+endif
 ALL_LOCAL_DEPS += $(PMDEPS) $(EXMAKE_DEPS)
 
 PERL_MFLAGS = DESTDIR="$(DESTDIR)" DISTDIR_AM="../$(distdir)/DTA-TokWrap"
@@ -58,6 +65,7 @@ PERL_MFLAGS += PREFIX="$(prefix)"
 endif
 
 all-local: $(ALL_LOCAL_DEPS)
+if ENABLE_PERL_MODULES
 	$(MAKE) -C DTA-TokWrap $(PERL_MFLAGS)
 
 DTA-TokWrap/Makefile:
@@ -65,7 +73,6 @@ DTA-TokWrap/Makefile:
 
 install-exec-local: $(PMDEPS)
 	$(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) install
-
 
 ##-- uninstall via MakeMaker is broken (Fri, 01 May 2009 22:30:24 +0200)
 #uninstall-local: $(PMDEPS)
@@ -83,6 +90,26 @@ clean-local:
 distclean-local:
 	if test -f DTA-TokWrap/Makefile ; then $(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) distclean; fi
 	if test "$(srcdir)" != "."; then chmod -R u+w DTA-TokWrap; rm -rf DTA-TokWrap; fi
+
+##-- EU::MM pass-through: test
+test:
+	$(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) test
+
+##-- EU:MM: meta -- MANUAL
+#metafile: META.yml META.json
+#META.yml META.json: DTA-TokWrap/Makefile
+#	$(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) metafile
+#	cp -p DTA-TokWrap/MYMETA.yml META.yml
+#	cp -p DTA-TokWrap/MYMETA.json META.json
+
+EXTRA_DIST += \
+	Makefile.PL \
+	META.json \
+	META.yml \
+	MANIFEST \
+	MANIFEST.SKIP
+
+endif
 
 ##-----------------------------------------------------------------------
 ## clean

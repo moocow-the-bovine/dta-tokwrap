@@ -386,7 +386,7 @@ SEE ALSO
     perl(1).
 
 AUTHOR
-    Bryan Jurish <jurish@bbaw.de>
+    Bryan Jurish <moocow@cpan.org>
 
 COPYRIGHT AND LICENSE
     Copyright (C) 2009-2018 by Bryan Jurish

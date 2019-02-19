@@ -1,7 +1,7 @@
 ##-*- Mode: Makefile -*-
 ##
 ## File: Makefile
-## Author: Bryan Jurish <jurish@bbaw.de>
+## Author: Bryan Jurish <moocow@cpan.org>
 ## Description:
 ##  + top-level makefile for corpus preparation via dta-tokwrap
 ## Usage:

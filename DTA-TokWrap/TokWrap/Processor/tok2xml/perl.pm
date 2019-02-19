@@ -1,7 +1,7 @@
 ## -*- Mode: CPerl -*-
 
 ## File: DTA::TokWrap::Processor::tok2xml::perl.pm
-## Author: Bryan Jurish <jurish@bbaw.de>
+## Author: Bryan Jurish <moocow@cpan.org>
 ## Descript: DTA tokenizer wrappers: t -> t.xml (pure-perl implementation; obsolete)
 
 package DTA::TokWrap::Processor::tok2xml::perl;
@@ -514,7 +514,7 @@ L<dta-tokwrap.perl(1)|dta-tokwrap.perl>,
 
 =head1 AUTHOR
 
-Bryan Jurish E<lt>jurish@bbaw.deE<gt>
+Bryan Jurish E<lt>moocow@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
