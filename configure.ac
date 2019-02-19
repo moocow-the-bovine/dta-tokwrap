@@ -200,7 +200,7 @@ AM_CONDITIONAL(ENABLE_PERL_MODULES, [test "$enable_perl_modules" != "no"])
 
 
 ##-- no-autoheader stuff
-AC_CONFIG_LINKS(src/dtatwConfigNoAuto.h:src/dtatwConfigAuto.h.in)
+dnl AC_CONFIG_LINKS(src/dtatwConfigNoAuto.h:src/dtatwConfigAuto.h.in)
 
 ##----------------------------------------------------------------------
 ## output
