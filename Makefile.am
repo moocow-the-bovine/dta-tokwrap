@@ -95,12 +95,18 @@ distclean-local:
 test:
 	$(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) test
 
-##-- EU:MM: meta -- MANUAL
-#metafile: META.yml META.json
-#META.yml META.json: DTA-TokWrap/Makefile
-#	$(MAKE) -C DTA-TokWrap $(PERL_MFLAGS) metafile
-#	cp -p DTA-TokWrap/MYMETA.yml META.yml
-#	cp -p DTA-TokWrap/MYMETA.json META.json
+##-- EU:MM: meta
+metafile: META.yml META.json
+if HAVE_MYMETA_YML
+META.yml: MYMETA.yml
+	-rm -f $@
+	cp -p MYMETA.yml $@
+endif
+if HAVE_MYMETA_JSON
+META.json: MYMETA.json
+	-rm -f $@
+	cp -p MYMETA.json $@
+endif
 
 EXTRA_DIST += \
 	Makefile.PL \
@@ -118,3 +124,11 @@ if HAVE_POD2HTML
 CLEANFILES += $(PODS:.pod=.html)
 endif
 
+##--- distclean: built by 'configure'
+DISTCLEANFILES = \
+	MYMETA.json MYMETA.yml
+
+##--- maintainerclean: built by maintainer / by hand
+MAINTAINERCLEANFILES = \
+	META.json META.yml \
+	Makefile_mm

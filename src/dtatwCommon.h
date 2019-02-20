@@ -16,7 +16,13 @@
 #include <ctype.h>
 #include <errno.h>
 #include <time.h>
-#include <inttypes.h>  /* for printf format macros, e.g. PRIu32 */
+#include <inttypes.h>   /* for printf format macros, e.g. PRIu32 */
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>  /* for ssize_t */
+#endif
+#if HAVE_SYS_STAT_H
+# include <sys/stat.h>   /* for off_t */
+#endif
 
 /*======================================================================
  * Globals
@@ -42,12 +48,12 @@ extern char *xmlid_name;
  */
 
 /** \brief useful alias */
-#ifndef uint
+#ifndef HAVE_UINT
 #define uint unsigned int
 #endif
 
 /** \brief useful alias */
-#ifndef uchar
+#ifndef HAVE_UCHAR
 # define uchar unsigned char
 #endif
 

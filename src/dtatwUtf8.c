@@ -11,19 +11,23 @@
   with these routines reserved for higher performance on data known to be
   valid.
 */
+#include "dtatwUtf8.h"
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#ifdef WIN32
-#include <malloc.h>
-#else
-#include <alloca.h>
+#if HAVE_MALLOC_H
+# include <malloc.h>
 #endif
-#include <inttypes.h> //-- for printf-formats e.g. PRIu32, PRIX32
+#if HAVE_ALLOCA_H
+# include <alloca.h>
+#endif
+#if HAVE_INTTYPES_H
+# include <inttypes.h> //-- for printf-formats e.g. PRIu32, PRIX32
+#endif
 
-#include "dtatwUtf8.h"
 
 static const uint32_t offsetsFromUTF8[6] = {
     0x00000000UL, 0x00003080UL, 0x000E2080UL,

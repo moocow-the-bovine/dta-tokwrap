@@ -35,6 +35,7 @@ Bryan Jurish E<lt>moocow@cpan.orgE<gt>
 ##-- parse
 @pods = qw();
 foreach $f (map {glob($_)} @ARGV) {
+  next if (!-e $f);
   podselect({-output=>$tmpfile,-sections=>["NAME"]}, $f);
   {
     open(TMP,"<$tmpfile");

@@ -37,7 +37,7 @@ if test "$ac_cv_enable_expat" != "no" ; then
  if test "$ac_cv_have_libexpat" != "yes" ; then
     AC_MSG_WARN([expat library not found!])
     AC_MSG_WARN([ + is the directory containing libexpat.a in your])
-    AC_MSG_WARN([   'LDPFLAGS' environment variable?])
+    AC_MSG_WARN([   'LDFLAGS' environment variable?])
     ac_cv_enable_expat="no"
     EXPAT_LIBS=""
  else

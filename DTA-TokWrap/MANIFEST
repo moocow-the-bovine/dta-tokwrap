@@ -41,7 +41,7 @@ TokWrap/Processor/tokenize/waste.pm
 TokWrap/Processor/tokenize1.pm
 TokWrap/Processor/txmlanno.pm
 TokWrap/Utils.pm
-#TokWrap/Version.pm
+TokWrap/Version.pm
 TokWrap/Version.pm.in
 
 t/00_basic.t

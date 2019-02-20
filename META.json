@@ -44,7 +44,8 @@
             "Time::HiRes" : "1.9711",
             "XML::LibXML" : "0",
             "XML::LibXSLT" : "0",
-            "XML::Parser" : "0"
+            "XML::Parser" : "0",
+            "perl" : "5.01"
          }
       }
    },
