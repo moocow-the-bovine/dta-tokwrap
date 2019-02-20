@@ -1,4 +1,6 @@
+##-*- Mode: CPerl -*-
 use ExtUtils::MakeMaker;
+use 5.010; ##-- in case old EU::MM doesn't grok MIN_PERL_VERSION
 
 ##----------------------------------------------------------------------
 ## MAIN
@@ -10,6 +12,7 @@ WriteMakefile
    ABSTRACT	=> 'Wrapper modules & scripts for DTA XML corpus tokenization',
    VERSION_FROM	=> 'TokWrap/Version.pm',
    LICENSE      => 'perl_5',
+   MIN_PERL_VERSION => 5.010, ##-- v5.10.0
 
    PREREQ_PM    => {
 		    'XML::Parser' => 0,
