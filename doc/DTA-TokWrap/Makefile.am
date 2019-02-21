@@ -210,7 +210,7 @@ $(HTML_DIR)/index.html: index.html
 html-readme: $(HTML_DIR)/README.html
 $(HTML_DIR)/README.html: README.html
 	$(mkdir_p) $(HTML_DIR)
-	cp -p $(HTML_DIR)/README.html $@
+	cp -p README.html $@
 
 no-html:
 	-rm -f html.stamp index.html
