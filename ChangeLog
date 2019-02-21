@@ -1,5 +1,11 @@
 ##-*- Mode: ChangeLog; coding: utf-8; -*-
 
+v0.88 Thu, 21 Feb 2019 21:18:49 +0100 moocow
+	* re-added missing top-level Makefile.PL (seems to have gotten lost in svn merge)
+	* set $ENV{PERL}=$^X in Makefile.PL before calling ./configure
+	  - should fix bogus failures from non-default perls (e.g. cpantesters ae09febc-353f-11e9-a0cc-de79a423f08d)
+	  - many thanks to Slaven Rezić for spotting the problem
+
 v0.87 Thu, 21 Feb 2019 15:21:05 +0100 moocow
 	* first non-dev cpan release
 

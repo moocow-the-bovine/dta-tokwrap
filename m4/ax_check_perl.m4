@@ -4,7 +4,11 @@ AC_DEFUN([AX_CHECK_PERL],
 ##vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 ## perl
 AC_ARG_VAR(PERL, [Path to your perl interpreter, "no" to disable])
-if test -z "$PERL" ; then
+AC_MSG_CHECKING([for PERL environment variable])
+if test -n "$PERL" ; then
+  AC_MSG_RESULT([$PERL])
+else
+  AC_MSG_RESULT(no)
   AC_PATH_PROG(PERL,[perl],[no])
 fi
 if test -z "$PERL" -o "$PERL" = "no"; then
