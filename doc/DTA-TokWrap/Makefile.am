@@ -49,7 +49,7 @@ pod-dist: pod.stamp $(POD_DIR)/index.pod
 	done
 
 index.pod: make-pod-index.perl pod.stamp
-	$(PERL) $< $(filter-out $(POD_DIR)/index.pod,$(wildcard $(POD_DIR)/*.pod)) > $@
+	$(PERL) make-pod-index.perl $(filter-out $(POD_DIR)/index.pod,$(wildcard $(POD_DIR)/*.pod)) -- > $@
 
 CLEAN_LOCAL_DEPS += no-pod
 else
@@ -65,16 +65,16 @@ endif
 pod-index: $(POD_DIR)/index.pod
 $(POD_DIR)/index.pod: index.pod
 	$(mkdir_p) $(POD_DIR)
-	cp $< $@
+	cp index.pod $@
 
 pod-readme: $(POD_DIR)/README.pod
 
 $(POD_DIR)/README.pod: README.pod
 	$(mkdir_p) $(POD_DIR)
-	cp -p $< $@
+	cp -p README.pod $@
 
 README.pod: $(PMSRC)/README.rpod
-	cp -p $< $@
+	cp -p $(PMSRC)/README.rpod $@
 
 EXTRA_DIST += make-pod-index.perl index.pod
 
@@ -113,10 +113,10 @@ txt-dist: txt.stamp txt-index
 	done
 
 index.txt: index.pod
-	$(POD2TEXT) $< $@
+	$(POD2TEXT) index.pod $@
 
 README.txt: README.pod
-	$(POD2TEXT) $< $@
+	$(POD2TEXT) README.pod $@
 
 CLEAN_LOCAL_DEPS += no-txt
 else
@@ -125,23 +125,23 @@ txt.stamp: $(TXT_DIR)/index.txt
 txt-dist: txt.stamp
 	@:
 index.txt: index.pod
-	cp -p $< $@
+	cp -p index.pod $@
 endif
 
 txt-index: $(TXT_DIR)/index.txt
 $(TXT_DIR)/index.txt: index.txt
 	$(mkdir_p) $(TXT_DIR)
-	cp -p $< $@
+	cp -p index.txt $@
 
 txt-readme: $(TXT_DIR)/README.txt
 $(TXT_DIR)/README.txt: README.txt
 	$(mkdir_p) $(TXT_DIR)
-	cp -p $< $@
+	cp -p README.txt $@
 
 no-txt:
-	rm -f txt.stamp index.txt
-	rm -f $(TXT_DIR)/*.txt $(TXT_DIR)/.exists || true
-	test -d $(TXT_DIR) && rmdir $(TXT_DIR) || true
+	-rm -f txt.stamp index.txt
+	-rm -f $(TXT_DIR)/*.txt $(TXT_DIR)/.exists
+	-test -d $(TXT_DIR) && rmdir $(TXT_DIR)
 
 
 if DOC_WANT_TXT
@@ -160,10 +160,10 @@ CSS = $(notdir $(CSS_SRC))
 css: $(HTML_DIR)/$(CSS)
 $(HTML_DIR)/$(CSS): $(CSS_SRC)
 	rm -f $@
-	cp -p $< $@
+	cp -p $(CSS_SRC) $@
 no-html-css:
-	rm -f $(HTML_DIR)/$(CSS) || true
-	rmdir $(HTML_DIR) || true
+	-rm -f $(HTML_DIR)/$(CSS)
+	-rmdir $(HTML_DIR)
 CLEAN_LOCAL_DEPS += no-html-css
 
 html: html.stamp css
@@ -180,14 +180,14 @@ html-dist: html.stamp
 	done
 
 index.html: index.pod
-	$(POD2HTML) --css=$(CSS) --podroot=$(POD_DIR) --podpath=. --infile=$< \
+	$(POD2HTML) --css=$(CSS) --podroot=$(POD_DIR) --podpath=. --infile=index.pod \
 	| $(PERL) -p \
 	   -e'sub hackhref {($$href=shift)=~s|^[/\.]*||; $$href=~s|/|.|g; $$href;}' \
 	   -e's/<a href="([^"]*)/'\''<a href="'\''.hackhref($$1)/eg;' \
 	 > $@ || (rm -f $@; false)
 
 README.html: README.pod
-	$(POD2HTML) --css=$(CSS) --podroot=$(POD_DIR) --podpath=. --infile=$< \
+	$(POD2HTML) --css=$(CSS) --podroot=$(POD_DIR) --podpath=. --infile=index.pod \
 	| $(PERL) -p \
 	   -e'sub hackhref {($$href=shift)=~s|^[/\.]*||; $$href=~s|/|.|g; $$href;}' \
 	   -e's/<a href="([^"]*)/'\''<a href="'\''.hackhref($$1)/eg;' \
@@ -205,17 +205,17 @@ endif
 html-index: $(HTML_DIR)/index.html
 $(HTML_DIR)/index.html: index.html
 	$(mkdir_p) $(HTML_DIR)
-	cp -p $< $@
+	cp -p index.html $@
 
 html-readme: $(HTML_DIR)/README.html
 $(HTML_DIR)/README.html: README.html
 	$(mkdir_p) $(HTML_DIR)
-	cp -p $< $@
+	cp -p $(HTML_DIR)/README.html $@
 
 no-html:
-	rm -f html.stamp index.html
-	rm -f $(HTML_DIR)/*.html $(HTML_DIR)/.exists || true
-	test -d $(HTML_DIR) && rmdir $(HTML_DIR) || true
+	-rm -f html.stamp index.html
+	-rm -f $(HTML_DIR)/*.html $(HTML_DIR)/.exists
+	-test -d $(HTML_DIR) && rmdir $(HTML_DIR)
 
 if DOC_WANT_HTML
 ALL_LOCAL_DEPS += html

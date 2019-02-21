@@ -9,7 +9,7 @@ AC_DEFUN([AX_ARG_DISTCHECK],
  AC_ARG_VAR(DISTCHECK,
 	[(Maintainer): set to nonempty value to simulate missing development packages])
  if test -n "$DISTCHECK" ; then
-   test -z "$PERL"  && PERL=no
+   #test -z "$PERL"  && PERL=no
    test -z "$OPTGEN_PERL" && OPTGEN_PERL=no
    test -z "$DOXYGEN" && DOXYGEN=no
    test -z "$POD2X" && PODSELECT=no

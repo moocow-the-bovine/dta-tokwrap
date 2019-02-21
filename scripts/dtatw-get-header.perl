@@ -192,6 +192,6 @@ L<dtatw-rm-c.perl(1)|dtatw-rm-c.perl>,
 
 =head1 AUTHOR
 
-Bryan Jurish E<lt>jurish@bbaw.deE<gt>
+Bryan Jurish E<lt>moocow@cpan.orgE<gt>
 
 =cut

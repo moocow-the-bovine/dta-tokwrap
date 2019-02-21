@@ -26,7 +26,7 @@ our $FOOTER = '
 
 =head1 AUTHOR
 
-Bryan Jurish E<lt>jurish@bbaw.deE<gt>
+Bryan Jurish E<lt>moocow@cpan.orgE<gt>
 
 =cut
 
@@ -35,6 +35,7 @@ Bryan Jurish E<lt>jurish@bbaw.deE<gt>
 ##-- parse
 @pods = qw();
 foreach $f (map {glob($_)} @ARGV) {
+  next if (!-e $f);
   podselect({-output=>$tmpfile,-sections=>["NAME"]}, $f);
   {
     open(TMP,"<$tmpfile");

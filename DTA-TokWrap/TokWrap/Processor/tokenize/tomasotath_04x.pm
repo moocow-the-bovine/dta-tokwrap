@@ -1,7 +1,7 @@
 ## -*- Mode: CPerl -*-
 
 ## File: DTA::TokWrap::Processor::tokenize::tomasotath_04x.pm
-## Author: Bryan Jurish <jurish@bbaw.de>
+## Author: Bryan Jurish <moocow@cpan.org>
 ## Description: DTA tokenizer wrappers: tokenizer: tomasoblabla (v0.4.x) via command-line
 
 package DTA::TokWrap::Processor::tokenize::tomasotath_04x;
@@ -274,7 +274,7 @@ L<dta-tokwrap.perl(1)|dta-tokwrap.perl>,
 
 =head1 AUTHOR
 
-Bryan Jurish E<lt>jurish@bbaw.deE<gt>
+Bryan Jurish E<lt>moocow@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -1,7 +1,7 @@
 ## -*- Mode: CPerl -*-
 
 ## File: DTA::TokWrap::Processor::tcfencode.pm
-## Author: Bryan Jurish <jurish@bbaw.de>
+## Author: Bryan Jurish <moocow@cpan.org>
 ## Description: DTA tokenizer wrappers: TEI->TCF[tei,text] encoding
 
 package DTA::TokWrap::Processor::tcfencode;
@@ -273,7 +273,7 @@ L<dta-tokwrap.perl(1)|dta-tokwrap.perl>,
 
 =head1 AUTHOR
 
-Bryan Jurish E<lt>jurish@bbaw.deE<gt>
+Bryan Jurish E<lt>moocow@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 

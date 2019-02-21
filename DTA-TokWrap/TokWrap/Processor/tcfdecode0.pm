@@ -1,7 +1,7 @@
 ## -*- Mode: CPerl -*-
 
 ## File: DTA::TokWrap::Processor::tcfdecode0.pm
-## Author: Bryan Jurish <jurish@bbaw.de>
+## Author: Bryan Jurish <moocow@cpan.org>
 ## Description: DTA tokenizer wrappers: TCF[?tei,?text,tokens,sentences]->?TEI,?text,tokdata decoding
 
 package DTA::TokWrap::Processor::tcfdecode0;
@@ -424,7 +424,7 @@ L<dta-tokwrap.perl(1)|dta-tokwrap.perl>,
 
 =head1 AUTHOR
 
-Bryan Jurish E<lt>jurish@bbaw.deE<gt>
+Bryan Jurish E<lt>moocow@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 

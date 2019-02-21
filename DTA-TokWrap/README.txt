@@ -59,5 +59,5 @@ SEE ALSO
     DTA::TokWrap(3pm), perl(1).
 
 AUTHOR
-    Bryan Jurish <jurish@bbaw.de>
+    Bryan Jurish <moocow@cpan.org>
 

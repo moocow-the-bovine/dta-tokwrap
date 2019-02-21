@@ -3,8 +3,8 @@ AC_PREREQ(2.5)
 
 dnl Some handy macros
 define([THE_PACKAGE_NAME],    [dta-tokwrap])
-define([THE_PACKAGE_VERSION], [0.86-pre1])
-define([THE_PACKAGE_MAINTAINER],  [jurish@bbaw.de])
+define([THE_PACKAGE_VERSION], [0.86_002])
+define([THE_PACKAGE_MAINTAINER],  [moocow@cpan.org])
 
 AC_INIT(THE_PACKAGE_NAME, THE_PACKAGE_VERSION, THE_PACKAGE_MAINTAINER)
 
@@ -15,7 +15,7 @@ dnl canonical target (sets $target, $target_(cpu|vendor|os) : used for bindist)
 AC_CANONICAL_TARGET
 
 dnl use automake
-AM_INIT_AUTOMAKE(THE_PACKAGE_NAME, THE_PACKAGE_VERSION)
+AM_INIT_AUTOMAKE()
 
 dnl use autoheader
 AM_CONFIG_HEADER([src/dtatwConfigAuto.h])
@@ -130,11 +130,18 @@ if test "$ENABLE_EXPAT" != "yes"; then
   AC_MSG_ERROR([could not find expat XML parser library: refusing to continue!])
 fi
 
+##-- headers
+AC_CHECK_HEADERS([malloc.h alloca.h inttypes.h sys/stat.h sys/types.h])
+
+##-- types
+AC_CHECK_TYPES([uint, uchar])
+
 ##-- debug
 AX_CHECK_DEBUG()
 
 ###-- restore user FLAGS
 AX_RESTORE_USERFLAGS()
+
 
 ##vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 ## Documentation
@@ -147,42 +154,75 @@ dnl AX_DOC_GOG_LINKS()
 
 pkgdocdotdir="\${docdir}/\${PACKAGE}/dot"
 AC_SUBST(pkgdocdotdir)
-AC_CONFIG_LINKS([doc/programs/dta-tokwrap.perl.pod:DTA-TokWrap/dta-tokwrap.perl])
-AC_CONFIG_LINKS([doc/programs/dtatw-add-c.perl.pod:scripts/dtatw-add-c.perl])
-AC_CONFIG_LINKS([doc/programs/dtatw-add-ws.perl.pod:scripts/dtatw-add-ws.perl])
-dnl AC_CONFIG_LINKS([doc/programs/dtatw-add-s.perl.pod:scripts/dtatw-add-s.perl])
-##
-dnl AC_CONFIG_LINKS([doc/programs/dtatw-rm-c.perl.pod:scripts/dtatw-rm-c.perl])   ##-- no pod docs (yet)
-dnl AC_CONFIG_LINKS([doc/programs/dtatw-rm-lb.perl.pod:scripts/dtatw-rm-lb.perl])   ##-- no pod docs (yet)
-dnl AC_CONFIG_LINKS([doc/programs/file-substr.perl.pod:scripts/file-substr.perl]) ##-- no pod docs (yet)
-AC_CONFIG_LINKS([doc/programs/dtatw-cids2local.perl.pod:scripts/dtatw-cids2local.perl])
-AC_CONFIG_LINKS([doc/programs/dtatw-mkpx.perl.pod:scripts/dtatw-mkpx.perl])
-AC_CONFIG_LINKS([doc/programs/dtatw-txml2uxml.perl.pod:scripts/dtatw-txml2uxml.perl])
-##
-AC_CONFIG_LINKS([doc/programs/dtatw-splice.perl.pod:scripts/dtatw-splice.perl])
-AC_CONFIG_LINKS([doc/programs/dtatw-get-ddc-attrs.perl.pod:scripts/dtatw-get-ddc-attrs.perl])
-AC_CONFIG_LINKS([doc/programs/dtatw-get-header.perl.pod:scripts/dtatw-get-header.perl])
-AC_CONFIG_LINKS([doc/programs/dtatw-sanitize-header.perl.pod:scripts/dtatw-sanitize-header.perl])
-AC_CONFIG_LINKS([doc/programs/dtatw-pn2p.perl.pod:scripts/dtatw-pn2p.perl])
-AC_CONFIG_LINKS([doc/programs/dtatw-xml2ddc.perl.pod:scripts/dtatw-xml2ddc.perl])
-AC_CONFIG_LINKS([doc/programs/dtatw-ensure-lb.perl.pod:scripts/dtatw-ensure-lb.perl])
-##
-AC_CONFIG_LINKS([doc/README.pod:README.pod])
+if test "$doc_formats" != "none" ; then
+ AC_CONFIG_LINKS([doc/programs/dta-tokwrap.perl.pod:DTA-TokWrap/dta-tokwrap.perl])
+ AC_CONFIG_LINKS([doc/programs/dtatw-add-c.perl.pod:scripts/dtatw-add-c.perl])
+ AC_CONFIG_LINKS([doc/programs/dtatw-add-ws.perl.pod:scripts/dtatw-add-ws.perl])
+ dnl AC_CONFIG_LINKS([doc/programs/dtatw-add-s.perl.pod:scripts/dtatw-add-s.perl])
+ ##
+ dnl AC_CONFIG_LINKS([doc/programs/dtatw-rm-c.perl.pod:scripts/dtatw-rm-c.perl])   ##-- no pod docs (yet)
+ dnl AC_CONFIG_LINKS([doc/programs/dtatw-rm-lb.perl.pod:scripts/dtatw-rm-lb.perl])   ##-- no pod docs (yet)
+ dnl AC_CONFIG_LINKS([doc/programs/file-substr.perl.pod:scripts/file-substr.perl]) ##-- no pod docs (yet)
+ AC_CONFIG_LINKS([doc/programs/dtatw-cids2local.perl.pod:scripts/dtatw-cids2local.perl])
+ AC_CONFIG_LINKS([doc/programs/dtatw-mkpx.perl.pod:scripts/dtatw-mkpx.perl])
+ AC_CONFIG_LINKS([doc/programs/dtatw-txml2uxml.perl.pod:scripts/dtatw-txml2uxml.perl])
+ ##
+ AC_CONFIG_LINKS([doc/programs/dtatw-splice.perl.pod:scripts/dtatw-splice.perl])
+ AC_CONFIG_LINKS([doc/programs/dtatw-get-ddc-attrs.perl.pod:scripts/dtatw-get-ddc-attrs.perl])
+ AC_CONFIG_LINKS([doc/programs/dtatw-get-header.perl.pod:scripts/dtatw-get-header.perl])
+ AC_CONFIG_LINKS([doc/programs/dtatw-sanitize-header.perl.pod:scripts/dtatw-sanitize-header.perl])
+ AC_CONFIG_LINKS([doc/programs/dtatw-pn2p.perl.pod:scripts/dtatw-pn2p.perl])
+ AC_CONFIG_LINKS([doc/programs/dtatw-xml2ddc.perl.pod:scripts/dtatw-xml2ddc.perl])
+ AC_CONFIG_LINKS([doc/programs/dtatw-ensure-lb.perl.pod:scripts/dtatw-ensure-lb.perl])
+ ##
+ AC_CONFIG_LINKS([doc/README.pod:README.pod])
+
+ DOC_SUBDIRS="doc"
+else
+  DOC_SUBDIRS=""
+fi
+AC_SUBST(DOC_SUBDIRS)
+
 ##
 ## /Documentation
 ##^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+##vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+## Perl modules (checks)
+
+AC_ARG_ENABLE([perl-modules],
+	AC_HELP_STRING([--disable-perl-modules],[Disable autotools-initiated build of perl modules]),
+	[enable_perl_modules="$enableval"],[enable_perl_modules="yes"])
+
+AC_MSG_CHECKING([whether to build perl modules via autotools])
+if test "$enable_perl_modules" = "no" ; then
+ AC_MSG_RESULT(no)
+else
+ AC_MSG_RESULT(yes)
+fi
+AM_CONDITIONAL(ENABLE_PERL_MODULES, [test "$enable_perl_modules" != "no"])
+
+##-- cpan metadata (really generated by Makefile.PL)
+AM_CONDITIONAL(HAVE_MYMETA_YML, [test -e "MYMETA.yml"])
+AM_CONDITIONAL(HAVE_MYMETA_JSON,[test -e "MYMETA.json"])
+
+##
+##^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
 ##-- no-autoheader stuff
-AC_CONFIG_LINKS(src/dtatwConfigNoAuto.h:src/dtatwConfigAuto.h.in)
+dnl AC_CONFIG_LINKS(src/dtatwConfigNoAuto.h:src/dtatwConfigAuto.h.in)
 
 ##----------------------------------------------------------------------
 ## output
 ##
 AC_CONFIG_FILES(DTA-TokWrap/TokWrap/Version.pm)
-AC_CONFIG_FILES(doc/DTA-TokWrap/Makefile)
-AC_CONFIG_FILES(doc/programs/Makefile)
-AC_CONFIG_FILES(doc/dot/Makefile)
-AC_CONFIG_FILES(doc/Makefile)
+if test "$doc_formats" != "none" ; then
+ AC_CONFIG_FILES(doc/DTA-TokWrap/Makefile)
+ AC_CONFIG_FILES(doc/programs/Makefile)
+ AC_CONFIG_FILES(doc/dot/Makefile)
+ AC_CONFIG_FILES(doc/Makefile)
+fi
 AC_CONFIG_FILES(scripts/Makefile)
 AC_CONFIG_FILES(src/Makefile)
 AC_CONFIG_FILES(Makefile)
@@ -193,21 +233,33 @@ AC_OUTPUT
 ## Subdirs:perl
 ##  + must be *AFTER* AC_OUTPUT call so that Version.pm exists for distcheck
 ##
-AC_MSG_NOTICE([(re-)configuring perl module DTA::TokWrap])
-AC_MSG_NOTICE([+ ignore any warnings from Makefile.PL about missing Version.pm])
 
-##-- TODO: pass options down to 'perl Makefile.PL'
-AC_ARG_VAR(MAKEPLFLAGS,[Additional flags to pass to `perl Makefile.PL`])
+if test "$enable_perl_modules" != "no" ; then
 
-##-- hack for 'make distcheck' / non-inplace builds
-if test "$srcdir" != "."; then
+ AC_MSG_NOTICE([(re-)configuring perl module DTA::TokWrap])
+ AC_MSG_NOTICE([+ ignore any warnings from Makefile.PL about missing Version.pm])
+
+ ##-- TODO: pass options down to 'perl Makefile.PL'
+ AC_ARG_VAR(MAKEPLFLAGS,[Additional flags to pass to `perl Makefile.PL`])
+
+ ##-- hack for 'make distcheck' / non-inplace builds
+ if test "$srcdir" != "."; then
    AC_MSG_NOTICE([+ non-inplace build detected: copying $srcdir/DTA-TokWrap/* to DTA-TokWrap/])
    mkdir DTA-TokWrap
    cp -r $srcdir/DTA-TokWrap/* DTA-TokWrap
+ fi
+
+ ##-- more distcheck hacks
+ if test -n "$DISTCHECK" ; then
+    PERL=perl
+    MAKEPLFLAGS="$MAKEPLFLAGS INSTALL_BASE=\"$prefix\""
+ fi
+
+ AC_MSG_NOTICE([cd DTA-TokWrap; $PERL Makefile.PL $MAKEPLFLAGS])
+ (cd DTA-TokWrap; $PERL Makefile.PL $MAKEPLFLAGS)
+
 fi
 
-AC_MSG_NOTICE([cd DTA-TokWrap; $PERL Makefile.PL $MAKEPLFLAGS])
-(cd DTA-TokWrap; $PERL Makefile.PL $MAKEPLFLAGS)
 ##
 ## /subdirs:perl
 ##^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,7 +1,7 @@
-## -*- Mode: CPerl -*-
+## -*- Mode: CPerl; coding:utf-8; -*-
 
 ## File: DTA::TokWrap::Processor::mkbx0.pm
-## Author: Bryan Jurish <jurish@bbaw.de>
+## Author: Bryan Jurish <moocow@cpan.org>
 ## Description: DTA tokenizer wrappers: sxfile -> bx0doc
 
 package DTA::TokWrap::Processor::mkbx0;
@@ -31,7 +31,7 @@ our @ISA = qw(DTA::TokWrap::Processor);
 our $AUTOTUNE_MIN_C_PER_P = 200;
 
 ## $AUTOTUNE_MAX_LX_PER_L
-##  + maximum fraction of tx lines matching /[[:lower:]][\-¬]$/
+##  + maximum fraction of tx lines matching /[[:lower:]][\-Â¬]$/
 ##    for application of $AUTOTUNE_MIN_C_PER_P autotune heuristic
 ##  + idea: differentiate verse from prose (verse --> low ratio, prosa --> high ratio),
 ##    since <p>-recognition errors are most likely for verse
@@ -1128,7 +1128,7 @@ L<dta-tokwrap.perl(1)|dta-tokwrap.perl>,
 
 =head1 AUTHOR
 
-Bryan Jurish E<lt>jurish@bbaw.deE<gt>
+Bryan Jurish E<lt>moocow@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -23,6 +23,9 @@ EXTRA_PROGRAMS_OLD = dtatw-cxlexer \
 	dtatw-txml2sxml \
 	dtatw-txml2axml
 
+BUILT_SOURCES = \
+	dtatwConfigNoAuto.h
+
 common_deps = dtatwCommon.c dtatwCommon.h config.h dtatwConfig.h dtatwConfigAuto.h dtatwConfigNoAuto.h
 expat_deps = dtatwExpat.c dtatwExpat.h
 utf8_deps = dtatwUtf8.h dtatwUtf8.c
@@ -56,8 +59,19 @@ dtatw_b2xb_SOURCES = dtatw-b2xb.c $(common_deps)
 
 extra: $(EXTRA_PROGRAMS)
 
+##----------------------------------------------------
+## Additional rules
+
+dtatwConfigNoAuto.h: dtatwConfigAuto.h
+	echo "/* src/dtatwConfigNoAuto.h. Generated from dtatwConfigAuto.h by make */" > dtatwConfigNoAuto.h
+	sed 's/^#define \([^ ]*\).*$$/#undef \1/;' dtatwConfigAuto.h >> dtatwConfigNoAuto.h
+
+
 ##-----------------------------------------------------------------------
 ## Dist
 
 EXTRA_DIST += \
 	dtatw-tokenize-dummy.l dtatw-tokenize-dummy.c
+
+DISTCLEANFILES = \
+	dtatwConfigNoAuto.h

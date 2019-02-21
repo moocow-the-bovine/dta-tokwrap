@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
  ! File: dtatw-txmlsort.xsl
- ! Author: Bryan Jurish (jurish@bbaw.de)
+ ! Author: Bryan Jurish (moocow@cpan.org)
  ! Description:
  !   + sort dta-tokwrap *.t.xml files sentence-wise in source-document order
  !   + uses //s/w/@xb attribute (source xml-byte offset+length) to determine

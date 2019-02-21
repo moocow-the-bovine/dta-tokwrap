@@ -182,6 +182,6 @@ L<dta-rm-namespaces(1)|dta-rm-namespaces>,
 
 =head1 AUTHOR
 
-Bryan Jurish E<lt>jurish@bbaw.deE<gt>
+Bryan Jurish E<lt>moocow@cpan.orgE<gt>
 
 =cut

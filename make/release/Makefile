@@ -1,7 +1,7 @@
 ##-*- Mode: Makefile -*-
 
 ## File: Makefile
-## Author: Bryan Jurish <jurish@bbaw.de>
+## Author: Bryan Jurish <moocow@cpan.org>
 ## Description: Makefile for preparation for dta-release preprocessing
 
 ##======================================================================

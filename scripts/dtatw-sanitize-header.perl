@@ -950,6 +950,6 @@ L<dtatw-get-header.perl(1)|dtatw-get-header.perl>,
 
 =head1 AUTHOR
 
-Bryan Jurish E<lt>jurish@bbaw.deE<gt>
+Bryan Jurish E<lt>moocow@cpan.orgE<gt>
 
 =cut
