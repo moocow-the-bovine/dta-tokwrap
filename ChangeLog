@@ -1,5 +1,10 @@
 ##-*- Mode: ChangeLog; coding: utf-8; -*-
 
+v0.89 Fri, 22 Feb 2019 09:31:13 +0100 moocow
+	* top-level Makefile.PL tweaks
+	  - META.* re-generation fixes
+	  - declare lack of support for win32
+
 v0.88 Thu, 21 Feb 2019 21:18:49 +0100 moocow
 	* re-added missing top-level Makefile.PL (seems to have gotten lost in svn merge)
 	* set $ENV{PERL}=$^X in Makefile.PL before calling ./configure

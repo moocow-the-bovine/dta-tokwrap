@@ -124,11 +124,14 @@ if HAVE_POD2HTML
 CLEANFILES += $(PODS:.pod=.html)
 endif
 
-##--- distclean: built by 'configure'
+##--- clean: built by 'make'
+CLEANFILES += \
+	META.json META.yml
+
+##--- distclean: built by 'configure' (or here, by ExtUtils::MakeMaker)
 DISTCLEANFILES = \
 	MYMETA.json MYMETA.yml
 
 ##--- maintainerclean: built by maintainer / by hand
 MAINTAINERCLEANFILES = \
-	META.json META.yml \
 	Makefile_mm

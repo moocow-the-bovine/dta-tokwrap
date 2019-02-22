@@ -1,5 +1,5 @@
 ---
-abstract: 'Wrapper modules & scripts for DTA XML corpus tokenization'
+abstract: 'Utility suite for DTA-style XML corpus tokenization'
 author:
   - 'Bryan Jurish <moocow@cpan.org>'
 build_requires:
@@ -7,12 +7,12 @@ build_requires:
 configure_requires:
   ExtUtils::MakeMaker: '0'
 dynamic_config: 0
-generated_by: 'ExtUtils::MakeMaker version 7.1002, CPAN::Meta::Converter version 2.150005, CPAN::Meta::Converter version 2.141520'
+generated_by: 'ExtUtils::MakeMaker version 7.1002, CPAN::Meta::Converter version 2.150005'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: '1.4'
-name: DTA-TokWrap
+name: dta-tokwrap
 no_index:
   directory:
     - t
@@ -32,5 +32,5 @@ requires:
   XML::LibXSLT: '0'
   XML::Parser: '0'
   perl: '5.01'
-version: 0.86-pre1
-x_serialization_backend: 'JSON::PP version 2.27300_01'
+version: '0.89'
+x_serialization_backend: 'CPAN::Meta::YAML version 0.018'

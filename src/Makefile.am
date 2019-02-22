@@ -73,5 +73,13 @@ dtatwConfigNoAuto.h: dtatwConfigAuto.h
 EXTRA_DIST += \
 	dtatw-tokenize-dummy.l dtatw-tokenize-dummy.c
 
-DISTCLEANFILES = \
+##--- clean: built by 'make'
+CLEANFILES += \
 	dtatwConfigNoAuto.h
+
+##--- distclean: built by 'configure'
+#DISTCLEANFILES =
+
+##--- maintainerclean: built by maintainer / by hand
+#MAINTAINERCLEANFILES =
+

@@ -6,6 +6,18 @@ use strict;
 use utf8;
 
 ##----------------------------------------------------------------------
+## sanity checks
+die("OS $^O not supported") if ($^O =~ /win32/i);
+
+##-- always re-generate MYMETA.*
+foreach my $f (qw(META.yml META.json MYMETA.yml MYMETA.json)) {
+  (!-e $f)
+    or unlink($f)
+    or warn("$0: WARNING: failed to unlink $f: $!");
+}
+
+
+##----------------------------------------------------------------------
 ## dummy MakeMaker
 WriteMakefile
   (
