@@ -13,7 +13,7 @@ bin_PROGRAMS = \
 	dtatw-mkindex \
 	dtatw-cx2dat \
 	dtatw-rm-namespaces \
-	dtatw-check-depth \
+	dtatw-xml-depth \
 	dtatw-tokenize-dummy \
 	dtatw-b2xb \
 	dtatw-tok2xml
@@ -45,8 +45,8 @@ endif
 dtatw_rm_namespaces_SOURCES = dtatw-rm-namespaces.c $(common_deps) $(expat_deps)
 dtatw_rm_namespaces_LDADD = $(EXPAT_LIBS)
 
-dtatw_check_depth_SOURCES = dtatw-check-depth.c $(common_deps) $(expat_deps)
-dtatw_check_depth_LDADD = $(EXPAT_LIBS)
+dtatw_xml_depth_SOURCES = dtatw-xml-depth.c $(common_deps) $(expat_deps)
+dtatw_xml_depth_LDADD = $(EXPAT_LIBS)
 
 dtatw_tok2xml_SOURCES = dtatw-tok2xml.c $(common_deps)
 
