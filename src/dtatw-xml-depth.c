@@ -61,7 +61,7 @@ int main(int argc, char **argv)
   if (argc <= 1) {
     fprintf(stderr, "(%s version %s / %s)\n", PACKAGE, PACKAGE_VERSION, PACKAGE_SVNID);
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, " %s [INFILE(s)...]\n", prog);
+    fprintf(stderr, " %s INFILE(s)...\n", prog);
     fprintf(stderr, " + INFILE  : XML source file(s)\n");
     exit(1);
   }
