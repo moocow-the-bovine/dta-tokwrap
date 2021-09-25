@@ -300,10 +300,11 @@ elsif ($author_nod && $author_nod->nodeName eq 'idno') {
 elsif ($author_nod && $author_nod->nodeName =~ /^(?:author|editor)$/ && ($author_nod->getAttribute('n')||'') ne 'ddc') {
   warn("$prog: $basename: WARNING: formatting author node from ", $author_nod->nodePath) if ($verbose >= $vl_progress);
   ##-- parse structured author node (new, 2012-07)
-  my ($nnods,$first,$last,$gen,@other,$name);
+  my ($nnods,$first,$link,$last,$gen,@other,$name);
   $author = join('; ',
 		 map {
 		   $last  = xpval($_,'surname');
+		   $link  = xpval($_,'nameLink');
 		   $first = xpval($_,'forename');
 		   $gen   = xpval($_,'genName');
 		   @other = (
@@ -312,7 +313,7 @@ elsif ($author_nod && $author_nod->nodeName =~ /^(?:author|editor)$/ && ($author
 			     ($_->nodeName eq 'editor' || $_->parentNode->nodeName eq 'editor' ? 'ed.' : qw()),
 			    );
 		   $_ =~ s{^http://d-nb.info/gnd/}{#}g foreach (@other); ##-- pnd hack
-		   $name = ($last||'').", ".($first||'').($gen ? " $gen" : '').' ('.join('; ', @other).')';
+		   $name = ($last||'').", ".($first||'').($link ? " $link":'').($gen ? " $gen" : '').' ('.join('; ', @other).')';
 		   $name =~ s/^, //;
 		   $name =~ s/ \(\)//;
 		   $name
